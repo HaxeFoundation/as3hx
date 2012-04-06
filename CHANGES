@@ -1,0 +1,41 @@
+ - Added handling for classes outside of package {} in as3 (private tail classes)
+ - Removed conversion of escape sequences in Parser.readString
+ - Added odd as3 vector constructor style: mStringVec = new <String>["a","b"];
+
+2011-10-19 - Russell
+ - Added writing out class inits
+ - Fixed empty functions returning f.expr = Object (messed up metadata parsing)
+ - Improved metadata support for [Bindable("move")]
+ - Added native flash getter and setter methods
+ - Refactored configuration, reads xml config files
+ - Fixed default values in function args
+ - Fixed setters not returning values
+ - Output Dynamic for Object
+ - Added -no-func2dyn. Prevents Function type being changed to Dynamic
+ - Total rewrite of Writer:ESwitch. Corrects switch..break behaviour of flash. See tests/Switch.as
+ - Fixed isNaN -> Math.isNaN
+ - Fixed continue statements in EFor blocks not incrementing counters. See tests/Loops.as
+ - Type.getClass() for "as Class"
+ - A little spaghetti, more copy pasta, and some casts to Stringozzi
+ - Added compiler warnings
+ - Fixed missed chars in token()
+ - Parse typeof, added as3hx.Compat class to handle untranslatable flash
+ - Skip comments in object create or fuction calls
+ - Support for Vector added to Writer
+
+2011-10-14 - Russell
+ - cleaned formatting on comments
+ - added === support (missed)
+ - added -no-cast-guess 
+
+2011-10-12 - Russell
+ - added comments
+ - fixed static var initializations were not output
+ - added output for the "as" keyword
+ - fixed "interface extends" to "interface implements" 
+ - fixed interface functions were outputting empty bodies
+ - added ETernary
+ - fixed formatting on if...else
+ - added parsing for !==
+ - added -uint2int command line switch
+ - fixed field access (none to never)
