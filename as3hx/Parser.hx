@@ -1137,6 +1137,29 @@ class Parser {
 					return parseExprNext(EUnop(op,false,e1));
 				}
 			return makeBinop(op,e1,parseExpr());
+		case TNs:
+			switch(e1) {
+			case EIdent(i):
+				switch(i) {
+					case "public":
+						return parseExprNext(ECommented("/* AS3HX WARNING namespace modifier " + i + ":: */", true, false, null));
+					default:
+				}
+				tk = token();
+				switch(tk) {
+					case TId(id):
+						switch(peek()) {
+							case TBrOpen: // functions inside a namespace
+								return parseExprNext(ECommented("/* AS3HX WARNING namespace modifier " + i + "::"+id+" */", true, false, null));
+							default:
+						}
+					default:
+				}
+			default:
+			}
+			dbgln("WARNING parseExprNext unable to create namespace for " + Std.string(e1));
+			add(tk);
+			return e1;
 		case TDot:
 			tk = token();
 			var field = null;

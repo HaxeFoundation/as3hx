@@ -41,6 +41,13 @@ public class Expressions {
 
 		for each (var namespaceURL:String in usedMetadatas) {
 		}
+
+		// from Flex mx/styles/CSSStyleDeclaration.as, and other files for CONFIG::
+		public function clearStyle(styleProp:String):void
+		{
+			public::setStyle(styleProp, undefined);
+			CONFIG::debug { assert(obj != null, "Event target is not a DisplayObject"); }
+		}
 	}
 }
 }
