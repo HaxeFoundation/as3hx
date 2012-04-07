@@ -58,6 +58,8 @@ class Config {
 	public var setterMethods : String;
 	/** getter/setter output style **/
 	public var getterSetterStyle : String;
+	/** list of paths to exclude from parsing **/
+	public var excludePaths : List<String>;
 
 	/** source directory **/
 	public var src : String;
@@ -214,6 +216,7 @@ class Config {
 			case "getterMethods":		setCharField(el, "get%I");
 			case "setterMethods":		setCharField(el, "set%I");
 			case "getterSetterStyle":	setCharField(el, "haxe", ["haxe","flash","combined"]);
+			case "excludeList":			setExcludeField(el, new List());
 			default:
 				neko.Lib.println("Unrecognized config var " + el.name);
 			}
@@ -239,6 +242,15 @@ class Config {
 			if(!ok) val = defaultVal;
 		}
 		Reflect.setField(this, f.name, unescape(val));
+	}
+
+	function setExcludeField(f:Fast, defaultExcludes:List<String>) {
+		excludePaths = defaultExcludes;
+		for (file in f.nodes.path) {
+			if (file.has.value) {
+				excludePaths.add(file.att.value);
+			}
+		}
 	}
 
 	public static function toPath(inPath:String) {
@@ -281,6 +293,7 @@ class Config {
 	<setterMethods value="set%I" />
 	<!-- Style of getter and setter output. haxe, flash or combined -->
 	<getterSetterStyle value="haxe" />
+	<excludeList />
 </as3hx>';
 	}
 }

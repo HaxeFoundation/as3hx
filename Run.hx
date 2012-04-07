@@ -17,11 +17,11 @@ class Run {
 		}
 	}
 	
-	static function loop( src: String, dst : String ) {
+	static function loop( src: String, dst : String, excludes: List<String> ) {
 		var subs = [];
 		var writer = new Writer(cfg);
 		for( f in neko.FileSystem.readDirectory(src) ) {
-			if( f.endsWith(".as") ) {
+			if( f.endsWith(".as") && !isExcludeFile(excludes, src + "/" + f) ) {
 				var p = new as3hx.Parser();
 				var file = src + "/" + f;
 				neko.Lib.println(file);
@@ -47,14 +47,17 @@ class Run {
 			}
 		}
 		for ( sub in subs )
-			loop(sub, dst);
+			loop(sub, dst, excludes);
 	}
+
+	static function isExcludeFile(excludes: List<String>, file: String) 
+		return Lambda.filter(excludes, function (path) return as3hx.Config.toPath(file).indexOf(path.replace(".", "/")) > -1).length > 0
 
 	static var warnings : Hash<Hash<Bool>> = new Hash();
 	static var cfg : as3hx.Config;
 	public static function main() {
 		cfg = new as3hx.Config();
-		loop(cfg.src, cfg.dst);
+		loop(cfg.src, cfg.dst, cfg.excludePaths);
 		neko.Lib.println("");
 		Writer.showWarnings(warnings);
 		neko.Lib.println("");
