@@ -31,6 +31,15 @@ public class Expressions {
 		case true:
 		case false:
 		}
+
+		if ("runtimeDPI" in FlexGlobals.topLevelApplication) {
+		}
+
+		for (istr in p_obj) {
+		}
+
+		for each (var namespaceURL:String in usedMetadatas) {
+		}
 	}
 }
 }

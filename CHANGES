@@ -1,3 +1,6 @@
+ - Removed writing var type in for(var x : String in y)
+ - Created "in" as Binop : for(i in x)
+ - Handle of if(x in y) as Lambda.has
  - Added handling for classes outside of package {} in as3 (private tail classes)
  - Removed conversion of escape sequences in Parser.readString
  - Added odd as3 vector constructor style: mStringVec = new <String>["a","b"];

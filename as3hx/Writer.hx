@@ -602,6 +602,13 @@ class Writer
 					}
 					write(")");
 				}
+				else if(op == "in") {
+					write("Lambda.has(");
+					writeExpr(e2);
+					write(", ");
+					writeExpr(e1);
+					write(")");
+				}
 				else {
 					writeExpr(e1);
 					write(" " + op + " ");
@@ -761,7 +768,16 @@ class Writer
 				rv = None;
 			case EForEach( ev, e, block ):
 				write("for(");
-				writeExpr(ev);
+				switch(ev) {
+					case EVars(vars):
+						if(vars.length == 1 && vars[0].val == null) {
+							write(vars[0].name);
+						} else {
+							writeExpr(ev);
+						}
+					default:
+						writeExpr(ev);
+				}
 				write(" in ");
 				writeExpr(e);
 				write(")");

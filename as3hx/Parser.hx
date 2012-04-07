@@ -989,19 +989,28 @@ class Parser {
 			if( opt(TId("each")) ) {
 				ensure(TPOpen);
 				var ev = parseExpr();
-				ensure(TId("in"));
-				var e = parseExpr();
-				ensure(TPClose);
-				EForEach(ev, e, parseExpr());
+				switch(ev) {
+					case EBinop(op, e1, e2):
+						if(op == "in") {
+							ensure(TPClose);
+							return EForEach(e1, e2, parseExpr());
+						}
+						unexpected(TId(op));
+					default:
+						unexpected(TId(Std.string(ev)));
+				}
 			} else {
 				ensure(TPOpen);
 				var inits = [];
 				if( !opt(TSemicolon) ) {
 					var e = parseExpr();
-					if( opt(TId("in")) ) {
-						var ein = parseExpr();
-						ensure(TPClose);
-						return EForIn(e, ein, parseExpr());
+					switch(e) {
+						case EBinop(op, e1, e2):
+							if(op == "in") {
+								ensure(TPClose);
+								return EForIn(e1, e2, parseExpr());
+							}
+						default:
 					}
 					if( opt(TComma) ) {
 						inits = parseExprList(TSemicolon);
@@ -1102,7 +1111,7 @@ class Parser {
 		dbgln("parseCaseBlock()");
 		var el = [];
 		while( true ) {
-			var tk = peek(false);
+			var tk = peek();
 			switch( tk ) {
 			case TId(id): if( id == "case" || id == "default" ) break;
 			case TBrClose: break;
@@ -1172,11 +1181,13 @@ class Parser {
 			switch( s ) {
 			case "is": return makeBinop("is", e1, parseExpr());
 			case "as": return makeBinop("as",e1,parseExpr());
+			case "in": return makeBinop("in",e1,parseExpr());
 			default:
 				add(tk);
 				return e1;
 			}
 		default:
+			dbgln("parseExprNext stopped at " + tk);
 			add(tk);
 			return e1;
 		}
@@ -1338,7 +1349,7 @@ class Parser {
 		return b.getBytes().toString();
 	}
 
-	function peek(ic:Bool=true) : Token {
+	function peek() : Token {
 		if( tokens.isEmpty() )
 			add(token());
 		return uncomment(tokens.first());
