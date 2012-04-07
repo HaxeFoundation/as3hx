@@ -76,6 +76,8 @@ class Parser {
 	var ops : Array<Bool>;
 	var idents : Array<Bool>;
 	var tokens : haxe.FastList<Token>;
+	var path : String;
+	var filename : String;
 
 	public function new() {
 		line = 1;
@@ -106,8 +108,6 @@ class Parser {
 		unopsSuffix = ["++", "--"];
 	}
 
-	var path : String;
-	var filename : String;
 	public function parseString( s : String, path : String, filename : String ) {
 		line = 1;
 		this.path = path;
@@ -132,8 +132,13 @@ class Parser {
 	public function parseInclude(p:String, call:Void->Void) {
 		var oldInput = input;
 		var oldLine = line;
+		var oldPath = path;
+		var oldFilename = filename;
 		var file = path + "/" + p;
-		openDebug("Parsing included file " + file);
+		var parts = file.split("/");
+		filename = parts.pop();
+		path = parts.join("/");
+		openDebug("Parsing included file " + file + "\n");
 		var content = neko.io.File.getContent(file);
 		line = 1;
 		input = new haxe.io.StringInput(content);
@@ -144,6 +149,8 @@ class Parser {
 		}
 		input = oldInput;
 		line = oldLine;
+		path = oldPath;
+		filename = oldFilename;
 		closeDebug("Finished parsing file " + file);
 	}
 	
@@ -321,6 +328,9 @@ class Parser {
 		var defs = [];
 		var meta : Array<Expr> = [];
 		var closed = false;
+
+		var pf : Bool->Void = null;
+		pf = function(included:Bool) {
 		while( true ) {
 			var tk = token();
 			switch( tk ) {
@@ -337,6 +347,8 @@ class Parser {
 				closed = false;
 				continue;
 			case TEof:
+				if( included )
+					return;
 				if( closed )
 					break;
 			case TBkOpen: // [
@@ -356,6 +368,24 @@ class Parser {
 					add(tk);
 					defs.push(parseDefinition(meta));
 					meta = [];
+					continue;
+				case "include":
+					tk = token();
+					switch(tk) {
+						case TConst(c):
+							switch(c) {
+								case CString(path):
+									var oldClosed = closed;
+									closed = false;
+									parseInclude(path,callback(pf, true));
+									end();
+									closed = oldClosed;
+								default:
+									unexpected(tk);
+							}
+						default:
+							unexpected(tk);
+					}
 					continue;
 				default:
 				}
@@ -377,6 +407,8 @@ class Parser {
 			}
 			unexpected(tk);
 		}
+		};
+		pf(false);
 		if( !closed )
 			unexpected(TEof);
 
@@ -611,15 +643,14 @@ class Parser {
 							case TConst(c):
 								switch(c) {
 									case CString(path):
-										end();
 										parseInclude(path,callback(pf, true));
+										end();
 									default:
 										unexpected(t);
 								}
 							default:
 								unexpected(t);
 						}
-						//throw "Incomplete " + t;
 					default:
 						kwds.push(id);
 					}

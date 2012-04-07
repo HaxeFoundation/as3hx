@@ -6,6 +6,8 @@ package {
 
 	[ExcludeClass]
 
+	include "../includes/BasicInheritingStyles.as";
+
 	/**
 	*  @private
 	*/
