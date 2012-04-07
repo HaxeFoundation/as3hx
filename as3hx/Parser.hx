@@ -492,10 +492,9 @@ class Parser {
 				parseUse();
 				continue;
 			case "class":
-				return CDef(parseClass(kwds,meta));
+				return CDef(parseClass(kwds,meta,false));
 			case "interface":
-				var c = parseClass(kwds, meta);
-				c.isInterface = true;
+				var c = parseClass(kwds,meta,true);
 				return CDef(c);
 			case "function":
 				// Writer does not have this implemented
@@ -546,7 +545,7 @@ class Parser {
 		};
 	}
 	
-	function parseClass(kwds,meta:Array<Expr>) : ClassDef {
+	function parseClass(kwds,meta:Array<Expr>,isInterface:Bool) : ClassDef {
 		var cname = id();
 		var classMeta = meta;
 		meta = [];
@@ -561,7 +560,14 @@ class Parser {
 				continue;
 			}
 			if( opt(TId("extends")) ) {
-				extend = parseType();
+				if(!isInterface) {
+					extend = parseType();
+				}
+				else {
+					impl.push(parseType());
+					while( opt(TComma) )
+						impl.push(parseType());
+				}
 				continue;
 			}
 			break;
@@ -691,7 +697,7 @@ class Parser {
 		return {
 			meta : classMeta,
 			kwds : kwds,
-			isInterface : false,
+			isInterface : isInterface,
 			name : cname,
 			fields : fields,
 			implement : impl,
