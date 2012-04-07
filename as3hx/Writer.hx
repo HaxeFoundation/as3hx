@@ -285,6 +285,8 @@ class Writer
 				write("static ");
 			if (isPublic(field.kwds))
 				write("public ");
+			if (isConst(field.kwds) && isStatic(field.kwds))
+				write("inline ");
 		}
 		switch(field.kind)
 		{
@@ -1033,6 +1035,11 @@ class Writer
 	function isSetter(kwds : Array<String>)
 	{
 		return Lambda.has(kwds, "set");
+	}
+
+	function isConst(kwds : Array<String>)
+	{
+		return Lambda.has(kwds, "const");
 	}
 	
 	function tstring(t : T, isNativeGetSet:Bool=false)
