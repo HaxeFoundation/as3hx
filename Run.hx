@@ -26,7 +26,7 @@ class Run {
 				var file = src + "/" + f;
 				neko.Lib.println(file);
 				var content = neko.io.File.getContent(file);
-				var program = try p.parseString(content) catch( e : as3hx.Parser.Error ) {
+				var program = try p.parseString(content,src,f) catch( e : as3hx.Parser.Error ) {
 					#if macro
 					neko.io.File.stderr().writeString(file+":"+p.line+": "+errorString(e)+"\n");
 					#end

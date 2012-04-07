@@ -106,8 +106,12 @@ class Parser {
 		unopsSuffix = ["++", "--"];
 	}
 
-	public function parseString( s : String ) {
+	var path : String;
+	var filename : String;
+	public function parseString( s : String, path : String, filename : String ) {
 		line = 1;
+		this.path = path;
+		this.filename = filename;
 		return parse( new haxe.io.StringInput(s) );
 	}
 
@@ -123,6 +127,24 @@ class Parser {
 		for( i in 0...identChars.length )
 			idents[identChars.charCodeAt(i)] = true;
 		return parseProgram();
+	}
+
+	public function parseInclude(p:String, call:Void->Void) {
+		var oldInput = input;
+		var oldLine = line;
+		var file = path + "/" + p;
+		openDebug("Parsing included file " + file);
+		var content = neko.io.File.getContent(file);
+		line = 1;
+		input = new haxe.io.StringInput(content);
+		try {
+			call();
+		} catch(e:Dynamic) {
+			throw "Error " + e + " while parsing included file " + file + " at " + oldLine;
+		}
+		input = oldInput;
+		line = oldLine;
+		closeDebug("Finished parsing file " + file);
 	}
 	
 	inline function add(tk) {
@@ -513,6 +535,10 @@ class Parser {
 			break;
 		}
 		ensure(TBrOpen);
+
+		var pf : Bool->Void = null;
+
+		pf = function(included:Bool) {
 		while( true ) {
 			// check for end of class
 			if( opt2(TBrClose, meta) ) break;
@@ -540,6 +566,11 @@ class Parser {
 						break;
 					}
 					continue;
+				case TEof:
+					if(included)
+						return;
+					add(tk);
+					break;
 				default:
 					add(tk);
 					break;
@@ -574,12 +605,35 @@ class Parser {
 					case "use":
 						parseUse();
 						break;
+					case "include":
+						t = token();
+						switch(t) {
+							case TConst(c):
+								switch(c) {
+									case CString(path):
+										end();
+										parseInclude(path,callback(pf, true));
+									default:
+										unexpected(t);
+								}
+							default:
+								unexpected(t);
+						}
+						//throw "Incomplete " + t;
 					default:
 						kwds.push(id);
 					}
 				case TCommented(s,b,t):
 					add(t);
 					meta.push(ECommented(s,b,false,null));
+				case TEof:
+					if(included)
+						return;
+					add(t);
+					while( kwds.length > 0 )
+						add(TId(kwds.pop()));
+					inits.push(parseExpr());
+					end();
 				default:
 					add(t);
 					while( kwds.length > 0 )
@@ -590,6 +644,9 @@ class Parser {
 				}
 			}
 		}
+		};
+		pf(false);
+			
 		//trace("*** " + meta);
 		for(m in meta) {
 			switch(m) {
