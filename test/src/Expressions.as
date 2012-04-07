@@ -36,6 +36,7 @@ public class Expressions {
 		}
 
 		for (istr in p_obj) {
+			var f : float = 1.0e-9; // - replace '1.0e-9' with '0.000000001'
 		}
 
 		for each (var namespaceURL:String in usedMetadatas) {

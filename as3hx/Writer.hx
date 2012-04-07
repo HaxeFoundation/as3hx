@@ -586,6 +586,12 @@ class Writer
 							writeExpr(e2);
 							write(") catch(e:Dynamic) null");
 						}
+					case EField(_):
+						write("try cast(");
+						writeExpr(e1);
+						write(", ");
+						writeExpr(e2);
+						write(") catch(e:Dynamic) null");
 					default:
 						throw "Unexpected " + Std.string(e2);
 					}

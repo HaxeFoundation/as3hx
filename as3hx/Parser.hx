@@ -1442,7 +1442,27 @@ class Parser {
 						buf.addChar(char);
 						char = nextChar();
 					} while( char >= '0'.code && char <= '9'.code );
-					pushBackChar(char);
+					switch( char ) {
+						case 'e'.code:
+							if( buf.toString() == '.' ) {
+								pushBackChar(char);
+								return TDot;
+							}
+							buf.addChar(char);
+							char = nextChar();
+							if( char == '-'.code ) {
+								buf.addChar(char);
+								char = nextChar();
+							}
+							while( char >= '0'.code && char <= '9'.code ) {
+								buf.addChar(char);
+								char = nextChar();
+							}
+							pushBackChar(char);
+							return TConst(CFloat(buf.toString()));
+						default:
+							pushBackChar(char);
+					}
 					var str = buf.toString();
 					if( str.length == 1 ) return TDot;
 					return TConst(CFloat(str));

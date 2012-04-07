@@ -15,6 +15,7 @@ public class AsAndIs {
                 {
                         _icon = new Label(null, 0, 0, iconOrLabel as String);
                         (_icon as Label).draw();
+						(_icon as mx.geom.Transform).rotate();
                 }
                 if(_icon != null)
                 {
