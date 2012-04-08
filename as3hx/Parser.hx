@@ -337,7 +337,6 @@ class Parser {
 		pf = function(included:Bool) {
 		while( true ) {
 			var tk = token();
-			trace(tk);
 			switch( tk ) {
 			case TBrClose: // }
 				if( inNamespace ) {
@@ -735,9 +734,11 @@ class Parser {
 		for(m in meta) {
 			switch(m) {
 			case ECommented(s,b,t,e):
-				if(e != null) throw "Assert error";
+				if(e != null)
+					throw "Assert error: " + m;
 				fields.push({name:null, meta:[ECommented(s,b,false,null)], kwds:[], kind:FComment});
-			default: throw "Assert error";
+			default:
+				throw "Assert error: " + m;
 			}
 		}
 		closeDebug("parseClass("+cname+") finished");
@@ -1800,10 +1801,16 @@ class Parser {
 
 	static var lvl : Int = 0;
 
-	function openDebug(s,newline:Bool=false,?p:haxe.PosInfos) {
+	function printDebug(s) {
+		neko.io.File.stderr().write(haxe.io.Bytes.ofString(s));
+	}
+	
+	function openDebug(s:String,newline:Bool=false,?p:haxe.PosInfos) {
 		#if debug
-		var pf = newline ? neko.Lib.println : neko.Lib.print;
-		pf(indent() + "(" + line + ") " + s);
+		var o = indent() + "(" + line + ") " + s  + " [Parser " + p.lineNumber + "]";
+		if(newline)
+			o = o + "\r\n";
+		printDebug(o);
 		lvl++;
 		#end
 	}
@@ -1811,21 +1818,23 @@ class Parser {
 	function closeDebug(s,?p:haxe.PosInfos) {
 		#if debug
 		lvl--;
-		neko.Lib.println(indent() + "(" + line + ") " + s + " [Parser " + p.lineNumber + "]");
+		printDebug(indent() + "(" + line + ") " + s + " [Parser " + p.lineNumber + "]\r\n");
 		#end
 	}
 
 	function dbg(s,ind:Bool=true,?p:haxe.PosInfos) {
 		#if debug
-		if(ind) neko.Lib.print(indent());
-		neko.Lib.print("(" + line + ") " + s + " [Parser " + p.lineNumber + "]");
+		var o = ind ? indent() : "";
+		o += "(" + line + ") " + s + " [Parser " + p.lineNumber + "]";
+		printDebug(o);
 		#end
 	}
 
 	function dbgln(s,ind:Bool=true,?p:haxe.PosInfos) {
 		#if debug
-		if(ind) neko.Lib.print(indent());
-		neko.Lib.println("(" + line + ") " + s + " [Parser " + p.lineNumber + "]");
+		var o = ind ? indent() : "";
+		o += "(" + line + ") " + s + " [Parser " + p.lineNumber + "]\r\n";
+		printDebug(o);
 		#end
 	}
 

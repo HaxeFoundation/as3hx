@@ -51,13 +51,6 @@ public class Expressions {
 		for each (var namespaceURL:String in usedMetadatas) {
 		}
 
-		// from Flex mx/styles/CSSStyleDeclaration.as, and other files for CONFIG::
-		public function clearStyle(styleProp:String):void
-		{
-			public::setStyle(styleProp, undefined);
-			CONFIG::debug { assert(obj != null, "Event target is not a DisplayObject"); }
-		}
-
 		// Comment before a namespace block
 		CONFIG::debug { assert(obj != null, "Event target is not a DisplayObject"); }
 
@@ -68,6 +61,13 @@ public class Expressions {
 		// +1.0e-9 fails
 		if (-1.0e-9 < c && c < +1.0e-9) doSomething();
 
+	}
+
+	// from Flex mx/styles/CSSStyleDeclaration.as, and other files for CONFIG::
+	public function clearStyle(styleProp:String):void
+	{
+		public::setStyle(styleProp, undefined);
+		CONFIG::debug { assert(obj != null, "Event target is not a DisplayObject"); }
 	}
 }
 }
