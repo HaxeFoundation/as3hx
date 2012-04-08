@@ -370,7 +370,15 @@ class Parser {
 					continue;
 				case "public", "class", "internal", "interface", "dynamic", "function":
 					add(tk);
-					defs.push(parseDefinition(meta));
+					var d = parseDefinition(meta);
+					switch(d) {
+						case CDef(c):
+							for(i in c.imports)
+								imports.push(i);
+							c.imports = [];
+						default:
+					}
+					defs.push(d);
 					meta = [];
 					continue;
 				case "include":
@@ -558,6 +566,7 @@ class Parser {
 	function parseClass(kwds,meta:Array<Expr>,isInterface:Bool) : ClassDef {
 		var cname = id();
 		var classMeta = meta;
+		var imports = [];
 		meta = [];
 		openDebug("parseClass("+cname+")", true);
 		var fields = new Array();
@@ -650,6 +659,11 @@ class Parser {
 						fields.push(parseClassFun(kwds, meta));
 						meta = [];
 						break;
+					case "import":
+						var impt = parseImport();
+						if (impt.length > 0) imports.push(impt);
+						end();
+						break;
 					case "use":
 						parseUse();
 						break;
@@ -707,6 +721,7 @@ class Parser {
 		return {
 			meta : classMeta,
 			kwds : kwds,
+			imports : imports,
 			isInterface : isInterface,
 			name : cname,
 			fields : fields,

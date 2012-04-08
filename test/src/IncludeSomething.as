@@ -15,6 +15,7 @@ package {
 	{
 		include "../includes/Version.as";
 
+		import flash.display.LoaderInfo;
 		public static function doNothing() {
 		}
 	}

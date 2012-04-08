@@ -99,6 +99,7 @@ typedef ClassField = {
 typedef ClassDef = {
 	var meta : Array<Expr>;
 	var kwds : Array<String>;
+	var imports : Array<Array<String>>;
 	var isInterface : Bool;
 	var name : String;
 	var fields : Array<ClassField>;
