@@ -718,7 +718,7 @@ class Writer
 					rv = switch(e1) {
  						case EObject(_): Ret;
 						case EBlock(_): None;
-						case EIf(_,_,_): None;
+						case EIf(_,_,_): Semi;
 						case EReturn(_): Semi;
 						default: Semi; 
 					}
@@ -972,10 +972,11 @@ class Writer
 					writeNL("");
 					if(!t)
 						write(indent());
-					//rv = None;
-				}
-				if(!t)
+				} 	
+				if(!t) 
 					writeExpr(ex);
+
+				if (ex == null) rv = Ret;
 			case EMeta(m):
 				write("@:meta("+m.name+"(");
 				var first = true;

@@ -1259,7 +1259,7 @@ class Parser {
 			var field = null;
 			switch(tk) {
 			case TId(id):
-				field = id;
+				field = StringTools.replace(id, "$", "__DOLLAR__");
 				if( opt(TNs) )
 					field = field + "::" + this.id();
 			case TOp(op):
