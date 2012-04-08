@@ -451,6 +451,8 @@ class Parser {
 				case TId(id): 
 					if (id == "getQualifiedClassName" && cfg.mapFlClasses) return [];
 					else if (id == "getTimer" && cfg.mapFlClasses) return [];
+					else if (id == "getDefinitionByName" && cfg.mapFlClasses) return [];
+					else if (id == "Vector" && a[0] == "__AS3__" && cfg.mapFlClasses) return [];
 					else a.push(id);
 				case TOp(op):
 					if( op == "*" ) {
@@ -1230,11 +1232,19 @@ class Parser {
 				var e = parseExpr();
 				ECall(EField(EIdent("Type"), "getClassName"), [e]);
 			}
+
+		case "getDefinitionByName":
+			if (cfg.mapFlClasses) {
+				var e = parseExpr();
+				ECall(EField(EIdent("Type"), "resolveClass"), [e]);
+			}
+
 		case "getTimer":
 			if (cfg.mapFlClasses) {
 				// TODO: this isn't quite right...
 				ECall(EField(EIdent("Math"), "round"), [EBinop("/", ECall(EField(EIdent("haxe.Timer"), "getStamp"), []), EConst(CInt("1000")))]);
 			}
+
 
 		default:
 			null;
@@ -1277,7 +1287,7 @@ class Parser {
 				switch(i) {
 					case "public":
 						return parseExprNext(ECommented("/* AS3HX WARNING namespace modifier " + i + ":: */", true, false, null));
-					default:
+					default: 
 				}
 				tk = token();
 				switch(tk) {
