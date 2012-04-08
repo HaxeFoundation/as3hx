@@ -48,6 +48,17 @@ public class Expressions {
 			public::setStyle(styleProp, undefined);
 			CONFIG::debug { assert(obj != null, "Event target is not a DisplayObject"); }
 		}
+
+		// Comment before a namespace block
+		CONFIG::debug { assert(obj != null, "Event target is not a DisplayObject"); }
+
+		SystemManagerGlobals.topLevelSystemManagers[0].
+			// Comment between a method call
+			dispatchEvent(new FocusEvent(FlexEvent.NEW_CHILD_APPLICATION, false, false, this));
+
+		// +1.0e-9 fails
+		if (-1.0e-9 < c && c < +1.0e-9) doSomething();
+
 	}
 }
 }
