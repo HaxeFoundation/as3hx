@@ -792,7 +792,16 @@ class Writer
 				rv = writeExpr(block);
 			case EForIn( ev, e, block ):
 				write("for(");
-				writeExpr(ev);
+				switch(ev) {
+					case EVars(vars):
+						if(vars.length == 1 && vars[0].val == null) {
+							write(vars[0].name);
+						} else {
+							writeExpr(ev);
+						}
+					default:
+						writeExpr(ev);
+				}
 				write(" in Reflect.fields(");
 				writeExpr(e);
 				write("))");
