@@ -358,7 +358,8 @@ class Parser {
 			case TId(id):
 				switch( id ) {
 				case "import":
-					imports.push(parseImport());
+					var impt = parseImport();
+					if (impt.length > 0) imports.push(impt);
 					end();
 					continue;
 				case "use":
@@ -436,7 +437,9 @@ class Parser {
 			case TDot:
 				tk = token();
 				switch(tk) {
-				case TId(id): a.push(id);
+				case TId(id): 
+					if (id == "getQualifiedClassName") return [];
+					else a.push(id);
 				case TOp(op):
 					if( op == "*" ) {
 						a.push(op);
@@ -1196,6 +1199,9 @@ class Parser {
 				unexpected(TId(Std.string(e)));
 			}
 			ETypeof(e);
+		case "getQualifiedClassName":
+			var e = parseExpr();
+			ECall(EField(EIdent("Type"), "getClassName"), [e]);
 		default:
 			null;
 		}

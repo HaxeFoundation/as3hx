@@ -165,7 +165,7 @@ class Writer
 		//TODO c.inits
 		// a list of TId(ClassName),TSemicolon pairs that is typically
 		// at the end of a class
-		writeInits(c);
+		//writeInits(c);
 		
 		lvl--;
 		writeLine(closeb());
