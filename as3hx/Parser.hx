@@ -474,7 +474,10 @@ class Parser {
 				switch(peek()) {
 				case TId(i):
 					n = id();
-					ensure(TOp("="));
+					if(!opt(TOp("="))) {
+						args.push( { name : null, val : EIdent(n) } );
+						continue;
+					}
 				case TConst(_):
 				default:
 					unexpected(peek());
