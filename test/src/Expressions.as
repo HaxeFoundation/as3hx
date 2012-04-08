@@ -1,5 +1,12 @@
 package {
 
+// Found in LayoutManager.as
+CONFIG::performanceInstrumentation
+{
+	import mx.utils.PerfUtil; 
+}
+
+// Found in PerfUtil.as
 CONFIG::performanceInstrumentation
 public class Expressions {
 
