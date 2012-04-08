@@ -780,7 +780,7 @@ class Parser {
 		var rv = {
 			meta : meta,
 			kwds : kwds,
-			name : name,
+			name : StringTools.replace(name, "$", "__DOLLAR__"),
 			kind : FVar(t, val),
 		};
 		closeDebug("parseClassVar -> " + rv);
@@ -801,7 +801,7 @@ class Parser {
 		return {
 			meta : meta,
 			kwds : kwds,
-			name : name,
+			name : StringTools.replace(name, "$", "__DOLLAR__"),
 			kind : FFun(f),
 		};
 	}
