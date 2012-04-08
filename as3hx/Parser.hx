@@ -1204,6 +1204,7 @@ class Parser {
 			case EBinop(op, e1, e2):
 				//if(op != "==" && op != "!=")
 				//	unexpected(TOp(op));
+			case EParent(e1):
 			case EIdent(id):
 			default:
 				unexpected(TId(Std.string(e)));

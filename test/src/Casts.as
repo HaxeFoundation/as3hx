@@ -15,6 +15,7 @@ package {
 			var j = typeof a;
 			if(typeof j == "string") {}
 			if(typeof j == typeof a) {}
+			var type:String = typeof(value);
 
 			if (typeof(arguments[i]) == "string" && !AuxFunctions.isInArray(arguments[i], properties)) properties.push(arguments[i]);
 		}
