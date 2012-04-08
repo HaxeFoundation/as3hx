@@ -1297,7 +1297,7 @@ class Parser {
 		case TDot:
 			tk = token();
 			var field = null;
-			switch(tk) {
+			switch(uncomment(tk)) {
 			case TId(id):
 				field = StringTools.replace(id, "$", "__DOLLAR__");
 				if( opt(TNs) )
