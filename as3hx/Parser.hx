@@ -162,6 +162,8 @@ class Parser {
 	}
 
 	function uncomment(tk) {
+		if(tk == null)
+			return null;
 		return switch(tk) {
 		case TCommented(s,b,e):
 			uncomment(e);
@@ -169,6 +171,17 @@ class Parser {
 			tk;
 		}
 	}
+
+	function uncommentExpr(e) {
+		if(e == null)
+			return null;
+		return switch(e) {
+		case ECommented(s,b,t,e2):
+			uncommentExpr(e2);
+		default:
+			e;
+		}
+	}	
 
 	/**
 	 * Takes a token that may be a comment and returns
@@ -179,6 +192,8 @@ class Parser {
 		var a = [];
 		var f : Token->Void = null;
 		f = function(t) {
+			if(t == null)
+				return;
 			switch(t) {
 			case TCommented(s,b,t2):
 				a.push(TCommented(s,b,null));
@@ -188,6 +203,24 @@ class Parser {
 			}
 		}
 		f(tk);
+		return a;
+	}
+
+	function explodeCommentExpr(e) : Array<Expr> {
+		var a = [];
+		var f : Expr->Void = null;
+		f = function(e) {
+			if(e == null)
+				return;
+			switch(e) {
+			case ECommented(s,b,t,e2):
+				a.push(ECommented(s,b,t,null));
+				f(e2);
+			default:
+				a.push(e);
+			}
+		}
+		f(e);
 		return a;
 	}
 
@@ -734,9 +767,17 @@ class Parser {
 		for(m in meta) {
 			switch(m) {
 			case ECommented(s,b,t,e):
-				if(e != null)
+				if(uncommentExpr(m) != null)
 					throw "Assert error: " + m;
-				fields.push({name:null, meta:[ECommented(s,b,false,null)], kwds:[], kind:FComment});
+				var a = explodeCommentExpr(m);
+				for(i in a) {
+					switch(i) {
+						case ECommented(s,b,t,e):
+							fields.push({name:null, meta:[ECommented(s,b,false,null)], kwds:[], kind:FComment});
+						default:
+							throw "Assert error: " + i;
+					}
+				}
 			default:
 				throw "Assert error: " + m;
 			}
