@@ -61,6 +61,11 @@ public class Expressions {
 		// +1.0e-9 fails
 		if (-1.0e-9 < c && c < +1.0e-9) doSomething();
 
+		// Found in ObjectUtil.as
+		if (a is ObjectProxy)
+			a = ObjectProxy(a).object_proxy::object;
+
+		var dynamic:Boolean = false;
 	}
 
 	// from Flex mx/styles/CSSStyleDeclaration.as, and other files for CONFIG::
