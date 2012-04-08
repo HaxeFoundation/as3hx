@@ -1,4 +1,6 @@
 package {
+
+CONFIG::performanceInstrumentation
 public class Expressions {
 
 	public static function tests() {
