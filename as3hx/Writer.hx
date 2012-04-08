@@ -496,6 +496,7 @@ class Writer
 			case "Error":		cfg.mapFlClasses ? "flash.errors.Error" : s;
 			case "XML":		cfg.mapFlClasses ? "flash.xml.XML" : s;
 			case "XMLList":		cfg.mapFlClasses ? "flash.xml.XMLList" : s;
+			case "QName":		cfg.mapFlClasses ? "flash.utils.QName" : s;
 			default: s;
 		};
 	}
@@ -903,7 +904,7 @@ class Writer
 						var field = fl[i];
 						writeIndent(field.name + " : ");
 						writeExpr(field.e);
-						writeNL(i > 0 ? "," : "");
+						writeNL(i > 0 || fl.length > 1 ? "," : "");
 					}
 					lvl--;
 					writeNL();

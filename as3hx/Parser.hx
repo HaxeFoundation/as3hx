@@ -141,6 +141,7 @@ class Parser {
 		filename = parts.pop();
 		path = parts.join("/");
 		openDebug("Parsing included file " + file + "\n");
+		if (!neko.FileSystem.exists(file)) throw "Error: file '" + file + "' does not exist, at " + oldLine;
 		var content = neko.io.File.getContent(file);
 		line = 1;
 		input = new haxe.io.StringInput(content);
@@ -441,6 +442,7 @@ class Parser {
 				switch(tk) {
 				case TId(id): 
 					if (id == "getQualifiedClassName" && cfg.mapFlClasses) return [];
+					else if (id == "getTimer" && cfg.mapFlClasses) return [];
 					else a.push(id);
 				case TOp(op):
 					if( op == "*" ) {
@@ -1209,6 +1211,12 @@ class Parser {
 				var e = parseExpr();
 				ECall(EField(EIdent("Type"), "getClassName"), [e]);
 			}
+		case "getTimer":
+			if (cfg.mapFlClasses) {
+				// TODO: this isn't quite right...
+				ECall(EField(EIdent("Math"), "round"), [EBinop("/", ECall(EField(EIdent("haxe.Timer"), "getStamp"), []), EConst(CInt("1000")))]);
+			}
+
 		default:
 			null;
 		}
