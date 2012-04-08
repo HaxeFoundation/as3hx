@@ -482,8 +482,8 @@ class Writer
 		}
 	}
 
-	function writeModifiedIdent(s:String) {
-		write (switch(s) {
+	public static inline function getModifiedIdent(cfg : Config, s : String) {
+		return switch(s) {
 			case "string": 		"String";
 			case "int":			"Int";
 			case "uint":		cfg.uintToInt ? "Int" : "UInt";
@@ -493,8 +493,15 @@ class Writer
 			case "Function":	cfg.functionToDynamic ? "Dynamic" : s;
 			case "Object":		"Dynamic";
 			case "undefined":	"null";
+			case "Error":		cfg.mapFlClasses ? "flash.errors.Error" : s;
+			case "XML":		cfg.mapFlClasses ? "flash.xml.XML" : s;
+			case "XMLList":		cfg.mapFlClasses ? "flash.xml.XMLList" : s;
 			default: s;
-		});
+		};
+	}
+
+	function writeModifiedIdent(s : String) {
+		write (getModifiedIdent(cfg, s));
 	}
 
 	/**
@@ -585,14 +592,24 @@ class Writer
 							write("try cast(");
 							writeExpr(e1);
 							write(", ");
-							writeExpr(e2);
+							switch(e2) {
+							case EIdent(s):
+								writeModifiedIdent(s);
+							default:
+								writeExpr(e2);
+							}
 							write(") catch(e:Dynamic) null");
 						}
 					case EField(_):
 						write("try cast(");
 						writeExpr(e1);
 						write(", ");
-						writeExpr(e2);
+						switch(e2) {
+						case EIdent(s):
+							writeModifiedIdent(s);
+						default:
+							writeExpr(e2);
+						}
 						write(") catch(e:Dynamic) null");
 					default:
 						throw "Unexpected " + Std.string(e2);
@@ -618,7 +635,12 @@ class Writer
 					write(")");
 				}
 				else {
-					writeExpr(e1);
+					switch(e1) {
+					case EIdent(s):
+						writeModifiedIdent(s);
+					default:
+						writeExpr(e1);
+					}
 					write(" " + op + " ");
 					switch(e2) {
 					case EIdent(s):

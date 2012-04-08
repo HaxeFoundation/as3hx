@@ -60,6 +60,8 @@ class Config {
 	public var getterSetterStyle : String;
 	/** list of paths to exclude from parsing **/
 	public var excludePaths : List<String>;
+	/** map flash internal classes **/
+	public var mapFlClasses : Bool;
 
 	/** source directory **/
 	public var src : String;
@@ -217,6 +219,7 @@ class Config {
 			case "setterMethods":		setCharField(el, "set%I");
 			case "getterSetterStyle":	setCharField(el, "haxe", ["haxe","flash","combined"]);
 			case "excludeList":			setExcludeField(el, new List());
+			case "mapFlClasses": 		setBoolField(el, false);
 			default:
 				neko.Lib.println("Unrecognized config var " + el.name);
 			}

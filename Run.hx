@@ -22,7 +22,7 @@ class Run {
 		var writer = new Writer(cfg);
 		for( f in neko.FileSystem.readDirectory(src) ) {
 			if( f.endsWith(".as") && !isExcludeFile(excludes, src + "/" + f) ) {
-				var p = new as3hx.Parser();
+				var p = new as3hx.Parser(cfg);
 				var file = src + "/" + f;
 				neko.Lib.println(file);
 				var content = neko.io.File.getContent(file);

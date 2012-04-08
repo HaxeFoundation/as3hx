@@ -78,8 +78,9 @@ class Parser {
 	var tokens : haxe.FastList<Token>;
 	var path : String;
 	var filename : String;
+	var cfg : Config;
 
-	public function new() {
+	public function new(config:Config) {
 		line = 1;
 		pc = 1;
 		identChars = "$ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
@@ -106,6 +107,7 @@ class Parser {
 			if( !opPriority.exists(op) )
 				opPriority.set(op, -1);
 		unopsSuffix = ["++", "--"];
+		this.cfg = config;
 	}
 
 	public function parseString( s : String, path : String, filename : String ) {
@@ -438,7 +440,7 @@ class Parser {
 				tk = token();
 				switch(tk) {
 				case TId(id): 
-					if (id == "getQualifiedClassName") return [];
+					if (id == "getQualifiedClassName" && cfg.mapFlClasses) return [];
 					else a.push(id);
 				case TOp(op):
 					if( op == "*" ) {
@@ -747,7 +749,10 @@ class Parser {
 			}
 			ensure(TOp(">"));
 			return TVector(t);
-		}
+		} 
+		
+		t = Writer.getModifiedIdent(cfg, t);
+
 		var a = [t];
 		var tk = token();
 		while( true ) {
@@ -1200,8 +1205,10 @@ class Parser {
 			}
 			ETypeof(e);
 		case "getQualifiedClassName":
-			var e = parseExpr();
-			ECall(EField(EIdent("Type"), "getClassName"), [e]);
+			if (cfg.mapFlClasses) {
+				var e = parseExpr();
+				ECall(EField(EIdent("Type"), "getClassName"), [e]);
+			}
 		default:
 			null;
 		}
