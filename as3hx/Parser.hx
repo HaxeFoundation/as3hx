@@ -331,18 +331,26 @@ class Parser {
 		var defs = [];
 		var meta : Array<Expr> = [];
 		var closed = false;
+		var inNamespace = false;
 
 		var pf : Bool->Void = null;
 		pf = function(included:Bool) {
 		while( true ) {
 			var tk = token();
+			trace(tk);
 			switch( tk ) {
 			case TBrClose: // }
-				if( !closed ) {
+				if( inNamespace ) {
+					inNamespace = false;
+					continue;
+				}
+				else if( !closed ) {
 					closed = true;
 					continue;
 				}
 			case TBrOpen: // {
+				if(inNamespace)
+					continue;
 				// private classes outside of first package {}
 				if( !closed ) {
 					unexpected(tk);
@@ -369,6 +377,7 @@ class Parser {
 					parseUse();
 					continue;
 				case "public", "class", "internal", "interface", "dynamic", "function":
+					inNamespace = false;
 					add(tk);
 					var d = parseDefinition(meta);
 					switch(d) {
@@ -400,6 +409,18 @@ class Parser {
 					}
 					continue;
 				default:
+					ensure(TNs);
+					var ns : String = id + "::";
+					var t = uncomment(token());
+					switch(t) {
+						case TId(id2):
+							ns += id2;
+						default:
+							unexpected(t);
+					}
+					inNamespace = true;
+					meta.push(ECommented("/* AS3HX WARNING : Discarded namespace "+ns+"*/",true,false,null));
+					continue;
 				}
 			case TSemicolon:
 				continue;
