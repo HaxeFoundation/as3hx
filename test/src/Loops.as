@@ -10,6 +10,12 @@ public class Loops {
 			if(btn.name != null) continue;
 			trace(i);
                 }
+
+		var advanceStyleClientChildren:Dictionary = new Dictionary();
+
+            	for (var styleClient:Object in advanceStyleClientChildren) {
+			var iAdvanceStyleClientChild:Sprite = styleClient as Sprite;
+            	}
         }
 }
 }
