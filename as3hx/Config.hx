@@ -50,6 +50,8 @@ class Config {
 	public var guessCasts : Bool;
 	/** write commented Expr into output **/
 	public var debugExpr : Bool;
+	/** Continue parsing despite errors? **/
+	public var errorContinue : Bool;
 	/** Write Dynamic for Function **/
 	public var functionToDynamic : Bool;
 	/** getter function template **/
@@ -178,6 +180,8 @@ class Config {
 				debugExpr = true;
 			case "-no-func2dyn", "--no-func2dyn":
 				functionToDynamic = false;
+			case "-error-continue","--error-continue":
+				errorContinue = true;
 			default:
 				break;
 			}
@@ -218,6 +222,7 @@ class Config {
 			case "getterMethods":		setCharField(el, "get%I");
 			case "setterMethods":		setCharField(el, "set%I");
 			case "getterSetterStyle":	setCharField(el, "haxe", ["haxe","flash","combined"]);
+			case "errorContinue":		setBoolField(el, false);
 			case "excludeList":			setExcludeField(el, new List());
 			case "mapFlClasses": 		setBoolField(el, false);
 			default:
@@ -285,6 +290,7 @@ class Config {
 	public static function defaultConfig() {
 		return 
 '<as3hx>
+	<errorContinue value="false" />
 	<indentChars value="\\t" />
 	<newlineChars value="\\n" />
 	<bracesOnNewline value="true" />

@@ -30,7 +30,12 @@ class Run {
 					#if macro
 					neko.io.File.stderr().writeString(file+":"+p.line+": "+errorString(e)+"\n");
 					#end
-					neko.Lib.rethrow("In " + file + "("+p.line+") : " + errorString(e));
+					if(cfg.errorContinue) {
+						errors.push("In " + file + "("+p.line+") : " + errorString(e));
+						continue;
+					}
+					else
+						neko.Lib.rethrow("In " + file + "("+p.line+") : " + errorString(e));
 				}
 				var out = dst + "/" + Writer.properCaseA(program.pack,false).join("/");
 				ensureDirectoryExists(out);
@@ -53,6 +58,7 @@ class Run {
 	static function isExcludeFile(excludes: List<String>, file: String) 
 		return Lambda.filter(excludes, function (path) return as3hx.Config.toPath(file).indexOf(path.replace(".", "/")) > -1).length > 0
 
+	static var errors : Array<String> = new Array();
 	static var warnings : Hash<Hash<Bool>> = new Hash();
 	static var cfg : as3hx.Config;
 	public static function main() {
@@ -61,6 +67,11 @@ class Run {
 		neko.Lib.println("");
 		Writer.showWarnings(warnings);
 		neko.Lib.println("");
+		if(errors.length > 0) {
+			neko.Lib.println("ERRORS: These files were not written due to source parsing errors:");
+			for(i in errors)
+				neko.Lib.println(i);
+		}
 	}
 
 	static function ensureDirectoryExists(dir : String)
