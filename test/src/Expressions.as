@@ -66,6 +66,9 @@ public class Expressions {
 			a = ObjectProxy(a).object_proxy::object;
 
 		var dynamic:Boolean = false;
+
+		// Found in StyleProtoChain.as
+		return typeHierarchy.object_proxy::getObjectProperty(cssType) != null;
 	}
 
 	// from Flex mx/styles/CSSStyleDeclaration.as, and other files for CONFIG::
