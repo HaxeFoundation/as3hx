@@ -491,7 +491,7 @@ class Parser {
 		var ns = this.id();
 		end();
 	}
-	
+
 	function parseImport() {
 		dbg("parseImport()");
 		var a = [id()];
@@ -503,8 +503,10 @@ class Parser {
 				switch(tk) {
 				case TId(id): 
 					if (id == "getQualifiedClassName" && cfg.mapFlClasses) return [];
+					else if (id == "getQualifiedSuperclassName" && cfg.mapFlClasses) return [];
 					else if (id == "getTimer" && cfg.mapFlClasses) return [];
 					else if (id == "getDefinitionByName" && cfg.mapFlClasses) return [];
+					else if (id == "flash_proxy" && cfg.mapFlClasses) return [];
 					else if (id == "Vector" && a[0] == "__AS3__" && cfg.mapFlClasses) return [];
 					else a.push(id);
 				case TOp(op):
@@ -1295,20 +1297,21 @@ class Parser {
 				var e = parseExpr();
 				ECall(EField(EIdent("Type"), "getClassName"), [e]);
 			}
-
+		case "getQualifiedSuperclassName":
+			if (cfg.mapFlClasses) {
+				var e = parseExpr();
+				ECall(EField(EIdent("Type"), "getClassName"), [ECall(EField(EIdent("Type"), "getSuperClass"), [e])]);
+			}
 		case "getDefinitionByName":
 			if (cfg.mapFlClasses) {
 				var e = parseExpr();
 				ECall(EField(EIdent("Type"), "resolveClass"), [e]);
 			}
-
 		case "getTimer":
 			if (cfg.mapFlClasses) {
 				// TODO: this isn't quite right...
 				ECall(EField(EIdent("Math"), "round"), [EBinop("/", ECall(EField(EIdent("haxe.Timer"), "getStamp"), []), EConst(CInt("1000")))]);
 			}
-
-
 		default:
 			null;
 		}

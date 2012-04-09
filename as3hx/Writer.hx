@@ -24,6 +24,8 @@
  */
 package as3hx;
 
+using Lambda;
+
 import as3hx.As3;
 import haxe.io.Output;
 
@@ -911,7 +913,7 @@ class Writer
 					writeIndent("}");
 				}
 			case ERegexp( str, opts ):
-				write('new EReg('+quote(str)+', "'+opts+'")');
+				write('new EReg('+eregQuote(str)+', "'+opts+'")');
 			case ESwitch( e, cases, def):
 				var newCases : Array<CaseDef> = new Array();
 				var writeTestVar = false;
@@ -1038,6 +1040,11 @@ class Writer
 	static function quote(s : String)
 	{
 		return '"' + StringTools.replace(s, '"', '\\"') + '"';
+	}
+
+	static function eregQuote(s : String)
+	{
+		return "'" + StringTools.replace(s, "\\", "\\\\") + "'";
 	}
 	
 	function isOverride(kwds : Array<String>)
@@ -1283,7 +1290,7 @@ class Writer
 		var p = [];
 		for(i in 0...path.length) {
 			if(hasClassName && i == path.length - 1)
-				p[i] = path[i];
+				p[i] = removeUnderscores(path[i]);
 			else
 				p[i] = path[i].toLowerCase();
 		} 
@@ -1301,4 +1308,11 @@ class Writer
 		}
 		return p;
 	}
+
+	public static function removeUnderscores(id : String) {
+		return id.split("_").map( 
+			function (v:String) return v.length > 0 ? v.charAt(0).toUpperCase() + v.substr(1) : ""
+		).array().join("");
+	}
+	
 }
