@@ -3,7 +3,7 @@
  **/
 
 package {
-	public class test extends sprite {
+	public class Test extends Sprite {
 		static public var t : String = "eorw";
 
 		static var _s : Int;
