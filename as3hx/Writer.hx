@@ -53,12 +53,37 @@ class Writer
 	var warnings : Hash<Bool>; // warning->isError
 	var loopIncrements : Array<Expr>;
 	var varCount : Int; // vars added for ESwitch or EFor initialization
+	var isInterface : Bool; // set if current class is an interface
+	var context : Hash<String>;
+	var contextStack : Array<Hash<String>>;
+	var inArrayAccess : Bool;
 
 	public function new(config:Config)
 	{
 		this.lvl = 0;
 		this.cfg = config;
 		this.varCount = 0;
+		this.context = new Hash();
+		this.contextStack = new Array();
+		this.inArrayAccess = false;
+	}
+
+	/**
+	 * Opens a new context for variable typing
+	 **/
+	function openContext() {
+		var c = new Hash();
+		for(k in context.keys())
+			c.set(k, context.get(k));
+		contextStack.push(context);
+		context = c;
+	}
+
+	/**
+	 * Closes the current variable typing copntext
+	 **/
+	function closeContext() {
+		context = contextStack.pop();
 	}
 
 	function formatComment(s:String, isBlock:Bool):String {
@@ -135,7 +160,6 @@ class Writer
 		}
 	}
 
-	var isInterface : Bool;
 	function writeClassDef(c : ClassDef)
 	{
 		writeMetaData(c.meta);
@@ -193,6 +217,7 @@ class Writer
 				};
 				p.push(property);
 				h.set(name, property);
+				context.set(name, tstring(t, true));
 			}
 			return property;
 		}
@@ -243,6 +268,7 @@ class Writer
 					writeNL("; #end");
 				else
 					writeNL(";");
+				context.set(property.name, tstring(property.ret, false));
 			}
 		}
 	}
@@ -339,6 +365,7 @@ class Writer
 				start(field.name, false);
 				write("var " + field.name);
 				writeVarType(t);
+				context.set(field.name, tstring(t, false));
 				if(val != null && isStatic(field.kwds)) {
 					write(" = ");
 					writeExpr(val);
@@ -398,6 +425,7 @@ class Writer
 			}
 			write(arg.name);
 			writeVarType(arg.t);
+			context.set(arg.name, tstring(arg.t, false));
 			if(arg.val != null) {
 				write(" = ");
 				writeExpr(arg.val);
@@ -527,6 +555,45 @@ class Writer
 		}
 	}
 
+	function getExprType(e:Expr, descend:Bool=true) : String {
+		switch(e) {
+			case EField(e2, f):
+				if(descend)
+					return getExprType(e2);
+			case EIdent(s):
+				return context.get(s);
+			case EArray(n, i):
+				if(descend)
+					return getExprType(n);
+			default:
+		}
+		return null;
+	}
+
+	/**
+	 * Returns the base variable from expressions like xml.user
+	 * EField(EIdent(xml),user)
+	 **/
+	function getBaseVar(e:Expr) : String {
+		switch(e) {
+			case EField(e2, f):
+				return getExprType(e2);
+			case EIdent(s):
+				return s;
+			default:
+		}
+		throw "Unexpected";
+	}
+
+	function typeExpr(e:Expr) : String {
+		switch(e) {
+			case EIdent(s):
+				return context.get(s);
+			default:
+		}
+		return null;
+	}
+
 	public static inline function getModifiedIdent(cfg : Config, s : String) {
 		return switch(s) {
 			case "string": 		"String";
@@ -539,8 +606,8 @@ class Writer
 			case "Object":		"Dynamic";
 			case "undefined":	"null";
 			case "Error":		cfg.mapFlClasses ? "flash.errors.Error" : s;
-			case "XML":		cfg.mapFlClasses ? "flash.xml.XML" : s;
-			case "XMLList":		cfg.mapFlClasses ? "flash.xml.XMLList" : s;
+			case "XML":			cfg.mapFlClasses ? "flash.xml.XML" : "FastXML";
+			case "XMLList":		cfg.mapFlClasses ? "flash.xml.XMLList" : "Array<FastXML>";
 			case "QName":		cfg.mapFlClasses ? "flash.utils.QName" : s;
 			default: s;
 		};
@@ -575,6 +642,7 @@ class Writer
 						writeIndent("");
 					}
 					var v = vars[i];
+					context.set(v.name, tstring(v.t, false));
 					write("var " + v.name);
 					writeVarType(v.t);
 					if (null != v.val)
@@ -589,6 +657,7 @@ class Writer
 				write(")");
 			case EBlock( e ):
 				if(!isInterface) {
+					openContext();
 					write(openb());
 					lvl++;
 					writeNL();
@@ -599,12 +668,37 @@ class Writer
 					}
 					lvl--;
 					write(closeb());
+					closeContext();
 					writeNL();
 					rv = Ret;
 				} else { writeNL(";"); rv = None; }
 			case EField( e, f ):
-				writeExpr(e);
-				write("." + f);
+				//write("/* EField ("+Std.string(e)+","+Std.string(f)+") " + Std.string(getExprType(e, false)) + "  */ ");
+				//[EField(EArray(EIdent(user3),EConst(CInt(0))),name)])
+				var old = inArrayAccess;
+				if(getExprType(e, false) == "FastXML") {
+					writeExpr(e);
+					if(inArrayAccess)
+						write(".nodes." + f);
+					else
+						write(".node." + f + ".innerData");
+				}
+				else if(getExprType(e, true) == "Array<FastXML>") {
+					writeExpr(e);
+					write(".node");
+					write("." + f + ".innerData");
+				}
+				else {
+					switch(e) {
+						case EField(e2, f2):
+							if(getExprType(e2, false) == "FastXML")
+								inArrayAccess = true;
+						default:
+					}
+					writeExpr(e);
+					write("." + f);
+				}
+				inArrayAccess = old;
 			case EBinop( op, e1, e2 ):
 				if(op == "as") {
 					switch(e2) {
@@ -813,6 +907,7 @@ class Writer
 					rv = writeExpr(e);
 				}
 			case EFor( inits, conds, incrs, e ):
+				openContext();
 				for (init in inits)
 				{
 					writeExpr(init);
@@ -841,13 +936,17 @@ class Writer
 					es.push(incr);
 				}
 				writeLoop(incrs, function() { writeExpr(EBlock(es)); });
+				closeContext();
 				rv = None;
 			case EForEach( ev, e, block ):
+				openContext();
+				var varName = null;
 				write("for(");
 				switch(ev) {
 					case EVars(vars):
 						if(vars.length == 1 && vars[0].val == null) {
 							write(vars[0].name);
+							varName = vars[0].name;
 						} else {
 							writeExpr(ev);
 						}
@@ -855,15 +954,35 @@ class Writer
 						writeExpr(ev);
 				}
 				write(" in ");
+				var old = inArrayAccess;
+				inArrayAccess = true;
 				writeExpr(e);
+				inArrayAccess = old;
+				var t = getExprType(e);
+				if((t == "FastXML" || t == "Array<FastXML>" )&& varName != null) {
+					context.set(varName, "FastXML");
+				} else {
+					write("/* AS3HX WARNING could not determine type for var: " + varName + " exp: " + e + " type: " +getExprType(e)+ "*/");
+				}
 				write(")");
+				switch(block) {
+					case EBlock(_):
+					default:
+						lvl++;
+						writeNL();
+						writeIndent();
+						lvl--;
+				}
 				rv = writeExpr(block);
+				closeContext();
 			case EForIn( ev, e, block ):
+				openContext();
 				write("for(");
 				switch(ev) {
 					case EVars(vars):
 						if(vars.length == 1 && vars[0].val == null) {
 							write(vars[0].name);
+							context.set(vars[0].name, "String");
 						} else {
 							writeExpr(ev);
 						}
@@ -874,6 +993,7 @@ class Writer
 				writeExpr(e);
 				write("))");
 				rv = writeExpr(block);
+				closeContext();
 			case EBreak( label ):
 				write("break");
 			case EContinue:
@@ -894,10 +1014,14 @@ class Writer
 					writeExpr(e);
 				}
 			case EArray( e, index ):
+				var old = inArrayAccess;
+				inArrayAccess = true;
 				writeExpr(e);
+				inArrayAccess = old;
 				write("[");
 				writeExpr(index); // TODO, not integers
 				write("]");
+				
 			case EArrayDecl( e ):
 				write("[");
 				for (i in 0...e.length)
@@ -1021,14 +1145,22 @@ class Writer
 				// t is TPath([inst1,inst2]), which should have been handled in ECall 
 				write(tstring(t));
 				addWarning("Vector.<T>", true);
-			case EE4X( e1, e2 ):
-				// e1.(@e2)
+			case EE4XAttr( e1, e2 ):
+				// e1.@e2
 				writeExpr(e1);
-				write(".@");
+				trace(e1);
+				write(".att.");
 				writeExpr(e2);
 				addWarning("EE4X");
+			case EE4XFilter( e1, e2 ):
+				// e1.(weight > 300) innerData search
+				writeE4XFilterExpr(e1, e2, false);
+			case EE4XFilterAttr( e1, e2 ):
+				// e1.(@user_id == 3) attribute search
+				writeE4XFilterExpr(e1, e2, true);
 			case EXML( s ):
-				write("new flash.xml.XML(" + quote(s) + ")");
+				//write("new flash.xml.XML(" + quote(s) + ")");
+				write("FastXML.parse(" + quote(s) + ")");
 				addWarning("EXML");
 			case ELabel( name ):
 				addWarning("Unhandled ELabel("+name+")", true);
@@ -1072,6 +1204,69 @@ class Writer
 					write(")");
 				}
 				addWarning("ETypeof");
+		}
+		return rv;
+	}
+
+	// as3
+	// xml.user.(@user_id == 3);
+	// to haxe
+	//XMLFast.filterNodes(xml.nodes.user,
+	//	function(x) {
+	//		if(x.att.user_id == 3)
+	//			return true;
+	//		return false;
+	//	});
+	// e1.(@user_id == 3) attribute search
+	function writeE4XFilterExpr(e1, e2, isAttribute : Bool) {
+		var fxmlfield : String = (isAttribute ? "att" : "node");
+		write("FastXML.filterNodes(");
+		var n = getBaseVar(e1);    // make sure it's set to FastXML in the
+		context.set(n, "FastXML"); // current context
+		var old = inArrayAccess;
+		inArrayAccess = true;
+		writeExpr(e1); // ensure 'nodes' vs. 'node'
+		inArrayAccess = old;
+		write(", function(x) {\n");
+		lvl++;
+		writeIndent("if(");// + wrapper + "x.att.");
+		writeExpr(rebuildE4XExpr(e2, fxmlfield));
+		writeNL(")");
+		lvl++;
+		writeLine("return true;");
+		lvl--;
+		writeLine("return false;\n");
+		lvl--;
+		writeIndent("})");
+	}
+
+	function rebuildE4XExpr(e:Expr,field:String) : Expr {
+		var rv : Expr = null;
+		/* EBinop(==,EIdent(user_id),EConst(CInt(3))) */
+		switch(e) {
+		case EBinop(op, e2, e3): // e2 should be EIdent()
+			var id : String = "x." + field + ".";
+			switch(e2) {
+				case EIdent(i):
+					id += i;
+				default:
+					throw "Unexpected " + e2;
+			}
+			if(field == "node")
+				id += ".innerData";
+			var r1 = EIdent(id);
+			var r2 : Expr = null;
+			switch(e3) {
+			case EConst(c):
+				switch(c) {
+					case CInt(_), CFloat(_):
+						rv = EBinop(op,ECall(EField(EIdent("Std"),"parseFloat"), [r1]),e3);
+					default:
+				}
+			default:
+			}
+		default:
+			throw "Unexpected " + e;
 		}
 		return rv;
 	}
@@ -1127,6 +1322,8 @@ class Writer
 	
 	function tstring(t : T, isNativeGetSet:Bool=false)
 	{
+		if(t == null)
+			return null;
 		switch(t)
 		{
 			case TStar:

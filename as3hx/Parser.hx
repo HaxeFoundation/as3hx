@@ -1335,7 +1335,7 @@ class Parser {
 	
 	function parseExprNext( e1 : Expr ) {
 		var tk = token();
-		dbgln("parseExprNext("+tk+")");
+		dbgln("parseExprNext("+e1+") ("+tk+")");
 		switch( tk ) {
 		case TOp(op):
 			for( x in unopsSuffix )
@@ -1372,6 +1372,7 @@ class Parser {
 			return e1;
 		case TDot:
 			tk = token();
+			dbgln(Std.string(uncomment(tk)));
 			var field = null;
 			switch(uncomment(tk)) {
 			case TId(id):
@@ -1384,16 +1385,22 @@ class Parser {
 				ensure(TOp(">"));
 				return parseExprNext(EVector(t));
 			case TPOpen:
-				ensure(TAt);
+				var isAttr : Bool = opt(TAt);
 				var e2 = parseExpr();
 				ensure(TPClose);
-				return parseExprNext(EE4X(e1, e2));
+				if(isAttr)
+					return parseExprNext(EE4XFilterAttr(e1, e2));
+				return parseExprNext(EE4XFilter(e1, e2));
 			case TAt:
 				var id = id();
-				return parseExprNext(EE4X(e1, EIdent(id)));
+				return parseExprNext(EE4XAttr(e1, EIdent(id)));
+			/*
+			 * The only example of this I have seen so far is
+			 * a normal field access like g..beginFill()
 			case TDot:
 				var id = "."+id();
 				return parseExprNext(EE4X(e1, EIdent(id)));
+			*/
 			default: unexpected(tk);
 			}
 			return parseExprNext(EField(e1,field));
@@ -1473,6 +1480,7 @@ class Parser {
 			var prev = 0;
 			while(true) {
 				var c = input.readByte();
+				if(c == "\n".code) line++;
 				buf.addChar(c);
 				if( c == ">".code ) break;
 				prev = c;
@@ -1481,8 +1489,10 @@ class Parser {
 				return buf.toString();
 			while(true) {
 				var c = input.readByte();
+				if(c == "\n".code) line++;
 				if( c == "<".code ) {
 					c = input.readByte();
+					if(c == "\n".code) line++;
 					if( c == "/".code ) {
 						buf.add("</");
 						break;
@@ -1495,6 +1505,7 @@ class Parser {
 			}
 			while(true) {
 				var c = input.readByte();
+				if(c == "\n".code) line++;
 				buf.addChar(c);
 				if( c == ">".code ) break;
 			}
@@ -1514,6 +1525,7 @@ class Parser {
 		while( true ) {
 			try {
 				c = s.readByte();
+				if(c == "\n".code) line++;
 			} catch( e : Dynamic ) {
 				line = old;
 				throw EUnterminatedString;
