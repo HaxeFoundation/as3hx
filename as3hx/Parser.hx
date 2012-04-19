@@ -1858,7 +1858,7 @@ class Parser {
 	static var lvl : Int = 0;
 
 	function printDebug(s) {
-		neko.io.File.stderr().write(haxe.io.Bytes.ofString(s));
+		Sys.stderr().write(haxe.io.Bytes.ofString(s));
 	}
 	
 	function openDebug(s:String,newline:Bool=false,?p:haxe.PosInfos) {
