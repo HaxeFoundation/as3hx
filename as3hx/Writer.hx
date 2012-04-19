@@ -833,6 +833,11 @@ class Writer
 							writeExpr(params[0]);
 							write(")");
 							handled = true;
+						case "isFinite":
+							write("Math.isFinite(");
+							writeExpr(params[0]);
+							write(")");
+							handled = true;
 						}
 					case EVector(t):
 						handled = true;
