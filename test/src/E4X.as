@@ -39,6 +39,7 @@ public class E4X {
 		e.iterate2();
 		e.findUser();
 		e.filter();
+		e.setAttribute();
 	}
 
 	public function getFirstUser() {
@@ -73,6 +74,29 @@ public class E4X {
 		for each (var iUser:XML in bigUsers)
 			trace("Big user is " + iUser.name + " from group " + iUser.@group_name);
 	}
+	
+	public function setAttribute() {
+		var userXml:XML = xml.user[0];
+		userXml.@group_name = "enemies";
+		//userXml.@["group_name"] = "enemies";
+		trace(userXml.@group_name.toString());
+	}
+	
+	/*
+	public function findByFirstLetter() {
+		var workList:XMLList = xml.user.(@group_name.charAt(0) == "w");
+		trace(workList);
+		var nameList:XMLList = xml.user.(name.charAt(0) == "J");
+		trace(nameList);
+	}*/
+
+	/*
+	public function makeAFriend():void{
+		var james:XML = xml..user.(@user_id == "5" && @group_name =="work")[0];
+		james.@group_name = "friends";
+		trace(james.@group_name);
+	}
+	*/
 
 /*
 	public function filterWithDescending() {
@@ -80,11 +104,7 @@ public class E4X {
 		var bigUsers:XMLList = xml.descendants().user.(weight > 300);
 	}
 
-	public function setAttribute() {
-		var userXml:XML = xml.user[0];
-		userXml.@["group_name"] = "enemies";
-		trace(userXml.@group_name.toString());
-	}
+
 */
 
 }

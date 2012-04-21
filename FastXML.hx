@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2007, The haXe Project Contributors
+ * Copyright (c) 2012, The haXe Project Contributors
  * All rights reserved.
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -91,7 +91,7 @@ private class HasNodeAccess implements Dynamic<Bool> {
 
 }
 
-private class NodeListAccess implements Dynamic<Array<FastXML>> {
+private class NodeListAccess implements Dynamic<FastXMLList> {
 
 	var __x : Xml;
 
@@ -99,11 +99,11 @@ private class NodeListAccess implements Dynamic<Array<FastXML>> {
 		__x = x;
 	}
 
-	public function resolve( name : String ) : Array<FastXML> {
+	public function resolve( name : String ) : FastXMLList {
 		var l = new Array();
 		for( x in __x.elementsNamed(name) ) 
 			l.push(new FastXML(x));
-		return l;
+		return new FastXMLList(l);
 	}
 
 }
@@ -132,11 +132,27 @@ class FastXML {
 		hasNode = new HasNodeAccess(x);
 	}
 
-	function appendChild( a : Dynamic ) {
+	public function appendChild( a : Dynamic ) {
 		if( Std.is(a, Xml) )
 			x.addChild(a);
 		else
 			x.addChild(Xml.parse(a));
+	}
+
+	public function descendants(name:String) :FastXMLList {
+		throw "Incomplete";
+		return null;
+	}
+
+	/**
+	 * Return the specified attribute, or null if it does not exist
+	 * @throws String if the nodeType is an XML Document
+	 **/
+	public function getAttribute(name:String) : String {
+		if( x.nodeType == Xml.Document )
+			throw "Cannot access document attribute "+name;
+		var v = x.get(name);
+		return v;
 	}
 
 	function getName() {
@@ -183,6 +199,16 @@ class FastXML {
 		};
 	}
 
+	public function length() : Int {
+		return 1;
+	}
+
+	public function setAttribute(name:String, value:String) : Void {
+		if( x.nodeType == Xml.Document )
+			throw "Cannot access document attribute "+name;
+		x.set(name,value);
+	}
+	
 	public function toString() : String {
 		return x.toString();
 	}
@@ -192,11 +218,11 @@ class FastXML {
 		return new FastXML(x.firstChild());
 	}
 
-	public static function filterNodes(a : Array<FastXML>, f : FastXML -> Bool) : Array<FastXML> {
+	public static function filterNodes(a : FastXMLList, f : FastXML -> Bool) : FastXMLList {
 		var rv = new Array();
 		for(i in a)
 			if(f(i))
 				rv.push(i);
-		return rv;
+		return new FastXMLList(rv);
 	}
 }

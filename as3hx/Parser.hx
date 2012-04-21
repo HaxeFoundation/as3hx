@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Nicolas Cannasse
+ * Copyright (c) 2008-2011, Nicolas Cannasse, Russell Weir, Niel Drummond
  * All rights reserved.
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -1394,13 +1394,9 @@ class Parser {
 			case TAt:
 				var id = id();
 				return parseExprNext(EE4XAttr(e1, EIdent(id)));
-			/*
-			 * The only example of this I have seen so far is
-			 * a normal field access like g..beginFill()
 			case TDot:
-				var id = "."+id();
-				return parseExprNext(EE4X(e1, EIdent(id)));
-			*/
+				var id = id();
+				return parseExprNext(EE4XDescend(e1, EIdent(id)));
 			default: unexpected(tk);
 			}
 			return parseExprNext(EField(e1,field));

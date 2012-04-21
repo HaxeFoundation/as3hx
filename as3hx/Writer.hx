@@ -57,6 +57,8 @@ class Writer
 	var context : Hash<String>;
 	var contextStack : Array<Hash<String>>;
 	var inArrayAccess : Bool;
+	var inLvalAssign : Bool; // current expr is lvalue in assignment (expr = valOfSomeSort)
+	var rvalue : Expr;
 
 	public function new(config:Config)
 	{
@@ -66,6 +68,7 @@ class Writer
 		this.context = new Hash();
 		this.contextStack = new Array();
 		this.inArrayAccess = false;
+		this.inLvalAssign = false;
 	}
 
 	/**
@@ -607,7 +610,7 @@ class Writer
 			case "undefined":	"null";
 			case "Error":		cfg.mapFlClasses ? "flash.errors.Error" : s;
 			case "XML":			cfg.mapFlClasses ? "flash.xml.XML" : "FastXML";
-			case "XMLList":		cfg.mapFlClasses ? "flash.xml.XMLList" : "Array<FastXML>";
+			case "XMLList":		cfg.mapFlClasses ? "flash.xml.XMLList" : "FastXMLList";
 			case "QName":		cfg.mapFlClasses ? "flash.utils.QName" : s;
 			default: s;
 		};
@@ -683,7 +686,7 @@ class Writer
 					else
 						write(".node." + f + ".innerData");
 				}
-				else if(getExprType(e, true) == "Array<FastXML>") {
+				else if(getExprType(e, true) == "FastXMLList") {
 					writeExpr(e);
 					write(".node");
 					write("." + f + ".innerData");
@@ -774,19 +777,26 @@ class Writer
 					writeExpr(e1);
 					write(")");
 				}
-				else {
+				else { // op e1 e2
+					var oldInLVA = inLvalAssign;
+					rvalue = e2;
+					if(op == "=")
+						inLvalAssign = true;
 					switch(e1) {
 					case EIdent(s):
 						writeModifiedIdent(s);
 					default:
 						writeExpr(e1);
 					}
-					write(" " + op + " ");
-					switch(e2) {
-					case EIdent(s):
-						writeModifiedIdent(s);
-					default:
-						writeExpr(e2);
+					inLvalAssign = oldInLVA;
+					if(rvalue != null) {
+						write(" " + op + " ");
+						switch(e2) {
+						case EIdent(s):
+							writeModifiedIdent(s);
+						default:
+							writeExpr(e2);
+						}
 					}
 				}
 			case EUnop( op, prefix, e ):
@@ -964,8 +974,8 @@ class Writer
 				writeExpr(e);
 				inArrayAccess = old;
 				var t = getExprType(e);
-				if((t == "FastXML" || t == "Array<FastXML>" )&& varName != null) {
-					context.set(varName, "FastXML");
+				if((t == "FastXML" || t == "FastXMLList" )&& varName != null) {
+					context.set(varName, t);
 				} else {
 					write("/* AS3HX WARNING could not determine type for var: " + varName + " exp: " + e + " type: " +getExprType(e)+ "*/");
 				}
@@ -1019,14 +1029,22 @@ class Writer
 					writeExpr(e);
 				}
 			case EArray( e, index ):
+				//write("/* EArray ("+Std.string(e)+","+Std.string(index)+") " + Std.string(getExprType(e, true)) + "  */ ");
 				var old = inArrayAccess;
 				inArrayAccess = true;
 				writeExpr(e);
 				inArrayAccess = old;
-				write("[");
-				writeExpr(index); // TODO, not integers
-				write("]");
-				
+				// this test can be generalized to any array[]->get() translation
+				var etype = getExprType(e, true);
+				if(etype == "FastXML" || etype == "FastXMLList") {
+					write(".get(");
+					writeExpr(index);
+					write(")");
+				} else {
+					write("[");
+					writeExpr(index); // TODO, not integers
+					write("]");
+				}
 			case EArrayDecl( e ):
 				write("[");
 				for (i in 0...e.length)
@@ -1153,9 +1171,18 @@ class Writer
 			case EE4XAttr( e1, e2 ):
 				// e1.@e2
 				writeExpr(e1);
-				trace(e1);
-				write(".att.");
-				writeExpr(e2);
+				if(inLvalAssign) {
+					write(".setAttribute(\"");
+					writeExpr(e2);
+					write("\", ");
+					writeExpr(rvalue);
+					write(")");
+					rvalue = null; // so case EBinop will not write rvalue
+				}
+				else {
+					write(".att.");
+					writeExpr(e2);
+				}
 				addWarning("EE4X");
 			case EE4XFilter( e1, e2 ):
 				// e1.(weight > 300) innerData search
@@ -1163,6 +1190,10 @@ class Writer
 			case EE4XFilterAttr( e1, e2 ):
 				// e1.(@user_id == 3) attribute search
 				writeE4XFilterExpr(e1, e2, true);
+			case EE4XDescend( e1, e2 ):
+				writeExpr(e1);
+				write(".descendants().");
+				writeExpr(e2);
 			case EXML( s ):
 				//write("new flash.xml.XML(" + quote(s) + ")");
 				write("FastXML.parse(" + quote(s) + ")");
@@ -1232,7 +1263,7 @@ class Writer
 		inArrayAccess = true;
 		writeExpr(e1); // ensure 'nodes' vs. 'node'
 		inArrayAccess = old;
-		write(", function(x) {\n");
+		write(", function(x:FastXML) {\n");
 		lvl++;
 		writeIndent("if(");// + wrapper + "x.att.");
 		writeExpr(rebuildE4XExpr(e2, fxmlfield));

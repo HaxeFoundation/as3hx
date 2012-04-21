@@ -61,7 +61,8 @@ enum Expr {
 	ERegexp( str : String, opts : String );
 	ESwitch( e : Expr, cases : Array<{ val : Expr, el : Array<Expr> }>, def : Null<Array<Expr>> );
 	EVector( t : T ); // Vector.<T> call
-	EE4XAttr( e1 : Expr, e2 : Expr ); // e1.@e2
+	EE4XDescend( e1 : Expr, e2 : Expr ); // e1..childNode
+	EE4XAttr( e1 : Expr, e2 : Expr ); // e1.@e2, e1.@["foo"], e1["@foo"]
 	EE4XFilter( e1 : Expr, e2 : Expr ); // e1.(weight > 300) innerData search
 	EE4XFilterAttr( e1 : Expr, e2 : Expr ); // e1.(@user_id == 3) attribute search
 	EXML( s : String );
