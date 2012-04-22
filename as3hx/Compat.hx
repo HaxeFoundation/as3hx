@@ -40,7 +40,7 @@ class Compat {
 	 *
 	 * TODO: TUnknown returns "undefined" on top of this. Not positive on this
 	 */
-	function typeof(v:Dynamic) : String {
+	public static function typeof(v:Dynamic) : String {
 		return
 		switch(Type.typeof(v)) {
 		case TUnknown: "undefined";
