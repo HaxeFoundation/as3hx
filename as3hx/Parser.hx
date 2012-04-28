@@ -502,13 +502,18 @@ class Parser {
 				tk = token();
 				switch(tk) {
 				case TId(id): 
-					if (id == "getQualifiedClassName" && cfg.mapFlClasses) return [];
-					else if (id == "getQualifiedSuperclassName" && cfg.mapFlClasses) return [];
-					else if (id == "getTimer" && cfg.mapFlClasses) return [];
-					else if (id == "getDefinitionByName" && cfg.mapFlClasses) return [];
-					else if (id == "flash_proxy" && cfg.mapFlClasses) return [];
-					else if (id == "Vector" && a[0] == "__AS3__" && cfg.mapFlClasses) return [];
-					else a.push(id);
+					if (id == "getQualifiedClassName") return [];
+					if (id == "getQualifiedSuperclassName") return [];
+					if (id == "getTimer") return [];
+					if (id == "getDefinitionByName") return [];
+					// TODO: this is flash.utils.Proxy need to create a compat class
+					// http://blog.int3ractive.com/2010/05/using-flash-proxy-class.html
+					// Will put this into the nme namespace for now, and merge it
+					// to nme if it works
+					if (id == "flash_proxy") return ["nme","utils","Proxy"];
+					// import __AS3__.vec.Vector;
+					if (id == "Vector" && a[0] == "__AS3__") return [];
+					a.push(id);
 				case TOp(op):
 					if( op == "*" ) {
 						a.push(op);
@@ -837,8 +842,6 @@ class Parser {
 			ensure(TOp(">"));
 			return TVector(t);
 		} 
-		
-		t = Writer.getModifiedIdent(cfg, t);
 
 		var a = [t];
 		var tk = token();
@@ -1162,7 +1165,7 @@ class Parser {
 				if( opt(TColon) )
 					t = parseType();
 				if( opt(TOp("=")) )
-					val = parseExpr();
+					val = ETypedExpr(parseExpr(), t);
 				vars.push( { name : name, t : t, val : val } );
 				if( !opt(TComma) )
 					break;
@@ -1293,25 +1296,23 @@ class Parser {
 			}
 			ETypeof(e);
 		case "getQualifiedClassName":
-			if (cfg.mapFlClasses) {
-				var e = parseExpr();
-				ECall(EField(EIdent("Type"), "getClassName"), [e]);
-			}
+			ensure(TPOpen);
+			var e = parseExpr();
+			ensure(TPClose);
+			ECall(EField(EIdent("Type"), "getClassName"), [e]);
 		case "getQualifiedSuperclassName":
-			if (cfg.mapFlClasses) {
-				var e = parseExpr();
-				ECall(EField(EIdent("Type"), "getClassName"), [ECall(EField(EIdent("Type"), "getSuperClass"), [e])]);
-			}
+			ensure(TPOpen);
+			var e = parseExpr();
+			ensure(TPClose);
+			ECall(EField(EIdent("Type"), "getClassName"), [ECall(EField(EIdent("Type"), "getSuperClass"), [e])]);
 		case "getDefinitionByName":
-			if (cfg.mapFlClasses) {
-				var e = parseExpr();
-				ECall(EField(EIdent("Type"), "resolveClass"), [e]);
-			}
+			ensure(TPOpen);
+			var e = parseExpr();
+			ensure(TPClose);
+			ECall(EField(EIdent("Type"), "resolveClass"), [e]);
 		case "getTimer":
-			if (cfg.mapFlClasses) {
-				// TODO: this isn't quite right...
-				ECall(EField(EIdent("Math"), "round"), [EBinop("/", ECall(EField(EIdent("haxe.Timer"), "getStamp"), []), EConst(CInt("1000")))]);
-			}
+			// TODO: this isn't quite right...
+			ECall(EField(EIdent("Math"), "round"), [EBinop("/", ECall(EField(EIdent("haxe.Timer"), "getStamp"), []), EConst(CInt("1000")))]);
 		default:
 			null;
 		}
@@ -1385,15 +1386,29 @@ class Parser {
 				ensure(TOp(">"));
 				return parseExprNext(EVector(t));
 			case TPOpen:
-				var isAttr : Bool = opt(TAt);
-				var e2 = parseExpr();
+				var e2 = parseE4XFilter();
 				ensure(TPClose);
-				if(isAttr)
-					return parseExprNext(EE4XFilterAttr(e1, e2));
-				return parseExprNext(EE4XFilter(e1, e2));
+				return EE4XFilter(e1, e2);
 			case TAt:
-				var id = id();
-				return parseExprNext(EE4XAttr(e1, EIdent(id)));
+				var i : String = null;
+				if(opt(TBkOpen)) {
+					tk = token();
+					switch(uncomment(tk)) {
+						case TConst(c):
+							switch(c) {
+								case CString(s):
+									i = s;
+								default:
+									unexpected(tk);
+							}
+						default:
+							unexpected(tk);
+					}
+					ensure(TBkClose);
+				}
+				else
+					i = id();
+				return parseExprNext(EE4XAttr(e1, EIdent(i)));
 			case TDot:
 				var id = id();
 				return parseExprNext(EE4XDescend(e1, EIdent(id)));
@@ -1465,6 +1480,85 @@ class Parser {
 		return args;
 	}
 
+	function parseE4XFilter() : Expr {
+		var tk = token();
+		dbgln("parseE4XFilter("+tk+")");
+		switch(tk) {
+			case TAt:
+				return parseE4XFilterNext(EIdent("@" + id()));
+			case TId(id):
+				var e = parseStructure(id);
+				if( e != null )
+					return unexpected(tk);
+				return parseE4XFilterNext(EIdent(id));
+			case TConst(c):
+				return parseE4XFilterNext(EConst(c));
+			case TCommented(s,b,t):
+				add(t);
+				return ECommented(s,b,false,parseE4XFilter());
+			default:
+				return unexpected(tk);
+		}
+	}
+
+	function parseE4XFilterNext( e1 : Expr ) : Expr {
+		var tk = token();
+		dbgln("parseE4XFilterNext("+e1+") ("+tk+")");
+		//parseE4XFilterNext(EIdent(groups)) (TBkOpen) [Parser 1506]
+		switch( tk ) {
+			case TOp(op):
+				for( x in unopsSuffix )
+					if( x == op )
+						unexpected(tk);
+				return makeBinop(op,e1,parseE4XFilter());
+			case TPClose:
+				dbgln("parseE4XFilterNext stopped at " + tk);
+				add(tk);
+				return e1;
+			case TDot:
+				tk = token();
+				var field = null;
+				switch(uncomment(tk)) {
+					case TId(id):
+						field = StringTools.replace(id, "$", "__DOLLAR__");
+						if( opt(TNs) )
+							field = field + "::" + this.id();
+					case TAt:
+						var i : String = null;
+						if(opt(TBkOpen)) {
+							tk = token();
+							switch(uncomment(tk)) {
+								case TConst(c):
+									switch(c) {
+										case CString(s):
+											i = s;
+										default:
+											unexpected(tk);
+									}
+								default:
+									unexpected(tk);
+							}
+							ensure(TBkClose);
+						}
+						else
+							i = id();
+						return parseE4XFilterNext(EE4XAttr(e1, EIdent(i)));
+					default:
+						unexpected(tk);
+				}
+				return parseE4XFilterNext(EField(e1,field));
+			case TPOpen:
+				return parseE4XFilterNext(ECall(e1,parseExprList(TPClose)));
+			case TBkOpen:
+				var e2 = parseExpr();
+				tk = token();
+				if( tk != TBkClose ) unexpected(tk);
+				return parseE4XFilterNext(EArray(e1, e2));
+			default:
+				return unexpected( tk );
+		}
+	}
+	
 	function readXML() {
 		dbgln("readXML()");
 		var buf = new StringBuf();

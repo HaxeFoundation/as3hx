@@ -139,9 +139,17 @@ class FastXML {
 			x.addChild(Xml.parse(a));
 	}
 
-	public function descendants(name:String) :FastXMLList {
-		throw "Incomplete";
-		return null;
+	public function descendants(name:String = "*") : FastXMLList {
+		var a = new Array<FastXML>();
+		for(e in x.elements()) {
+			if(e.nodeName == name || name == "*") {
+				a.push(new FastXML(e));
+			} else {
+				var fx = new FastXML(e);
+				a = a.concat(fx.descendants(name).getArray());
+			}
+		}
+		return new FastXMLList(a);
 	}
 
 	/**

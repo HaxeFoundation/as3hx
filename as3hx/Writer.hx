@@ -57,6 +57,7 @@ class Writer
 	var context : Hash<String>;
 	var contextStack : Array<Hash<String>>;
 	var inArrayAccess : Bool;
+	var inE4XFilter : Bool;
 	var inLvalAssign : Bool; // current expr is lvalue in assignment (expr = valOfSomeSort)
 	var rvalue : Expr;
 
@@ -68,6 +69,7 @@ class Writer
 		this.context = new Hash();
 		this.contextStack = new Array();
 		this.inArrayAccess = false;
+		this.inE4XFilter = false;
 		this.inLvalAssign = false;
 	}
 
@@ -558,16 +560,42 @@ class Writer
 		}
 	}
 
-	function getExprType(e:Expr, descend:Bool=true) : String {
+	function getExprType(e:Expr) : String {
+		/*EField(ECall(EField(EIdent(xml),descendants),[]),user)*/
 		switch(e) {
+			case ETypedExpr(e2, t):
+				return tstring(t, false);
 			case EField(e2, f):
-				if(descend)
-					return getExprType(e2);
+				var t2 = getExprType(e2);
+				//write("/* e2 " + e2 + "."+f+" type: "+t2+" */");
+				switch(t2) {
+					case "FastXML":
+						switch(f) {
+							case "descendants", "nodes":
+								return "FastXMLList";
+							case "node":
+								return "FastXML";
+							case "length":
+								return "Int";
+						}
+						return "FastXMLList";
+					case "FastXMLList":
+						switch(f) {
+							case "length": return "Int";
+						}
+					default:
+				}
 			case EIdent(s):
+				s = getModifiedIdent(s);
+				//if(context.get(s) == null)
+				//	write("/* AS3HX WARNING var " + s + " is not in scope */");
 				return context.get(s);
+			case EVars(vars):
+				if(vars.length != 1)
+					return null;
+				return tstring(vars[0].t, false);
 			case EArray(n, i):
-				if(descend)
-					return getExprType(n);
+				return getExprType(n);
 			default:
 		}
 		return null;
@@ -575,7 +603,7 @@ class Writer
 
 	/**
 	 * Returns the base variable from expressions like xml.user
-	 * EField(EIdent(xml),user)
+	 * EField(EIdent(xml),user) or EE4XDescend(EIdent(xml), EIdent(user))
 	 **/
 	function getBaseVar(e:Expr) : String {
 		switch(e) {
@@ -583,9 +611,11 @@ class Writer
 				return getExprType(e2);
 			case EIdent(s):
 				return s;
+			case EE4XDescend(e2, e3):
+				return getBaseVar(e2);
 			default:
 		}
-		throw "Unexpected";
+		throw "Unexpected " + e;
 	}
 
 	function typeExpr(e:Expr) : String {
@@ -597,27 +627,27 @@ class Writer
 		return null;
 	}
 
-	public static inline function getModifiedIdent(cfg : Config, s : String) {
+	function getModifiedIdent(s : String) {
 		return switch(s) {
-			case "string": 		"String";
-			case "int":			"Int";
-			case "uint":		cfg.uintToInt ? "Int" : "UInt";
-			case "number":		"Float";
-			case "array":		"Array";
-			case "boolean","Boolean":"Bool";
-			case "Function":	cfg.functionToDynamic ? "Dynamic" : s;
-			case "Object":		"Dynamic";
-			case "undefined":	"null";
-			case "Error":		cfg.mapFlClasses ? "flash.errors.Error" : s;
-			case "XML":			cfg.mapFlClasses ? "flash.xml.XML" : "FastXML";
-			case "XMLList":		cfg.mapFlClasses ? "flash.xml.XMLList" : "FastXMLList";
-			case "QName":		cfg.mapFlClasses ? "flash.utils.QName" : s;
+			case "string": 				"String";
+			case "int":					"Int";
+			case "uint":				cfg.uintToInt ? "Int" : "UInt";
+			case "number","Number":		"Float";
+			case "array":				"Array";
+			case "boolean","Boolean":	"Bool";
+			case "Function":			cfg.functionToDynamic ? "Dynamic" : s;
+			case "Object":				"Dynamic";
+			case "undefined":			"null";
+			//case "Error":		cfg.mapFlClasses ? "flash.errors.Error" : s;
+			case "XML":					"FastXML";
+			case "XMLList":				"FastXMLList";
+			//case "QName":		cfg.mapFlClasses ? "flash.utils.QName" : s;
 			default: s;
 		};
 	}
 
 	function writeModifiedIdent(s : String) {
-		write (getModifiedIdent(cfg, s));
+		write(getModifiedIdent(s));
 	}
 
 	/**
@@ -633,6 +663,8 @@ class Writer
 		var rv = Semi;
 		switch(expr)
 		{
+			case ETypedExpr( e, t ):
+				rv = writeExpr(e);
 			case EConst( c ):
 				write(getConst(c));
 			case EIdent( v ):
@@ -676,17 +708,22 @@ class Writer
 					rv = Ret;
 				} else { writeNL(";"); rv = None; }
 			case EField( e, f ):
-				//write("/* EField ("+Std.string(e)+","+Std.string(f)+") " + Std.string(getExprType(e, false)) + "  */ ");
-				//[EField(EArray(EIdent(user3),EConst(CInt(0))),name)])
+				var n = checkE4XDescendants(expr);
+				if(n != null)
+					return writeExpr(n);
+				var t1 = getExprType(expr);
+				var t2 = getExprType(e);
+				//write("/* EField ("+Std.string(e)+","+Std.string(f)+") " +t1 + ":"+t2+ "  */\n");
 				var old = inArrayAccess;
-				if(getExprType(e, false) == "FastXML") {
+				if(t1 == "FastXMLList" || (t1 == null && t2 == "FastXML")) {
+					//write("/* t1 : " + t1 + " */");
 					writeExpr(e);
 					if(inArrayAccess)
 						write(".nodes." + f);
 					else
 						write(".node." + f + ".innerData");
 				}
-				else if(getExprType(e, true) == "FastXMLList") {
+				else if(t1 == "FastXML" || (t1 == null && t2 == "FastXMLList")) {
 					writeExpr(e);
 					write(".node");
 					write("." + f + ".innerData");
@@ -694,7 +731,8 @@ class Writer
 				else {
 					switch(e) {
 						case EField(e2, f2):
-							if(getExprType(e2, false) == "FastXML")
+							//write("/* -- " +e2+ " " +getExprType(e2)+" */");
+							if(getExprType(e2) == "FastXML")
 								inArrayAccess = true;
 						default:
 					}
@@ -809,6 +847,7 @@ class Writer
 					write(op);
 				}
 			case ECall( e, params ):
+				//write("/*ECall " + e + "(" + params + ")*/\n");
 				var handled = false;
 				if(cfg.guessCasts && params.length == 1) {
 					switch(e) {
@@ -965,7 +1004,11 @@ class Writer
 						} else {
 							writeExpr(ev);
 						}
+					case EIdent(i):
+						varName = i;
+						writeExpr(ev);
 					default:
+						write("/* AS3HX ERROR unhandled " + ev + " */");
 						writeExpr(ev);
 				}
 				write(" in ");
@@ -974,7 +1017,9 @@ class Writer
 				writeExpr(e);
 				inArrayAccess = old;
 				var t = getExprType(e);
-				if((t == "FastXML" || t == "FastXMLList" )&& varName != null) {
+				if(varName == null) {
+					write("/* AS3HX ERROR varName is null in expression " + e);
+				} else if(t == "FastXML" || t == "FastXMLList") {
 					context.set(varName, t);
 				} else {
 					write("/* AS3HX WARNING could not determine type for var: " + varName + " exp: " + e + " type: " +getExprType(e)+ "*/");
@@ -1035,12 +1080,13 @@ class Writer
 				writeExpr(e);
 				inArrayAccess = old;
 				// this test can be generalized to any array[]->get() translation
-				var etype = getExprType(e, true);
+				var etype = getExprType(e);
 				if(etype == "FastXML" || etype == "FastXMLList") {
 					write(".get(");
 					writeExpr(index);
 					write(")");
 				} else {
+					//write("/*!!!" + etype + "!!!*/");
 					write("[");
 					writeExpr(index); // TODO, not integers
 					write("]");
@@ -1175,9 +1221,10 @@ class Writer
 					write(".setAttribute(\"");
 					writeExpr(e2);
 					write("\", ");
-					writeExpr(rvalue);
-					write(")");
+					var v = rvalue;
 					rvalue = null; // so case EBinop will not write rvalue
+					writeExpr(v);
+					write(")");
 				}
 				else {
 					write(".att.");
@@ -1185,15 +1232,19 @@ class Writer
 				}
 				addWarning("EE4X");
 			case EE4XFilter( e1, e2 ):
-				// e1.(weight > 300) innerData search
-				writeE4XFilterExpr(e1, e2, false);
-			case EE4XFilterAttr( e1, e2 ):
-				// e1.(@user_id == 3) attribute search
-				writeE4XFilterExpr(e1, e2, true);
+				// e1.(weight > 300) search
+				writeE4XFilterExpr(e1, e2);
 			case EE4XDescend( e1, e2 ):
+				//write("/* " + e2 + " */");
 				writeExpr(e1);
-				write(".descendants().");
-				writeExpr(e2);
+				write(".descendants(");
+				switch(e2) {
+					case EIdent(id):
+						write(quote(id));
+					default:
+						writeExpr(e2);
+				}
+				write(")");
 			case EXML( s ):
 				//write("new flash.xml.XML(" + quote(s) + ")");
 				write("FastXML.parse(" + quote(s) + ")");
@@ -1254,19 +1305,27 @@ class Writer
 	//		return false;
 	//	});
 	// e1.(@user_id == 3) attribute search
-	function writeE4XFilterExpr(e1, e2, isAttribute : Bool) {
-		var fxmlfield : String = (isAttribute ? "att" : "node");
+	function writeE4XFilterExpr(e1, e2) {
+		if(inE4XFilter)
+			throw "Unexpected E4XFilter inside E4XFilter";
+
 		write("FastXML.filterNodes(");
+		//write("/*"+Std.string(e1)+"*/");
 		var n = getBaseVar(e1);    // make sure it's set to FastXML in the
-		context.set(n, "FastXML"); // current context
+		if(n != null)
+			context.set(n, "FastXML"); // current context
 		var old = inArrayAccess;
-		inArrayAccess = true;
-		writeExpr(e1); // ensure 'nodes' vs. 'node'
+		inArrayAccess = true; // ensure 'nodes' vs. 'node'
+		writeExpr(e1); 
 		inArrayAccess = old;
+		
+		inE4XFilter = true;
 		write(", function(x:FastXML) {\n");
 		lvl++;
-		writeIndent("if(");// + wrapper + "x.att.");
-		writeExpr(rebuildE4XExpr(e2, fxmlfield));
+		writeIndent("if(");
+		var ee = rebuildE4XExpr(e2);
+		//write("/* "+e2+" rebuilt: " + ee + " */\n");
+		writeExpr(ee);
 		writeNL(")");
 		lvl++;
 		writeLine("return true;");
@@ -1274,37 +1333,85 @@ class Writer
 		writeLine("return false;\n");
 		lvl--;
 		writeIndent("})");
+		inE4XFilter = false;
 	}
 
-	function rebuildE4XExpr(e:Expr,field:String) : Expr {
-		var rv : Expr = null;
-		/* EBinop(==,EIdent(user_id),EConst(CInt(3))) */
+	/**
+	 * Rebuilds any E4X expression to check for instances where the string value
+	 * is compared to a numerical constant, and change all EIdent instances to
+	 * the FastXML version.
+	 * @return expr ready for writing
+	 **/
+	function rebuildE4XExpr(e:Expr) : Expr {
 		switch(e) {
-		case EBinop(op, e2, e3): // e2 should be EIdent()
-			var id : String = "x." + field + ".";
-			switch(e2) {
-				case EIdent(i):
-					id += i;
-				default:
-					throw "Unexpected " + e2;
+		case EBinop(op, e2, e3):
+			if(isNumericConst(e2)) {
+				return EBinop(op,ECall(EField(EIdent("Std"),"parseFloat"), [rebuildE4XExpr(e3)]), e2);
 			}
-			if(field == "node")
-				id += ".innerData";
-			var r1 = EIdent(id);
-			var r2 : Expr = null;
-			switch(e3) {
-			case EConst(c):
-				switch(c) {
-					case CInt(_), CFloat(_):
-						rv = EBinop(op,ECall(EField(EIdent("Std"),"parseFloat"), [r1]),e3);
-					default:
-				}
+			if(isNumericConst(e3)) {
+				return EBinop(op,ECall(EField(EIdent("Std"),"parseFloat"), [rebuildE4XExpr(e2)]), e3);
+			}
+			var r1 = rebuildE4XExpr(e2);
+			var r2 = rebuildE4XExpr(e3);
+			return EBinop(op, r1, r2);
+		case EIdent(id):
+			if(id.charAt(0) == "@")
+				return EIdent("x.att."+id.substr(1));
+			return EIdent("x.node."+id+".innerData");
+		case ECall(e2, params):
+			//ECall(EField(EIdent(name),charAt),[EConst(CInt(0))])
+			return ECall(rebuildE4XExpr(e2), params);
+		case EField(e2, f):
+			var n = checkE4XDescendants(e);
+			if(n != null)
+				return n;
+			return EField(rebuildE4XExpr(e2),f);
+		default:
+		}
+		return e;
+	}
+
+	/**
+	 * Check for a call to XML.descendants, returning null if the
+	 * expression is not modified, or a new expr
+	 **/
+	function checkE4XDescendants(e:Expr) : Expr {
+		switch(e) {
+			case EField(e2, f):
+			//  e    -e2--------------------------------------  f
+			//             -e3----------------------------
+			//                    -e4-------- -f2--------
+			//EField(ECall(EField(EIdent(xml),descendants),[]),user)
+			switch(e2) {
+				case ECall(e3, p):
+					switch(e3) {
+						case EField(e4,f2):
+							if(getExprType(e4) == "FastXML" && f2 == "descendants")
+								return EE4XDescend(e4,EIdent(f));
+						default:
+					}
+				default:
+			}
+			default:
+		}
+		return null;
+	}
+
+	/**
+	 * Checks if 'e' represents a numerical constant value
+	 * @return true if so
+	 **/
+	function isNumericConst(e:Expr) : Bool {
+		switch(e) {
+		case EConst(c):
+			switch(c) {
+			case CInt(_), CFloat(_):
+				return true;
 			default:
 			}
 		default:
-			throw "Unexpected " + e;
 		}
-		return rv;
+		return false;
 	}
 
 	function addWarning(type,isError=false) {
@@ -1379,6 +1486,8 @@ class Writer
 					case "void"		: "Void";
 					case "Function"	: cfg.functionToDynamic ? "Dynamic" : c;
 					case "Object"	: isNativeGetSet ? "{}" : "Dynamic";
+					case "XML"		: "FastXML";
+					case "XMLList"	: "FastXMLList";
 					default			: properCase(c,true);
 				}
 			case TComplex(e):

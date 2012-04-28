@@ -27,19 +27,23 @@ public class E4X {
 		<user user_id="5" group_name="work">
 			<name>James Spade</name>
 			<country>Egypt</country>
-			<weight>250</weight>
+			<weight>350</weight>
 		</user>
 	</group>
 </data>;
 
 	public static function main() {
-		var e = new E4X();
+		var e : E4X = new E4X();
 		e.getFirstUser();
 		e.iterateOver();
 		e.iterate2();
 		e.findUser();
 		e.filter();
 		e.setAttribute();
+		e.findByFirstLetter();
+		e.makeAFriend();
+		e.filterWithDescending();
+		e.filterByArray();
 	}
 
 	public function getFirstUser() {
@@ -78,34 +82,39 @@ public class E4X {
 	public function setAttribute() {
 		var userXml:XML = xml.user[0];
 		userXml.@group_name = "enemies";
-		//userXml.@["group_name"] = "enemies";
+		userXml.@["group_name"] = "enemies";
 		trace(userXml.@group_name.toString());
 	}
-	
-	/*
+
 	public function findByFirstLetter() {
+		// no descendants, should trace 2 entries
 		var workList:XMLList = xml.user.(@group_name.charAt(0) == "w");
 		trace(workList);
-		var nameList:XMLList = xml.user.(name.charAt(0) == "J");
+		// Using descendants, should trace 2 entries.
+		var nameList:XMLList = xml..user.(name.charAt(0) == "J");
 		trace(nameList);
-	}*/
+	}
 
-	/*
 	public function makeAFriend():void{
 		var james:XML = xml..user.(@user_id == "5" && @group_name =="work")[0];
 		james.@group_name = "friends";
 		trace(james.@group_name);
 	}
-	*/
 
-/*
 	public function filterWithDescending() {
-		// this should include users in the <group> as well
+		// this should include users in the <group> as well, so 3 entries should trace
 		var bigUsers:XMLList = xml.descendants().user.(weight > 300);
+		trace(bigUsers);
 	}
 
-
-*/
+	public function filterByArray() {
+		var groups : Array = ["friends"];
+		var res : XMLList;
+		for (var j:uint = 0; j<groups.length; j++) {
+			res = xml.user.(@group_name == groups[j]);
+			trace(res);
+		}
+	}
 
 }
 }
