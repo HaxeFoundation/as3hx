@@ -750,15 +750,14 @@ class Writer
 							writeExpr(e1);
 							write(")");
 						case "int":
-							write("Std.int(");
+							write("as3hx.Compat.parseInt(");
 							writeExpr(e1);
-							write(") /** AS3HX WARNING check type **/");
+							write(")");
 							addWarning("as int",false);
 						case "number":
-							write("Std.parseFloat(");
+							write("as3hx.Compat.parseFloat(");
 							writeExpr(e1);
-							write(") /** AS3HX WARNING check type **/");
-							addWarning("as number",false);
+							write(")");
 						case "array":
 							write("try cast(");
 							writeExpr(e1);
@@ -853,17 +852,17 @@ class Writer
 					switch(e) {
 					case EIdent(n):
 						var c = n.charCodeAt(0);
-						if(n.indexOf(".") == -1 && c>=65 && c<=90) {
+						if(n.indexOf(".") == -1 && ((c>=65 && c<=90) || (c>=97 && c<=122))) {
 							handled = true;
 							switch(n) {
-							case "Int":
-								write("Std.int(");
+							case "int":
+								write("as3hx.Compat.parseInt(");
 								writeExpr(params[0]);
 								write(")");
 							case "Number":
-								write("Std.parseFloat(");
+								write("as3hx.Compat.parseFloat(");
 								writeExpr(params[0]);
-								write(") /* AS3HX WARNING check type */");
+								write(")");
 							case "String":
 								write("Std.string(");
 								writeExpr(params[0]);

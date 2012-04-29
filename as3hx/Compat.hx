@@ -26,6 +26,9 @@
 package as3hx;
 
 import Type;
+import haxe.macro.Expr;
+import haxe.macro.Context;
+import haxe.macro.Type;
 
 /**
  * Collection of functions that just have no real way to be compatible in Haxe 
@@ -50,7 +53,7 @@ class Compat {
 		case TFunction: "function";
 		case TFloat: "number";
 		case TEnum(e): "object";
-		case TClass(c : Class<Dynamic>):
+		case TClass(c):
 			switch(Type.getClassName(c)) {
 			case "String": "string";
 			case "Xml": "xml";
@@ -61,4 +64,40 @@ class Compat {
 		};
 	}
 
+	/**
+	 * Converts a typed expression into a Float.
+	 */
+	@:macro public static function parseFloat(e:Expr) : Expr {
+		var _ = function (e:ExprDef) return { expr: e, pos: Context.currentPos() };
+		switch (Context.typeof(e)) {
+			case TInst(t,params): 
+				var castToFloat = _(ECast(e, TPath({name:"Float", pack:[], params:[], sub:null})));
+				if (t.get().pack.length == 0)
+					switch (t.get().name) {
+						case "Int": return castToFloat;
+						case "Float": return castToFloat;
+						default:
+					}
+			default:
+		}
+		return _(ECall( _(EField( _(EConst(CType("Std"))), "parseFloat")), [_(ECall( _(EField( _(EConst(CType("Std"))), "string")), [e]))]));
+	}
+
+	/**
+	 * Converts a typed expression into an Int.
+	 */
+	@:macro public static function parseInt(e:Expr) : Expr {
+		var _ = function (e:ExprDef) return { expr: e, pos: Context.currentPos() };
+		switch (Context.typeof(e)) {
+			case TInst(t,params): 
+				if (t.get().pack.length == 0)
+					switch (t.get().name) {
+						case "Int": return _(ECast(e, TPath({name:"Int", pack:[], params:[], sub:null})));
+						case "Float": return _(ECall( _(EField( _(EConst(CType("Std"))), "int")), [_(ECast(e, TPath({name:"Float", pack:[], params:[], sub:null})))]));
+						default:
+					}
+			default:
+		}
+		return _(ECall( _(EField( _(EConst(CType("Std"))), "parseInt")), [_(ECall( _(EField( _(EConst(CType("Std"))), "string")), [e]))]));
+	}
 }
