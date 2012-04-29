@@ -361,6 +361,7 @@ class Parser {
 
 		// parse package
 		var imports = [];
+		var inits : Array<Expr> = [];
 		var defs = [];
 		var meta : Array<Expr> = [];
 		var closed = false;
@@ -416,7 +417,10 @@ class Parser {
 						case CDef(c):
 							for(i in c.imports)
 								imports.push(i);
+							for(i in inits)
+								c.inits.push(i);
 							c.imports = [];
+							inits = [];
 						default:
 					}
 					defs.push(d);
@@ -441,18 +445,26 @@ class Parser {
 					}
 					continue;
 				default:
-					ensure(TNs);
-					var ns : String = id + "::";
-					var t = uncomment(token());
-					switch(t) {
-						case TId(id2):
-							ns += id2;
-						default:
-							unexpected(t);
+					if(opt(TNs)) {
+						var ns : String = id + "::";
+						var t = uncomment(token());
+						switch(t) {
+							case TId(id2):
+								ns += id2;
+							default:
+								unexpected(t);
+						}
+						inNamespace = true;
+						meta.push(ECommented("/* AS3HX WARNING : Discarded namespace "+ns+"*/",true,false,null));
+						continue;
+					} else if(opt(TSemicolon)) {
+						// class names without an import statement used
+						// for forcing compilation and linking.
+						inits.push(EIdent(id));
+						continue;
+					} else {
+						unexpected(tk);
 					}
-					inNamespace = true;
-					meta.push(ECommented("/* AS3HX WARNING : Discarded namespace "+ns+"*/",true,false,null));
-					continue;
 				}
 			case TSemicolon:
 				continue;

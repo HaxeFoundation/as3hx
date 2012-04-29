@@ -193,10 +193,9 @@ class Writer
 		// process fields
 		writeFields(c);
 
-		//TODO c.inits
-		// a list of TId(ClassName),TSemicolon pairs that is typically
-		// at the end of a class
-		//writeInits(c);
+		// a list of TId(ClassName),TSemicolon pairs that is used to force
+		// compiling/linking classes
+		writeInits(c);
 		
 		lvl--;
 		writeLine(closeb());
