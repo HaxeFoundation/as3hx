@@ -1242,7 +1242,23 @@ class Parser {
 				ECall(EVector(t), [parseExpr()]);
 			} else {
 				var t = parseType();
-				ENew(t,if( opt(TPOpen) ) parseExprList(TPClose) else []);
+				// o = new (iconOrLabel as Class)() as DisplayObject
+				var cc = switch (t) {
+					case TComplex(e1) : 
+						switch (e1) {
+							case EBinop(op, e2, e3): 
+								if (op == "as") {
+									switch (e2) {
+										case ECall(e4, a): 
+											EBinop(op, ECall(EField(EIdent("Type"), "createInstance"), [e4, EArrayDecl(a)]), e3);
+										default: 
+									}
+								} 
+							default: 
+						}
+					default: 
+				}
+				if (cc != null) cc; else ENew(t,if( opt(TPOpen) ) parseExprList(TPClose) else []);
 			}
 		case "throw":
 			EThrow( parseExpr() );
