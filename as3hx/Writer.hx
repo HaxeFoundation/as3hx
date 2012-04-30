@@ -851,13 +851,9 @@ class Writer
 					switch(e) {
 					case EIdent(n):
 						var c = n.charCodeAt(0);
-						if(n.indexOf(".") == -1 && ((c>=65 && c<=90) || (c>=97 && c<=122))) {
+						if(n.indexOf(".") == -1 && (c>=65 && c<=90)) {
 							handled = true;
 							switch(n) {
-							case "int":
-								write("as3hx.Compat.parseInt(");
-								writeExpr(params[0]);
-								write(")");
 							case "Number":
 								write("as3hx.Compat.parseFloat(");
 								writeExpr(params[0]);
@@ -882,6 +878,11 @@ class Writer
 							handled = true;
 						case "isFinite":
 							write("Math.isFinite(");
+							writeExpr(params[0]);
+							write(")");
+							handled = true;
+						case "int":
+							write("as3hx.Compat.parseInt(");
 							writeExpr(params[0]);
 							write(")");
 							handled = true;
