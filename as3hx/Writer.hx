@@ -283,24 +283,6 @@ class Writer
 			writeField(field, c);
 		if(c.isInterface)
 			return;
-		// check if there is no constructor, since as3 allows class
-		// variables to be initialized outside the constructor, we
-		// will have to create a constructor here
-
-		// test for member var with initialization
-		if(!Lambda.exists(c.fields,
-			function(field:ClassField) {
-				switch(field.kind)
-				{
-					case FVar(_, val):
-						if (null != val && !isStatic(field.kwds))
-							return true;
-					default:
-				}
-				return false;
-			}
-		))
-			return;
 			
 		if(!Lambda.exists(c.fields,
 			function(field:ClassField) {
@@ -317,6 +299,7 @@ class Writer
 			addWarning("Required constructor was added for member var initialization");
 			writeNL();
 			writeIndent();
+			write("public ");
 			writeConstructor({
 				args : [],
 				varArgs : null,
