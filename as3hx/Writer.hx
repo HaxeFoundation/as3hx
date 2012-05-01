@@ -1100,22 +1100,37 @@ class Writer
 				}
 				write("]");
 			case ENew( t, params ):
-				write("new " + tstring(t) + "(");
-				var out = true;
-				// prevent params when converting vector to array
-				switch(t) {
-				case TVector(_): out = !cfg.vectorToArray;
-				default:
-				}
-				if(out) {
+				//write("/* " +context.get(tstring(t,false,false))+ " */");
+				var origType = context.get(tstring(t,false,false));
+				if(origType == "Class<Dynamic>") {
+					write("Type.createInstance(");
+					write(tstring(t,false,false));
+					write(", [");
 					for (i in 0...params.length)
 					{
 						if (i > 0)
 							write(", ");
 						writeExpr(params[i]);
 					}
+					write("])");
+				} else {
+					write("new " + tstring(t) + "(");
+					var out = true;
+					// prevent params when converting vector to array
+					switch(t) {
+					case TVector(_): out = !cfg.vectorToArray;
+					default:
+					}
+					if(out) {
+						for (i in 0...params.length)
+						{
+							if (i > 0)
+								write(", ");
+							writeExpr(params[i]);
+						}
+					}
+					write(")");
 				}
-				write(")");
 			case EThrow( e ):
 				write("throw ");
 				writeExpr(e);
@@ -1462,7 +1477,7 @@ class Writer
 		return Lambda.has(kwds, "const");
 	}
 	
-	function tstring(t : T, isNativeGetSet:Bool=false)
+	function tstring(t : T, isNativeGetSet:Bool=false, fixCase:Bool=true)
 	{
 		if(t == null)
 			return null;
@@ -1487,7 +1502,7 @@ class Writer
 					case "Object"	: isNativeGetSet ? "{}" : "Dynamic";
 					case "XML"		: "FastXML";
 					case "XMLList"	: "FastXMLList";
-					default			: properCase(c,true);
+					default			: fixCase? properCase(c,true) : c;
 				}
 			case TComplex(e):
 				return buffer(function() { writeExpr(e); });
