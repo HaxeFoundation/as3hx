@@ -1059,19 +1059,31 @@ class Writer
 				//write("/* EArray ("+Std.string(e)+","+Std.string(index)+") " + Std.string(getExprType(e, true)) + "  */ ");
 				var old = inArrayAccess;
 				inArrayAccess = true;
-				writeExpr(e);
-				inArrayAccess = old;
 				// this test can be generalized to any array[]->get() translation
 				var etype = getExprType(e);
 				if(etype == "FastXML" || etype == "FastXMLList") {
+					writeExpr(e);
+					inArrayAccess = old;
 					write(".get(");
 					writeExpr(index);
 					write(")");
 				} else {
 					//write("/*!!!" + etype + "!!!*/");
-					write("[");
-					writeExpr(index); // TODO, not integers
-					write("]");
+					if (etype != "Int") {
+						write("Reflect.field(");
+						writeExpr(e);
+						inArrayAccess = old;
+						write(", ");
+						write("Std.string(");
+						writeExpr(index); // index could be anything
+						write("))");
+					} else {
+						writeExpr(e);
+						inArrayAccess = old;
+						write("[");
+						writeExpr(index); 
+						write("]");
+					}
 				}
 			case EArrayDecl( e ):
 				write("[");
