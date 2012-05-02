@@ -11,5 +11,8 @@ package
 		static public function getClass(interfaceName : String) : Class {
 			return classMap[interfaceName];
 		}
+		static public function assignSomething(f : String, value : String): Void {
+			classMap[f] = value;
+		}
 	}
 }

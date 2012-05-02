@@ -578,6 +578,12 @@ class Writer
 				return tstring(vars[0].t, false);
 			case EArray(n, i):
 				return getExprType(n);
+			case EConst(c):
+				return switch(c) {
+				case CInt(_): "Int";
+				case CFloat(_): "Float";
+				case CString(_): "String";
+				}
 			default:
 		}
 		return null;
@@ -1061,6 +1067,7 @@ class Writer
 				inArrayAccess = true;
 				// this test can be generalized to any array[]->get() translation
 				var etype = getExprType(e);
+				var itype = getExprType(index);
 				if(etype == "FastXML" || etype == "FastXMLList") {
 					writeExpr(e);
 					inArrayAccess = old;
@@ -1069,14 +1076,26 @@ class Writer
 					write(")");
 				} else {
 					//write("/*!!!" + etype + "!!!*/");
-					if (etype != "Int") {
-						write("Reflect.field(");
+					if(etype != null && etype != "Array<Dynamic>" && itype != null && itype != "Int") {
+						var isString = (itype == "String");
+						if(inLvalAssign)
+							write("Reflect.setField(");
+						else
+							write("Reflect.field(");
 						writeExpr(e);
 						inArrayAccess = old;
 						write(", ");
-						write("Std.string(");
-						writeExpr(index); // index could be anything
-						write("))");
+						if(!isString)
+							write("Std.string(");
+						writeExpr(index);
+						if(!isString)
+							write(")");
+						if(inLvalAssign) {
+							write(", ");
+							writeExpr(rvalue);
+							rvalue = null;
+						}
+						write(")");
 					} else {
 						writeExpr(e);
 						inArrayAccess = old;

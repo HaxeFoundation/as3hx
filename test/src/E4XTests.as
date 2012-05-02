@@ -1,6 +1,9 @@
 package {
 // from flex/4.6/frameworks/projects/rpc/src/mx/messaging/config/ServerConfig.as
 public class E4X {
+	private var xml : XML;
+	private var _configFetchedChannels : Object;
+	
 	/**
 	*  @private
 	*  This method updates the xml with serverConfig object returned from the
