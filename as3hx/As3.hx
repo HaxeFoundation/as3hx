@@ -70,6 +70,7 @@ enum Expr {
 	ECommented(s : String, isBlock:Bool, isTail:Bool, e : Expr);
 	EMeta( m : Metadata );
 	ETypedExpr( e : Expr, t : Null<T> );
+	EDelete( e : Expr );
 }
 
 enum T {

@@ -1319,6 +1319,11 @@ class Writer
 					write(")");
 				}
 				addWarning("ETypeof");
+			case EDelete(e):
+				addWarning("EDelete");
+				writeNL("This is an intentional compilation error. See the README for handling the delete keyword");
+				writeIndent("delete ");
+				writeExpr(e);
 		}
 		return rv;
 	}
@@ -1687,6 +1692,7 @@ class Writer
 				case "as Class": println("WARNING: These files casted using 'obj as Class', which may produce incorrect code");
 				case "as number", "as int": println("WARNING: "+warn+" casts in these files");
 				case "as array": println("ERROR: type must be determined for 'as array' cast for:");
+				case "EDelete": println("FATAL: Files will not compile due to 'delete' keyword. See README");
 				default: println("WARNING: " + warn);
 				}
 				for(f in a)

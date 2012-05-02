@@ -1323,6 +1323,10 @@ class Parser {
 				unexpected(TId(Std.string(e)));
 			}
 			ETypeof(e);
+		case "delete":
+			var e = parseExpr();
+			end();
+			EDelete(e);
 		case "getQualifiedClassName":
 			ensure(TPOpen);
 			var e = parseExpr();

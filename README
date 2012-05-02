@@ -53,19 +53,23 @@ Current failures:
 =================
 
 ================================
+'delete' keyword:
+================================
+In actionscript, the delete keyword will cause an intentional failure in the
+generated .hx file. Take a close look at the object being deleted.
+1) if it is a local variable, replace 'delete varname' with 'varname = null'
+2) if it is a class member variable, remove the delete entirely
+3) it it is an E4X (FastXML), well, hmmm... still working on that one.
+
+Senocular did a little writeup on 'delete' that might make it more clear
+http://www.kirupa.com/forum/showthread.php?223798-ActionScript-3-Tip-of-the-Day/page3
+
+
+================================
 E4X:
 ================================
-No E4X is done as of yet. This will fail.
-Solution: Comment out the function in the source code, and re-run. 
-
-for each ( var v:XML in classInfo..*.(
-      name() == "variable"
-      || ( 
-            name() == "accessor"
-            // Issue #116 - Make sure accessors are readable
-            && attribute( "access" ).charAt( 0 ) == "r" )
-         ) 
-)
+E4X is currently partly done. This will fail in some cases, just examine source
+and output carefully.
 
 ================================
 For Initializations:
