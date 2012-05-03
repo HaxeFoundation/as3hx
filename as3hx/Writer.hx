@@ -578,6 +578,8 @@ class Writer
 				return tstring(vars[0].t, false);
 			case EArray(n, i):
 				return getExprType(n);
+			case EUnop(op, prefix, e2):
+				return getExprType(e2);
 			case EConst(c):
 				return switch(c) {
 				case CInt(_): "Int";
@@ -851,6 +853,11 @@ class Writer
 								write("Std.string(");
 								writeExpr(params[0]);
 								write(")");
+							case "Boolean":
+								write("cast(");
+								writeExpr(params[0]);
+								write(", ");
+								write("Bool)");
 							default:
 								write("cast((");
 								writeExpr(params[0]);
@@ -902,7 +909,11 @@ class Writer
 				}
 			case EIf( cond, e1, e2 ):
 				write("if(");
-				writeExpr(cond);
+				var rb = rebuildIfExpr(cond);
+				if(rb != null)
+					writeExpr(rb);
+				else
+					writeExpr(cond);
 				write(") ");
 				switch(e1) {
 					case EBlock(_):
@@ -1426,6 +1437,74 @@ class Writer
 				default:
 			}
 			default:
+		}
+		return null;
+	}
+
+	/**
+	 * Rebuilds an if condition, checking for tests that should be compared
+	 * to null or to 0. Errors on the side of caution, which will just leave
+	 * the original expression to be used, which will cause a haxe compilation
+	 * error at worst.
+	 * @return expr ready for writing, or null if the expr could not be handled
+	 **/
+	function rebuildIfExpr(e:Expr) : Expr {
+		var isNumericType = function(s) {
+			return (s == "Float" || s == "Int" || s == "UInt");
+		}
+		switch(e) {
+		case EIdent(id):
+			if(id == "null")
+				return null;
+			var t = getExprType(e);
+			if(t == null || t == "Bool" || t == "Dynamic")
+				return null;
+			if(isNumericType(t))
+				return EBinop("!=", e, EConst(CInt("0")));
+			return EBinop("!=", e, EIdent("null"));
+		case EBinop(op, e2, e3):
+			if(isNumericConst(e2) || isNumericConst(e3))
+				return null;
+			if(op == "==" || op == "!=" || op == "!==" || op == "===")
+				return null;
+			if(op == "is" || op == "in" || op == "as")
+				return null;
+			if(op == "<" || op == ">" || op == ">=" || op == "<=")
+				return null;
+			if(op == "?:")
+				return null;
+			var r1 = rebuildIfExpr(e2);
+			var r2 = rebuildIfExpr(e3);
+			if(r1 == null) r1 = e2;
+			if(r2 == null) r2 = e3;
+			return EBinop(op, r1, r2);
+		case EUnop(op, prefix, e2):
+			var r2 = rebuildIfExpr(e2);
+			if(r2 == null)
+				return null;
+			if(op == "!") {
+				if(!prefix)
+					return null;
+				switch(r2) {
+					case EBinop(op2, e3, e4):
+						if(op2 == "==") return EBinop("!=", e3, e4);
+						if(op2 == "!=") return EBinop("==", e3, e4);
+					default:
+				}
+				return null;
+			}
+			var t = getExprType(e2);
+			if(t == null) return null;
+			if(isNumericType(t))
+				return EBinop("!=", e, EConst(CInt("0")));
+			return EBinop("!=", e, EIdent("null"));
+		case EParent(e2):
+			var r2 = rebuildIfExpr(e2);
+			if(r2 == null) return null;
+			return EParent(r2);
+		case ECall(e2, params): //These would require a full typer
+		case EField(e2, f):
+		default:
 		}
 		return null;
 	}
