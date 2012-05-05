@@ -1404,6 +1404,31 @@ class Writer
 			return EIdent("x.node."+id+".innerData");
 		case ECall(e2, params):
 			//ECall(EField(EIdent(name),charAt),[EConst(CInt(0))])
+			var f = function(e) : String {
+				switch(e) {
+					case EConst(c):
+						switch(c) {
+							case CString(s):
+								if(s.charAt(0) == "@")
+									s = s.substr(1);
+								return s;
+							default:
+						}
+					default:
+				}
+				return null;
+			}
+			switch(e2) {
+				case EIdent(s):
+					if(params.length == 1) {
+						if(s == "hasOwnProperty") {
+							var i = f(params[0]);
+							if(i != null)
+								return EIdent("x.has." + i);
+						}
+					}
+				default:
+			}
 			return ECall(rebuildE4XExpr(e2), params);
 		case EField(e2, f):
 			var n = checkE4XDescendants(e);

@@ -24,7 +24,7 @@ public class E4X {
 		<weight>450</weight>
 	</user>
 	<group group_id="1" group_name="work">
-		<user user_id="5" group_name="work">
+		<user user_id="5" group_name="work" find_me="true">
 			<name>James Spade</name>
 			<country>Egypt</country>
 			<weight>350</weight>
@@ -44,6 +44,7 @@ public class E4X {
 		e.makeAFriend();
 		e.filterWithDescending();
 		e.filterByArray();
+		e.filterWithCheck();
 	}
 
 	public function getFirstUser() {
@@ -114,6 +115,13 @@ public class E4X {
 			res = xml.user.(@group_name == groups[j]);
 			trace(res);
 		}
+	}
+
+	public function filterWithCheck() {
+		var people:XMLList = xml..user.(hasOwnProperty("@group_name") && @["user_id"] == 3);
+		trace(people);
+		people = xml..user.(hasOwnProperty("@find_me"));
+		trace(people);
 	}
 
 }

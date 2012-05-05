@@ -1433,6 +1433,8 @@ class Parser {
 								default:
 									unexpected(tk);
 							}
+						case TId(s):
+							i = s;
 						default:
 							unexpected(tk);
 					}
@@ -1517,7 +1519,27 @@ class Parser {
 		dbgln("parseE4XFilter("+tk+")");
 		switch(tk) {
 			case TAt:
-				return parseE4XFilterNext(EIdent("@" + id()));
+				var i : String = null;
+				if(opt(TBkOpen)) {
+					tk = token();
+					switch(uncomment(tk)) {
+						case TConst(c):
+							switch(c) {
+								case CString(s):
+									i = s;
+								default:
+									unexpected(tk);
+							}
+						default:
+							unexpected(tk);
+					}
+					ensure(TBkClose);
+				}
+				else
+					i = id();
+				if(i.charAt(0) != "@")
+					i = "@" + i;
+				return parseE4XFilterNext(EIdent(i));
 			case TId(id):
 				var e = parseStructure(id);
 				if( e != null )
