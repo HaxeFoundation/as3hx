@@ -62,6 +62,8 @@ class Config {
 	public var getterSetterStyle : String;
 	/** list of paths to exclude from parsing **/
 	public var excludePaths : List<String>;
+	/** Used only for test cases for compiler to ignore Sprite imports and extends **/
+	public var testCase : Bool;
 
 	/** source directory **/
 	public var src : String;
@@ -180,6 +182,8 @@ class Config {
 				functionToDynamic = false;
 			case "-error-continue","--error-continue":
 				errorContinue = true;
+			case "-test-case":
+				testCase = true;
 			default:
 				break;
 			}
@@ -221,6 +225,7 @@ class Config {
 			case "setterMethods":		setCharField(el, "set%I");
 			case "getterSetterStyle":	setCharField(el, "haxe", ["haxe","flash","combined"]);
 			case "errorContinue":		setBoolField(el, false);
+			case "testCase":			setBoolField(el, false);
 			case "excludeList":			setExcludeField(el, new List());
 			default:
 				neko.Lib.println("Unrecognized config var " + el.name);
@@ -299,6 +304,7 @@ class Config {
 	<setterMethods value="set%I" />
 	<!-- Style of getter and setter output. haxe, flash or combined -->
 	<getterSetterStyle value="haxe" />
+	<testCase value="false" />
 	<excludeList />
 </as3hx>';
 	}

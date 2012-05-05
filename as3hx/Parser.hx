@@ -542,6 +542,8 @@ class Parser {
 			}
 		}
 		dbgln(" -> " + a);
+		if(cfg.testCase && a.join(".") == "flash.display.Sprite")
+			return [];
 		return a;
 	}
 
@@ -655,6 +657,15 @@ class Parser {
 			if( opt(TId("extends")) ) {
 				if(!isInterface) {
 					extend = parseType();
+					if(cfg.testCase) {
+						switch(extend) {
+							case TPath(a):
+								var ex = a.join(".");
+								if(ex == "Sprite" || ex == "flash.display.Sprite")
+									extend = null;
+							default:
+						}
+					}
 				}
 				else {
 					impl.push(parseType());
@@ -1422,6 +1433,7 @@ class Parser {
 				ensure(TPClose);
 				return EE4XFilter(e1, e2);
 			case TAt:
+				//xml.attributes() is equivalent to xml.@*.
 				var i : String = null;
 				if(opt(TBkOpen)) {
 					tk = token();
