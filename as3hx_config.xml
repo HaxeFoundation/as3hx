@@ -1,0 +1,31 @@
+<as3hx>
+	<errorContinue value="true" />
+	<indentChars value="    " />
+	<newlineChars value="\n" />
+	<bracesOnNewline value="true" />
+	<uintToInt value="true" />
+	<vectorToArray value="true" />
+	<guessCasts value="true" />
+	<functionToDynamic value="true" />
+	<getterMethods value="get%I" />
+	<setterMethods value="set%I" />
+	<!-- Style of getter and setter output. haxe, flash or combined -->
+	<getterSetterStyle value="haxe" />
+	<testCase value="false" />
+	<excludeList />
+	<conditionalCompilationList>
+	  <variable value="TIVOCONFIG::AIR" />
+	  <variable value="TIVOCONFIG::ERROR_DIALOG" />
+	  <variable value="TIVOCONFIG::ASSERT" />
+	  <variable value="TIVOCONFIG::DEBUG" />
+	  <variable value="TIVOCONFIG::DEBUG_PRINT" />
+	  <variable value="TIVOCONFIG::AUDIT_IMAGE_LOADS" />
+	  <variable value="TIVOCONFIG::AUDIT_MINDRPC_SIZE" />
+	  <variable value="TIVOCONFIG::COVERAGE" />
+	  <variable value="TIVOCONFIG::UNSAFE_PRIVACY" />
+	  <variable value="TIVOCONFIG::BACKDOOR_SHORTCUTS" />
+	  <variable value="CONFIG::EXTENSION_REAL" />
+	  <variable value="CONFIG::EXTENSION_STUB" />
+	</conditionalCompilationList>
+	<dictionaryToHash value="true" />
+</as3hx>

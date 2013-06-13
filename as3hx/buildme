@@ -1,0 +1,4 @@
+#!/bin/sh
+
+haxe --no-traces -cp . -neko as3tohx.n -main Run
+nekotools boot as3tohx.n

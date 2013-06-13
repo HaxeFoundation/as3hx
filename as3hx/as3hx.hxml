@@ -1,0 +1,3 @@
+-cp .
+-neko as3hx.n
+-main Run

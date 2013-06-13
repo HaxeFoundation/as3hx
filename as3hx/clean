@@ -1,0 +1,5 @@
+#!/bin/sh
+find . -name "*~" -exec rm {} \;
+rm -f as3tohx
+rm -f as3tohx.n
+rm -rf test/out
