@@ -456,8 +456,12 @@ class Writer
 				write((isFlashNative && (isGet || isSet)) ? "" : "override ");
 			if (isStatic(field.kwds))
 				write("static ");
-			if (isPublic(field.kwds))
-				write("public ");
+			if (isPublic(field.kwds)) {
+				if (!(isGet && cfg.forcePrivateGetter) //check if forced private getter
+					&& !(isSet && cfg.forcePrivateSetter)) //check if forced private setter
+				    write("public ");
+			}
+				
 			if (isConst(field.kwds) && isStatic(field.kwds))
 				write("inline ");
 		}

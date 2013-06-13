@@ -71,8 +71,12 @@ class Config {
 	public var dictionaryToHash : Bool;
 	/** write inferred type information into output **/
 	public var debugInferredType : Bool;
-	/** converrt flexunit metadata and calls to munit form */
+	/** convert flexunit metadata and calls to munit form */
 	public var convertFlexunit : Bool;
+	/** make all generated setter private */
+	public var forcePrivateSetter : Bool;
+	/** make all generated getter private */
+	public var forcePrivateGetter : Bool;
 
 	/** source directory **/
 	public var src : String;
@@ -246,6 +250,8 @@ class Config {
 			case "getterMethods":		setCharField(el, "get%I");
 			case "setterMethods":		setCharField(el, "set%I");
 			case "getterSetterStyle":	setCharField(el, "haxe", ["haxe","flash","combined"]);
+			case "forcePrivateGetter":  setBoolField(el, false);
+			case "forcePrivateSetter":  setBoolField(el, false);
 			case "errorContinue":		setBoolField(el, false);
 			case "testCase":			setBoolField(el, false);
 			case "excludeList":			setExcludeField(el, new List());
