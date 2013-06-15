@@ -1436,13 +1436,24 @@ class Writer
 						writeExpr(c.vals[i]);
 					}
 					writeNL(":");
-					lvl++;
+
+                    //prevent switch case indenting if begins
+                    //with block expr
+					var didIndent = if (shouldIndentCase(c.el)) {
+					    lvl++;
+					    true;
+					} else {
+					    false;
+					}
+						
+
 					for (i in 0...c.el.length)
 					{
 						writeIndent();
 						writeFinish(writeExpr(c.el[i]));
 					}
-					lvl--;
+					if (didIndent)
+					    lvl--;
 				}
 				if (def != null)
 				{
@@ -1880,6 +1891,26 @@ class Writer
 		    default: Semi;
 	    }
 	}
+
+	/**
+	 * Return wether the content of the switch
+	 * case needs to be indented
+	 */
+    function shouldIndentCase(expressions:Array<Expr>) : Bool {
+        //search for the first significant expression
+        //to determine indenting
+    	for (expr in expressions)
+    	{
+    	    switch (expr) {
+        	    case EBlock(_): return false;  //block will add its own indenting
+        	    case ECommented(_):  //comments are skipped for this purpose
+        	    default: true;
+            }
+        }
+
+        //empty switch case
+        return false;
+    }
 
 	/**
 	 * Checks if 'e' represents a numerical constant value
