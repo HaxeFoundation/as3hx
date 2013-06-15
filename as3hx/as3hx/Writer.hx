@@ -1080,13 +1080,7 @@ class Writer
 					writeIndent("else ");
 					rv = writeExpr(e2);
 				} else {
-					rv = switch(e1) {
-						case EObject(_): Ret;
-						case EBlock(_): None;
-						case EIf(_,_,_): Semi;
-						case EReturn(_): Semi;
-						default: Semi;
-					}
+					rv = getIfBlockEnd(e1);
 				}
 			case ETernary( cond, e1, e2 ):
 				write("(");
@@ -1860,6 +1854,26 @@ class Writer
 		default:
 		}
 		return null;
+	}
+
+    /**
+     * For an if statement, return the 
+     * the appropriate block end, based on the
+     * type of the first child expression
+     */    
+	function getIfBlockEnd(e:Expr) : BlockEnd {
+	    return switch(e) {
+	        case EObject(_): Ret;
+		    case EBlock(_): None;
+		    case EIf(_,_,_): Semi;
+		    case EReturn(_): Semi;
+		    //comments expression are ignored for this purpose, 
+		    //and instead the first expression
+		    //following the comment is used
+		    case ECommented(s,b,t,e):    
+			    return getIfBlockEnd(e);
+		    default: Semi;
+	    }
 	}
 
 	/**
