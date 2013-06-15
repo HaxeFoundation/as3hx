@@ -2129,7 +2129,7 @@ class Writer
 	{
 		write(s);
 		if (eolComment != null) {
-			write(" " + eolComment);
+			write(eolComment);
 			eolComment = null;
 		}
 		write(cfg.newlineChars);
