@@ -1504,7 +1504,7 @@ class Writer
 				addWarning("Unhandled ELabel("+name+")", true);
 			case ECommented(s,b,t,ex):
 				if(t)
-					writeExpr(ex);
+					rv = writeExpr(ex);
 				write(formatComment(s,b));
 				if(!t) {
 					writeNL("");
@@ -1512,7 +1512,7 @@ class Writer
 						write(indent());
 				}	
 				if(!t) 
-					writeExpr(ex);
+					rv = writeExpr(ex);
 
 				if (ex == null) rv = Ret;
 			case EMeta(m):
