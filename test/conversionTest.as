@@ -18,7 +18,7 @@
  * Please refer to "conversionTest_golden.hx" as the golden file.
  */
 
-package com.as3tohx.test
+package as3tohx
 {
     /**
      *  This class is marked with final and
@@ -81,9 +81,9 @@ package com.as3tohx.test
             // with white space
             //
             funcB( paramA,
-                   paramB,
-                   paramC,
-                   paramD);
+                    paramB,
+                    paramC,
+                    paramD);
 
             /**
              * Function call: Each parameter on a
@@ -91,9 +91,9 @@ package com.as3tohx.test
              * white space to preserve
              */
             funcC( paramA,    // comment on paramA
-                   paramB,    /* comment describing paramB */
-                   paramC,
-                   paramD);   // one more comment
+                    paramB,    /* comment describing paramB */
+                    paramC,
+                    paramD);   // one more comment
 
 
             /**
@@ -102,8 +102,8 @@ package com.as3tohx.test
              * white space
              */
             retValue = funcD(paramA,    // comment on paramA
-                             paramB, paramC,    /* comment describing paramB */
-                             paramD);
+                    paramB, paramC,    /* comment describing paramB */
+                    paramD);
 
 
             /**
@@ -113,10 +113,10 @@ package com.as3tohx.test
              * white space to preserve
              */
             retValue = funcE(valueA + valueB + valueC +    // comment on paramA, B, C
-                             valueD + valueE + valueF,     // comment on paramD, E, F
-                             paramA, paramB, /* comment */ paramC,    /* comment describing paramC */
-                             // last comment
-                             paramD);
+                    valueD + valueE + valueF,     // comment on paramD, E, F
+                    paramA, paramB, /* comment */ paramC,    /* comment describing paramC */
+                    // last comment
+                    paramD);
 
 
             /**
@@ -164,7 +164,6 @@ package com.as3tohx.test
                     // replaced with "map.keys().hasNext()"
                     value = hasAnyProperties(map);
                 }
-
             }
             /* comment line */
             else if (isResult3) // coment at the end of the line
@@ -230,7 +229,6 @@ package com.as3tohx.test
 
                 default:
                      value = 0;
-
             }
             return true;
         }
@@ -246,9 +244,9 @@ package com.as3tohx.test
         * Also this function is marked as "final" and
         * should be converted to the Haxe "@:final"
         */
-        public final function testPublicMethod3(var1: Bool,                  // comment line 1
-            var2: String,    var3: UInt, /* comment line 2 */
-            func4: Function, var5: Array): Boolean  // comment line 3
+        public final function testPublicMethod3(var1: Bool, // comment line 1
+                var2: String,    var3: UInt, /* comment line 2 */
+                func4: Function, var5: Array): Boolean  // comment line 3
         {
             return true;
         }
@@ -258,14 +256,13 @@ package com.as3tohx.test
         * with comments inbetween
         */
         public function testPublicMethod5(var1: Bool,
-            var2: String,
-            // comment line here
-            var3: UInt,
-            /* comment line there before 2 white space line above*/
-            func4: Function,
-            /* comment line there before white space*/
-            var5: Array): Boolean
-        // comment line
+                var2: String,
+                // comment line here
+                var3: UInt,
+                /* comment line there before 2 white space line above*/
+                func4: Function,
+                /* comment line there before white space*/
+                var5: Array): Boolean
         {
             return true;
         }

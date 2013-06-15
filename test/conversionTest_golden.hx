@@ -25,7 +25,7 @@ import as3tohx.MyClass;
  *  This class is marked with final and
  *  should be converted to the Haxe "@:final"
  */
-class Main extends MyClass
+class  @:final Main extends MyClass
 {
     public var sampleProperty(getSampleProperty, setSampleProperty) : Dynamic;
 
@@ -82,9 +82,9 @@ class Main extends MyClass
         // with white space
         //
         funcB(paramA,
-              paramB,
-              paramC,
-              paramD);
+                paramB,
+                paramC,
+                paramD);
 
         /**
          * Function call: Each parameter on a
@@ -92,9 +92,9 @@ class Main extends MyClass
          * white space to preserve
          */
         funcC(paramA,    // comment on paramA
-              paramB,    /* comment describing paramB */
-              paramC,
-              paramD);   // one more comment
+                paramB,    /* comment describing paramB */
+                paramC,
+                paramD);   // one more comment
 
         /**
          * Function call: Parameters across different
@@ -102,8 +102,8 @@ class Main extends MyClass
          * white space
          */
         retValue = funcD(paramA,  // comment on paramA
-                         paramB, paramC, /* comment describing paramB */
-                         paramD);
+                paramB, paramC, /* comment describing paramB */
+                paramD);
 
         /**
          * Function call: Parameters across different
@@ -112,10 +112,10 @@ class Main extends MyClass
          * white space to preserve
          */
         retValue = funcE(valueA + valueB + valueC +  // comment on paramA, B, C
-                         valueD + valueE + valueF,  // comment on paramD, E, F
-                         paramA, paramB, /* comment */ paramC, /* comment describing paramC */
-                         // last comment
-                         paramD);
+                valueD + valueE + valueF,  // comment on paramD, E, F
+                paramA, paramB, /* comment */ paramC, /* comment describing paramC */
+                // last comment
+                paramD);
 
         /**
           * IF / ELSE IF STATEMENTS
@@ -235,9 +235,9 @@ class Main extends MyClass
      * Also this function is marked as "final" and
      * should be converted to the Haxe "@:final"
      */
-    public final function testPublicMethod3(var1 : Bool,                  // comment line 1
-                                            var2 : String, var3 : UInt, /* comment line 2 */
-                                            func4 : Function, var5 : Array<Dynamic>) : Bool // comment line 3
+    public @:final function testPublicMethod3(var1 : Bool, // comment line 1
+            var2 : String, var3 : UInt, /* comment line 2 */
+            func4 : Function, var5 : Array<Dynamic>) : Bool // comment line 3
     {
         return true;
     }
@@ -247,14 +247,13 @@ class Main extends MyClass
      * with comments inbetween
      */
     function testPublicMethod5(var1 : Bool,
-                               var2 : String,
-                               // comment line here
-                               var3 : UInt,
-                               /* comment line there before 2 white space line above*/
-                               func4: Function,
-                               /* comment line there before white space*/
-                               var5 : Array<Dynamic>) : Bool
-    // comment line
+            var2 : String,
+            // comment line here
+            var3 : UInt,
+            /* comment line there before 2 white space line above*/
+            func4: Function,
+            /* comment line there before white space*/
+            var5 : Array<Dynamic>) : Bool
     {
         return true;
     }
