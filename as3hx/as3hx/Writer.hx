@@ -1068,6 +1068,11 @@ class Writer
 				switch(e1) {
 					case EBlock(_):
 						null;
+					case ECommented(s,b,t,e): //comments don't need additional indent
+						if (!t)
+						    writeNL();
+
+						write(indent());    
 					default:
 						lvl++;
 						writeNL();
@@ -1080,7 +1085,7 @@ class Writer
 					writeIndent("else ");
 					rv = writeExpr(e2);
 				} else {
-					rv = getIfBlockEnd(e1);
+					rv = getEIfBlockEnd(e1);
 				}
 			case ETernary( cond, e1, e2 ):
 				write("(");
@@ -1861,7 +1866,7 @@ class Writer
      * the appropriate block end, based on the
      * type of the first child expression
      */    
-	function getIfBlockEnd(e:Expr) : BlockEnd {
+	function getEIfBlockEnd(e:Expr) : BlockEnd {
 	    return switch(e) {
 	        case EObject(_): Ret;
 		    case EBlock(_): None;
@@ -1871,7 +1876,7 @@ class Writer
 		    //and instead the first expression
 		    //following the comment is used
 		    case ECommented(s,b,t,e):    
-			    return getIfBlockEnd(e);
+			    return getEIfBlockEnd(e);
 		    default: Semi;
 	    }
 	}
