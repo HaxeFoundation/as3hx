@@ -61,7 +61,6 @@ class Writer
 	var inLvalAssign : Bool; // current expr is lvalue in assignment (expr = valOfSomeSort)
 	var rvalue : Expr;
 	var typeImportMap : Map<String,String>;
-	var eolComment : String = null;
     
 	public function new(config:Config)
 	{
@@ -122,10 +121,6 @@ class Writer
 
 	function formatComment(s:String, isBlock:Bool):String {
 		if(!isBlock) {
-			if (StringTools.startsWith(s, "//")) {
-				eolComment = s;
-				return "";
-			}
 			return s;
 		}
 		var r = new EReg("^(" + cfg.indentChars + ")+", "mg");
@@ -2180,10 +2175,6 @@ class Writer
 	function writeNL(s = "")
 	{
 		write(s);
-		if (eolComment != null) {
-			write(eolComment);
-			eolComment = null;
-		}
 		write(cfg.newlineChars);
 	}
 
