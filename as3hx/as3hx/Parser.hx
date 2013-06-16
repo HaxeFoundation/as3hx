@@ -51,7 +51,7 @@ enum Token {
 	TColon;
 	TAt;
 	TNs;
-	TNL;
+	TNL( t : Token );
 	TCommented( s : String, isBlock:Bool, t : Token );
 }
 
@@ -203,6 +203,8 @@ class Parser {
 			case TCommented(s,b,t2):
 				a.push(TCommented(s,b,null));
 				f(t2);
+			case TNL(t):
+			    f(t);
 			default:
 				a.push(t);
 			}
@@ -268,7 +270,20 @@ class Parser {
 			throw "Assert error: unexpected " + ctk;
 		}
 	}
-
+    
+    /**
+     * Takes a token which may be a newline. If it
+     * is, return the token wrapped by the newline,
+     * else return the token
+     */
+    function removeNewLine(t : Token) : Token {
+        return switch(t) {
+        	case TNL(t2):
+        	    return removeNewLine(t2);
+        	default:
+        	    return t;    
+        }
+    }
 	/**
 	 * Checks that the next token is of type 'tk', returning
 	 * true if so, and the token is consumed. If keepComments
@@ -276,10 +291,11 @@ class Parser {
 	 * stack along with the next token after 'tk'.
 	 **/
 	function opt(tk,keepComments:Bool=false) : Bool {
-		var t = nonNewLineToken();
+		var t = token();
 		var tu = uncomment(t);
+		var trnl = removeNewLine(tu);
 		dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk));
-		if( Type.enumEq(tu, tk) ) {
+		if( Type.enumEq(trnl, tk) ) {
 			if(keepComments) {
 				var ta = explodeComment(t);
 				// if only 'tk' exists in ta, we're done
@@ -311,8 +327,9 @@ class Parser {
 	function opt2(tk, cmntOut : Array<Expr>) : Bool {
 		var t = token();
 		var tu = uncomment(t);
+		var trnl = removeNewLine(tu);
 		dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk));
-		if( ! Type.enumEq(tu, tk) ) {
+		if( ! Type.enumEq(trnl, tk) ) {
 			add(t);
 			return false;
 		}
@@ -329,13 +346,16 @@ class Parser {
 	 * @return array of comments before 'tk'
 	 **/
 	function ensure(tk) : Array<Token> {
-		var t = nonNewLineToken();
+		var t = token();
 
 		//remove comment token
 		var tu = uncomment(t);
 
-		if( !Type.enumEq(tu, tk) )
-			unexpected(tu);
+		//remove newline token
+		var trnl = removeNewLine(t);
+
+		if( !Type.enumEq(trnl, tk) )
+			unexpected(trnl);
 		var ta = explodeComment(t);
 		ta.pop();
 		return ta;
@@ -346,35 +366,32 @@ class Parser {
 		var pack = [];
 		var header:Array<Expr> = [];
 
-		var foundPackage = false;
 		// look for first 'package'
-		while( !foundPackage ) {
-			var tk = token();
+		var tk = token();
+		var a = explodeComment(tk);
 
-			var a = explodeComment(tk);
-			for(t in a) {
-				switch(t) {
-				case TId(s):
-					if( s != "package" )
-						unexpected(t);
-					if( opt(TBrOpen) )
-						pack = []
-					else {
-						pack = parsePackageName();
-						ensure(TBrOpen);
-					}
-					
-					foundPackage = true;
-				case TCommented(s,b,t):
-					if(t != null) throw "Assert error " + tokenString(t);
-					header.push(ECommented(s,b,false,null));
-				case TNL:	
-				    //TODO : push ENL
-				default:
+		for(t in a) {
+			switch(t) {
+			case TId(s):
+				if( s != "package" )
 					unexpected(t);
+				if( opt(TBrOpen) )
+					pack = []
+				else {
+					pack = parsePackageName();
+					ensure(TBrOpen);
 				}
+				
+			case TCommented(s,b,t):
+				if(t != null) throw "Assert error " + tokenString(t);
+				header.push(ECommented(s,b,false,null));
+			case TNL(t):	
+			    //TODO : push ENL
+			default:
+				unexpected(t);
 			}
 		}
+		
 		
 
 		// parse package
@@ -486,7 +503,8 @@ class Parser {
 				}
 			case TSemicolon:
 				continue;
-			case TNL:
+			case TNL(t):
+			    add(t);
 			    continue;	
 			case TCommented(s,b,t):
 				var t = uncomment(tk);
@@ -1243,7 +1261,8 @@ class Parser {
 		case TCommented(s,b,t):
 			add(t);
 			return ECommented(s,b,false,parseExpr());
-		case TNL:	
+		case TNL(t):	
+		    add(t);
 		    return ENL(parseExpr());
 		default:
 			return unexpected(tk);
@@ -1891,25 +1910,6 @@ class Parser {
 			throw "Unexpected character pushed back";
 		this.char = c;
 	}
-    
-    /**
-     * Return the first next non-newline 
-     * token
-     */
-    function nonNewLineToken() : Token {
-        var t = token();
-
-		while( true ) {
-			switch (t) {
-				case TNL:
-				    t = token();
-				default:
-				    break;    
-			}
-		}
-
-		return t;
-    }
 
 	function token() : Token {
 		if( !tokens.isEmpty() ) 
@@ -1923,7 +1923,7 @@ class Parser {
 			case '\n'.code:
 				line++;
 				pc = 1;
-				return TNL;
+				return TNL(token());
 			case '\r'.code:
 				line++;
 				char = nextChar();
@@ -2137,7 +2137,7 @@ class Parser {
 		case TColon: ":";
 		case TAt: "@";
 		case TNs: "::";
-		case TNL: "<newline>";
+		case TNL(t): "<newline>";
 		case TCommented(s,b,t): s + " " + tokenString(t);
 		}
 	}
