@@ -624,6 +624,14 @@ class Writer
 			{
 				case EBlock(e):
 					es = es.concat(e);
+				case ENL(e): //newline may wrap a block
+				    switch (e) {
+				    	case EBlock(e):
+				    	    es = es.concat(e);
+				    	default:
+				    	    es.push(f.expr);
+				    }
+					
 				default:
 					es.push(f.expr);
 			}
