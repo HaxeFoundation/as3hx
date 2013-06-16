@@ -1451,8 +1451,8 @@ class Writer
 				}
 				if (def != null)
 				{
-					writeIndent();
-					write("default:");
+					writeNL();
+					writeIndent("default:");
 					lvl++;
 					for (i in 0...def.length)
 					{
