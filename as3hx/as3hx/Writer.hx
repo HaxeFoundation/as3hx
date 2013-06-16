@@ -2104,16 +2104,24 @@ class Writer
 		if(c.el == null || c.el.length == 0) {
 			falls = true;
 		} else {
-			switch(c.el[c.el.length-1]) {
-			case EBreak(lbl):
-				if(lbl == null) 
-					c.el.pop(); // remove break
-				falls = false;
-			case EReturn(ex):
-				falls = false;
-			default:
-				falls = true;
+
+			var f:Expr->Void = null;
+			f = function(e) {
+				switch(e) {
+					case EBreak(lbl):
+						if(lbl == null) 
+							c.el.pop(); // remove break
+						falls = false;
+					case EReturn(ex):
+						falls = false;
+					case ENL(e): //newline might wrap a break or return
+					    f(e);
+					default:
+						falls = true;
+				}
 			}
+			f(c.el[c.el.length-1]);
+			
 		}
 
 		// if it's a fallthough, we have to add the cases val to the
