@@ -129,7 +129,7 @@ class Writer
 			return s;
 		}
 		var r = new EReg("^(" + cfg.indentChars + ")+", "mg");
-	return StringTools.ltrim(r.replace(s,indent()));
+	    return StringTools.ltrim(r.replace(s,indent()));
 	}
 
 	function writeComments(comments : Array<Expr>) {
@@ -837,7 +837,6 @@ class Writer
 					openContext();
 					write(openb());
 					lvl++;
-					writeNL();
 					for (ex in e)
 					{
 						writeIndent();
@@ -1077,9 +1076,6 @@ class Writer
 					case EBlock(_):
 						null;
 					case ECommented(s,b,t,e): //comments don't need additional indent
-						if (!t)
-						    writeNL();
-
 						write(indent());    
 					default:
 						lvl++;
@@ -1525,7 +1521,7 @@ class Writer
 					rv = writeExpr(ex);
 				write(formatComment(s,b));
 				if(!t) {
-					writeNL("");
+					//writeNL("");
 					if(ex != null)
 						write(indent());
 				}	
@@ -1596,9 +1592,12 @@ class Writer
 				}
 				writeIndent("#end // " + kwd);
 				rv = Ret;
-			case ENL( e ):
+			case ENL( e ): 
+			    //newline starts new indented line before parsing
+			    //wrapped expression
+			    writeNL( );
+			    writeIndent( );
 			    rv = writeExpr(e);
-			    //TODO : write newline	
 		}
 		return rv;
 	}
