@@ -955,6 +955,7 @@ class Writer
 					write(")");
 				}
 				else { // op e1 e2
+
 					var oldInLVA = inLvalAssign;
 					rvalue = e2;
 					if(op == "=")
@@ -1074,8 +1075,20 @@ class Writer
 				writeExpr(e1);
 				if (e2 != null)
 				{
+					//corner case : comment located
+					//before the "else" keyword in the
+					//source file
+					switch (e2) {
+						case ECommented(s,b,t,e):
+							writeNL();
+							writeIndent(s);
+							e2 = e; //skip the comment
+						default:
+					}
+
 					writeNL();
 					writeIndent("else ");
+
 					rv = writeExpr(e2);
 				} else {
 					rv = getEIfBlockEnd(e1);
