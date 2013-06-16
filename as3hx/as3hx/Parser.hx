@@ -274,16 +274,43 @@ class Parser {
     /**
      * Takes a token which may be a newline. If it
      * is, return the token wrapped by the newline,
-     * else return the token
+     * else return the token. If the token is a comment,
+     * it may also return the wrapped tokent inside optionnaly
      */
-    function removeNewLine(t : Token) : Token {
+    function removeNewLine(t : Token, removeComments : Bool = true) : Token {
         return switch(t) {
         	case TNL(t2):
-        	    return removeNewLine(t2);
+        	    return removeNewLine(t2, removeComments);
+        	case TCommented(s,b,t2):
+        	    //remove comment by default
+        	    if (removeComments) {
+        	    	return removeNewLine(t2, removeComments);
+        	    } else {
+        	    	return t;
+        	    }
         	default:
         	    return t;    
         }
     }
+
+    /**
+     * Same as removeNewLine but for expression instead of token
+     */
+    function removeNewLineExpr(e : Expr, removeComments : Bool = true) : Expr {
+    	return switch(e) {
+        	case ENL(e2):
+        	    return removeNewLineExpr(e2, removeComments);
+        	case ECommented(s,b,t,e2):
+        	    if (removeComments) {
+        	    	return removeNewLineExpr(e2, removeComments);
+        	    } else {
+        	    	return e;
+        	    }
+        	default:
+        	    return e;    
+        }
+    }
+
 	/**
 	 * Checks that the next token is of type 'tk', returning
 	 * true if so, and the token is consumed. If keepComments
@@ -292,10 +319,9 @@ class Parser {
 	 **/
 	function opt(tk,keepComments:Bool=false) : Bool {
 		var t = token();
-		var tu = uncomment(t);
-		var trnl = removeNewLine(tu);
+		var tu = uncomment(removeNewLine(t));
 		dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk));
-		if( Type.enumEq(trnl, tk) ) {
+		if( Type.enumEq(tu, tk) ) {
 			if(keepComments) {
 				var ta = explodeComment(t);
 				// if only 'tk' exists in ta, we're done
@@ -352,7 +378,7 @@ class Parser {
 		var tu = uncomment(t);
 
 		//remove newline token
-		var trnl = removeNewLine(t);
+		var trnl = removeNewLine(tu);
 
 		if( !Type.enumEq(trnl, tk) )
 			unexpected(trnl);
@@ -866,6 +892,9 @@ class Parser {
 						default:
 							unexpected(t);
 					}
+				case TNL(t):
+				    add(t);
+
 				default:
 					dbgln("init block: " + t);
 					add(t);
@@ -1074,7 +1103,7 @@ class Parser {
 			f.ret = parseType();
 		if( peek() == TBrOpen ) {
 			f.expr = parseExpr(true);
-			switch(f.expr) {
+			switch(removeNewLineExpr(f.expr)) {
 			case EObject(fl):
 				if(fl.length == 0) {
 					f.expr = EBlock([]);
@@ -1883,12 +1912,12 @@ class Parser {
 	function peek() : Token {
 		if( tokens.isEmpty() )
 			add(token());
-		return uncomment(tokens.first());
+		return uncomment(removeNewLine(tokens.first()));
 	}
 	
 	function id() {
 		var t = token();
-		return switch( uncomment(t) ) {
+		return switch( uncomment(removeNewLine(t)) ) {
 		case TId(i): i;
 		default: unexpected(t);
 		}
