@@ -1597,7 +1597,7 @@ class Writer
 				writeIndent("#end // " + kwd);
 				rv = Ret;
 			case ENL( e ):
-			    writeExpr(e);
+			    rv = writeExpr(e);
 			    //TODO : write newline	
 		}
 		return rv;
@@ -1894,11 +1894,14 @@ class Writer
 		    case EBlock(_): None;
 		    case EIf(_,_,_): Semi;
 		    case EReturn(_): Semi;
+		   
 		    //comments expression are ignored for this purpose, 
 		    //and instead the first expression
 		    //following the comment is used
-		    case ECommented(s,b,t,e):    
-			    return getEIfBlockEnd(e);
+		    case ECommented(s,b,t,e): getEIfBlockEnd(e);
+            //like comment, wrapped expression used instead
+			case ENL(e): getEIfBlockEnd(e); 
+
 		    default: Semi;
 	    }
 	}
