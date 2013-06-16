@@ -830,7 +830,7 @@ class Writer
 			case EBlock( e ):
 				if(!isInterface) {
 					openContext();
-					write(openb());
+					write("{");
 					lvl++;
 					for (ex in e)
 					{
@@ -840,9 +840,8 @@ class Writer
 					lvl--;
 					write(closeb());
 					closeContext();
-					writeNL();
 					rv = None;
-				} else { writeNL(";"); rv = None; }
+				} else { write(";"); rv = None; }
 			case EField( e, f ):
 				var n = checkE4XDescendants(expr);
 				if(n != null)
@@ -1067,20 +1066,10 @@ class Writer
 				else
 					writeExpr(cond);
 				write(") ");
-				switch(e1) {
-					case EBlock(_):
-						null;
-					case ECommented(s,b,t,e): //comments don't need additional indent
-						write(indent());    
-					default:
-						lvl++;
-						writeNL();
-						write(indent());
-						lvl--;
-				}
 				writeExpr(e1);
 				if (e2 != null)
 				{
+					writeNL();
 					writeIndent("else ");
 					rv = writeExpr(e2);
 				} else {
@@ -1426,15 +1415,16 @@ class Writer
 					writeIndent("");
 				}
 				write("switch (" + testVar + ")" + openb());
-				writeNL();
+				
 				lvl++;
 				for(c in newCases) {
+					writeNL();
 					writeIndent("case ");
 					for(i in 0...c.vals.length) {
 						write(i>0 ? ", " : "");
 						writeExpr(c.vals[i]);
 					}
-					writeNL(":");
+					write(":");
 
                     //prevent switch case indenting if begins
                     //with block expr
@@ -1456,7 +1446,8 @@ class Writer
 				}
 				if (def != null)
 				{
-					writeLine("default:");
+					writeIndent();
+					write("default:");
 					lvl++;
 					for (i in 0...def.length)
 					{
@@ -1515,11 +1506,7 @@ class Writer
 				if(t)
 					rv = writeExpr(ex);
 				write(formatComment(s,b));
-				if(!t) {
-					//writeNL("");
-					if(ex != null)
-						write(indent());
-				}	
+					
 				if(!t) 
 					rv = writeExpr(ex);
 
@@ -2154,7 +2141,7 @@ class Writer
 	
 	function closeb()
 	{
-		return indent() + "}";
+		return cfg.newlineChars + indent() + "}";
 	}
 	
 	function write(s : String)
@@ -2181,8 +2168,8 @@ class Writer
 	function writeFinish(cond) {
 		switch(cond) {
 		case None:
-		case Semi: writeNL(";");
-		case Ret: writeNL("");
+		case Semi: write(";");
+		case Ret: write("");
 		}
 	}
 
