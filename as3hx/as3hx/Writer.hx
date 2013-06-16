@@ -1588,6 +1588,9 @@ class Writer
 				}
 				writeIndent("#end // " + kwd);
 				rv = Ret;
+			case ENL( e ):
+			    writeExpr(e);
+			    //TODO : write newline	
 		}
 		return rv;
 	}

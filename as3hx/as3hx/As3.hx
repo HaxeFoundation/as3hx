@@ -72,6 +72,7 @@ enum Expr {
 	ETypedExpr( e : Expr, t : Null<T> );
 	EDelete( e : Expr );
 	ECondComp( v : String, e : Expr );
+	ENL( e : Expr);
 }
 
 enum T {

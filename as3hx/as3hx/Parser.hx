@@ -276,7 +276,7 @@ class Parser {
 	 * stack along with the next token after 'tk'.
 	 **/
 	function opt(tk,keepComments:Bool=false) : Bool {
-		var t = token();
+		var t = nonNewLineToken();
 		var tu = uncomment(t);
 		dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk));
 		if( Type.enumEq(tu, tk) ) {
@@ -325,12 +325,15 @@ class Parser {
 	}
 
 	/**
-	 * Ensures the next token (ignoring comments) is 'tk'.
+	 * Ensures the next token (ignoring comments and newlines) is 'tk'.
 	 * @return array of comments before 'tk'
 	 **/
 	function ensure(tk) : Array<Token> {
-		var t = token();
+		var t = nonNewLineToken();
+
+		//remove comment token
 		var tu = uncomment(t);
+
 		if( !Type.enumEq(tu, tk) )
 			unexpected(tu);
 		var ta = explodeComment(t);
@@ -342,27 +345,37 @@ class Parser {
 		dbgln("parseProgram()");
 		var pack = [];
 		var header:Array<Expr> = [];
+
+		var foundPackage = false;
 		// look for first 'package'
-		var tk = token();
-		var a = explodeComment(tk);
-		for(t in a) {
-			switch(t) {
-			case TId(s):
-				if( s != "package" )
+		while( !foundPackage ) {
+			var tk = token();
+
+			var a = explodeComment(tk);
+			for(t in a) {
+				switch(t) {
+				case TId(s):
+					if( s != "package" )
+						unexpected(t);
+					if( opt(TBrOpen) )
+						pack = []
+					else {
+						pack = parsePackageName();
+						ensure(TBrOpen);
+					}
+					
+					foundPackage = true;
+				case TCommented(s,b,t):
+					if(t != null) throw "Assert error " + tokenString(t);
+					header.push(ECommented(s,b,false,null));
+				case TNL:	
+				    //TODO : push ENL
+				default:
 					unexpected(t);
-				if( opt(TBrOpen) )
-					pack = []
-				else {
-					pack = parsePackageName();
-					ensure(TBrOpen);
 				}
-			case TCommented(s,b,t):
-				if(t != null) throw "Assert error " + tokenString(t);
-				header.push(ECommented(s,b,false,null));
-			default:
-				unexpected(t);
 			}
 		}
+		
 
 		// parse package
 		var imports = [];
@@ -473,6 +486,8 @@ class Parser {
 				}
 			case TSemicolon:
 				continue;
+			case TNL:
+			    continue;	
 			case TCommented(s,b,t):
 				var t = uncomment(tk);
 				switch(t) {
@@ -1080,6 +1095,8 @@ class Parser {
 	}
 
 	function unexpected( tk ) : Dynamic {
+		neko.Lib.print(tk);
+		neko.Lib.print(haxe.CallStack.toString(haxe.CallStack.callStack()));
 		throw EUnexpected(tokenString(tk));
 		return null;
 	}
@@ -1226,6 +1243,8 @@ class Parser {
 		case TCommented(s,b,t):
 			add(t);
 			return ECommented(s,b,false,parseExpr());
+		case TNL:	
+		    return ENL(parseExpr());
 		default:
 			return unexpected(tk);
 		}
@@ -1594,6 +1613,7 @@ class Parser {
 		while( true ) {
 			args.push(parseExpr());
 			var tk = token();
+			
 			switch( tk ) {
 			case TComma:
 			case TCommented(_,_,_):
@@ -1871,6 +1891,25 @@ class Parser {
 			throw "Unexpected character pushed back";
 		this.char = c;
 	}
+    
+    /**
+     * Return the first next non-newline 
+     * token
+     */
+    function nonNewLineToken() : Token {
+        var t = token();
+
+		while( true ) {
+			switch (t) {
+				case TNL:
+				    t = token();
+				default:
+				    break;    
+			}
+		}
+
+		return t;
+    }
 
 	function token() : Token {
 		if( !tokens.isEmpty() ) 
@@ -1884,6 +1923,7 @@ class Parser {
 			case '\n'.code:
 				line++;
 				pc = 1;
+				return TNL;
 			case '\r'.code:
 				line++;
 				char = nextChar();
