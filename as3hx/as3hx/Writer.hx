@@ -599,7 +599,6 @@ class Writer
 		write("(");
 		var fst = writeArgs(f.args);
 		write(")");
-
 		// return type
 		if (null == ret)
 			ret = f.ret;
@@ -988,6 +987,11 @@ class Writer
 				}
 			case ECall( e, params ):
 				//write("/*ECall " + e + "(" + params + ")*/\n");
+
+                //func call use 2 levels of indentation if
+                //spread on multiple lines
+				lvl += 2;
+
 				var handled = false;
 				if(cfg.guessCasts && params.length == 1) {
 					switch(e) {
@@ -1058,6 +1062,7 @@ class Writer
 					}
 					write(")");
 				}
+				lvl -= 2;
 			case EIf( cond, e1, e2 ):
 				write("if (");
 				var rb = rebuildIfExpr(cond);
