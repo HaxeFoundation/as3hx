@@ -538,25 +538,70 @@ class Writer
 		}
 	}
 	
-	function writeArgs(args : Array<{ name : String, t : Null<T>, val : Null<Expr>, e:Array<Expr> }>)
+	function writeArgs(args : Array<{ name : String, t : Null<T>, val : Null<Expr>, exprs : Array<Expr> }>)
 	{
+		//add 2 extra indentation level if arguments
+		//spread on multiple lines
+		lvl += 2;
+
+		//store first argument
 		var fst = null;
-		for (arg in args)
+
+		//set to true at the end of the argument, 
+		//trigger writing a comma for next expression
+		var pendingComma = false; 
+
+		for (arg in args) //for each method argument
 		{
-			if (null == fst)
+
+			for (expr in arg.exprs) //for each expression within that argument
 			{
-				fst = arg;
-			} else {
-				write(", ");
-			}
-			write(arg.name);
-			writeVarType(arg.t);
-			context.set(arg.name, tstring(arg.t, false));
-			if(arg.val != null) {
-				write(" = ");
-				writeExpr(arg.val);
+				switch (expr) {
+					case EIdent(s):
+
+					    if (s == arg.name) { //this is the start of a new argument
+						    if (null == fst)
+							{
+								fst = arg; // no comma for the first
+							} else if (pendingComma) {
+				    	        pendingComma = false;
+				    	        write(",");
+							}
+					        write(s);
+					    }
+					   
+					case ETypedExpr(e, t):
+					    writeVarType(t);
+					    context.set(arg.name, tstring(arg.t, false));
+						if(arg.val != null) {
+							write(" = ");
+							writeExpr(arg.val);
+						}
+						pendingComma = true;
+
+					case ENL(e): //newline
+					    if (pendingComma){
+					    	pendingComma = false;
+					    	write(",");
+					    }
+					    writeNL();    
+					    writeIndent();   
+
+					case ECommented(s,b,t,e): // comment among arguments
+					 	if (pendingComma){
+					    	pendingComma = false;
+					    	write(",");
+					    }
+					    write(" "+s);
+	                
+	                default:
+
+				}
 			}
 		}
+
+        lvl -= 2;
+
 		return fst;
 	}
 	

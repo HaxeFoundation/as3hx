@@ -1081,7 +1081,7 @@ class Parser {
 		//for each method argument (except var args)
 		//store the whole expression, including
 		//comments and newline
-		var expr:Array<Expr> = [];
+		var expressions:Array<Expr> = [];
 
 		if( !opt(TPClose) )
 
@@ -1100,19 +1100,20 @@ class Parser {
 
 					case TId(s): //argument's name
 						var name = s, t = null, val = null;
-						expr.push(EIdent(s));
+						expressions.push(EIdent(s));
 
 						if( opt(TColon) ) { // ":" 
 							t = parseType(); //arguments type
-							expr.push(ETypedExpr(null, t));
+							expressions.push(ETypedExpr(null, t));
 						}
 
 						if( opt(TOp("=")) ) {
 					        val = parseExpr(); //optional argument's default value
-					        expr.push(val);
+					        expressions.push(val);
 				        }
 
-				        f.args.push( { name : name, t : t, val : val, e:[] } );
+				        f.args.push( { name : name, t : t, val : val, exprs:expressions } );
+                        expressions = []; // reset for next argument
 
 				        if( opt(TPClose) ) // ")" end of arguments
 					        break;
@@ -1120,11 +1121,11 @@ class Parser {
 
                     case TCommented(s,b,t): //comment in between arguments
                    		add(t);
-                        expr.push(makeECommented(tk, null));
+                        expressions.push(makeECommented(tk, null));
 
 				    case TNL(t):  //newline in between arguments
 				        add(t);
-				        expr.push(ENL(null));
+				        expressions.push(ENL(null));
 
 				    default:    
 

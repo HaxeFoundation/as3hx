@@ -90,7 +90,7 @@ enum FieldKind {
 }
 
 typedef Function = {
-	var args : Array<{ name : String, t : Null<T>, val : Null<Expr>, e:Array<Expr> }>;
+	var args : Array<{ name : String, t : Null<T>, val : Null<Expr>, exprs:Array<Expr> }>;
 	var varArgs : Null<String>;
 	var ret : Null<T>;
 	var expr : Null<Expr>;
