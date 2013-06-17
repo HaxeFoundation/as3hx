@@ -92,7 +92,7 @@ enum FieldKind {
 typedef Function = {
 	var args : Array<{ name : String, t : Null<T>, val : Null<Expr>, exprs:Array<Expr> }>;
 	var varArgs : Null<String>;
-	var ret : Null<T>;
+	var ret : FunctionRet;
 	var expr : Null<Expr>;
 }
 
@@ -121,6 +121,11 @@ typedef FunctionDef = {
 	var kwds : Array<String>;
 	var name : String;
 	var f : Function;
+}
+
+typedef FunctionRet = {
+	var t : Null<T>;
+	var exprs : Array<Expr>;
 }
 
 typedef NamespaceDef = {

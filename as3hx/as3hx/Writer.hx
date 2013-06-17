@@ -331,7 +331,7 @@ class Writer
 						continue;
 					if (isGetter(field.kwds))
 					{
-						var property = getOrCreateProperty(field.name, f.ret, isStatic(field.kwds));
+						var property = getOrCreateProperty(field.name, f.ret.t, isStatic(field.kwds));
 						if (isPublic(field.kwds))
 						{
 							property.get = cfg.makeGetterName(field.name);
@@ -495,7 +495,7 @@ class Writer
 					var name = if (isGetter(field.kwds)) {
 						cfg.makeGetterName(field.name); //"get" + ucfirst(field.name);
 					} else if (isSetter(field.kwds)) {
-						ret = f.args[0].t;
+						ret.t = f.args[0].t;
 						cfg.makeSetterName(field.name); //"set" + ucfirst(field.name);
 					} else {
 						field.name;
@@ -636,7 +636,7 @@ class Writer
 		writeExpr(EBlock(es));
 	}
 	
-	function writeFunction(f : Function, isGetter:Bool, isSetter:Bool, isNative:Bool, name : Null<String>, ?ret : Null<T>)
+	function writeFunction(f : Function, isGetter:Bool, isSetter:Bool, isNative:Bool, name : Null<String>, ?ret : FunctionRet)
 	{
 		write("function");
 		if(null != name)
@@ -649,12 +649,12 @@ class Writer
 			ret = f.ret;
 		if(isNative) {
 			if(isGetter)
-				writeVarType(ret, "{}", true);
+				writeVarType(ret.t, "{}", true);
 			if(isSetter)
 				writeVarType(null, "Void", true);
 		}
 		else
-			writeVarType(ret,null,false);
+			writeVarType(ret.t,null,false);
 
 		// ensure the function body is in a block
 		var es = [];

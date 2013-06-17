@@ -1073,7 +1073,7 @@ class Parser {
 		var f = {
 			args : [],
 			varArgs : null,
-			ret : null,
+			ret : {t:null, exprs:[]},
 			expr : null
 		};
 		ensure(TPOpen);
@@ -1082,8 +1082,7 @@ class Parser {
 		//store the whole expression, including
 		//comments and newline
 		var expressions:Array<Expr> = [];
-
-		if( !opt(TPClose) )
+		if( !opt(TPClose) ) {
 
 			while( true ) {
                
@@ -1131,9 +1130,41 @@ class Parser {
 
 				}
 			}
+		}
 
-		if( opt(TColon) )
-			f.ret = parseType();
+        //hold each expr for the function return until
+        //the opening bracket, including comments and
+        //newlines
+		var retExpressions:Array<Expr> = [];
+
+		//parse return type 
+		if( opt(TColon) ) {
+			var t = parseType();
+			retExpressions.push(ETypedExpr(null, t));
+			f.ret.t = t;
+		}
+			
+		//parse until '{'	
+		while (true) {
+			var tk = token();
+			switch (tk) {
+				case TNL(t): //parse new line before '{'
+				    add(t);
+				    retExpressions.push(ENL(null));
+
+				 case TCommented(s,b,t): //comment before '{'
+                   add(t);
+                   retExpressions.push(makeECommented(tk, null));    
+
+				case TBrOpen: //end of method return 
+				    add(tk);
+				    f.ret.exprs = retExpressions;
+				    break;
+
+				default:    
+			}
+		}		
+
 		if( peek() == TBrOpen ) {
 			f.expr = parseExpr(true);
 			switch(removeNewLineExpr(f.expr)) {
