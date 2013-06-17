@@ -779,7 +779,6 @@ class Parser {
 						continue;
 					default:
 						add(tk);
-						neko.Lib.print(tk);
 						//meta.push(ECommented(s,b,false,null));
 						break;
 					}

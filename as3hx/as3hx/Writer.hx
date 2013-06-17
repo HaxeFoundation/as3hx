@@ -612,10 +612,13 @@ class Writer
 		write("function new(");
 		writeArgs(f.args);
 		write(")");
+		writeNL();
+		writeIndent();
 		var es = [];
 		switch(f.expr)
 		{
 			case EBlock(e):
+			    es.push(ENL(null));
 				// inject instance field values
 				for (field in c.fields)
 				{
@@ -626,6 +629,7 @@ class Writer
 							{
 								var expr = EBinop("=", EIdent(field.name), val);
 								es.push(expr);
+								es.push(ENL(null));
 							}
 						default:
 							//
