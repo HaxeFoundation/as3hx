@@ -140,6 +140,8 @@ class Writer
 							throw "Unexpected " + e + " in comments";
 					}
 				}
+			case ENL(e):
+			    writeNL();	
 			default:
 				throw "Unexpected " + c + " in header";
 			}
@@ -251,6 +253,8 @@ class Writer
 				writeExpr(d);
 			case ECommented(s,b,t,e):
 				writeExpr(d);
+			case ENL(e):
+			    writeNL();	
 			default:
 				throw "Unexpected " + d;
 			}
@@ -699,7 +703,7 @@ class Writer
 				    writeIndent();
 
 				case ECommented(s,b,t,e):
-				    write(s);    
+				    write(" "+s);    
 
 				default:
 			}

@@ -412,7 +412,7 @@ class Parser {
 				if(t != null) throw "Assert error " + tokenString(t);
 				header.push(ECommented(s,b,false,null));
 			case TNL(t):	
-			    //TODO : push ENL
+			    header.push(ENL(null));
 			default:
 				unexpected(t);
 			}
@@ -530,6 +530,7 @@ class Parser {
 			case TSemicolon:
 				continue;
 			case TNL(t):
+			    meta.push(ENL(null));
 			    add(t);
 			    continue;	
 			case TCommented(s,b,t):
@@ -778,10 +779,14 @@ class Parser {
 						continue;
 					default:
 						add(tk);
+						neko.Lib.print(tk);
 						//meta.push(ECommented(s,b,false,null));
 						break;
 					}
 					continue;
+				case TNL(t):
+				    add(t);
+				    meta.push(ENL(null));
 				case TEof:
 					if(included)
 						return;
@@ -894,6 +899,7 @@ class Parser {
 					}
 				case TNL(t):
 				    add(t);
+				    meta.push(ENL(null));
 
 				default:
 					dbgln("init block: " + t);
@@ -1009,7 +1015,7 @@ class Parser {
 				default: unexpected(uncomment(tk));
 				}
 			case TCommented(s,b,t):
-			
+
 			    //this check prevents from losing the comment
 			    //token
 				if (t == TDot) {
