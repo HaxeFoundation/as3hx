@@ -153,7 +153,6 @@ class Writer
 		if (pack.length > 0)
 		{
 			writeLine("package " + properCaseA(pack,false).join(".") + ";");
-			writeLine();
 		}
 	}
 	
@@ -210,6 +209,7 @@ class Writer
 	    // Finally, if any additional implicit imports were found
 	    // to be needed, output them.
 	    if (addnImports.length > 0) {
+	    writeLine();
 		writeLine("// Additional implicit imports...");
 		addnImports.sort(
 		    function(a : String, b : String) : Int {
@@ -220,7 +220,7 @@ class Writer
 		for(a in addnImports) {
 		    writeLine("import " + a + ";");
 		}
-		writeLine();
+		
 	    }
 	}
 
@@ -289,7 +289,6 @@ class Writer
 		
 		// process properties
 		writeProperties(c);
-		writeNL();
 	
 		// process fields
 		writeFields(c);
@@ -300,7 +299,6 @@ class Writer
 		
 		lvl--;
 		writeLine(closeb());
-		writeNL();
 	}
 	
 	function writeProperties(c : ClassDef)
@@ -488,7 +486,7 @@ class Writer
 						default:	
 					}
 				}
-				writeNL(";");
+				write(";");
 			case FFun( f ):
 				if (field.name == c.name)
 				{
