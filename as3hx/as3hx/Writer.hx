@@ -538,7 +538,7 @@ class Writer
 		}
 	}
 	
-	function writeArgs(args : Array<{ name : String, t : Null<T>, val : Null<Expr> }>)
+	function writeArgs(args : Array<{ name : String, t : Null<T>, val : Null<Expr>, e:Array<Expr> }>)
 	{
 		var fst = null;
 		for (arg in args)

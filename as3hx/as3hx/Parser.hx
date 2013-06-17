@@ -1077,28 +1077,60 @@ class Parser {
 			expr : null
 		};
 		ensure(TPOpen);
+
+		//for each method argument (except var args)
+		//store the whole expression, including
+		//comments and newline
+		var expr:Array<Expr> = [];
+
 		if( !opt(TPClose) )
+
 			while( true ) {
-				if( opt(TDot) ) {
-					ensure(TDot);
-					ensure(TDot);
-					f.varArgs = id();
-					if( opt(TColon) )
-						ensure(TId("Array"));
-					ensure(TPClose);
-					break;
+               
+				var tk = token();
+				switch (tk) {
+					case TDot: //as3 var args start with "..."
+					    ensure(TDot);
+					    ensure(TDot);
+					    f.varArgs = id();
+					    if( opt(TColon) )
+						    ensure(TId("Array"));
+					    ensure(TPClose);
+					    break;
+
+					case TId(s): //argument's name
+						var name = s, t = null, val = null;
+						expr.push(EIdent(s));
+
+						if( opt(TColon) ) { // ":" 
+							t = parseType(); //arguments type
+							expr.push(ETypedExpr(null, t));
+						}
+
+						if( opt(TOp("=")) ) {
+					        val = parseExpr(); //optional argument's default value
+					        expr.push(val);
+				        }
+
+				        f.args.push( { name : name, t : t, val : val, e:[] } );
+
+				        if( opt(TPClose) ) // ")" end of arguments
+					        break;
+				        ensure(TComma);
+
+                    case TCommented(s,b,t): //comment in between arguments
+                   		add(t);
+                        expr.push(makeECommented(tk, null));
+
+				    case TNL(t):  //newline in between arguments
+				        add(t);
+				        expr.push(ENL(null));
+
+				    default:    
+
 				}
-				var name = id(), t = null, val = null;
-				if( opt(TColon) )
-					t = parseType();
-				if( opt(TOp("=")) )
-					val = parseExpr();
-				f.args.push( { name : name, t : t, val : val } );
-				//dbgln(Std.string({ name : name, t : t, val : val }));
-				if( opt(TPClose) )
-					break;
-				ensure(TComma);
 			}
+
 		if( opt(TColon) )
 			f.ret = parseType();
 		if( peek() == TBrOpen ) {
