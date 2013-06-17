@@ -647,14 +647,7 @@ class Writer
 		// return type
 		if (null == ret)
 			ret = f.ret;
-		if(isNative) {
-			if(isGetter)
-				writeVarType(ret.t, "{}", true);
-			if(isSetter)
-				writeVarType(null, "Void", true);
-		}
-		else
-			writeVarType(ret.t,null,false);
+		writeFunctionReturn(ret, isGetter, isSetter, isNative);
 
 		// ensure the function body is in a block
 		var es = [];
@@ -681,6 +674,37 @@ class Writer
 		}
 		writeExpr(EBlock(es));
 	}
+	
+	/**
+	 * Write the returned typed of a function and all
+	 * comments and newline until opening bracket
+	 */
+    function writeFunctionReturn(ret:FunctionRet, isGetter : Bool, isSetter : Bool, isNative : Bool) {
+        
+        //write return type
+        if(isNative) {
+			if(isGetter)
+				writeVarType(ret.t, "{}", true);
+			if(isSetter)
+				writeVarType(null, "Void", true);
+		}
+		else
+			writeVarType(ret.t,null,false);
+
+        //write comments and newline after return type
+		for (expr in ret.exprs) {
+			switch (expr) {
+				case ENL(e):
+				    writeNL();
+				    writeIndent();
+
+				case ECommented(s,b,t,e):
+				    write(s);    
+
+				default:
+			}
+		}	
+    }
 
 	function writeLoop(incrs:Array<Expr>, f:Void->Void) {
 		var old = loopIncrements;

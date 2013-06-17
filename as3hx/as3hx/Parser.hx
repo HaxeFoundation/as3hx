@@ -1009,8 +1009,18 @@ class Parser {
 				default: unexpected(uncomment(tk));
 				}
 			case TCommented(s,b,t):
-				tk = t;
-				continue;
+			
+			    //this check prevents from losing the comment
+			    //token
+				if (t == TDot) {
+					tk = t;
+					continue;
+				}
+				else {
+					add(tk);
+					break;
+				}
+				
 			default:
 				add(tk);
 				break;
