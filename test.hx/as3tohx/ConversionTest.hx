@@ -26,7 +26,7 @@ import as3tohx.UInt;
  *  This class is marked with final and
  *  should be converted to the Haxe "@:final"
  */
-@:final class Main extends MyClass
+class @:final Main extends MyClass
 {
     public var sampleProperty(get_sampleProperty, set_sampleProperty) : Dynamic;
     
@@ -55,7 +55,8 @@ import as3tohx.UInt;
     
     function set_sampleProperty(value : Dynamic) : Dynamic
     {        
-        _sampleProperty = value;        return value;
+        _sampleProperty = value;        
+        return value;
     }
     
     
@@ -108,8 +109,8 @@ import as3tohx.UInt;
          * white space
          */
         retValue = funcD(paramA, // comment on paramA
-                paramB, paramC, /* comment describing paramB */
-                paramD);        
+                        paramB, paramC, /* comment describing paramB */
+                        paramD);        
         
         
         /**
@@ -119,10 +120,10 @@ import as3tohx.UInt;
          * white space to preserve
          */
         retValue = funcE(valueA + valueB + valueC + // comment on paramA, B, C
-                valueD + valueE + valueF, // comment on paramD, E, F
-                paramA, paramB, /* comment */paramC, /* comment describing paramC */
-                // last comment
-                paramD);        
+                        valueD + valueE + valueF, // comment on paramD, E, F
+                        paramA, paramB, /* comment */paramC, /* comment describing paramC */
+                        // last comment
+                        paramD);        
         
         
         /**
@@ -176,7 +177,7 @@ import as3tohx.UInt;
         {            
             // one nested if
             if (!isResult1) 
-            trace("trace line");
+                trace("trace line");
         }        
         
         /**
@@ -187,11 +188,12 @@ import as3tohx.UInt;
         var value : Int;        
         
         switch (param)
-        {
+        {            
             case 0:            
             {                
                 value = 1;
-            }
+            }            
+            // comment line            
             case funcT(param):            // comment explaining function
             {                
                 // The if statement below tests that
@@ -203,7 +205,14 @@ import as3tohx.UInt;
                 }                
                 
                 value = 2;
-            }
+            }            
+            
+            /*
+             Another comment line
+             which usually disappear when
+             the break is removed and leaves
+             the dangling semicolon
+             */            
             case 1:            
             {                
                 value = 1;                /* comment line1
@@ -218,8 +227,10 @@ import as3tohx.UInt;
                 */
                 
                 value = "string part1" + "string part2" + 
-                "string part3" + "string part4";
-            }
+                        "string part3" + "string part4";
+            }            
+            
+            
             default:                
                 value = 0;
         }        
@@ -238,7 +249,7 @@ import as3tohx.UInt;
     * Also this function is marked as "final" and
     * should be converted to the Haxe "@:final"
     */    
-    @:final public function testPublicMethod3(var1 : Bool, // comment line 1
+    public @:final function testPublicMethod3(var1 : Bool, // comment line 1
             var2 : String,var3 : UInt, /* comment line 2 */
             func4 : Dynamic,var5 : Array<Dynamic>) : Bool // comment line 3
     {        
@@ -261,21 +272,15 @@ import as3tohx.UInt;
     {        
         return true;
     }
-    
-    
-    public function new()
-    {        
-        super();
-    }
 
     public function new()
     {        
-                isResult1 = true;        
-                isResult2 = true;        
-                isResult3 = true;        
-                isResult4 = true;        
-                intVal = 6;        
-                super();
+        isResult1 = true;        
+        isResult2 = true;        
+        isResult3 = true;        
+        isResult4 = true;        
+        intVal = 6;        
+        super();
     }
 }
 
