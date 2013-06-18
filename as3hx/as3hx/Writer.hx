@@ -404,7 +404,7 @@ class Writer
 				args : [],
 				varArgs : null,
 				ret : null,
-				expr : EBlock(((null != c.extend) ? [ECall(EIdent("super"),[])] : []))
+				expr : EBlock(((null != c.extend) ? [ENL(ECall(EIdent("super"),[]))] : []))
 			}, c);
 		}
 	}
@@ -619,7 +619,6 @@ class Writer
 		switch(f.expr)
 		{
 			case EBlock(e):
-			    es.push(ENL(null));
 				// inject instance field values
 				for (field in c.fields)
 				{
@@ -629,8 +628,7 @@ class Writer
 							if (null != val && !isStatic(field.kwds))
 							{
 								var expr = EBinop("=", EIdent(field.name), val);
-								es.push(expr);
-								es.push(ENL(null));
+								es.push(ENL(expr)); //wrap in newline for formatting
 							}
 						default:
 							//
@@ -1146,8 +1144,8 @@ class Writer
 					for (i in 0...params.length)
 					{
 						if (i > 0)
-                                                    write(", ");
-                                                writeExpr(params[i]);
+                            write(", ");
+                        writeExpr(params[i]);
 					}
 					write(")");
 				}
