@@ -1,11 +1,12 @@
 /*
  * Example Copyright Header. All Rights Reserved.
  */
- ////////////////////////////////////////////////////////////////////////////////
- //
- // Example Header different style
- //
- ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//
+// Example Header different style
+//
+////////////////////////////////////////////////////////////////////////////////
+
 /**
  * Below are examples of differently formatted
  * function calls, function definitions, else/if, and switch statements
@@ -16,18 +17,20 @@
  * 
  * Please refer to "conversionTest_golden.hx" as the golden file.
  */
+
 package as3tohx;
 
 // Additional implicit imports...
 import as3tohx.MyClass;
+import as3tohx.UInt;
 
 /**
  *  This class is marked with final and
  *  should be converted to the Haxe "@:final"
  */
-class  @:final Main extends MyClass
+class @:final Main extends MyClass
 {
-    public var sampleProperty(getSampleProperty, setSampleProperty) : Dynamic;
+    public var sampleProperty(get_sampleProperty, set_sampleProperty) : Dynamic;
 
     var isResult1 : Bool = true;
     var isResult2 : Bool = true;
@@ -37,6 +40,7 @@ class  @:final Main extends MyClass
     // the line below is to test assigning a value
     // during variable declaration
     var intVal : Int = 6;
+
     var _sampleProperty : Dynamic;
 
     /**
@@ -44,15 +48,16 @@ class  @:final Main extends MyClass
      * This section tests to make property set / get methods private
      * and make them named with set_ get_ 
      */
-    public function get_SampleProperty() : Dynamic
+
+    public function get_sampleProperty() : Dynamic
     {
         return _sampleProperty;
     }
 
-    public function set_SampleProperty(value : Dynamic) : Dynamic
+    public function set_sampleProperty(value : Dynamic) : Dynamic
     {
-     _sampleProperty = value;
-     return value;
+        _sampleProperty = value;
+        return value;
     }
 
     public function testPublicMethod() : Void
@@ -131,7 +136,7 @@ class  @:final Main extends MyClass
         // simple if with comments
         {
             isResult1 = true;
-        };
+        }
 
         /**
          * if statement:
@@ -196,6 +201,7 @@ class  @:final Main extends MyClass
 
                 value = 2;
             }
+
             /*
              Another comment line
              which usually disappear when
@@ -218,12 +224,14 @@ class  @:final Main extends MyClass
                 value = "string part1" + "string part2" +
                         "string part3" + "string part4";
             }
+
             default:
-                 value = 0;
+                value = 0;
 
         }
         return true;
     }
+
     /**
      * FUNCTION DEFINITION FORMATS
      * Below are two function definitions
@@ -237,7 +245,7 @@ class  @:final Main extends MyClass
      */
     public @:final function testPublicMethod3(var1 : Bool, // comment line 1
             var2 : String, var3 : UInt, /* comment line 2 */
-            func4 : Function, var5 : Array<Dynamic>) : Bool // comment line 3
+            func4 : Dynamic, var5 : Array<Dynamic>) : Bool // comment line 3
     {
         return true;
     }
@@ -246,12 +254,12 @@ class  @:final Main extends MyClass
      * All function arguments are on individual lines
      * with comments inbetween
      */
-    function testPublicMethod5(var1 : Bool,
+    public function testPublicMethod5(var1 : Bool,
             var2 : String,
             // comment line here
             var3 : UInt,
             /* comment line there before 2 white space line above*/
-            func4: Function,
+            func4 : Dynamic,
             /* comment line there before white space*/
             var5 : Array<Dynamic>) : Bool
     {
