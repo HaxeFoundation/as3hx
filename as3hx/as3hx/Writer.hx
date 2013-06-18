@@ -1513,15 +1513,18 @@ class Writer
 					writeTestVar = true;
 					testVar = "_sw"+(varCount++)+"_";
 				}
-				if(def != null && def.length > 0) {
-					switch(def[def.length-1]) {
-						case EBreak(lbl):
-							if(lbl == null) 
-								def.pop(); // remove break
-						default:
+				if(def != null) {
+					if (def.el.length > 0) {
+						switch(def.el[def.el.length-1]) {
+							case EBreak(lbl):
+								if(lbl == null) 
+									def.el.pop(); // remove break
+							default:
+						}
 					}
+					
 				}
-				newCases = loopCases(cases.slice(0), def == null ? null : def.slice(0), testVar, newCases);
+				newCases = loopCases(cases.slice(0), def == null ? null : def.el.slice(0), testVar, newCases);
 
 				if(writeTestVar) {
 					write("var " + testVar + " = ");
@@ -1563,10 +1566,10 @@ class Writer
 					writeNL();
 					writeIndent("default:");
 					lvl++;
-					for (i in 0...def.length)
+					for (i in 0...def.el.length)
 					{
 						writeIndent();
-						writeFinish(writeExpr(def[i]));
+						writeFinish(writeExpr(def.el[i]));
 					}
 					lvl--;
 				}
@@ -2206,7 +2209,7 @@ class Writer
 		
 	}
 
-	function loopCases(cases : Array<{ val : Expr, el : Array<Expr> }>, def: Null<Array<Expr>>, testVar:String, out:Array<CaseDef>) {
+	function loopCases(cases : Array<SwitchCase>, def: Null<Array<Expr>>, testVar:String, out:Array<CaseDef>) {
 		var c : { val : Expr, el : Array<Expr> } = cases.pop();
 		if(c == null)
 			return out;
@@ -2248,7 +2251,7 @@ class Writer
 			var el = c.el.slice(0);
 			if(el.length > 0) {
 				el.push(EBreak(null));
-				nextCase.el.unshift(ESwitch(EParent(EIdent(testVar)), [{val:c.val, el: el}], null));
+				nextCase.el.unshift(ESwitch(EParent(EIdent(testVar)), [{val:c.val, el: el, meta:[]}], null));
 			}
 		} else { 
 			outCase.vals.push(c .val);

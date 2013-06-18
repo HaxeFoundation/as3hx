@@ -1533,20 +1533,45 @@ class Parser {
 			ensure(TPOpen);
 			var e = EParent(parseExpr());
 			ensure(TPClose);
-			var def = null, cl = [];
+
+			var def = null, cl = [], meta = [];
 			ensure(TBrOpen);
-			while( !opt(TBrClose) ) {
-				if( opt(TId("default")) ) {
-					ensure(TColon);
-					def = parseCaseBlock();
-				} else {
-					ensure(TId("case"));
-					var val = parseExpr();
-					ensure(TColon);
-					var el = parseCaseBlock();
-					cl.push( { val : val, el : el } );
+
+            //parse all "case" and "default"
+			while(true) {
+				var tk = token();
+				switch (tk) {
+					case TBrClose: //end of switch
+					    break;
+					case TId(s):
+					    if (s == "default") {
+					    	ensure(TColon);
+							def = { el : parseCaseBlock(), meta : meta };
+					    }
+					    else if (s == "case"){
+					        var val = parseExpr();
+					        ensure(TColon);
+					        var el = parseCaseBlock();
+					        cl.push( { val : val, el : el, meta : meta } );
+                            
+                            //reset for next case or default
+					        meta = [];
+					    }
+					    else {
+					    	unexpected(tk);
+					    }
+					case TNL(t): //keep newline as meta for a case/default
+					    add(t);
+					    meta.push(ENL(null));
+					case TCommented(s,b,t): //keep comment as meta for a case/default
+					    add(t);
+					    meta.push(ECommented(s,b,false,null));        
+
+					default:
+					    unexpected(tk);     
 				}
 			}
+
 			ESwitch(e, cl, def);
 		case "do":
 			var e = parseExpr();

@@ -59,7 +59,7 @@ enum Expr {
 	ETry( e : Expr, catches : Array<{ name : String, t : Null<T>, e : Expr }> );
 	EObject( fl : Array<{ name : String, e : Expr }> );
 	ERegexp( str : String, opts : String );
-	ESwitch( e : Expr, cases : Array<{ val : Expr, el : Array<Expr> }>, def : Null<Array<Expr>> );
+	ESwitch( e : Expr, cases : Array<SwitchCase>, def : Null<SwitchDefault>);
 	EVector( t : T ); // Vector.<T> call
 	EE4XDescend( e1 : Expr, e2 : Expr ); // e1..childNode
 	EE4XAttr( e1 : Expr, e2 : Expr ); // e1.@e2, e1.@["foo"], e1["@foo"]
@@ -133,6 +133,17 @@ typedef NamespaceDef = {
 	var kwds : Array<String>;
 	var name : String;
 	var value : String;
+}
+
+typedef SwitchCase = {
+	var val : Expr;
+	var el : Array<Expr>;
+	var meta : Array<Expr>;
+}
+
+typedef SwitchDefault = {
+	var el : Array<Expr>;
+	var meta : Array<Expr>;
 }
 
 enum Definition {
