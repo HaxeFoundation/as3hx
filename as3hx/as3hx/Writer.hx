@@ -678,7 +678,6 @@ class Writer
 		// haxe setters must return the provided type
 		if(isSetter && !isNative && f.args.length == 1) {
 			es.push(ENL(EReturn(EIdent(f.args[0].name))));
-			neko.Lib.print(es);
 		}
 		writeExpr(EBlock(es));
 	}
@@ -1033,16 +1032,24 @@ class Writer
 				}
 				else { // op e1 e2
 
+                   
 					var oldInLVA = inLvalAssign;
 					rvalue = e2;
 					if(op == "=")
 						inLvalAssign = true;
+						
 					switch(e1) {
 					case EIdent(s):
 						writeModifiedIdent(s);
 					default:
 						writeExpr(e1);
 					}
+                     
+                    //for right part of indenting, add 2 extra
+                    //indenting level if spead on multiple lines
+					if (op == "=")
+					    lvl += 2;
+
 					inLvalAssign = oldInLVA;
 					if(rvalue != null) {
 						write(" " + op + " ");
@@ -1053,6 +1060,10 @@ class Writer
 							writeExpr(e2);
 						}
 					}
+                     
+                    if (op == "=")
+                        lvl -= 2; 
+					
 				}
 			case EUnop( op, prefix, e ):
 				if (prefix)
