@@ -38,6 +38,7 @@ enum BlockEnd {
 typedef CaseDef = {
 	var vals : Array<Expr>;
 	var el : Array<Expr>;
+	var meta : Array<Expr>;
 }
 
 /**
@@ -1535,7 +1536,7 @@ class Writer
 				
 				lvl++;
 				for(c in newCases) {
-					writeNL();
+					writeMetaData(c.meta); //write commnent and newline before "case"
 					writeIndent("case ");
 					for(i in 0...c.vals.length) {
 						write(i>0 ? ", " : "");
@@ -1563,7 +1564,7 @@ class Writer
 				}
 				if (def != null)
 				{
-					writeNL();
+					writeMetaData(def.meta); //write commnent and newline before "default"
 					writeIndent("default:");
 					lvl++;
 					for (i in 0...def.el.length)
@@ -2210,13 +2211,14 @@ class Writer
 	}
 
 	function loopCases(cases : Array<SwitchCase>, def: Null<Array<Expr>>, testVar:String, out:Array<CaseDef>) {
-		var c : { val : Expr, el : Array<Expr> } = cases.pop();
+		var c : { val : Expr, el : Array<Expr>, meta : Array<Expr> } = cases.pop();
 		if(c == null)
 			return out;
 
 		var outCase = {
 			vals: new Array(),
-			el : new Array()
+			el : new Array(),
+			meta : new Array()
 		};
 
 		var falls = false;
@@ -2257,6 +2259,8 @@ class Writer
 			outCase.vals.push(c .val);
 			for(e in c.el)
 				outCase.el.push(e);
+			for(m in c.meta)
+				outCase.meta.push(m);	
 			if(falls) {
 				// last case before default, add default code since this case has no break
 				if(def != null)
