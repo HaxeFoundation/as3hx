@@ -677,7 +677,8 @@ class Writer
 		}
 		// haxe setters must return the provided type
 		if(isSetter && !isNative && f.args.length == 1) {
-			es.push(EReturn(EIdent(f.args[0].name)));
+			es.push(ENL(EReturn(EIdent(f.args[0].name))));
+			neko.Lib.print(es);
 		}
 		writeExpr(EBlock(es));
 	}
@@ -2311,7 +2312,7 @@ class Writer
 		switch(cond) {
 		case None:
 		case Semi: write(";");
-		case Ret: write("");
+		case Ret:
 		}
 	}
 
