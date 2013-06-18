@@ -1147,6 +1147,27 @@ class Writer
 				else
 					writeExpr(cond);
 				write(") ");
+
+                //check if if expr is one line
+                //with no block bracket
+				if (isOneLiner(e1)) {
+					switch (e1) {
+						//if it is, start a new line
+						//if present in formatting
+						case ENL(e): 
+						    writeNL();
+						    e1 = e;
+						default:    
+					}
+                    
+                    //add extra level of indent for
+                    //teh one liner
+					lvl += 1;
+					writeIndent();
+					lvl -= 1;
+				}
+
+				
 				writeExpr(e1);
 				if (e2 != null)
 				{
@@ -1978,6 +1999,27 @@ class Writer
 
 		    default: Semi;
 	    }
+	}
+
+    /**
+     * Return wether the expression contained in an
+     * "if" statement is a one liner with no block bracket  
+     */
+	function isOneLiner(e : Expr) : Bool
+	{
+		return switch (e) {
+			case ENL(e): //ignore newline
+			    return isOneLiner(e);
+
+            case ECommented(s,b,t,e): //ignore comment
+                return isOneLiner(e);
+
+            case EBlock(e): //it is a regular block
+                return false;
+
+            default: //if it begins with anything but a block, one liner
+                return true;
+		}
 	}
 
 	/**
