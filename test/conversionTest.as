@@ -266,10 +266,5 @@ package as3tohx
         {
             return true;
         }
-
-        public function new()
-        {
-            super();
-        }
     }
 }
