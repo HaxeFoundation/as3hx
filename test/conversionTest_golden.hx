@@ -69,7 +69,7 @@ class @:final Main extends MyClass
          * function call formats with
          * comments inbetween
          */
-         
+
         /**
          * Function call: Simple function call
          * with all parameters on the same
@@ -102,6 +102,7 @@ class @:final Main extends MyClass
                 paramC,
                 paramD);   // one more comment
 
+
         /**
          * Function call: Parameters across different
          * lines, with comments interspersed and
@@ -110,6 +111,7 @@ class @:final Main extends MyClass
         retValue = funcD(paramA,  // comment on paramA
                 paramB, paramC, /* comment describing paramB */
                 paramD);
+
 
         /**
          * Function call: Parameters across different
@@ -122,6 +124,7 @@ class @:final Main extends MyClass
                 paramA, paramB, /* comment */ paramC, /* comment describing paramC */
                 // last comment
                 paramD);
+
 
         /**
           * IF / ELSE IF STATEMENTS
