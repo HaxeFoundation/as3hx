@@ -908,7 +908,6 @@ class Writer
                     lvl++;
                     for (ex in e)
                     {
-                        writeIndent();
                         writeFinish(writeExpr(ex));
                     }
                     lvl--;
@@ -1567,7 +1566,6 @@ class Writer
 
                     for (i in 0...c.el.length)
                     {
-                        writeIndent();
                         writeFinish(writeExpr(c.el[i]));
                     }
                     if (didIndent)
@@ -1580,7 +1578,6 @@ class Writer
                     lvl++;
                     for (i in 0...def.el.length)
                     {
-                        writeIndent();
                         writeFinish(writeExpr(def.el[i]));
                     }
                     lvl--;
