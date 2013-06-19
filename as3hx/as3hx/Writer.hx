@@ -523,7 +523,7 @@ class Writer
                         writeFunction(f, isGetter(field.kwds), isSetter(field.kwds), false, name, ret);
                     }
                 }
-                if(!isInterface) writeNL();
+                
             case FComment:
                 //writeComments(field.meta);
                 null;
