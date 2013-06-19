@@ -6,6 +6,7 @@
 // Example Header different style
 //
 ////////////////////////////////////////////////////////////////////////////////
+
 /**
  * Below are examples of differently formatted
  * function calls, function definitions, else/if, and switch statements
@@ -16,6 +17,7 @@
  *
  * Please refer to "conversionTest_golden.hx" as the golden file.
  */
+
 package as3tohx;
 
 // Additional implicit imports...
@@ -48,20 +50,18 @@ class @:final Main extends MyClass
      */    
     
     function get_sampleProperty() : Dynamic
-    {        
+    {
         return _sampleProperty;
-    }
-    
+    }    
     
     function set_sampleProperty(value : Dynamic) : Dynamic
-    {        
-        _sampleProperty = value;        
+    {
+        _sampleProperty = value;
         return value;
-    }
-    
+    }    
     
     public function testPublicMethod() : Void
-    {        
+    {
         /**
          * FUNCTION CALLS
          *
@@ -80,7 +80,7 @@ class @:final Main extends MyClass
          * @param paramC    dummy parameter C
          * @param paramD    dummy parameter D
          */
-        funcA(paramA, paramB, paramC, paramD);        
+        funcA(paramA, paramB, paramC, paramD);
         
         //
         // Function call: Each parameter on a
@@ -90,7 +90,7 @@ class @:final Main extends MyClass
         funcB(paramA, 
                 paramB, 
                 paramC, 
-                paramD);        
+                paramD);
         
         /**
          * Function call: Each parameter on a
@@ -100,7 +100,7 @@ class @:final Main extends MyClass
         funcC(paramA, // comment on paramA
                 paramB, /* comment describing paramB */
                 paramC, 
-                paramD);        // one more comment
+                paramD);// one more comment
         
         
         /**
@@ -110,7 +110,7 @@ class @:final Main extends MyClass
          */
         retValue = funcD(paramA, // comment on paramA
                         paramB, paramC, /* comment describing paramB */
-                        paramD);        
+                        paramD);
         
         
         /**
@@ -123,7 +123,7 @@ class @:final Main extends MyClass
                         valueD + valueE + valueF, // comment on paramD, E, F
                         paramA, paramB, /* comment */paramC, /* comment describing paramC */
                         // last comment
-                        paramD);        
+                        paramD);
         
         
         /**
@@ -138,9 +138,9 @@ class @:final Main extends MyClass
          */
         if (isResult1) 
         // simple if with comments
-        {            
+        {
             isResult1 = true;
-        }        
+        }
         
         
         /**
@@ -148,25 +148,25 @@ class @:final Main extends MyClass
          * series of else if statements with comments
          */
         if (isResult1) 
-        {            
+        {
             // comment within if
             isResult1 = true;
         }
         // comment line
         else if (isResult2) 
-        {            
-            trace("trace line");            
+        {
+            trace("trace line");
             
             // Testing nested else/if statements
             
             if (isResult3) 
-            {                
+            {
                 // Testing that "map.hasOwnProperty(xxx)" is
                 // replaced with "map.exists(xxx)"
                 value = map.hasOwnProperty(myClass);
             }
             else if (isResult4) 
-            {                
+            {
                 // Testing that "hasAnyProperties(map)" is
                 // replaced with "map.keys().hasNext()"
                 value = hasAnyProperties(map);
@@ -174,35 +174,35 @@ class @:final Main extends MyClass
         }
         /* comment line */
         else if (isResult3) // coment at the end of the line
-        {            
+        {
             // one nested if
             if (!isResult1) 
                 trace("trace line");
-        }        
+        }
         
         /**
          * SWITCH STATEMENT
          * Below is a switch with some comment variations
          * interspersed inbetween cases and white space
          */
-        var value : Int;        
+        var value : Int;
         
         switch (param)
         {            
-            case 0:            
-            {                
+            case 0:
+            {
                 value = 1;
             }            
             // comment line            
-            case funcT(param):            // comment explaining function
-            {                
+            case funcT(param):// comment explaining function
+            {
                 // The if statement below tests that
                 // 'if (obj)' is converted into 'if (obj != null)'
                 
                 if (obj) 
-                {                    
+                {
                     trace("trace line");
-                }                
+                }
                 
                 value = 2;
             }            
@@ -213,12 +213,12 @@ class @:final Main extends MyClass
              the break is removed and leaves
              the dangling semicolon
              */            
-            case 1:            
-            {                
-                value = 1;                /* comment line1
+            case 1:
+            {
+                value = 1;/* comment line1
                    comment line2
                    comment line3 */
-                value = 2;                
+                value = 2;
                 /*
                 // the lines below tests if the converter
                 // can correctly handle concatenated values
@@ -230,13 +230,11 @@ class @:final Main extends MyClass
                         "string part3" + "string part4";
             }            
             
-            
-            default:                
+            default:
                 value = 0;
-        }        
+        }
         return true;
-    }
-    
+    }    
     
     /**
     * FUNCTION DEFINITION FORMATS
@@ -252,10 +250,9 @@ class @:final Main extends MyClass
     public @:final function testPublicMethod3(var1 : Bool, // comment line 1
             var2 : String,var3 : UInt, /* comment line 2 */
             func4 : Dynamic,var5 : Array<Dynamic>) : Bool // comment line 3
-    {        
+    {
         return true;
-    }
-    
+    }    
     
     /**
     * All function arguments are on individual lines
@@ -269,17 +266,17 @@ class @:final Main extends MyClass
             func4 : Dynamic,
              /* comment line there before white space*/
             var5 : Array<Dynamic>) : Bool
-    {        
+    {
         return true;
     }
 
     public function new()
-    {        
-        isResult1 = true;        
-        isResult2 = true;        
-        isResult3 = true;        
-        isResult4 = true;        
-        intVal = 6;        
+    {
+        isResult1 = true;
+        isResult2 = true;
+        isResult3 = true;
+        isResult4 = true;
+        intVal = 6;
         super();
     }
 }
