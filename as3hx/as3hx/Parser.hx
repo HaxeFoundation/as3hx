@@ -397,7 +397,7 @@ class Parser {
         // look for first 'package'
         var tk = token();
         var a = explodeComment(tk);
-        
+
         for(t in a) {
             switch(t) {
             case TId(s):
@@ -1549,6 +1549,7 @@ class Parser {
                         if (s == "default") {
                             ensure(TColon);
                             def = { el : parseCaseBlock(), meta : meta };
+                            meta = [];
                         }
                         else if (s == "case"){
                             var val = parseExpr();
@@ -1573,7 +1574,7 @@ class Parser {
                         unexpected(tk);     
                 }
             }
-
+            
             ESwitch(e, cl, def);
         case "do":
             var e = parseExpr();
