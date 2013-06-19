@@ -204,6 +204,7 @@ class Parser {
                 a.push(TCommented(s,b,null));
                 f(t2);
             case TNL(t):
+                a.push(TNL(null));
                 f(t);
             default:
                 a.push(t);
@@ -334,6 +335,7 @@ class Parser {
                     case TCommented(s,b,t2):
                         if(t2 != null) throw "Assert error";
                         t = TCommented(s,b,t);
+                    case TNL(t):    
                     default: throw "Assert error";
                     }
                     l--;
@@ -395,7 +397,7 @@ class Parser {
         // look for first 'package'
         var tk = token();
         var a = explodeComment(tk);
-
+        
         for(t in a) {
             switch(t) {
             case TId(s):

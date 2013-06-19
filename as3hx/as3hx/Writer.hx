@@ -132,7 +132,7 @@ class Writer
         for(c in comments) {
             switch(c) {
             case ECommented(s,b,t,e):
-                writeNL(indent() + formatComment(s,b));
+                write(indent() + formatComment(s,b));
                 if (e != null) {
                     switch (e) {
                         case ECommented(_):
@@ -397,6 +397,7 @@ class Writer
         {
             addWarning("Required constructor was added for member var initialization");
             writeNL();
+            writeNL();
             writeIndent();
             write("public ");
             writeConstructor({
@@ -523,7 +524,7 @@ class Writer
                         writeFunction(f, isGetter(field.kwds), isSetter(field.kwds), false, name, ret);
                     }
                 }
-                
+
             case FComment:
                 //writeComments(field.meta);
                 null;
