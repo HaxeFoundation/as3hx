@@ -138,6 +138,7 @@ class @:final Main extends MyClass
             isResult1 = true;
         }
 
+
         /**
          * if statement:
          * series of else if statements with comments
