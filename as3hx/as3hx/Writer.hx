@@ -1937,7 +1937,7 @@ class Writer
             if(id == "null")
                 return null;
             var t = getExprType(e);
-            if(t == null || t == "Bool" || t == "Dynamic")
+            if(t == null || t == "Bool")
                 return null;
             if(isNumericType(t))
                 return EBinop("!=", e, EConst(CInt("0")));

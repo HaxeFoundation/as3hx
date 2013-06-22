@@ -199,7 +199,8 @@ class @:final Main extends MyClass
                 // The if statement below tests that
                 // 'if (obj)' is converted into 'if (obj != null)'
 
-                if (obj) 
+                var obj : Dynamic = {};
+                if (obj != null) 
                 {
                     trace("trace line");
                 }

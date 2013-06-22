@@ -194,6 +194,7 @@ package as3tohx
                     // The if statement below tests that
                     // 'if (obj)' is converted into 'if (obj != null)'
 
+                    var obj : Object = {};
                     if (obj)
                     {
                         trace("trace line");
