@@ -2251,16 +2251,16 @@ class Writer
                         var c = p.join(".");
                         switch (c) {
                             case "String":
-                                return "Hash<" + tstring(v) + ">";
+                                return "Map<String, " + tstring(v) + ">";
                             case "int", "uint":
-                                return "IntHash<" + tstring(v) + ">";
+                                return "Map<Int, " + tstring(v) + ">";
                             case "Object":
-                                return "DynamicHash<" + tstring(v) + ">";
+                                return "Map<Dynamic, " + tstring(v) + ">";
                         }
                     default:
                         null;// continue below
                 }
-                return "ObjectHash<" + tstring(k) + ", " + tstring(v) + ">";
+                return "Map<" + tstring(k) + ", " + tstring(v) + ">";
         }
     }
     
