@@ -79,7 +79,7 @@ class Writer
         var doNotImportClasses = [
             "Array", "Bool", "Boolean", "Class", "Date",
             "Dynamic", "EReg", "Enum", "EnumValue",
-            "Float", "Hash", "Int", "IntHash", "IntIter",
+            "Float", "Map", "Int", "IntIter",
             "Lambda", "List", "Math", "Number", "Reflect",
             "RegExp", "Std", "String", "StringBuf",
             "StringTools", "Sys", "Type", "Void",
@@ -97,9 +97,6 @@ class Writer
         for (c in nmeErrorsClasses) {
             this.typeImportMap.set(c, "nme.errors." + c);
         }
-
-        this.typeImportMap.set("ObjectHash", "nme.ObjectHash");
-        this.typeImportMap.set("DynamicHash", "com.tivo.core.ds.DynamicHash");
     }
 
     /**
@@ -476,7 +473,7 @@ class Writer
                     write(" = ");
                     writeExpr(val);
                 }
-                
+
                 write(";");
             case FFun( f ):
                 if (field.name == c.name)
@@ -1269,17 +1266,17 @@ class Writer
                         writeExpr(ev);
                 }
                 var t = getExprType(e);
-                var regexpHash:EReg = ~/^(Object|Int)?Hash<([^,]*, *)?(.*)>$/;
+                var regexpMap:EReg = ~/^Map<([^,]*, *)?(.*)>$/;
                 var regexpArray:EReg = ~/^Array<(.*)>$/;
                 if(varName == null) {
                     write("/* AS3HX ERROR varName is null in expression " + e);
                 } else if(t == "FastXML" || t == "FastXMLList") {
                     context.set(varName, t);
-                } else if (t != null && regexpHash.match(t)) {
+                } else if (t != null && regexpMap.match(t)) {
                     if (cfg.debugInferredType) {
-                        write("/* inferred type: " + regexpHash.matched(3) + " */" );
+                        write("/* inferred type: " + regexpMap.matched(3) + " */" );
                     }
-                    context.set(varName, regexpHash.matched(3));
+                    context.set(varName, regexpMap.matched(3));
                 } else if (t != null && regexpArray.match(t)) {
                     if (cfg.debugInferredType) {
                         write("/* inferred type: " + regexpArray.matched(1) + " */" );
@@ -1308,14 +1305,14 @@ class Writer
             case EForIn( ev, e, block ):
                 openContext();
                 var etype = getExprType(e);
-                var regexp:EReg = ~/^(Object|Int)?Hash<([^,]*)?,?.*>$/;
-                var isHash:Bool = etype != null && regexp.match(etype);
+                var regexp:EReg = ~/^Map<([^,]*)?,?.*>$/;
+                var isMap:Bool = etype != null && regexp.match(etype);
                 write("for (");
                 switch(ev) {
                     case EVars(vars):
                         if(vars.length == 1 && vars[0].val == null) {
                             write(vars[0].name);
-                            if (!isHash || regexp.matched(1) == null) {
+                            if (!isMap || regexp.matched(1) == null) {
                                 context.set(vars[0].name, "String");
                             } else if (regexp.matched(1) == "Int") {
                                 context.set(vars[0].name, "Int");
@@ -1332,7 +1329,7 @@ class Writer
                         writeExpr(ev);
                 }
                 write(" in ");
-                if (isHash) {
+                if (isMap) {
                     writeExpr(e);
                     write(".keys()");
                 } else {
@@ -1375,11 +1372,7 @@ class Writer
                     write(".get(");
                     writeExpr(index);
                     write(")");
-                } else if (etype != null &&
-                        (StringTools.startsWith(etype, "Hash") ||
-                        StringTools.startsWith(etype, "ObjectHash") ||
-                        StringTools.startsWith(etype, "DynamicHash") ||
-                        StringTools.startsWith(etype, "IntHash"))) {
+                } else if (etype != null && StringTools.startsWith(etype, "Map")) {
                     writeExpr(e);
                     inArrayAccess = old;
                     var oldInLVA = inLvalAssign;
@@ -1666,11 +1659,7 @@ class Writer
                 switch(e) {
                     case EArray(a, i):
                         var atype = getExprType(a);
-                        if (atype != null &&
-                                (StringTools.startsWith(atype, "Hash") ||
-                                 StringTools.startsWith(atype, "ObjectHash") ||
-                                 StringTools.startsWith(atype, "DynamicHash") ||
-                                 StringTools.startsWith(atype, "IntHash"))) {
+                        if (atype != null && StringTools.startsWith(atype, "Map")) {
                             writeExpr(a);
                             write(".remove(");
                             writeExpr(i);
@@ -2191,18 +2180,7 @@ class Writer
             case "void":    return null;
             default:    return fixCase ? properCase(c,true) : c;
             }
-        case TDictionary(k, v):
-            switch (k) {
-            case TPath(p):
-                var c = p.join(".");
-                switch (c) {
-                case "String":      return "Hash";
-                case "int", "uint": return "IntHash";
-                case "Object":     return "DynamicHash";
-                }
-            default: null;  // continue below
-            }
-            return "ObjectHash";
+        case TDictionary(k, v): return null;
         }
     }
     
