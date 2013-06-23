@@ -248,7 +248,6 @@ class Writer
         if(data == null)
             return;
         for(d in data) {
-            //writeIndent();
             switch(d) {
             case EMeta(_):
                 writeExpr(d);
@@ -283,7 +282,7 @@ class Writer
         for (i in c.implement)
             parents.push("implements " + tstring(i));
         if(parents.length > 0)
-            buf.add(" " + parents.join(", "));
+            buf.add(" " + parents.join(" "));
         buf.add(openb());
         writeLine(buf.toString());
         lvl++;
