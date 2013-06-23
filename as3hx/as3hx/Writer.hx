@@ -470,23 +470,13 @@ class Writer
                 write("var " + field.name);
                 writeVarType(t);
                 context.set(field.name, tstring(t, false));
+
+                //initialise class property
                 if(val != null) {
-                    //field vars can only be initialised with constant values
-                    switch(val) {
-                        case EConst(const):
-                            write(" = ");
-                            writeExpr(val);
-
-                        case EIdent(id):
-                            //field var is initialised with a bool
-                            if(id == "true" || id == "false") {
-                                write(" = ");
-                                writeExpr(val);
-                            }
-
-                        default:    
-                    }
+                    write(" = ");
+                    writeExpr(val);
                 }
+                
                 write(";");
             case FFun( f ):
                 if (field.name == c.name)
