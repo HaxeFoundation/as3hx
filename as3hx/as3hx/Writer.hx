@@ -2037,7 +2037,7 @@ class Writer
                         
                         //there should be one and only one identifier param
                         var paramIdent = getIdentString(params[0]);
-                        if (pramIdent != null ) {
+                        if (paramIdent != null ) {
                             var keysExpr =  ECall(EField(EIdent(paramIdent), "keys"), []);
                             var rebuiltExpr = EField(keysExpr, "hasNext");
                             rebuiltCall = { e : rebuiltExpr, params : [] };
