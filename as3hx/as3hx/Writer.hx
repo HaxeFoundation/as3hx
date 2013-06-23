@@ -248,14 +248,15 @@ class Writer
         if(data == null)
             return;
         for(d in data) {
-            writeIndent();
+            //writeIndent();
             switch(d) {
             case EMeta(_):
                 writeExpr(d);
             case ECommented(s,b,t,e):
                 writeExpr(d);
             case ENL(e):
-                writeNL();  
+                writeNL(); 
+                writeIndent();
             default:
                 throw "Unexpected " + d;
             }
@@ -432,7 +433,6 @@ class Writer
                 writeNL(isFlashNative ? "#if flash" : "#else");
                 //writeNL("");
             }
-            writeIndent();
 
             if(isFlashNative) {
                 if(isGet) {
@@ -596,7 +596,7 @@ class Writer
                             pendingComma = false;
                             write(",");
                         }
-                        write(" "+s);
+                        write(s);
                     
                     default:
 
@@ -705,7 +705,7 @@ class Writer
                     writeIndent();
 
                 case ECommented(s,b,t,e):
-                    write(" "+s);    
+                    write(s);    
 
                 default:
             }
@@ -1554,7 +1554,7 @@ class Writer
                 lvl++;
                 for(c in newCases) {
                     writeMetaData(c.meta); //write commnent and newline before "case"
-                    writeIndent("case ");
+                    write("case ");
                     for(i in 0...c.vals.length) {
                         write(i>0 ? ", " : "");
                         writeExpr(c.vals[i]);
@@ -1581,7 +1581,7 @@ class Writer
                 if (def != null)
                 {
                     writeMetaData(def.meta); //write commnent and newline before "default"
-                    writeIndent("default:");
+                    write("default:");
                     lvl++;
                     for (i in 0...def.el.length)
                     {
