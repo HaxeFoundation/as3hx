@@ -1075,6 +1075,13 @@ class Writer
             case ECall( e, params ):
                 //write("/*ECall " + e + "(" + params + ")*/\n");
 
+                //rebuild call expr if necessary
+                var eCall = rebuildCallExpr(e, params);
+                if (eCall != null) {
+                    e = eCall.e;
+                    params = eCall.params;
+                }
+
                 //func call use 2 levels of indentation if
                 //spread on multiple lines
                 lvl += 2;
@@ -1988,6 +1995,58 @@ class Writer
         default:
         }
         return null;
+    }
+
+    /**
+     * Reconstruct a call expression before writing it if necessary. Used
+     * for example to replace some ActionScript built-in method be Haxe ones.
+     * 
+     * This is TiVo specific code
+     * 
+     * @return the new expression, or null if no change were needed
+     */
+    function rebuildCallExpr(e : Expr, params : Array<Expr>) : {e : Expr, params : Array<Expr> } {
+        
+        var rebuiltCall = null;
+
+        //utils returning the ident string of an
+        //expr or null if the expr is not an ident
+        var getIdentString = function(expr) {
+            return switch (expr) {
+                case EIdent(v):
+                    v;
+                default:
+                    null;
+            }
+        }
+
+        switch (e) {
+            case EField(e, f):
+                //replace "hasAnyProperty(myVar)" by "myVar.keys().hasNext()"
+                // "myVar" is assumed to be an iterable
+                if (f == "hasOwnProperty") {
+                    var rebuiltExpr = EField(e, "exists");
+                    rebuiltCall = {e : rebuiltExpr, params : params};
+                }
+
+            default:
+                //replace "myVar.hasOwnProperty(myProperty)" by "myVar.exists(myProperty)"
+                var ident = getIdentString(e);
+                if (ident != null) {
+                    if (ident == "hasAnyProperties" && params.length == 1) {
+                        
+                        //there should be one and only one identifier param
+                        var paramIdent = getIdentString(params[0]);
+                        if (pramIdent != null ) {
+                            var keysExpr =  ECall(EField(EIdent(paramIdent), "keys"), []);
+                            var rebuiltExpr = EField(keysExpr, "hasNext");
+                            rebuiltCall = { e : rebuiltExpr, params : [] };
+                        }
+                    }
+                }
+        }
+
+        return rebuiltCall;
     }
 
     /**
