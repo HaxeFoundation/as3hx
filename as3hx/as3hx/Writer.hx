@@ -1042,7 +1042,16 @@ class Writer
 
                     inLvalAssign = oldInLVA;
                     if(rvalue != null) {
-                        write(" " + op + " ");
+                        write(" " + op);
+
+                        //minor formatting fix, if right expression starts
+                        //with a newline or comment, no need for extra 
+                        switch (e2) {
+                            case ECommented(s,b,t,e):
+                            case ENL(e):
+                            default:write(" ");
+                        }
+
                         switch(e2) {
                         case EIdent(s):
                             writeModifiedIdent(s);
@@ -1142,8 +1151,18 @@ class Writer
                     write("(");
                     for (i in 0...params.length)
                     {
-                        if (i > 0)
-                            write(", ");
+                        if (i > 0) {
+                        	write(",");
+                            
+                            //minor formatting fix, if arg is newline or 
+                            //comment, no need for extra 
+                            switch (params[i]) {
+                                case ECommented(s,b,t,e):
+                                case ENL(e):
+                                default:write(" ");
+                            }
+                        }
+                       
                         writeExpr(params[i]);
                     }
                     write(")");
