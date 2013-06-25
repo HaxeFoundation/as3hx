@@ -163,13 +163,13 @@ class @:final Main extends MyClass
             {
                 // Testing that "map.hasOwnProperty(xxx)" is
                 // replaced with "map.exists(xxx)"
-                value = map.hasOwnProperty(myClass);
+                value = map.exists(myClass);
             }
             else if (isResult4) 
             {
                 // Testing that "hasAnyProperties(map)" is
                 // replaced with "map.keys().hasNext()"
-                value = hasAnyProperties(map);
+                value = map.keys().hasNext();
             }
         }
         /* comment line */
