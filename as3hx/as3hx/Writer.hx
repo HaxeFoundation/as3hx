@@ -1156,7 +1156,7 @@ class Writer
                     writeExpr(rb);
                 else
                     writeExpr(cond);
-                write(") ");
+                write(")");
 
                 //check if if expr is one line
                 //with no block bracket
