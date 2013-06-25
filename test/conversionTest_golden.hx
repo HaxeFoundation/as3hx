@@ -24,12 +24,76 @@ package as3tohx;
 import as3tohx.MyClass;
 import as3tohx.UInt;
 
+import haxe.ds.IntMap; 
+import haxe.ds.StringMap; 
+
 /**
  *  This class is marked with final and
  *  should be converted to the Haxe "@:final"
  */
-class @:final Main extends MyClass
+class @:final Main extends MyClass implements ILayerView
 {
+    static public var someMonths : Array<Dynamic>= [ "January", "February", "March" ];
+    static public var someDay : Array<Dynamic>= [ "January", 1, 1970, "AD" ]; 
+
+    var mIntKeyMap : Map<Int, ValueClass>;
+    var mStringKeyMap : Map<String, ValueClass>;
+    var mObjectKeyMap : Map<KeyClass, ValueClass>;
+    var mMapOfArray : Map<Int, Array<AnotherClass>>;
+    var mMapOfMap : haxe.ds.IntMap<haxe.ds.StringMap<AnotherClass>>;
+
+    public var intKeyMap (get_intKeyMap, never) : Map<Int, ValueClass>;
+    public var stringKeyMap (get_stringKeyMap, never) : Map<String, ValueClass>;
+    public var objectKeyMap (get_objectKeyMap, never) : Map<KeyClass, ValueClass>;
+    public var mapOfArray (get_mapOfArray, never) : Map<Int, Array<AnotherClass>>;
+    public var mapOfMap (get_mapOfMap, never) : haxe.ds.IntMap<haxe.ds.StringMap<AnotherClass>>;
+   
+    public function get_intKeyMap() : Map<Int, ValueClass>
+    {
+       if (mIntKeyMap == null) 
+       {
+          mIntKeyMap = new Map<Int, ValueClass>();
+       }
+       return mIntKeyMap;
+    }
+
+    public function get_stringKeyMap() : Map<String, ValueClass>
+    {
+       if (mStringKeyMap == null) 
+       {
+          mStringKeyMap = new Map<String, ValueClass>();
+       }
+       return mStringKeyMap;
+    }
+
+    public function get_objectKeyMap() : Map<KeyClass, ValueClass>
+    {
+       if (mObjectKeyMap == null) 
+       {
+          mObjectKeyMap = Map<KeyClass, ValueClass>();
+       }
+      
+       return mObjectKeyMap;
+    }
+
+    public function get_mapOfArray() : Map<Int, Array<AnotherClass>>
+    {
+       if (mMapOfArray == null) 
+       {
+          mMapOfArray = new Map<Int, Array<AnotherClass>>();
+       }
+       return mMapOfArray;
+    }
+
+    public function get_mapOfMap() : haxe.ds.IntMap<haxe.ds.StringMap<AnotherClass>>
+    {
+       if (mMapOfMap == null) 
+       {
+          mMapOfMap = new haxe.ds.IntMap<haxe.ds.StringMap<AnotherClass>>();
+       }
+       return mMapOfMap;
+    }
+
     public var sampleProperty(get_sampleProperty, set_sampleProperty) : Dynamic;
 
     var isResult1 : Bool = true;

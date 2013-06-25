@@ -24,8 +24,57 @@ package as3tohx
      *  This class is marked with final and
      *  should be converted to the Haxe "@:final"
      */
-    public final class Main extends myClass
+    public final class Main extends myClass implements ISomeInterface
     {
+        static public var someMonths  : Array = [ "January", "February", "March" ];
+        static public var someDay     : Array = [ "January", 1, 1970, "AD" ]; 
+
+        private var mIntKeyMap:Dictionary/*.<Int, ValueClass>*/ = null;
+        private var mStringKeyMap:Dictionary/*.<String, ValueClass>*/ = null;
+        private var mObjectKeyMap:Dictionary/*.<KeyClass, ValueClass>*/ = null;
+        private var mMapOfArray:Dictionary/*.<Int, Vector.<AnotherClass>>*/ = null;
+        private var mMapOfMap:Dictionary/*.<Int, Dictionary.<String, AnotherClass>>*/ = null;
+
+        public final function get intKeyMap():Dictionary/*.<Int, ValueClass>*/
+        {
+            if (mIntKeyMap == null) {
+                mIntKeyMap = new Dictionary/*.<Int, ValueClass>*/();
+            }
+            return mIntKeyMap;
+        }
+
+        public final function get stringKeyMap():Dictionary/*.<String, ValueClass>*/
+        {
+            if (mStringKeyMap == null) {
+                mStringKeyMap = new Dictionary/*.<String, ValueClass>*/();
+            }
+            return mStringKeyMap;
+        }
+
+        public final function get objectKeyMap():Dictionary/*.<KeyClass, ValueClass>*/
+        {
+            if (mObjectKeyMap == null) {
+                mObjectKeyMap = new Dictionary/*.<KeyClass, ValueClass>*/();
+            }
+            return mObjectKeyMap;
+        }
+
+        public final function get mapOfArray():Dictionary/*.<Int, Vector.<AnotherClass>>*/
+        {
+            if (mMapOfArray == null) {
+                mMapOfArray = new Dictionary/*.<Int, Vector.<AnotherClass>>*/();
+            }
+            return mMapOfArray;
+        }
+
+        public final function get mapOfMap():Dictionary/*.<Int, Dictionary.<String, AnotherClass>>*/
+        {
+            if (mMapOfMap == null) {
+                mMapOfMap = new Dictionary/*.<Int, Dictionary.<String, AnotherClass>>*/();
+            }
+            return mMapOfMap;
+        }
+
         var isResult1: Boolean = true;
         var isResult2: Boolean = true;
         var isResult3: Boolean = true;
