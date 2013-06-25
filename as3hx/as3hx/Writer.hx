@@ -62,6 +62,7 @@ class Writer
     var inLvalAssign : Bool; // current expr is lvalue in assignment (expr = valOfSomeSort)
     var rvalue : Expr;
     var typeImportMap : Map<String,String>;
+    var lineIsDirty : Bool; // current line contains some non-whitespace/indent characters
     
     public function new(config:Config)
     {
@@ -73,6 +74,7 @@ class Writer
         this.inArrayAccess = false;
         this.inE4XFilter = false;
         this.inLvalAssign = false;
+        this.lineIsDirty = false;
 
         this.typeImportMap = new Map<String,String>();
 
@@ -133,7 +135,7 @@ class Writer
         for(c in comments) {
             switch(c) {
             case ECommented(s,b,t,e):
-                write(indent() + formatComment(s,b));
+                writeComment(indent() + formatComment(s,b));
                 if (e != null) {
                     switch (e) {
                         case ECommented(_):
@@ -586,7 +588,7 @@ class Writer
                             pendingComma = false;
                             write(",");
                         }
-                        write(s);
+                        writeComment(s);
                     
                     default:
 
@@ -695,7 +697,7 @@ class Writer
                     writeIndent();
 
                 case ECommented(s,b,t,e):
-                    write(s);    
+                    writeComment(s);    
 
                 default:
             }
@@ -1624,7 +1626,7 @@ class Writer
             case ECommented(s,b,t,ex):
                 if(t)
                     rv = writeExpr(ex);
-                write(formatComment(s,b));
+                writeComment(formatComment(s,b));
                     
                 if(!t) 
                     rv = writeExpr(ex);
@@ -2340,9 +2342,27 @@ class Writer
     
     function write(s : String)
     {
+        //set line as dirty if string contains something other
+        //than whitespace/indent
+        if (!containsOnlyWhiteSpace(s) && s != cfg.indentChars)
+            lineIsDirty = true;
+
         o.writeString(s);
     }
     
+   /**
+    * Writing for block and line comment. If 
+    * comment written on dirty line (not first text on line),
+    * add extra whitespace before and after comment
+    */
+    function writeComment(s : String)
+    {
+        if (lineIsDirty)
+            s = "  " + s + "  ";
+
+        write(s);    
+    }
+
     function writeIndent(s = "")
     {
         write(indent() + s);
@@ -2350,11 +2370,15 @@ class Writer
     
     function writeLine(s = "")
     {
+        lineIsDirty = false;
+
         write(indent() + s + cfg.newlineChars);
     }
     
     function writeNL(s = "")
     {
+        lineIsDirty = false; //reset line dirtyness
+
         write(s);
         write(cfg.newlineChars);
     }
@@ -2365,6 +2389,11 @@ class Writer
         case Semi: write(";");
         case Ret:
         }
+    }
+
+    function containsOnlyWhiteSpace(s : String) : Bool
+    {
+        return StringTools.trim(s) == "";
     }
 
     /**
