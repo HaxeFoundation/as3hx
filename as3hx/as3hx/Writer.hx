@@ -99,10 +99,6 @@ class Writer
         for (c in nmeErrorsClasses) {
             this.typeImportMap.set(c, "nme.errors." + c);
         }
-
-        //used for typed As3 Dictionary
-        this.typeImportMap.set("StringMap", "haxe.ds.StringMap");
-        this.typeImportMap.set("IntMap", "haxe.ds.IntMap");
     }
 
     /**
@@ -2182,18 +2178,7 @@ class Writer
             case "void":    return null;
             default:    return fixCase ? properCase(c,true) : c;
             }
-        case TDictionary(k, v):
-            switch (k) 
-            {
-                case TPath(p):
-                    var c = p.join(".");
-                    switch (c) {
-                        case "String": return "StringMap";
-                        case "int", "uint", "Int": return "IntMap";
-                        default: return null;
-                    }
-                default: return null;
-            }  
+        case TDictionary(k, v): return null;
         }
     }
     
@@ -2227,23 +2212,6 @@ class Writer
             case TComplex(e):
                 return buffer(function() { writeExpr(e); });
             case TDictionary(k, v):
-                switch (k) {
-                    case TPath(p):
-                        var c = p.join(".");
-                        switch (c) {
-                            //use Haxe 3 dedicated data structures when possible
-                            //instead of generic Map, which seems to cause some
-                            //runtime error
-                            case "String":
-                                return "StringMap<" + tstring(v) + ">";
-                            case "int", "uint", "Int":
-                                return "IntMap<" + tstring(v) + ">";
-                            case "Object":
-                                return "Map<Dynamic, " + tstring(v) + ">";
-                        }
-                    default:
-                        null;// continue below
-                }
                 return "Map<" + tstring(k) + ", " + tstring(v) + ">";
         }
     }
