@@ -408,7 +408,7 @@ class Writer
                 varArgs : null,
                 ret : null,
                 expr : EBlock(((null != c.extend) ? [ENL(ECall(EIdent("super"),[]))] : []))
-            }, c);
+            });
         }
     }
     
@@ -485,7 +485,7 @@ class Writer
                 if (field.name == c.name)
                 {
                     start("new", false);
-                    writeConstructor(f, c);
+                    writeConstructor(f);
                 } else {
                     var ret = f.ret;
                     var name = if (isGetter(field.kwds)) {
@@ -601,37 +601,14 @@ class Writer
         return fst;
     }
     
-    function writeConstructor(f : Function, c : ClassDef)
+    function writeConstructor(f : Function)
     {
         write("function new(");
         writeArgs(f.args);
         write(")");
         writeNL();
         writeIndent();
-        var es = [];
-        switch(f.expr)
-        {
-            case EBlock(e):
-                // inject instance field values
-                for (field in c.fields)
-                {
-                    switch(field.kind)
-                    {
-                        case FVar(_, val):
-                            if (null != val && !isStatic(field.kwds))
-                            {
-                                var expr = EBinop("=", EIdent(field.name), val);
-                                es.push(ENL(expr)); //wrap in newline for formatting
-                            }
-                        default:
-                            //
-                    }
-                }
-                es = es.concat(e);
-            default:
-                es.push(f.expr);
-        }
-        writeExpr(EBlock(es));
+        writeExpr(f.expr);
     }
     
     function writeFunction(f : Function, isGetter:Bool, isSetter:Bool, isNative:Bool, name : Null<String>, ?ret : FunctionRet)
