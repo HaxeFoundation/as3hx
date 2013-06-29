@@ -915,7 +915,7 @@ class Parser {
         }
         };
         pf(false, false);
-            
+        
         //trace("*** " + meta);
         for(m in meta) {
             switch(m) {
@@ -1095,12 +1095,13 @@ class Parser {
         };
         ensure(TPOpen);
 
+                   
         //for each method argument (except var args)
         //store the whole expression, including
         //comments and newline
         var expressions:Array<Expr> = [];
         if( !opt(TPClose) ) {
-
+ 
             while( true ) {
                
                 var tk = token();
@@ -1143,7 +1144,7 @@ class Parser {
                         add(t);
                         expressions.push(ENL(null));
 
-                    default:    
+                    default: 
 
                 }
             }
@@ -1161,24 +1162,24 @@ class Parser {
             f.ret.t = t;
         }
             
-        //parse until '{'   
+        //parse until '{' or ';' (for interface method)   
         while (true) {
             var tk = token();
             switch (tk) {
-                case TNL(t): //parse new line before '{'
+                case TNL(t): //parse new line before '{' or ';'
                     add(t);
                     retExpressions.push(ENL(null));
 
-                 case TCommented(s,b,t): //comment before '{'
+                 case TCommented(s,b,t): //comment before '{' or ';'
                    add(t);
                    retExpressions.push(makeECommented(tk, null));    
 
-                case TBrOpen: //end of method return 
+                case TBrOpen, TSemicolon: //end of method return 
                     add(tk);
                     f.ret.exprs = retExpressions;
                     break;
 
-                default:    
+                default:
             }
         }       
 
