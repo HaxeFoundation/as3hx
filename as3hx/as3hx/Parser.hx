@@ -667,9 +667,6 @@ class Parser {
                 typesDefd.push(c);
                 return CDef(c);
             case "function":
-                // Writer does not have this implemented
-                trace("ERROR: Not implemented");
-                unexpected(TId(id));
                 return FDef(parseFunDef(kwds, meta));
             case "namespace":
                 return NDef(parseNsDef(kwds, meta));

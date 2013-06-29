@@ -2271,11 +2271,46 @@ class Writer
         }
     }
     
-    function writeFunctionDef(f : FunctionDef)
+   /**
+    * Write an As3 package level function. As Haxe
+    * does not have this, wrap it in a class definition
+    */
+    function writeFunctionDef(fDef : FunctionDef)
     {
-        trace("****** not complete *******");
-        trace(f);
-        trace("***************************");
+        writeClassDef(wrapFuncDefInClassDef(fDef));
+    }
+
+   /**
+    * Wrap a function definition inside a class definition,
+    * using the function name as a basis for the class name
+    */
+    function wrapFuncDefInClassDef(fDef : FunctionDef) : ClassDef
+    {
+       //first func need to be converted to the field
+       //type for classes
+       var funcAsClassField : ClassField = {
+           name : fDef.name,
+           meta : fDef.meta,
+           condVars : [],
+           kwds : fDef.kwds,
+           kind : FFun(fDef.f)
+       };
+
+       //uppercase func name first letter
+       var name = fDef.name.charAt(0).toUpperCase() + fDef.name.substr(1);
+
+       //builds the class definition
+       return {
+            name : "ClassFor" + name,
+            meta:[],
+            kwds:["final"], //always final as generated class
+            imports:[],
+            isInterface : false,
+            extend : null,
+            implement : [],
+            fields:[funcAsClassField],
+            inits : []
+       };
     }
     
     function writeNamespaceDef(n : NamespaceDef)
