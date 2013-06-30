@@ -22,13 +22,63 @@ package as3tohx;
 
 // Additional implicit imports...
 import as3tohx.AnotherClass;
-import as3tohx.ISomeInterface;
 import as3tohx.KeyClass;
 import as3tohx.MyClass;
 import as3tohx.UInt;
 import as3tohx.ValueClass;
-import haxe.ds.IntMap;
-import haxe.ds.StringMap;
+
+/**
+ * Class for standaloneFunc
+ */
+class @:final ClassForStandaloneFunc
+{
+    /**
+     * Standalone function at package level with no class.
+     * 
+     * @return always false
+     */
+    public function standaloneFunc(object : Dynamic) : Bool
+    {
+        #if TIVOCONFIG_COVERAGE
+        {            
+            trace("blah");
+        }
+        #end // TIVOCONFIG_COVERAGE
+        
+        #if TIVOCONFIG_ASSERT
+        {            
+            if (object != null){
+                #if TIVOCONFIG_DEBUG_PRINT
+                {                    
+                    trace(object.value);
+                }
+                #end // TIVOCONFIG_DEBUG_PRINT
+            }
+            else {
+                trace("blah");
+            }
+        }
+        #end // TIVOCONFIG_ASSERT
+        
+        return false;
+    }
+
+    public function new()
+    {
+    }
+}
+
+/**
+ * This interface is implemented by classes that want to receive
+ * ICE commands. 
+ */
+interface ISomeInterface
+{
+    /**
+     * Send a command to the ICE server.
+     */
+    function sendCommand(args : String) : Void;
+}
 
 /**
  *  This class is marked with final and
@@ -36,34 +86,34 @@ import haxe.ds.StringMap;
  */
 class @:final Main extends MyClass implements ISomeInterface
 {
-    public var intKeyMap(get_intKeyMap, never) : IntMap<ValueClass>;
-    public var stringKeyMap(get_stringKeyMap, never) : StringMap<ValueClass>;
+    public var intKeyMap(get_intKeyMap, never) : Map<Int, ValueClass>;
+    public var stringKeyMap(get_stringKeyMap, never) : Map<String, ValueClass>;
     public var objectKeyMap(get_objectKeyMap, never) : Map<KeyClass, ValueClass>;
-    public var mapOfArray(get_mapOfArray, never) : IntMap<Array<AnotherClass>>;
-    public var mapOfMap(get_mapOfMap, never) : IntMap<StringMap<AnotherClass>>;
+    public var mapOfArray(get_mapOfArray, never) : Map<Int, Array<AnotherClass>>;
+    public var mapOfMap(get_mapOfMap, never) : Map<Int, Map<String, AnotherClass>>;
     public var sampleProperty(get_sampleProperty, set_sampleProperty) : Dynamic;
 
     static public var someMonths : Array<Dynamic> = ["January", "February", "March"];
     static public var someDay : Array<Dynamic> = ["January", 1, 1970, "AD"];
     
-    var mIntKeyMap : IntMap<ValueClass> = null;
-    var mStringKeyMap : StringMap<ValueClass> = null;
+    var mIntKeyMap : Map<Int, ValueClass> = null;
+    var mStringKeyMap : Map<String, ValueClass> = null;
     var mObjectKeyMap : Map<KeyClass, ValueClass> = null;
-    var mMapOfArray : IntMap<Array<AnotherClass>> = null;
-    var mMapOfMap : IntMap<StringMap<AnotherClass>> = null;
+    var mMapOfArray : Map<Int, Array<AnotherClass>> = null;
+    var mMapOfMap : Map<Int, Map<String, AnotherClass>> = null;
     
-    @:final function get_intKeyMap() : IntMap<ValueClass>
+    @:final function get_intKeyMap() : Map<Int, ValueClass>
     {
         if (mIntKeyMap == null){
-            mIntKeyMap = new IntMap<ValueClass>();
+            mIntKeyMap = new Map<Int, ValueClass>();
         }
         return mIntKeyMap;
     }
     
-    @:final function get_stringKeyMap() : StringMap<ValueClass>
+    @:final function get_stringKeyMap() : Map<String, ValueClass>
     {
         if (mStringKeyMap == null){
-            mStringKeyMap = new StringMap<ValueClass>();
+            mStringKeyMap = new Map<String, ValueClass>();
         }
         return mStringKeyMap;
     }
@@ -76,18 +126,18 @@ class @:final Main extends MyClass implements ISomeInterface
         return mObjectKeyMap;
     }
     
-    @:final function get_mapOfArray() : IntMap<Array<AnotherClass>>
+    @:final function get_mapOfArray() : Map<Int, Array<AnotherClass>>
     {
         if (mMapOfArray == null){
-            mMapOfArray = new IntMap<Array<AnotherClass>>();
+            mMapOfArray = new Map<Int, Array<AnotherClass>>();
         }
         return mMapOfArray;
     }
     
-    @:final function get_mapOfMap() : IntMap<StringMap<AnotherClass>>
+    @:final function get_mapOfMap() : Map<Int, Map<String, AnotherClass>>
     {
         if (mMapOfMap == null){
-            mMapOfMap = new IntMap<StringMap<AnotherClass>>();
+            mMapOfMap = new Map<Int, Map<String, AnotherClass>>();
         }
         return mMapOfMap;
     }
@@ -330,21 +380,87 @@ class @:final Main extends MyClass implements ISomeInterface
     {
         return true;
     }
+    
+    /**
+     * This is how we receive a command from the ICE Server.
+     */
+    public function sendCommand(args : String) : Void
+    {
+        return;
+    }
+    
+    /**
+     * Conditionally compiled code with comments
+     */
+    #if TIVOCONFIG_ASSERT
+    public function someFunctionToTestTiVoConfig() : Void
+    {
+        return;
+    }
+    #end // TIVOCONFIG_ASSERT
+    
+    // below are unit tests' methods with annotations
+    
+    @Test("this will test prime number function")
+    public function testPrime(val : Int) : Bool
+    {
+        return true;
+    }
+    
+    @AsyncTest("Test for missing golden")
+    public function testWhole(val : Int) : Bool
+    {
+        return true;
+    }
+    
+    @DataProvider("trueAndFalse")
+    @Test
+    public function testBooleanValues(val : Bool) : Bool
+    {
+        return true;
+    }
+    
+    @Ignore("Memory leak detection is not deterministic")
+    @DataProvider("memoryMap")
+    @Test
+    public function testBooleanValues(val : Bool) : Bool
+    {
+        return true;
+    }
+    
+    @:meta(Before(order=-1))
+    public function firstMostBefore() : Void
+    {
+        return;
+    }
+    
+    @Before
+    public function unorderedBefore() : Void
+    {
+        return;
+    }
+    
+    @After
+    public function tearDown() : Void
+    {
+        return;
+    }
+    
+    @BeforeClass
+    public function preConstruction() : Void
+    {
+        return;
+    }
+    
+    @AfterClass
+    public function onDestroy() : Void
+    {
+        return;
+    }
 
     public function new()
     {
-        mIntKeyMap = null;
-        mStringKeyMap = null;
-        mObjectKeyMap = null;
-        mMapOfArray = null;
-        mMapOfMap = null;
-        isResult1 = true;
-        isResult2 = true;
-        isResult3 = true;
-        isResult4 = true;
-        intVal = 6;
         super();
     }
 }
-
 
