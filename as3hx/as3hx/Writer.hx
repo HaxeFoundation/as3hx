@@ -295,7 +295,7 @@ class Writer
         if(parents.length > 0)
             buf.add(" " + parents.join(" "));
         buf.add(openb());
-        writeLine(buf.toString());
+        write(buf.toString());
         lvl++;
         
         // process properties
@@ -366,6 +366,10 @@ class Writer
                     continue;
             }
         }
+        
+        if (p.length > 0)
+            writeNL();
+
         if(cfg.getterSetterStyle == "haxe" || cfg.getterSetterStyle == "combined") {
             for (property in p)
             {
