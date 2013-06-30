@@ -882,7 +882,7 @@ class Writer
                     }
                     var v = vars[i];
                     context.set(v.name, tstring(v.t, false));
-                    write("var " + v.name);
+                    write("var " + getModifiedIdent(v.name));
                     writeVarType(v.t);
                     if (null != v.val)
                     {
