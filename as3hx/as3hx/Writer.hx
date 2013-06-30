@@ -309,7 +309,7 @@ class Writer
         writeInits(c);
         
         lvl--;
-        writeLine(closeb());
+        write(closeb());
     }
     
     function writeProperties(c : ClassDef)
@@ -2298,10 +2298,17 @@ class Writer
        //uppercase func name first letter
        var name = fDef.name.charAt(0).toUpperCase() + fDef.name.substr(1);
 
+       //generate class doc
+       var meta = [];
+       meta.push(ENL(null));
+       meta.push(ECommented("/**\n * Class for " + fDef.name + "\n */",false,false,null));
+       meta.push(ENL(null));
+
+
        //builds the class definition
        return {
             name : "ClassFor" + name,
-            meta:[],
+            meta:meta,
             kwds:["final"], //always final as generated class
             imports:[],
             isInterface : false,
