@@ -20,18 +20,65 @@
 
 package as3tohx;
 
-// Additional implicit imports...
 import as3tohx.MyClass;
 import as3tohx.UInt;
 
-import haxe.ds.IntMap; 
-import haxe.ds.StringMap; 
+/**
+ * Class for standaloneFunc
+ */
+class @:final ClassForStandaloneFunc
+{
+    /**
+     * Standalone function at package level with no class.
+     * 
+     * @return always false
+     */
+    public function standaloneFunc(object:Dynamic):Boolean
+    {
+        #if TIVOCONFIG_COVERAGE
+        {
+            trace("blah");
+        }
+        #end // TIVOCONFIG_COVERAGE
+
+        #if TIVOCONFIG_ASSERT 
+        {
+            if (object != null)
+            {
+                #if TIVOCONFIG_DEBUG_PRINT 
+                {
+                    trace(object.value);
+                }
+                #end // TIVOCONFIG_DEBUG_PRINT
+            }
+            else
+            {
+                trace("blah");
+            }
+        }
+        #end // TIVOCONFIG_ASSERT
+
+        return false;
+    }
+}
+
+/**
+ * This interface is implemented by classes that want to receive
+ * ICE commands. 
+ */
+interface ISomeInterface
+{
+    /**
+     * Send a command to the ICE server.
+     */
+    function sendCommand(args:String):Void;
+}
 
 /**
  *  This class is marked with final and
  *  should be converted to the Haxe "@:final"
  */
-class @:final Main extends MyClass implements ILayerView
+class @:final Main extends MyClass implements ISomeInterface
 {
     static public var someMonths : Array<Dynamic>= [ "January", "February", "March" ];
     static public var someDay : Array<Dynamic>= [ "January", 1, 1970, "AD" ]; 
@@ -40,14 +87,14 @@ class @:final Main extends MyClass implements ILayerView
     var mStringKeyMap : Map<String, ValueClass>;
     var mObjectKeyMap : Map<KeyClass, ValueClass>;
     var mMapOfArray : Map<Int, Array<AnotherClass>>;
-    var mMapOfMap : haxe.ds.IntMap<haxe.ds.StringMap<AnotherClass>>;
+    var mMapOfMap : Map<Int, Map<String, AnotherClass>>;
 
     public var intKeyMap (get_intKeyMap, never) : Map<Int, ValueClass>;
     public var stringKeyMap (get_stringKeyMap, never) : Map<String, ValueClass>;
     public var objectKeyMap (get_objectKeyMap, never) : Map<KeyClass, ValueClass>;
     public var mapOfArray (get_mapOfArray, never) : Map<Int, Array<AnotherClass>>;
-    public var mapOfMap (get_mapOfMap, never) : haxe.ds.IntMap<haxe.ds.StringMap<AnotherClass>>;
-   
+    public var mapOfMap (get_mapOfMap, never) : Map<Int, Map<String, AnotherClass>>;
+
     public function get_intKeyMap() : Map<Int, ValueClass>
     {
        if (mIntKeyMap == null) 
@@ -85,25 +132,25 @@ class @:final Main extends MyClass implements ILayerView
        return mMapOfArray;
     }
 
-    public function get_mapOfMap() : haxe.ds.IntMap<haxe.ds.StringMap<AnotherClass>>
+    public function get_mapOfMap() : Map<Map<AnotherClass>>
     {
        if (mMapOfMap == null) 
        {
-          mMapOfMap = new haxe.ds.IntMap<haxe.ds.StringMap<AnotherClass>>();
+          mMapOfMap = new Map<Int, Map<String, AnotherClass>>();
        }
        return mMapOfMap;
     }
 
     public var sampleProperty(get_sampleProperty, set_sampleProperty) : Dynamic;
 
-    var isResult1 : Bool = true;
-    var isResult2 : Bool = true;
-    var isResult3 : Bool = true;
-    var isResult4 : Bool = true;
+    var isResult1 : Bool;
+    var isResult2 : Bool;
+    var isResult3 : Bool;
+    var isResult4 : Bool;
 
     // the line below is to test assigning a value
     // during variable declaration
-    var intVal : Int = 6;
+    var intVal : Int;
 
     var _sampleProperty : Dynamic;
 
@@ -335,9 +382,91 @@ class @:final Main extends MyClass implements ILayerView
     {
         return true;
     }
+
+    /**
+     * This is how we receive a command from the ICE Server.
+     */
+    public function sendCommand(args: String):Void
+    {
+        return; 
+    }
+
+    /**
+     * Conditionally compiled code with comments
+     */
+    #if TIVOCONFIG_ASSERT
+    public function someFunctionToTestTiVoConfig():Void
+    {
+        return; 
+    }
+    #end // TIVOCONFIG_ASSERT
+
+    // below are unit tests' methods with annotations
     
+    @Test("this will test prime number function")
+    public function testPrime(val:Int):Bool
+    {
+        return true;
+    }
+
+    @AsyncTest("Test for missing golden")
+    public function testWhole(val:Int):Bool
+    {
+        return true;
+    }
+
+    @DataProvider("trueAndFalse")
+    @Test
+    public function testBooleanValues(val:Bool):Bool
+    {
+        return true;
+    }
+
+    @Ignore("Memory leak detection is not deterministic")
+    @DataProvider("memoryMap")
+    @Test
+    public function testBooleanValues(val:Bool):Bool
+    {
+        return true;
+    }
+
+    @:meta(Before(order=-1))
+    public function firstMostBefore():Void
+    {
+        return;
+    }
+
+    @Before
+    public function unorderedBefore():Void
+    {
+        return;
+    }
+
+    @After
+    public function tearDown():Void
+    {
+        return;
+    }
+
+    @BeforeClass
+    public function preConstruction():Void
+    {
+        return;
+    }
+
+    @AfterClass
+    public function onDestroy():Void
+    {
+        return;
+    }
+
     public function new()
     {
+        intKeyMap = null;
+        stringKeyMap = null;
+        objectKeyMap = null;
+        mapOfArray = null;
+        mapOfMap = null;
         isResult1 = true;
         isResult2 = true;
         isResult3 = true;

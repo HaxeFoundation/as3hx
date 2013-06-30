@@ -21,6 +21,43 @@
 package as3tohx
 {
     /**
+     * Standalone function at package level with no class.
+     * 
+     * @return always false
+     */
+    public function standaloneFunc(object:Object):Boolean
+    {
+        TIVOCONFIG::COVERAGE {
+            trace("blah");
+        }
+
+        TIVOCONFIG::ASSERT {
+            if (object) {
+                TIVOCONFIG::DEBUG_PRINT {
+                    trace(object.value);
+                }
+            }
+            else {
+                trace("blah");
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * This interface is implemented by classes that want to receive
+     * ICE commands. 
+     */
+    public interface ISomeInterface
+    {
+        /**
+         * Send a command to the ICE server.
+         */
+        function sendCommand(args:String):void;
+    }    
+
+    /**
      *  This class is marked with final and
      *  should be converted to the Haxe "@:final"
      */
@@ -315,6 +352,80 @@ package as3tohx
                 var5: Array): Boolean
         {
             return true;
+        }
+
+        /**
+         * This is how we receive a command from the ICE Server.
+         */
+        public function sendCommand(args:String):void
+        {
+            return;
+        }
+
+        /**
+         * Conditionally compiled code with comments
+         */
+        TIVOCONFIG::ASSERT
+        public function someFunctionToTestTiVoConfig():void
+        {
+            return; 
+        }
+
+        // below are unit tests' methods with annotations
+        
+        [Test(description="this will test prime number function")]
+        public function testPrime(val:Int):Boolean
+        {
+            return true;
+        }
+
+        [Test(async, order=12, description="Test for missing golden")]
+        public function testWhole(val:Int):Boolean
+        {
+            return true;
+        }
+
+        [Test(order=24, dataProvider="trueAndFalse")]
+        public function testBooleanValues(val:Boolean):Boolean
+        {
+            return true;
+        }
+
+        [Ignore("Memory leak detection is not deterministic")]
+        [Test(order=24, dataProvider="memoryMap")]
+        public function testBooleanValues(val:Boolean):Boolean
+        {
+            return true;
+        }
+
+        [Before(order=-1)]
+        public function firstMostBefore():void
+        {
+            return;
+        }
+
+        [Before]
+        public function unorderedBefore():void
+        {
+            return;
+        }
+
+        [After]
+        public function tearDown():void
+        {
+            return;
+        }
+
+        [BeforeClass]
+        public function preConstruction():void
+        {
+            return;
+        }
+
+        [AfterClass]
+        public function onDestroy():void
+        {
+            return;
         }
     }
 }
