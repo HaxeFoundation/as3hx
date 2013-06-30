@@ -1670,17 +1670,25 @@ class Writer
                         writeExpr(e);
                 }
             case ECondComp( kwd, e ):
-                writeNL("#if " + kwd);
+                write("#if " + kwd);
                 switch(e) {
                     case EBlock(elist):
+
+                        writeNL();
+                        writeIndent("{");
+                        lvl++;
                         for (ex in elist) {
                             writeIndent();
                             writeFinish(writeExpr(ex));
                         }
+                        lvl--;
+                        writeNL();
+                        writeIndent("}");
                     default:
                         writeIndent();
                         writeFinish(writeExpr(e));
                 }
+                writeNL( );
                 writeIndent("#end // " + kwd);
                 rv = Ret;
             case ENL( e ): 
