@@ -468,7 +468,7 @@ class Writer
         {
             case FVar( t, val ):
                 start(field.name, false);
-                write("var " + field.name);
+                write("var " + getModifiedIdent(field.name));
                 writeVarType(t);
                 context.set(field.name, tstring(t, false));
 
@@ -492,7 +492,7 @@ class Writer
                         ret.t = f.args[0].t;
                         cfg.makeSetterName(field.name); //"set" + ucfirst(field.name);
                     } else {
-                        field.name;
+                        getModifiedIdent(field.name);
                     }
                     if(isGetter(field.kwds) || isSetter(field.kwds)) {
                         // write flash native
@@ -844,6 +844,7 @@ class Writer
             //case "Error":     cfg.mapFlClasses ? "flash.errors.Error" : s;
             case "XML":                 "FastXML";
             case "XMLList":             "FastXMLList";
+            case "callback":             "callbackFunc";
             //case "QName":     cfg.mapFlClasses ? "flash.utils.QName" : s;
             default: s;
         };
@@ -871,7 +872,7 @@ class Writer
             case EConst( c ):
                 write(getConst(c));
             case EIdent( v ):
-                write(v);
+                writeModifiedIdent(v);
             case EVars( vars ):
                 for (i in 0...vars.length)
                 {
@@ -1751,7 +1752,7 @@ class Writer
                         break;
                     }
                 }
-                
+
                 //use custom syntax otherwise 
                 if (!hasOrder) {
                     write("@" + m.name);
