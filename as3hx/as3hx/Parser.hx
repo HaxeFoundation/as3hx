@@ -878,6 +878,7 @@ class Parser {
                                 // this is a user supplied conditional compilation variable
                                 openDebug("conditional compilation: " + ns + "::" + id);
                                 condVars.push(ns + "_" + id);
+                                meta.push(ECondComp(ns + "_" + id, null));
                                 t = token();
                                 switch (t) {
                                     case TBrOpen:
@@ -912,7 +913,7 @@ class Parser {
         }
         };
         pf(false, false);
-        
+
         //trace("*** " + meta);
         for(m in meta) {
             switch(m) {

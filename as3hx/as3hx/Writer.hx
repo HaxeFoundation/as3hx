@@ -246,6 +246,9 @@ class Writer
     function writeMetaData(data:Array<Expr>) {
         if(data == null)
             return;
+
+        var isFirstCondComp = true;
+            
         for(d in data) {
             switch(d) {
             case EMeta(_):
@@ -255,6 +258,15 @@ class Writer
             case ENL(e):
                 writeNL(); 
                 writeIndent();
+            case ECondComp(v,e):
+                if (isFirstCondComp) {
+                    write("#if ");
+                    isFirstCondComp = false;
+                }
+                else {
+                    write(" && ");
+                } 
+                write(v);
             default:
                 throw "Unexpected " + d;
             }
@@ -414,18 +426,8 @@ class Writer
         var isSet : Bool = isSetter(field.kwds);
         var isFun : Bool = switch(field.kind) {case FFun(_): true; default: false;};
 
-        for (i in 0...field.condVars.length) {
-            if (i == 0) {
-                writeIndent("#if ");
-            } else {
-                write(" && ");
-            }
-            write(field.condVars[i]);
-        }
-        if (field.condVars.length != 0) {
-            writeNL("");
-        }
         writeMetaData(field.meta);
+        
         var start = function(name:String, isFlashNative:Bool=false) {
             if((isGet || isSet) && cfg.getterSetterStyle == "combined") {
                 writeNL(isFlashNative ? "#if flash" : "#else");
@@ -517,17 +519,45 @@ class Writer
                 //writeComments(field.meta);
                 null;
         }
-        for (i in 0...field.condVars.length) {
+
+        //close conditional compilation block
+        var condComps = getECondComp(field.meta);
+        for (i in 0...condComps.length) {
             if (i == 0) {
+                writeNL();
                 writeIndent("#end // ");
             } else {
                 write(" && ");
             }
-            write(field.condVars[i]);
+            switch (condComps[i]) {
+                case ECondComp(v,e):
+                   write(v);
+                default:   
+            }
         }
-        if (field.condVars.length != 0) {
+        if (condComps.length != 0) {
             writeNL("");
         }
+    }
+    
+   /**
+    * Return a new array containing all the expressions
+    * of type ECondComp from the provided array
+    */
+    function getECondComp(exprs : Array<Expr>) : Array<Expr>
+    {
+       var condComps : Array<Expr> = [];
+
+       for (expr in exprs) 
+       {
+            switch (expr) {
+                case ECondComp(v,e):
+                    condComps.push(expr);
+
+                default:    
+            }
+       }
+       return condComps;
     }
     
     function writeArgs(args : Array<{ name : String, t : Null<T>, val : Null<Expr>, exprs : Array<Expr> }>)
