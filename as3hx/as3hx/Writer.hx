@@ -1732,11 +1732,31 @@ class Writer
     function writeMunitMetadata(m:Metadata) : Bool {
         var rv : Bool = false;
         switch (m.name) {
-            case "Before", "BeforeClass", "After", "AfterClass":
+            case "BeforeClass", "AfterClass":
                 write("@" + m.name);
                 if (m.args.length > 0) {
                     addWarning("Metadata parameters on " + m.name + " ignored: " + Std.string(m.args));
                 }
+                rv = true;
+            case "Before", "After":
+                var hasOrder = false;
+                //special case, for those, write the "order" attribute if present, using standard meta syntax
+                for (arg in m.args) {
+                    if (arg.name == "order") {
+                        write("@:meta("+m.name+"(");
+                        write(arg.name + "=");
+                        writeExpr(arg.val);
+                        write("))");
+                        hasOrder = true;
+                        break;
+                    }
+                }
+                
+                //use custom syntax otherwise 
+                if (!hasOrder) {
+                    write("@" + m.name);
+                }
+
                 rv = true;
             case "Ignore":
                 write("@Ignore");
