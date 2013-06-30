@@ -770,18 +770,8 @@ class Parser {
                     meta.push(parseMetadata());
                     continue;
                 case TCommented(s,b,t):
-                    var t = uncomment(tk);
-                    switch(t) {
-                    case TBkOpen:
-                        add(t);
-                        meta.push(makeECommented(tk, parseMetadata()));
-                        continue;
-                    default:
-                        add(tk);
-                        //meta.push(ECommented(s,b,false,null));
-                        break;
-                    }
-                    continue;
+                    add(t);
+                    meta.push(ECommented(s,b,false,null));
                 case TNL(t):
                     add(t);
                     meta.push(ENL(null));
