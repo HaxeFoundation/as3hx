@@ -16,7 +16,7 @@ mkdir -p $DIRECTORY.hx
 )
 
 # Now run as3tohx...
-~/dev/as3tohx_project/as3hx/as3tohx --debug-inferred-type $DIRECTORY.as3tidy $DIRECTORY.hx
+~/dev/as3tohx_project/as3hx/as3tohx -convert-flexunit --debug-inferred-type $DIRECTORY.as3tidy $DIRECTORY.hx
 
 # Now do post-processing with sed...
 (
@@ -32,7 +32,7 @@ echo 'Comparing results...'
 if ! cmp test/conversionTest_golden.hx test.hx/com/as3tohx/test/ConversionTest.hx
 then
   echo 'Found some differences...'
-  #diff test/conversionTest_golden.hx test.hx/com/as3tohx/test/ConversionTest.hx
+   #diff test/conversionTest_golden.hx test.hx/as3tohx/ConversionTest.hx
 else
   echo 'Files match golden!'
 fi

@@ -535,9 +535,6 @@ class Writer
                 default:   
             }
         }
-        if (condComps.length != 0) {
-            writeNL("");
-        }
     }
     
    /**
@@ -1736,7 +1733,7 @@ class Writer
         var rv : Bool = false;
         switch (m.name) {
             case "Before", "BeforeClass", "After", "AfterClass":
-                writeNL("@" + m.name);
+                write("@" + m.name);
                 if (m.args.length > 0) {
                     addWarning("Metadata parameters on " + m.name + " ignored: " + Std.string(m.args));
                 }
@@ -1759,7 +1756,6 @@ class Writer
                     }
                     write(")");
                 }
-                writeNL();
                 rv = true;
             case "Test":
                 var testTag:String = "Test";
@@ -1807,7 +1803,6 @@ class Writer
                     }
                     write(")");
                 }
-                writeNL();
                 rv = true;
             case "Theory":
                 addWarning("Theory flexunit tests not supported", true);
