@@ -23,6 +23,33 @@ package as3tohx;
 import as3tohx.MyClass;
 import as3tohx.UInt;
 
+using Lambda;
+
+/**
+ * Most commonly failing interface use case.
+ */
+interface ISomeInterface
+{
+    function oneMethod():Date; 
+
+    // missing semi-colon in AS3 code is Valid
+    function twoMethod():Date; 
+
+    /**
+     * Function comments
+     */
+    function fiveCommand(arg1:String,
+                         arg2:Int,
+                         arg3:Float):Void; 
+
+    function fourMethod():Date;
+
+    // missing semi-colon in AS3 code is Valid
+    function keepCommand(arg1:String,
+                         arg2:Int,    // parameter comments 
+                         arg3:Float):Void; 
+}
+
 /**
  * Class for standaloneFunc
  */
@@ -33,7 +60,7 @@ class @:final ClassForStandaloneFunc
      * 
      * @return always false
      */
-    public function standaloneFunc(object:Dynamic):Boolean
+    public function standaloneFunc(object:Dynamic):Bool
     {
         #if TIVOCONFIG_COVERAGE
         {
@@ -82,6 +109,8 @@ class @:final Main extends MyClass implements ISomeInterface
 {
     static public var someMonths : Array<Dynamic>= [ "January", "February", "March" ];
     static public var someDay : Array<Dynamic>= [ "January", 1, 1970, "AD" ]; 
+
+    static private inline ROLE_PRIORITY : Int = 99; 
 
     var mIntKeyMap : Map<Int, ValueClass>;
     var mStringKeyMap : Map<String, ValueClass>;
@@ -386,8 +415,69 @@ class @:final Main extends MyClass implements ISomeInterface
     /**
      * This is how we receive a command from the ICE Server.
      */
-    public function sendCommand(args: String):Void
+    public function sendCommand(args: String, anObj: Dynamic):Void
     {
+        var nowTheTimeIs : Date = Date.now(); 
+
+        var array : Array<SomeType> = new Array<SomeType>(); 
+
+        var strTest : String = "Hello World is Just a String";
+
+        var x : String = StringTools.trim(strTest.substr(9));
+
+        var y : String = (anObj != null) ? Std.string( anObj ) : "";
+
+        var f : SomeType = 0.0;
+        if (Std.is (anObj, SomeType))
+        {
+            f = cast (anObj, SomeType).specialMethod(); 
+        }
+
+        var i : Int = 0; 
+        while ( i < array.length )
+        {
+            // some code here
+            trace (array[i]);
+            
+            i++; 
+        }
+
+        if( ( mBoolVar1
+            && mBoolVar2
+            && ! mBoolVar3)
+            ||
+            ((anObj != null)
+                && mBoolVar3
+                && ! mBoolVar3)
+            ||
+            (mBoolVar1
+                && mBoolVar2
+                && mBoolVar3
+                && mBoolVar4)
+        )
+        {
+            // some code here
+            dispatchMessageLoadedSignal();
+        }
+
+        for (obj /* inferred type: SomeType */ in array) {
+            trace ( obj.specialMethod() ); 
+        } 
+
+        var multiLineStringConstruction : String = "This kind of String construction is failing to convert: "
+                                            + strTest.slice(9)
+                                            + ". "; 
+
+        // this kind of method calling (or construtor calling) is also failing to convert
+        someClass.someStaticMethod (param1,
+                                    param2 + // this comment should not break conversion 
+                                    value22, // so does this 
+                                    param3   // or this :) (should not choke on these parantheses)
+                                    );
+
+        var flag : Bool = (someMonths.indexOf("June") != -1);   // indexOf not supported by Haxe array, but Lambda does
+                                                                // when converted, this should insert "using Lambda"
+
         return; 
     }
 
@@ -400,6 +490,7 @@ class @:final Main extends MyClass implements ISomeInterface
         return; 
     }
     #end // TIVOCONFIG_ASSERT
+
 
     // below are unit tests' methods with annotations
     
@@ -475,4 +566,3 @@ class @:final Main extends MyClass implements ISomeInterface
         super();
     }
 }
-
