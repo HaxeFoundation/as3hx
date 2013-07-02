@@ -1080,7 +1080,6 @@ class Writer
                 }
             case ECall( e, params ):
                 //write("/*ECall " + e + "(" + params + ")*/\n");
-
                 //rebuild call expr if necessary
                 var eCall = rebuildCallExpr(e, params);
                 if (eCall != null) {
@@ -1152,15 +1151,45 @@ class Writer
                     }
                 }
                 if(!handled) {
+                    //return wether the param at the index is the last
+                    //method call argument
+                    var isLastArgument:Array<Expr>->Int->Bool = function(params, index) {
+                        
+                        //return wether the expression is a method call
+                        //argument, which excludes comments and newlines
+                        var isArgument : Expr->Bool = null;
+                        isArgument = function(expr) {
+                            if (expr == null)
+                                 return true;
+
+                            return switch (expr) {
+                                case ECommented(s,b,t,e): isArgument(e);
+                                case ENL(e): isArgument(e);
+                                default:return true;
+                            }
+                        }
+                        
+                        //check all remaining parameters
+                        var i = index;
+                        while(i < params.length) {
+                            if(isArgument(params[i]))
+                                return false;
+                            i++;
+                        }
+                        return true;
+                    }
+
                     writeExpr(e);
                     write("(");
                     for (i in 0...params.length)
                     {
                         if (i > 0) {
-                        	write(",");
-                            
+                            //check if arguments remain before adding comma
+                        	if(!isLastArgument(params, i))
+                                write(",");
+
                             //minor formatting fix, if arg is newline or 
-                            //comment, no need for extra 
+                            //comment, no need for extra space
                             switch (params[i]) {
                                 case ECommented(s,b,t,e):
                                 case ENL(e):
@@ -1225,7 +1254,13 @@ class Writer
                 }
             case ETernary( cond, e1, e2 ):
                 write("(");
-                writeExpr(cond);
+
+                var rb = rebuildIfExpr(cond);
+                if(rb != null)
+                    writeExpr(rb);
+                else
+                    writeExpr(cond);
+                    
                 write(") ? ");
                 writeExpr(e1);
                 write(" : ");
@@ -2043,7 +2078,7 @@ class Writer
      * 
      * @return the new expression, or null if no change were needed
      */
-    function rebuildCallExpr(e : Expr, params : Array<Expr>) : {e : Expr, params : Array<Expr> } {
+    function rebuildCallExpr(expr : Expr, params : Array<Expr>) : {e : Expr, params : Array<Expr> } {
         
         var rebuiltCall = null;
 
@@ -2058,19 +2093,47 @@ class Writer
             }
         }
 
-        switch (e) {
+        switch (expr) {
             case EField(e, f):
-                //replace "hasAnyProperty(myVar)" by "myVar.keys().hasNext()"
-                // "myVar" is assumed to be an iterable
+
+                //replace "myVar.hasOwnProperty(myProperty)" by "myVar.exists(myProperty)"
                 if (f == "hasOwnProperty") {
                     var rebuiltExpr = EField(e, "exists");
                     rebuiltCall = {e : rebuiltExpr, params : params};
                 }
+                else if (f == "slice") {
+                    //replace AS3 slice by Haxe substr
+                    var rebuiltExpr = EField(e, "substr");
+                    rebuiltCall = {e : rebuiltExpr, params : params};
+                }
+                else if (f == "indexOf") {
+                    //in AS3, indexOf is a method in Array whilt it is not in Haxe
+                    //Replace it by the Labda.indexOf method
+                    var type = getExprType(e);
+                    if (type != null) {
+                        //determine wheter the calling object is an Haxe iterable
+                        //if it is, rebuild the expression to use Lamda
+                        if (type.indexOf("Array") != -1 || type.indexOf("Map") != -1) {
+                            var rebuiltExpr = EField(EIdent("Lambda"), "indexOf");
+                            params.unshift(e);
+                            rebuiltCall = {e : rebuiltExpr, params : params};
+                        }
+                    }
+                }
+                else if (getIdentString(e) != null) {
+                    var ident = getIdentString(e);
+                    //replace AS3 StringUtil by Haxe StringTools
+                    if (ident == "StringUtil" ) {
+                        var rebuiltExpr = EField(EIdent("StringTools"), f);
+                        rebuiltCall = {e : rebuiltExpr, params : params};
+                    }
+                }
 
             default:
-                //replace "myVar.hasOwnProperty(myProperty)" by "myVar.exists(myProperty)"
-                var ident = getIdentString(e);
+                var ident = getIdentString(expr);
                 if (ident != null) {
+                    //replace "hasAnyProperty(myVar)" by "myVar.keys().hasNext()"
+                    // "myVar" is assumed to be an iterable
                     if (ident == "hasAnyProperties" && params.length == 1) {
                         
                         //there should be one and only one identifier param

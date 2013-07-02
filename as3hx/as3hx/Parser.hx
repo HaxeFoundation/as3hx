@@ -1781,6 +1781,10 @@ class Parser {
                 switch(t) {
                 case TComma:
                     f(tk);
+                case TNL(t):
+                    f(tk);
+                    args.push(ENL(null));
+                    if (t == etk) break;
                 default:
                     if( tk == etk ) break;
                     unexpected(tk);
