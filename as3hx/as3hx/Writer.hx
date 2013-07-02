@@ -1479,6 +1479,10 @@ class Writer
                         writeExpr(params[i]);
                     }
                     write("])");
+                } 
+                //in AS3, if Date constructed without argument, uses current time
+                else if (tstring(t) == "Date" && params.length == 0) {
+                      write("Date.now()"); //use Haxe constructor for current time
                 } else {
                     write("new " + tstring(t) + "(");
                     var out = true;
