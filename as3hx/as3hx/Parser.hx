@@ -814,7 +814,7 @@ class Parser {
                         }
                         break;
                     case "function":
-                        fields.push(parseClassFun(kwds, meta, condVars.copy()));
+                        fields.push(parseClassFun(kwds, meta, condVars.copy(), isInterface));
                         meta = [];
                         if (condVars.length != 0 && !inCondBlock) {
                             return;
@@ -1046,7 +1046,7 @@ class Parser {
         return rv;
     }
 
-    function parseClassFun(kwds:Array<String>,meta,condVars:Array<String>) : ClassField {
+    function parseClassFun(kwds:Array<String>,meta,condVars:Array<String>, isInterface:Bool) : ClassField {
         openDebug("parseClassFun(");
         var name = id();
         if( name == "get" || name == "set" ) {
@@ -1061,7 +1061,7 @@ class Parser {
             }
         }
         dbgln(Std.string(kwds) + " " + name + ")", false);
-        var f = parseFun();
+        var f = parseFun(isInterface);
         end();
         closeDebug("end parseClassFun()");
         return {
@@ -1073,7 +1073,7 @@ class Parser {
         };
     }
     
-    function parseFun() : Function {
+    function parseFun(isInterfaceFun : Bool = false) : Function {
         openDebug("parseFun()",true);
         var f = {
             args : [],
@@ -1157,6 +1157,15 @@ class Parser {
                 case TNL(t): //parse new line before '{' or ';'
                     add(t);
                     retExpressions.push(ENL(null));
+                    
+                    //corner case, in AS3 interface method don't
+                    //have to end with a ";". So If we encounter a
+                    //newline after the return definition, we assume
+                    //this is the end of the method definition
+                    if (isInterfaceFun) {
+                         f.ret.exprs = retExpressions;
+                         break;
+                    }
 
                  case TCommented(s,b,t): //comment before '{' or ';'
                    add(t);
