@@ -1156,7 +1156,6 @@ class Parser {
             switch (tk) {
                 case TNL(t): //parse new line before '{' or ';'
                     add(t);
-                    retExpressions.push(ENL(null));
                     
                     //corner case, in AS3 interface method don't
                     //have to end with a ";". So If we encounter a
@@ -1165,6 +1164,9 @@ class Parser {
                     if (isInterfaceFun) {
                          f.ret.exprs = retExpressions;
                          break;
+                    }
+                    else {
+                        retExpressions.push(ENL(null));
                     }
 
                  case TCommented(s,b,t): //comment before '{' or ';'
