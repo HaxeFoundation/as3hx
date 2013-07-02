@@ -1160,7 +1160,7 @@ class Writer
                         var isArgument : Expr->Bool = null;
                         isArgument = function(expr) {
                             if (expr == null)
-                                 return true;
+                                 return false;
 
                             return switch (expr) {
                                 case ECommented(s,b,t,e): isArgument(e);
@@ -1171,7 +1171,7 @@ class Writer
                         
                         //check all remaining parameters
                         var i = index;
-                        while(i < params.length) {
+                        while(i <= params.length) {
                             if(isArgument(params[i]))
                                 return false;
                             i++;
@@ -1260,7 +1260,7 @@ class Writer
                     writeExpr(rb);
                 else
                     writeExpr(cond);
-                    
+
                 write(") ? ");
                 writeExpr(e1);
                 write(" : ");
