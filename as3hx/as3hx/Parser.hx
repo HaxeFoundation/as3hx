@@ -1746,6 +1746,9 @@ class Parser {
                 add(tk);
                 return e1;
             }
+        case TNL(t):
+            add(t);
+            return ENL(parseExprNext(e1));
         default:
             dbgln("parseExprNext stopped at " + tk);
             add(tk);
