@@ -21,6 +21,31 @@
 package as3tohx
 {
     /**
+     * Most commonly failing interface use case.
+     */
+    interface IAnotherInterface
+    {
+        function oneMethod():Date; 
+
+        // missing semi-colon in AS3 code is Valid
+        function twoMethod():Date 
+
+         /**
+          * Function comments
+          */
+        function fiveCommand(arg1:String,
+                             arg2:Int,
+                             arg3:Float):Void; 
+
+        function fourMethod():Date;
+
+        // missing semi-colon in AS3 code is Valid
+        function keepCommand(arg1:String,
+                             arg2:Int,    // parameter comments 
+                             arg3:Float):Void 
+    }
+
+    /**
      * Standalone function at package level with no class.
      * 
      * @return always false
@@ -66,6 +91,8 @@ package as3tohx
         static public var someMonths  : Array = [ "January", "February", "March" ];
         static public var someDay     : Array = [ "January", 1, 1970, "AD" ]; 
 
+        static private const ROLE_PRIORITY : int = 99; 
+        
         private var mIntKeyMap:Dictionary/*.<Int, ValueClass>*/ = null;
         private var mStringKeyMap:Dictionary/*.<String, ValueClass>*/ = null;
         private var mObjectKeyMap:Dictionary/*.<KeyClass, ValueClass>*/ = null;
@@ -357,8 +384,64 @@ package as3tohx
         /**
          * This is how we receive a command from the ICE Server.
          */
-        public function sendCommand(args:String):void
+        public function sendCommand(args:String, anObj:Object):void
         {
+            var nowTheTimeIs : Date = new Date(); 
+
+            var array : Vector.<SomeType> = new Vector.<SomeType>(); 
+
+            var strTest : String = "Hello World is Just a String";
+
+            var x : String = StringUtil.trim ( strTest.slice(9) );
+
+            var y : String = (anObj) ? anObj.toString() : "";
+
+            var f : Float = 0.0; 
+            if (anObj is SomeType) {
+                f = (anObj as SomeType).specialMethod(); 
+            }
+
+            for ( var i : int = 0; i < array.length; i++ ) {
+                // some code here
+                trace (array[i]);
+            }
+
+            if( ( mBoolVar1
+                && mBoolVar2
+                && ! mBoolVar3)
+                ||
+                (anObj
+                    && mBoolVar3
+                    && ! mBoolVar3)
+                ||
+                (mBoolVar1
+                    && mBoolVar2
+                    && mBoolVar3
+                    && mBoolVar4)
+            )
+            {
+                // some code here
+                dispatchMessageLoadedSignal();
+            }
+
+            for each (obj:SomeType in array) {
+                trace ( obj.specialMethod() ); 
+            } 
+            
+            var multiLineStringConstruction : String = "This kind of String construction is failing to convert: "
+                                                + strTest.slice(9)
+                                                + ". "; 
+
+            // this kind of method calling (or construtor calling) is also failing to convert
+            someClass.someStaticMethod (param1,
+                                        param2 + // this comment should not break conversion 
+                                        value22, // so does this 
+                                        param3   // or this :) (should not choke on these parantheses)
+                                        );
+
+            var flag : Boolean = (someMonths.indexOf("June") != -1);   // indexOf not supported by Haxe array, but Lambda does
+                                                                       // when converted, this should insert "using Lambda"
+
             return;
         }
 
