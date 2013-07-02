@@ -424,7 +424,7 @@ package as3tohx
                 dispatchMessageLoadedSignal();
             }
 
-            for each (obj:SomeType in array) {
+            for each (var obj:SomeType in array) {
                 trace ( obj.specialMethod() ); 
             } 
             
