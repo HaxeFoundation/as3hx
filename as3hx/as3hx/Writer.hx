@@ -1263,7 +1263,6 @@ class Writer
                 }
             case ETernary( cond, e1, e2 ):
                 write("(");
-
                 var rb = rebuildIfExpr(cond);
                 if(rb != null)
                     writeExpr(rb);
@@ -2074,6 +2073,7 @@ class Writer
         case ECall(e2, params): //These would require a full typer
         case EField(e2, f):
             null;
+        case ENL(e): return ENL(rebuildIfExpr(e));    
         default:
         }
         return null;
