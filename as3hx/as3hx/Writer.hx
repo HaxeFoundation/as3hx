@@ -2116,7 +2116,7 @@ class Writer
                     rebuiltCall = {e : rebuiltExpr, params : params};
                 }
                 else if (f == "indexOf") {
-                    //in AS3, indexOf is a method in Array whilt it is not in Haxe
+                    //in AS3, indexOf is a method in Array while it is not in Haxe
                     //Replace it by the Labda.indexOf method
                     var type = getExprType(e);
                     if (type != null) {
@@ -2128,6 +2128,11 @@ class Writer
                             rebuiltCall = {e : rebuiltExpr, params : params};
                         }
                     }
+                }
+                else if (f == "toString") {
+                    //replace AS3 toString by Haxe Std.string
+                    var rebuiltExpr = EField(EIdent("Std"), "string");
+                    rebuiltCall = {e : rebuiltExpr, params : [e]};
                 }
                 else if (getIdentString(e) != null) {
                     var ident = getIdentString(e);
