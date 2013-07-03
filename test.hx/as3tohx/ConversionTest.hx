@@ -72,7 +72,6 @@ class @:final ClassForStandaloneFunc
         
         #if TIVOCONFIG_ASSERT
         {            
-            
             if (object != null){
                 #if TIVOCONFIG_DEBUG_PRINT
                 {                    
@@ -132,42 +131,42 @@ class @:final Main extends MyClass implements ISomeInterface
     
     @:final function get_intKeyMap() : Map<Int, ValueClass>
     {
-        
         if (mIntKeyMap == null){
             mIntKeyMap = new Map<Int, ValueClass>();
-        }return mIntKeyMap;
+        }
+        return mIntKeyMap;
     }
     
     @:final function get_stringKeyMap() : Map<String, ValueClass>
     {
-        
         if (mStringKeyMap == null){
             mStringKeyMap = new Map<String, ValueClass>();
-        }return mStringKeyMap;
+        }
+        return mStringKeyMap;
     }
     
     @:final function get_objectKeyMap() : Map<KeyClass, ValueClass>
     {
-        
         if (mObjectKeyMap == null){
             mObjectKeyMap = new Map<KeyClass, ValueClass>();
-        }return mObjectKeyMap;
+        }
+        return mObjectKeyMap;
     }
     
     @:final function get_mapOfArray() : Map<Int, Array<AnotherClass>>
     {
-        
         if (mMapOfArray == null){
             mMapOfArray = new Map<Int, Array<AnotherClass>>();
-        }return mMapOfArray;
+        }
+        return mMapOfArray;
     }
     
     @:final function get_mapOfMap() : Map<Int, Map<String, AnotherClass>>
     {
-        
         if (mMapOfMap == null){
             mMapOfMap = new Map<Int, Map<String, AnotherClass>>();
-        }return mMapOfMap;
+        }
+        return mMapOfMap;
     }
     
     var isResult1 : Bool = true;
@@ -274,17 +273,16 @@ class @:final Main extends MyClass implements ISomeInterface
          * If statement:
          * simple if different style
          */
-        
-        
-        
         if (isResult1)
         // simple if with comments
         {
             isResult1 = true;
-        }  /**
+        }
+        
+        /**
          * if statement:
          * series of else if statements with comments
-         */  
+         */
         if (isResult1)
         {
             // comment within if
@@ -303,8 +301,7 @@ class @:final Main extends MyClass implements ISomeInterface
                 // replaced with "map.exists(xxx)"
                 value = map.exists(myClass);
             }
-            else 
-            if (isResult4)
+            else if (isResult4)
             {
                 // Testing that "hasAnyProperties(map)" is
                 // replaced with "map.keys().hasNext()"
@@ -312,22 +309,19 @@ class @:final Main extends MyClass implements ISomeInterface
             }
         }
         /* comment line */
-        else 
-        
-        if (isResult3)  // coment at the end of the line  
+        else if (isResult3)  // coment at the end of the line  
         {
             // one nested if
-            
-            
             if (!isResult1)
                 trace("trace line");
-        }  /**
+        }
+        
+        /**
          * SWITCH STATEMENT
          * Below is a switch with some comment variations
          * interspersed inbetween cases and white space
-         */  
+         */
         var value : Int;
-        
         
         switch (param)
         {
@@ -342,12 +336,12 @@ class @:final Main extends MyClass implements ISomeInterface
                 // 'if (obj)' is converted into 'if (obj != null)'
                 
                 var obj : Dynamic = { };
-                
-                
                 if (obj != null)
                 {
                     trace("trace line");
-                }value = 2;
+                }
+                
+                value = 2;
             }
             
             /*
@@ -375,7 +369,8 @@ class @:final Main extends MyClass implements ISomeInterface
             
             default:
                 value = 0;
-        }return true;
+        }
+        return true;
     }
     
     /**
@@ -425,11 +420,9 @@ class @:final Main extends MyClass implements ISomeInterface
         
         var x : String = StringTools.trim(strTest.substr(9));
         
-        var y : String = ((anObj != null)) ? anObj.toString() : "";
+        var y : String = ((anObj != null)) ? Std.string(anObj) : "";
         
         var f : Float = 0.0;
-        
-        
         if (Std.is(anObj, SomeType)){
             f = (try cast(anObj, SomeType) catch(e:Dynamic) null).specialMethod();
         }
@@ -437,22 +430,22 @@ class @:final Main extends MyClass implements ISomeInterface
         var i : Int = 0;
         while (i < Array.length){
             // some code here
-            trace(Array[i]);i++;
+            trace(Array[i]);
+            i++;
         }
         
-        if (
-        (
-        mBoolVar1 &&
-        mBoolVar2 && !mBoolVar3) ||
-        
-        (
-        anObj &&
-        mBoolVar3 && !mBoolVar3) ||
-        
-        (
-        mBoolVar1 &&
-        mBoolVar2 &&
-        mBoolVar3 && mBoolVar4))
+        if ((mBoolVar1
+        && mBoolVar2
+        && !mBoolVar3)
+        ||
+        (anObj != null
+        && mBoolVar3
+        && !mBoolVar3)
+        ||
+        (mBoolVar1
+        && mBoolVar2
+        && mBoolVar3
+        && mBoolVar4))
         {
             // some code here
             dispatchMessageLoadedSignal();
@@ -460,9 +453,11 @@ class @:final Main extends MyClass implements ISomeInterface
         
         for (obj/* AS3HX WARNING could not determine type for var: obj exp: EIdent(array) type: null */ in Array){
             trace(obj.specialMethod());
-        }var multiLineStringConstruction : String = 
-        "This kind of String construction is failing to convert: " +
-        strTest.substr(9) + ". ";
+        }
+        
+        var multiLineStringConstruction : String = "This kind of String construction is failing to convert: "
+        + strTest.substr(9)
+        + ". ";
         
         // this kind of method calling (or construtor calling) is also failing to convert
         someClass.someStaticMethod(param1,
