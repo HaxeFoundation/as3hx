@@ -1749,13 +1749,26 @@ class Parser {
                 return e1;
             }
         case TNL(t):
+
+            //push a token back and wrap it in newline if previous
+            //token was newline
+            var addToken : Token->Void = function(tk) {
+                if (pendingNewLine)
+                    add(TNL(tk));
+                else 
+                    add(tk);       
+            }
+
             switch (t) {
                 case TId(ident):
-                    add(tk);
+                    addToken(tk);
                     return e1;
                 case TPClose:
-                    add(tk);
+                    addToken(tk);
                     return e1;    
+                case TCommented(s,b,t):
+                    addToken(tk);
+                    return e1; 
                 default:  
                     add(t);
                     return parseExprNext(e1, true);  
