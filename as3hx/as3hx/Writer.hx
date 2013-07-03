@@ -1315,7 +1315,7 @@ class Writer
                 }
                 
                 for (incr in incrs) {
-                    es.push(incr);
+                    es.push(ENL(incr));
                 }
                 writeLoop(incrs, function() { writeExpr(EBlock(es)); });
                 closeContext();
