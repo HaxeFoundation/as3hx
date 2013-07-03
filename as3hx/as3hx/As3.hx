@@ -39,7 +39,7 @@ enum Expr {
     EParent( e : Expr );
     EBlock( e : Array<Expr> );
     EField( e : Expr, f : String );
-    EBinop( op : String, e1 : Expr, e2 : Expr );
+    EBinop( op : String, e1 : Expr, e2 : Expr, newLineAfterOp : Bool );
     EUnop( op : String, prefix : Bool, e : Expr );
     ECall( e : Expr, params : Array<Expr> );
     EIf( cond : Expr, e1 : Expr, ?e2 : Expr );

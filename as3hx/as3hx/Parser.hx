@@ -1381,21 +1381,21 @@ class Parser {
 
     function makeUnop( op, e ) {
         return switch( e ) {
-        case EBinop(bop,e1,e2): EBinop(bop,makeUnop(op,e1),e2);
+        case EBinop(bop,e1,e2, n): EBinop(bop,makeUnop(op,e1),e2, n);
         default: EUnop(op,true,e);
         }
     }
 
-    function makeBinop( op, e1, e, newLineAfterOp : Bool = false ) {
+    function makeBinop( op, e1, e, newLineBeforeOp : Bool = false ) {
         return switch( e ) {
-        case EBinop(op2, e2, e3):
+        case EBinop(op2, e2, e3, n):
             var p1 = opPriority.get(op);
             var p2 = opPriority.get(op2);
             if( p1 < p2 || (p1 == p2 && op.charCodeAt(op.length-1) != "=".code) )
-                EBinop(op2,makeBinop(op,e1,e2),e3);
+                EBinop(op2,makeBinop(op,e1,e2, newLineBeforeOp),e3, newLineBeforeOp);
             else
-                EBinop(op,e1,e);
-        default: EBinop(op ,e1,e);
+                EBinop(op,e1,e, newLineBeforeOp);
+        default: EBinop(op ,e1,e, newLineBeforeOp);
         }
     }
 
@@ -1434,7 +1434,7 @@ class Parser {
                 ensure(TPOpen);
                 var ev = parseExpr();
                 switch(ev) {
-                    case EBinop(op, e1, e2):
+                    case EBinop(op, e1, e2, n):
                         if(op == "in") {
                             ensure(TPClose);
                             return EForEach(e1, e2, parseExpr());
@@ -1449,7 +1449,7 @@ class Parser {
                 if( !opt(TSemicolon) ) {
                     var e = parseExpr();
                     switch(e) {
-                        case EBinop(op, e1, e2):
+                        case EBinop(op, e1, e2, n):
                             if(op == "in") {
                                 ensure(TPClose);
                                 return EForIn(e1, e2, parseExpr());
@@ -1498,11 +1498,11 @@ class Parser {
                 var cc = switch (t) {
                                     case TComplex(e1) : 
                                     switch (e1) {
-                                        case EBinop(op, e2, e3): 
+                                        case EBinop(op, e2, e3, n): 
                                         if (op == "as") {
                                             switch (e2) {
                                                 case ECall(e4, a): 
-                                                EBinop(op, ECall(EField(EIdent("Type"), "createInstance"), [e4, EArrayDecl(a)]), e3);
+                                                EBinop(op, ECall(EField(EIdent("Type"), "createInstance"), [e4, EArrayDecl(a)]), e3, n);
                                                 default: 
                                                 null;
                                             }
@@ -1584,7 +1584,7 @@ class Parser {
         case "typeof":
             var e = parseExpr();
             switch(e) {
-            case EBinop(op, e1, e2):
+            case EBinop(op, e1, e2, n):
                 //if(op != "==" && op != "!=")
                 //  unexpected(TOp(op));
             case EParent(e1):
@@ -1614,7 +1614,7 @@ class Parser {
             ensure(TPClose);
             ECall(EField(EIdent("Type"), "resolveClass"), [e]);
         case "getTimer":
-            ECall(EField(EIdent("Math"), "round"), [EBinop("*", ECall(EField(EIdent("haxe.Timer"), "getStamp"), []), EConst(CInt("1000")))]);
+            ECall(EField(EIdent("Math"), "round"), [EBinop("*", ECall(EField(EIdent("haxe.Timer"), "getStamp"), []), EConst(CInt("1000")), false)]);
         default:
             null;
         }

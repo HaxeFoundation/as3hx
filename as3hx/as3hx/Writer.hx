@@ -945,7 +945,7 @@ class Writer
                     write("." + f);
                 }
                 inArrayAccess = old;
-            case EBinop( op, e1, e2 ):
+            case EBinop( op, e1, e2, newlineBeforeOp):
                 if(op == "as") {
                     switch(e2) {
                     case EIdent(s):
@@ -1047,8 +1047,17 @@ class Writer
 
                     inLvalAssign = oldInLVA;
                     if(rvalue != null) {
-                        write(" " + op);
 
+                        //check wether newline was found just before
+                        //op while parsing
+                        if (newlineBeforeOp) {
+                            writeNL();
+                            writeIndent(op);
+                        }
+                        else {
+                            write(" " + op);
+                        }
+                           
                         //minor formatting fix, if right expression starts
                         //with a newline or comment, no need for extra 
                         switch (e2) {
@@ -1713,7 +1722,7 @@ class Writer
                 }
             case ETypeof(e):
                 switch(e) {
-                case EBinop(op, e1, e2):
+                case EBinop(op, e1, e2, n):
                     writeExpr(ETypeof(e1));
                     write(" " + op + " ");
                     writeExpr(e2);
@@ -1923,16 +1932,16 @@ class Writer
      **/
     function rebuildE4XExpr(e:Expr) : Expr {
         switch(e) {
-        case EBinop(op, e2, e3):
+        case EBinop(op, e2, e3, n):
             if(isNumericConst(e2)) {
-                return EBinop(op,ECall(EField(EIdent("Std"),"parseFloat"), [rebuildE4XExpr(e3)]), e2);
+                return EBinop(op,ECall(EField(EIdent("Std"),"parseFloat"), [rebuildE4XExpr(e3)]), e2, n);
             }
             if(isNumericConst(e3)) {
-                return EBinop(op,ECall(EField(EIdent("Std"),"parseFloat"), [rebuildE4XExpr(e2)]), e3);
+                return EBinop(op,ECall(EField(EIdent("Std"),"parseFloat"), [rebuildE4XExpr(e2)]), e3, n);
             }
             var r1 = rebuildE4XExpr(e2);
             var r2 = rebuildE4XExpr(e3);
-            return EBinop(op, r1, r2);
+            return EBinop(op, r1, r2, n);
         case EIdent(id):
             if(id.charAt(0) == "@")
                 return EIdent("x.att."+id.substr(1));
@@ -2020,9 +2029,9 @@ class Writer
             if(t == null || t == "Bool")
                 return null;
             if(isNumericType(t))
-                return EBinop("!=", e, EConst(CInt("0")));
-            return EBinop("!=", e, EIdent("null"));
-        case EBinop(op, e2, e3):
+                return EBinop("!=", e, EConst(CInt("0")), false);
+            return EBinop("!=", e, EIdent("null"), false);
+        case EBinop(op, e2, e3, n):
             if(isNumericConst(e2) || isNumericConst(e3))
                 return null;
             if(op == "==" || op == "!=" || op == "!==" || op == "===")
@@ -2037,7 +2046,7 @@ class Writer
             var r2 = rebuildIfExpr(e3);
             if(r1 == null) r1 = e2;
             if(r2 == null) r2 = e3;
-            return EBinop(op, r1, r2);
+            return EBinop(op, r1, r2, n);
         case EUnop(op, prefix, e2):
             var r2 = rebuildIfExpr(e2);
             if(r2 == null)
@@ -2046,9 +2055,9 @@ class Writer
                 if(!prefix)
                     return null;
                 switch(r2) {
-                    case EBinop(op2, e3, e4):
-                        if(op2 == "==") return EBinop("!=", e3, e4);
-                        if(op2 == "!=") return EBinop("==", e3, e4);
+                    case EBinop(op2, e3, e4, n):
+                        if(op2 == "==") return EBinop("!=", e3, e4, n);
+                        if(op2 == "!=") return EBinop("==", e3, e4, n);
                     default:
                 }
                 return null;
@@ -2056,8 +2065,8 @@ class Writer
             var t = getExprType(e2);
             if(t == null) return null;
             if(isNumericType(t))
-                return EBinop("!=", e, EConst(CInt("0")));
-            return EBinop("!=", e, EIdent("null"));
+                return EBinop("!=", e, EConst(CInt("0")), false);
+            return EBinop("!=", e, EIdent("null"), false);
         case EParent(e2):
             var r2 = rebuildIfExpr(e2);
             if(r2 == null) return null;
