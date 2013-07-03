@@ -1386,7 +1386,7 @@ class Parser {
         }
     }
 
-    function makeBinop( op, e1, e ) {
+    function makeBinop( op, e1, e, newLineAfterOp : Bool = false ) {
         return switch( e ) {
         case EBinop(op2, e2, e3):
             var p1 = opPriority.get(op);
@@ -1395,7 +1395,7 @@ class Parser {
                 EBinop(op2,makeBinop(op,e1,e2),e3);
             else
                 EBinop(op,e1,e);
-        default: EBinop(op,e1,e);
+        default: EBinop(op ,e1,e);
         }
     }
 
@@ -1636,7 +1636,7 @@ class Parser {
         return el;
     }
     
-    function parseExprNext( e1 : Expr ) {
+    function parseExprNext( e1 : Expr, pendingNewLine : Bool = false ) {
         var tk = token();
         dbgln("parseExprNext("+e1+") ("+tk+")");
         switch( tk ) {
@@ -1649,7 +1649,7 @@ class Parser {
                     }
                     return parseExprNext(EUnop(op,false,e1));
                 }
-            return makeBinop(op,e1,parseExpr());
+            return makeBinop(op,e1,parseExpr(), pendingNewLine);
         case TNs:
             switch(e1) {
             case EIdent(i):
@@ -1749,8 +1749,18 @@ class Parser {
                 return e1;
             }
         case TNL(t):
-            add(t);
-            return ENL(parseExprNext(e1));
+            switch (t) {
+                case TId(ident):
+                    add(tk);
+                    return e1;
+                case TPClose:
+                    add(tk);
+                    return e1;    
+                default:  
+                    add(t);
+                    return parseExprNext(e1, true);  
+            }
+           
         default:
             dbgln("parseExprNext stopped at " + tk);
             add(tk);
