@@ -252,6 +252,34 @@ class @:final Main extends MyClass implements ISomeInterface
                 paramB, paramC, /* comment describing paramB */
                 paramD);
 
+         // this is failing 
+         anotherObjType.templateArray.push(
+                 templateFactory.templateForA(),
+                 templateFactory.templateForB(),
+                 templateFactory.templateForC()
+         );
+
+         // also failing 
+         anotherObjType.templateArray.push(
+                 templateFactory.templateForA(),
+                 templateFactory.templateForB(),
+                 movieDataStructure.FIELD_IS_ADULT_NUM
+         );
+
+         // also failing 
+         anotherObjType.templateArray.push(
+                 templateFactory.templateForA(),
+                 templateFactory.templateForB(),
+                 "String Literal"
+         );
+
+         a++; // some comment - after conversion, switch starts on this line... resulting in compiler error
+         switch (expression) {
+             case value1:
+                 trace("expression value is value1");
+             case value2:
+                 trace("expression value is value1");
+         }
 
         /**
          * Function call: Parameters across different
@@ -464,6 +492,14 @@ class @:final Main extends MyClass implements ISomeInterface
             trace ( obj.specialMethod() ); 
         } 
 
+        for (obj /* inferred type: String */ in array) {
+                trace ( obj ); 
+        } 
+
+        for (obj /* inferred type: Dynamic */ in array) {
+                trace ( obj ); 
+        } 
+
         var multiLineStringConstruction : String = "This kind of String construction is failing to convert: "
                                             + strTest.slice(9)
                                             + ". "; 
@@ -494,6 +530,10 @@ class @:final Main extends MyClass implements ISomeInterface
 
     // below are unit tests' methods with annotations
     
+    // all the unit test annotations are being enclosed in meta
+    // to make it easy for converter, I removed meta
+    // we should not have any @meta
+    
     @Test("this will test prime number function")
     public function testPrime(val:Int):Bool
     {
@@ -521,7 +561,11 @@ class @:final Main extends MyClass implements ISomeInterface
         return true;
     }
 
-    @:meta(Before(order=-1))
+    /* order=value parts can be moved to top of the annotations (in comments)
+       see below... note: order should not be in any annotation itself */
+       
+    // order=-1
+    @Before
     public function firstMostBefore():Void
     {
         return;
