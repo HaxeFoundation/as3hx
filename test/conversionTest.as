@@ -225,6 +225,13 @@ package as3tohx
                     templateFactory.templateForC()
             );
 
+            // this is a variation of above, and should not fail
+            anotherObjType.templateArray.push(
+                    templateFactory.templateForA(),
+                    templateFactory.templateForB(),
+                    templateFactory.templateForC() // abraca'dabra magic :) 
+            );
+
             // also failing 
             anotherObjType.templateArray.push(
                     templateFactory.templateForA(),
@@ -239,7 +246,29 @@ package as3tohx
                     "String Literal"
             );
 
-            a++; // some comment - after conversion, switch starts on this line... resulting in compiler error
+            // this is a variation of above, and should not fail
+            anotherObjType.templateArray.push(
+                    templateFactory.templateForA(),
+                    templateFactory.templateForB(),
+                    "String Literal" // abraca'dabra magic :) 
+            );
+
+            a++; // this is working correct i.e. if comment is here, switch begins in next line
+            switch (expression) {
+                case value1:
+                    trace("expression value is value1");
+                    break;
+                case value2:
+                    trace("expression value is value1");
+                    break;
+            }
+
+            // this is a variation of above
+            // this one is incorrectly indenting i.e. if there's no comment on the line above switch,
+            // switch statement is starting right after previous statement i.e. as follows:
+            // a++;    switch (expression) {
+            // it is not resulting in compiler error though
+            a++; 
             switch (expression) {
                 case value1:
                     trace("expression value is value1");
