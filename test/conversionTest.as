@@ -218,6 +218,36 @@ package as3tohx
                     paramB, paramC,    /* comment describing paramB */
                     paramD);
 
+            // this is failing 
+            anotherObjType.templateArray.push(
+                    templateFactory.templateForA(),
+                    templateFactory.templateForB(),
+                    templateFactory.templateForC()
+            );
+
+            // also failing 
+            anotherObjType.templateArray.push(
+                    templateFactory.templateForA(),
+                    templateFactory.templateForB(),
+                    movieDataStructure.FIELD_IS_ADULT_NUM
+            );
+
+            // also failing 
+            anotherObjType.templateArray.push(
+                    templateFactory.templateForA(),
+                    templateFactory.templateForB(),
+                    "String Literal"
+            );
+
+            a++; // some comment - after conversion, switch starts on this line... resulting in compiler error
+            switch (expression) {
+                case value1:
+                    trace("expression value is value1");
+                    break;
+                case value2:
+                    trace("expression value is value1");
+                    break;
+            }
 
             /**
              * Function call: Parameters across different
@@ -427,7 +457,19 @@ package as3tohx
             for each (var obj:SomeType in array) {
                 trace ( obj.specialMethod() ); 
             } 
-            
+
+            // this is failing
+            for (var obj:String in array)
+            {
+                trace ( obj ); 
+            }
+
+            // this is failing too 
+            for (var obj:Object in array)
+            {
+                trace ( obj ); 
+            }
+
             var multiLineStringConstruction : String = "This kind of String construction is failing to convert: "
                                                 + strTest.slice(9)
                                                 + ". "; 
