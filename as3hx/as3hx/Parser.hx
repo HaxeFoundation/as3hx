@@ -1814,6 +1814,9 @@ class Parser {
                     if( tk == etk ) break;
                     unexpected(tk);
                 }
+            case TNL(t):
+                args.push(ENL(null));
+                if (t == etk) break;
             default:
                 if( tk == etk ) break;
                 unexpected(tk);
