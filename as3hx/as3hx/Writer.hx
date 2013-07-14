@@ -1791,24 +1791,18 @@ class Writer
                 }
                 rv = true;
             case "Before", "After":
-                var hasOrder = false;
-                //special case, for those, write the "order" attribute if present, using standard meta syntax
+                //special case, for those, write the "order" attribute if present, as an annotation in comments
                 for (arg in m.args) {
                     if (arg.name == "order") {
-                        write("@:meta("+m.name+"(");
-                        write(arg.name + "=");
+                        write("// order=");
                         writeExpr(arg.val);
-                        write("))");
-                        hasOrder = true;
+                        writeNL();
+                        writeIndent();
                         break;
                     }
                 }
 
-                //use custom syntax otherwise 
-                if (!hasOrder) {
-                    write("@" + m.name);
-                }
-
+                write("@" + m.name);
                 rv = true;
             case "Ignore":
                 write("@Ignore");
