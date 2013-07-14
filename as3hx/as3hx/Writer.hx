@@ -2207,6 +2207,10 @@ class Writer
      * case needs to be indented
      */
     function shouldIndentCase(expressions:Array<Expr>) : Bool {
+        
+        //copy as might need to change
+        var expressions = expressions.copy();
+
         //search for the first significant expression
         //to determine indenting
         for (expr in expressions)
@@ -2214,7 +2218,8 @@ class Writer
             switch (expr) {
                 case EBlock(_): return false;  //block will add its own indenting
                 case ECommented(_):  //comments are skipped for this purpose
-                default: true;
+                case ENL(e): expressions.push(e); //newline are ignored but its content matters
+                default: return true;
             }
         }
 
