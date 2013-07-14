@@ -252,6 +252,61 @@ class @:final Main extends MyClass implements ISomeInterface
                 paramB, paramC, /* comment describing paramB */
                 paramD);
 
+         // this is failing 
+         anotherObjType.templateArray.push(
+                 templateFactory.templateForA(),
+                 templateFactory.templateForB(),
+                 templateFactory.templateForC()
+         );
+
+         // this is a variation of above, and should not fail
+         anotherObjType.templateArray.push(
+                 templateFactory.templateForA(),
+                 templateFactory.templateForB(),
+                 templateFactory.templateForC() // abraca'dabra magic :) 
+         );
+
+         // also failing 
+         anotherObjType.templateArray.push(
+                 templateFactory.templateForA(),
+                 templateFactory.templateForB(),
+                 movieDataStructure.FIELD_IS_ADULT_NUM
+         );
+
+         // also failing 
+         anotherObjType.templateArray.push(
+                 templateFactory.templateForA(),
+                 templateFactory.templateForB(),
+                 "String Literal"
+         );
+
+         // this is a variation of above, and should not fail
+         anotherObjType.templateArray.push(
+                 templateFactory.templateForA(),
+                 templateFactory.templateForB(),
+                 "String Literal" // abraca'dabra magic :) 
+         );
+
+         a++; // this is working correct i.e. if comment is here, switch begins in next line
+         switch (expression) {
+             case value1:
+                 trace("expression value is value1");
+             case value2:
+                 trace("expression value is value1");
+         }
+
+         // this is a variation of above
+         // this one is incorrectly indenting i.e. if there's no comment on the line above switch,
+         // switch statement is starting right after previous statement i.e. as follows:
+         // a++;    switch (expression) {
+         // it is not resulting in compiler error though
+         a++; 
+         switch (expression) {
+             case value1:
+                 trace("expression value is value1");
+             case value2:
+                 trace("expression value is value1");
+         }
 
         /**
          * Function call: Parameters across different
@@ -464,6 +519,14 @@ class @:final Main extends MyClass implements ISomeInterface
             trace ( obj.specialMethod() ); 
         } 
 
+        for (obj /* inferred type: String */ in array) {
+                trace ( obj ); 
+        } 
+
+        for (obj /* inferred type: Dynamic */ in array) {
+                trace ( obj ); 
+        } 
+
         var multiLineStringConstruction : String = "This kind of String construction is failing to convert: "
                                             + strTest.slice(9)
                                             + ". "; 
@@ -475,8 +538,8 @@ class @:final Main extends MyClass implements ISomeInterface
                                     param3   // or this :) (should not choke on these parantheses)
                                     );
 
-        var flag : Bool = (someMonths.indexOf("June") != -1);   // indexOf not supported by Haxe array, but Lambda does
-                                                                // when converted, this should insert "using Lambda"
+        var flag : Bool = (Lambda.indexOf(someMonths, "June") != -1);   // indexOf not supported by Haxe array, but Lambda does
+                                                                        // when converted, this should insert "using Lambda"
 
         return; 
     }
@@ -493,6 +556,10 @@ class @:final Main extends MyClass implements ISomeInterface
 
 
     // below are unit tests' methods with annotations
+    
+    // all the unit test annotations are being enclosed in meta
+    // to make it easy for converter, I removed meta
+    // we should not have any @meta
     
     @Test("this will test prime number function")
     public function testPrime(val:Int):Bool
@@ -521,7 +588,11 @@ class @:final Main extends MyClass implements ISomeInterface
         return true;
     }
 
-    @:meta(Before(order=-1))
+    /* order=value parts can be moved to top of the annotations (in comments)
+       see below... note: order should not be in any annotation itself */
+       
+    // order=-1
+    @Before
     public function firstMostBefore():Void
     {
         return;
