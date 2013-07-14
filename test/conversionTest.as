@@ -218,6 +218,65 @@ package as3tohx
                     paramB, paramC,    /* comment describing paramB */
                     paramD);
 
+            // this is failing 
+            anotherObjType.templateArray.push(
+                    templateFactory.templateForA(),
+                    templateFactory.templateForB(),
+                    templateFactory.templateForC()
+            );
+
+            // this is a variation of above, and should not fail
+            anotherObjType.templateArray.push(
+                    templateFactory.templateForA(),
+                    templateFactory.templateForB(),
+                    templateFactory.templateForC() // abraca'dabra magic :) 
+            );
+
+            // also failing 
+            anotherObjType.templateArray.push(
+                    templateFactory.templateForA(),
+                    templateFactory.templateForB(),
+                    movieDataStructure.FIELD_IS_ADULT_NUM
+            );
+
+            // also failing 
+            anotherObjType.templateArray.push(
+                    templateFactory.templateForA(),
+                    templateFactory.templateForB(),
+                    "String Literal"
+            );
+
+            // this is a variation of above, and should not fail
+            anotherObjType.templateArray.push(
+                    templateFactory.templateForA(),
+                    templateFactory.templateForB(),
+                    "String Literal" // abraca'dabra magic :) 
+            );
+
+            a++; // this is working correct i.e. if comment is here, switch begins in next line
+            switch (expression) {
+                case value1:
+                    trace("expression value is value1");
+                    break;
+                case value2:
+                    trace("expression value is value1");
+                    break;
+            }
+
+            // this is a variation of above
+            // this one is incorrectly indenting i.e. if there's no comment on the line above switch,
+            // switch statement is starting right after previous statement i.e. as follows:
+            // a++;    switch (expression) {
+            // it is not resulting in compiler error though
+            a++; 
+            switch (expression) {
+                case value1:
+                    trace("expression value is value1");
+                    break;
+                case value2:
+                    trace("expression value is value1");
+                    break;
+            }
 
             /**
              * Function call: Parameters across different
@@ -427,7 +486,19 @@ package as3tohx
             for each (var obj:SomeType in array) {
                 trace ( obj.specialMethod() ); 
             } 
-            
+
+            // this is failing
+            for (var obj:String in array)
+            {
+                trace ( obj ); 
+            }
+
+            // this is failing too 
+            for (var obj:Object in array)
+            {
+                trace ( obj ); 
+            }
+
             var multiLineStringConstruction : String = "This kind of String construction is failing to convert: "
                                                 + strTest.slice(9)
                                                 + ". "; 
