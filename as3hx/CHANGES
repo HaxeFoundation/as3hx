@@ -1,3 +1,14 @@
+ - replaced as3 "toString" by Haxe "Std.string"
+ - replaced as3 "Date" by Haxe "Date.now" for current time
+ - "callback" ident in as3 source replaced by "callbackfunc" because of Haxe reserved keyword
+ - implemented support for as3 package level function, wrapped in Haxe class
+ - replaced Haxe 2 "Hash" generation by Haxe 3 "Map"
+ - removed comma before haxe "implements" keyword (haxe 3 syntax)
+ - as3 "hasOwnProperty" replaced by haxe "exists"
+ - replaced all tabs by spaces
+ - Most newlines are now preserved from as3 source
+ - Most comment are now preserved from as3 source
+ - Added support for "final" as3 keyword
  - Added ENL type, representing source code new line chars
  - New line chars from as3 files are tokenised instead of ignored
  - Fixed bug where comment made semicolon appear on new lines
