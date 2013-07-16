@@ -1,3 +1,4 @@
+ - added many improvements to generated code style
  - replaced as3 "toString" by Haxe "Std.string"
  - replaced as3 "Date" by Haxe "Date.now" for current time
  - "callback" ident in as3 source replaced by "callbackfunc" because of Haxe reserved keyword
