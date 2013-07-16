@@ -1,8 +1,9 @@
-===== Need to add TiVo's changes summary =====
-
-
-
-===== originally came with tool's source =====
+ - Added ENL type, representing source code new line chars
+ - New line chars from as3 files are tokenised instead of ignored
+ - Fixed bug where comment made semicolon appear on new lines
+ - Class attribute can now be initialised inline
+ - Implemented Haxe 3 getter/setter syntax
+=====
 
  - Removed writing var type in for(var x : String in y)
  - Created "in" as Binop : for(i in x)
