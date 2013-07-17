@@ -56,6 +56,11 @@ package as3tohx
             trace("blah");
         }
 
+        // another way of using TIVOCONFIG 
+        if (TIVOCONFIG::UNSAFE_PRIVACY) {
+            trace("roar");
+        }
+
         TIVOCONFIG::ASSERT {
             if (object) {
                 TIVOCONFIG::DEBUG_PRINT {
@@ -89,7 +94,67 @@ package as3tohx
     public final class Main extends myClass implements ISomeInterface
     {
         static public var someMonths  : Array = [ "January", "February", "March" ];
-        static public var someDay     : Array = [ "January", 1, 1970, "AD" ]; 
+
+        // apparently, if there is an extra comma (,) after the last value in an array/vector
+        // declaration (or creating when passing as a param to function) is allowed in AS3
+        // there were several places such as these in code hence, need to handle it.
+        static public var someDay     : Array = [ "January", 1, 1970, "AD", ]; 
+
+        //---------- this is the most commonly occurring type of data declarations that we missed -
+        //---------- yes, we are done :)
+
+        /** IMP: when converting to haxe ... these result in TWO (2) Parts
+         *       1. a typedef declaration on top
+         *       2. this data definition in haxe
+         *
+         *       Typedef declaration will derive field names from here, e.g. "name", "imageUrl".
+         *       Data-types for those type declarations will be based on data values here.
+         *       i.e. if it is quoted - String type, it is a number... Int (ignore Floats, everything is Int),
+         *            if it is true/false - Bool, everything else (unknown types) are Dynamic type.
+         *
+         *       This typedef name will be same as data definition e.g. ABC_DEF converted to AbcDefTypedef.
+         *
+         *       i.e.   ABC_DEF : Array will become ABC_DEF : Array<AbcDefTypedef>.
+         */
+
+        private static const VIDEO_PROVIDER_INFO_ITEMS:Array = [
+            { name: "Amazon", imageUrl: "images/providers/Source_Amazon_icon_sm.png", partnerId: "Amazon-Id", 
+                uiDestinationId:"Amazon-Des-Id" },
+            { name: "Netflix", imageUrl: "images/providers/Source_Netflix_icon_sm.png", partnerId: "Netflix-Id", 
+                uiDestinationId:"Netflix-Des-Id" },
+        ];
+
+        // --- more examples --- I know this is too many examples... you don't have to code for all these
+        // just code for the one above ... these are just additional test data for validation :)
+
+        private static const DESTINATION_ITEMS:Array = [
+            {name:"amazon", uiDestinationId: "Amazon-Des-Id", uri:"Amazon-transition-uri"},
+            {name:"netflix", uiDestinationId: "Netflix-Des-Id", uri:"Netflix-transition-uri"},
+            ];
+        
+        private static const COLLECTION:Array           = [
+            { id: "1", title: "Collection1", type: CollectionType.SERIES, 
+                imageType: ImageType.TV_SHOW_SERIES_LOGO, imageUrl: "images/discovery/flyout6.jpg", 
+                height: 150, width: 200 },
+            { id: "2", title: "Collection2", type: CollectionType.SERIES, 
+                imageType: ImageType.TV_SHOW_SERIES_LOGO, imageUrl: "images/discovery/flyout7.jpg", 
+                height: 150, width: 200 },
+        ];
+
+        private static const CONTENT:Array     = [
+            { id: "1", title: "Content1", match: MatchedField.TITLE, includeInSearch: true },
+            { id: "2", title: "Content2", match: MatchedField.TITLE, includeInSearch: true },
+        ];
+        
+        private static const OFFER:Array    = [
+            { id: "1", contentId: "1", transportType: OfferTransportType.STREAM, channelCallSign: "CBS", channelId: "5", channelNumber: 5, title: "Some title" },
+            { id: "2", contentId: "2", transportType: OfferTransportType.STREAM, channelCallSign: "CBS", channelId: "6", channelNumber: 6, title: "Some title" },
+        ];
+
+        private static const PERSON:Array = [
+            { id: "1", first: "First1", last: "Last1" },
+            { id: "2", first: "First2", last: "Last2" },
+        ];
 
         static private const ROLE_PRIORITY : int = 99; 
         
@@ -98,7 +163,7 @@ package as3tohx
         private var mObjectKeyMap:Dictionary/*.<KeyClass, ValueClass>*/ = null;
         private var mMapOfArray:Dictionary/*.<Int, Vector.<AnotherClass>>*/ = null;
         private var mMapOfMap:Dictionary/*.<Int, Dictionary.<String, AnotherClass>>*/ = null;
-
+        
         public final function get intKeyMap():Dictionary/*.<Int, ValueClass>*/
         {
             if (mIntKeyMap == null) {
@@ -278,6 +343,23 @@ package as3tohx
                     break;
             }
 
+            /** I couldn't do haxe code for this, I'm pretty sure you can figure how this is in haxe */
+            // need to be able to convert these anonymous callback function definitions
+            someAsyncEventRegisterMethod(
+                "listener description or name",
+                // anonymous call back function
+                function():SomeType
+                {
+                    return aValueOfSomeType; // could be another function call 
+                }
+            );
+            
+             // making sure this succeeds
+             functionGHIJ(
+             param1,
+             param2
+             );
+
             /**
              * Function call: Parameters across different
              * lines with concatenation of parameters across
@@ -290,6 +372,25 @@ package as3tohx
                     // last comment
                     paramD);
 
+            // this should not fail
+            someObject.
+            methodIsOnNextLine(); 
+
+            // this should not be failing either
+            (someObject
+            as SomeClass).someMethod(new<Int>(5), new<int>(10)); // <int> & <Int> should both be allowed for <Int>,
+                                                                 // whether it is here or in Dictionary declaration
+
+            // this is tricky...whenever you see { ... } inside a method call, don't try to convert it
+            // pass it as-is into haxe  
+            someFunction( param1,
+                         {season:"Winter",
+                          wish:"Snow",
+                          intent:"Skiing, Exercise, Loose Weight", 
+                          offered:"Hot Chocolate",
+                          result:"Gained Weight",
+                          }, param3
+            );
 
             /**
              * IF / ELSE IF STATEMENTS
@@ -307,6 +408,11 @@ package as3tohx
                 isResult1 = true;
             }
 
+            // this should not be failing
+            if (expression1 /* some comment */ && class.Method() /* returns boolean */ && anObjetc is classType)
+            {
+                isResult112 = true;
+            }
 
             /**
              * if statement:
@@ -405,7 +511,139 @@ package as3tohx
             }
             return true;
         }
-
+        
+        // I do not have a converted golden version for this next one !
+        // I trust you to figure this :)
+        
+        // this is basically like earlier tip about passing values as-is when enclosed in {...} within a function call
+        // here, this is CDATA / XML / JSON string ... need not always be inside quotes... so we should pass as-is
+        
+        public final function someWrapperMethod():String {
+                    return someUtilClass.buildCustomObjFromThisJsonStringHere(<![CDATA[
+                        {
+                        "conflicts": {
+                        "type": "subscriptionConflicts",
+                        "willClip": [
+                        {
+                        "requestWinning": true,
+                        "winningOffer": [
+                        {
+                        "subtitle": "Family Business",
+                        "title": "Dog the Bounty Hunter",
+                        "startTime": "2011-03-14 15:00:00",
+                        "duration": 3600,
+                        "type": "offer",
+                        "channel": {
+                        "isReceived": true,
+                        "name": "A & E Network",
+                        "isKidZone": false,
+                        "isBlocked": false,
+                        "channelId": "tivo:ch.489",
+                        "callSign": "AETV",
+                        "isDigital": false,
+                        "stationId": "tivo:st.335",
+                        "channelNumber": "27",
+                        "logoIndex": 65548,
+                        "sourceType": "cable",
+                        "type": "channel",
+                        "levelOfDetail": "low"
+                        },
+                        "levelOfDetail": "low"
+                        },
+                        {
+                        "subtitle": "Wines and Misdemeanors",
+                        "title": "Las Vegas",
+                        "startTime": "2011-03-14 16:00:00",
+                        "duration": 3600,
+                        "type": "offer",
+                        "channel": {
+                        "isReceived": true,
+                        "name": "Turner Network TV",
+                        "isKidZone": false,
+                        "isBlocked": false,
+                        "channelId": "tivo:ch.9",
+                        "callSign": "TNT",
+                        "isDigital": false,
+                        "stationId": "tivo:st.984",
+                        "channelNumber": "26",
+                        "logoIndex": 65542,
+                        "sourceType": "cable",
+                        "type": "channel",
+                        "levelOfDetail": "low"
+                        },
+                        "levelOfDetail": "low"
+                        }
+                        ],
+                        "losingRecording": [
+                        {
+                        "state": "scheduled",
+                        "bodyId": "tsn:7D8000190307708",
+                        "scheduledStartTime": "2011-03-14 16:00:00",
+                        "scheduledEndTime": "2011-03-14 17:02:00",
+                        "type": "recording",
+                        "expectedDeletion": "2011-03-16 16:00:00"
+                        }
+                        ],
+                        "reason": "startTimeClipped",
+                        "type": "conflict",
+                        "losingOffer": [
+                        {
+                        "subtitle": "Offense",
+                        "title": "Law & Order: Criminal Intent",
+                        "startTime": "2011-03-14 16:00:00",
+                        "duration": 3600,
+                        "type": "offer",
+                        "channel": {
+                        "isReceived": true,
+                        "name": "USA Network",
+                        "isKidZone": false,
+                        "isBlocked": false,
+                        "channelId": "tivo:ch.9",
+                        "callSign": "USA",
+                        "isDigital": false,
+                        "stationId": "tivo:st.988",
+                        "channelNumber": "25",
+                        "logoIndex": 66054,
+                        "sourceType": "cable",
+                        "type": "channel",
+                        "levelOfDetail": "low"
+                        },
+                        "levelOfDetail": "low"
+                        }
+                        ]
+                        }
+                        ],
+                        "willGet": [
+                        {
+                        "subtitle": "Family Business",
+                        "title": "Dog the Bounty Hunter",
+                        "startTime": "2011-03-14 15:00:00",
+                        "duration": 3600,
+                        "type": "offer",
+                        "channel": {
+                        "isReceived": true,
+                        "name": "A & E Network",
+                        "isKidZone": false,
+                        "isBlocked": false,
+                        "channelId": "tivo:ch.489",
+                        "callSign": "AETV",
+                        "isDigital": false,
+                        "stationId": "tivo:st.335",
+                        "channelNumber": "27",
+                        "logoIndex": 65548,
+                        "sourceType": "cable",
+                        "type": "channel",
+                        "levelOfDetail": "low"
+                        },
+                        "levelOfDetail": "low"
+                        }
+                        ]
+                        },
+                        "type": "subscribeResult"
+                        }
+                                                ]]>);
+        }
+        
         /**
         * FUNCTION DEFINITION FORMATS
         * Below are two function definitions
@@ -581,5 +819,14 @@ package as3tohx
         {
             return;
         }
+    }
+}
+
+// last way left , for using TIVOCONFIG ... at top level of the file,
+// i.e. not inside a package or class or method scope but, at file scope
+TIVOCONFIG::DEBUG {
+    interface IGlobalInterface
+    {
+        function summerMethod():Int;
     }
 }
