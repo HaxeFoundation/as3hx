@@ -1267,6 +1267,9 @@ class Parser {
                 }
             case TBrClose:
                 break;
+            case TNL(t):
+                add(t);
+                continue;
             default:
                 unexpected(tk);
             }
