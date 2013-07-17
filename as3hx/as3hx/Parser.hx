@@ -1408,8 +1408,19 @@ class Parser {
             ensure(TPClose);
             var e1 = parseExpr();
             end();
-            var e2 = if( opt(TId("else"), true) ) parseExpr() else null;
-            EIf(cond,e1,e2);
+            
+            switch (cond) {
+                case ECondComp(v, e):
+                    //corner case, the condition is an AS3 preprocessor 
+                    //directive, it must contain the block to wrap it 
+                    //in Haxe #if #end preprocessor directive
+                    ECondComp(v, e1);
+                default:
+                    //regular if statement,,check for an "else" block
+                    var e2 = if( opt(TId("else"), true) ) parseExpr() else null;
+                    EIf(cond,e1,e2);
+            }
+
         case "var", "const":
             var vars = [];
             while( true ) {
@@ -1664,9 +1675,19 @@ class Parser {
                         if (Lambda.has(cfg.conditionalVars, i + "::" + id)) {
                             // this is a user supplied conditional compilation variable
                             openDebug("conditional compilation: " + i + "::" + id);
-                            var e = parseExpr();
-                            closeDebug("end conditional compilation: " + i + "::" + id);
-                            return ECondComp(i + "_" + id, e);
+                            switch (peek()) {
+                                case TPClose:
+                                    closeDebug("end conditional compilation: " + i + "::" + id);
+                                    //corner case, the conditional compilation is within an "if" statement
+                                    //example if(CONFIG::MY_CONFIG) { //code block }
+                                    //normal "if" statement parsing will take care of it
+                                    return ECondComp(i + "_" + id, null);
+                                default:    
+                                    var e = parseExpr();
+                                    closeDebug("end conditional compilation: " + i + "::" + id);
+                                    return ECondComp(i + "_" + id, e);
+                            }
+
                         } else switch(peek()) {
                             case TBrOpen: // functions inside a namespace
                                 return parseExprNext(ECommented("/* AS3HX WARNING namespace modifier " + i + "::"+id+" */", true, false, null));
