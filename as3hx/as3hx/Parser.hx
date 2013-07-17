@@ -1707,7 +1707,7 @@ class Parser {
             tk = token();
             dbgln(Std.string(uncomment(tk)));
             var field = null;
-            switch(uncomment(tk)) {
+            switch(uncomment(removeNewLine(tk))) {
             case TId(id):
                 field = StringTools.replace(id, "$", "__DOLLAR__");
                 if( opt(TNs) )
