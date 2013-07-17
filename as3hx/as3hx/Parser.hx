@@ -1765,9 +1765,9 @@ class Parser {
             return ETernary(e1, e2, e3);
         case TId(s):
             switch( s ) {
-            case "is": return makeBinop("is", e1, parseExpr());
-            case "as": return makeBinop("as",e1,parseExpr());
-            case "in": return makeBinop("in",e1,parseExpr());
+            case "is": return makeBinop("is", e1, parseExpr(), pendingNewLine);
+            case "as": return makeBinop("as",e1,parseExpr(), pendingNewLine);
+            case "in": return makeBinop("in",e1,parseExpr(), pendingNewLine);
             default:
                 add(tk);
                 return e1;
@@ -1784,9 +1784,6 @@ class Parser {
             }
 
             switch (t) {
-                case TId(ident):
-                    addToken(tk);
-                    return e1;
                 case TPClose:
                     addToken(tk);
                     return e1;    
