@@ -1363,7 +1363,7 @@ class Parser {
         case TBkOpen:
             var a = new Array();
             tk = token();
-            while( tk != TBkClose ) {
+            while( removeNewLine(tk) != TBkClose ) {
                 add(tk);
                 a.push(parseExpr());
                 tk = token();
