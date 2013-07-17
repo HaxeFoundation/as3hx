@@ -6,7 +6,7 @@
 	<uintToInt value="true" />
 	<vectorToArray value="true" />
 	<guessCasts value="true" />
-	<functionToDynamic value="true" />
+	<functionToDynamic value="false" />
 	<getterMethods value="get_%i" />
 	<setterMethods value="set_%i" />
 	<forcePrivateSetter value="true" />
