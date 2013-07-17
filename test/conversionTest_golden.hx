@@ -25,6 +25,55 @@ import as3tohx.UInt;
 
 using Lambda;
 
+// typedef declarations
+
+typedef VideoProviderInfoItemsTypedef = {
+    var name                : String; 
+    var imageUrl            : String; 
+    var partnerId           : String; 
+    var uiDestinationId     : String;  
+}
+
+typedef DestinationItemsTypedef = {
+    var name                : String; 
+    var uiDestinationId     : String;  
+    var uri                 : String; 
+}
+
+typedef CollectionTypedef = {
+    var id                : String; 
+    var title             : String; 
+    var type              : Dynamic; 
+    var imageType         : Dynamic;  
+    var imageUrl          : String;  
+    var height            : Int;  
+    var width             : Int;  
+}
+
+typedef ContentTypedef = {
+    var id                : String; 
+    var title             : String; 
+    var match             : Dynamic; 
+    var includeInSearch   : Bool;  
+} 
+
+typedef OfferTypedef = {
+    var id                : String; 
+    var contentId         : String; 
+    var transportType     : Dynamic; 
+    var channelCallSign   : String;  
+    var channelId         : String;  
+    var channelNumber     : Int;  
+    var title             : String;  
+} 
+
+typedef PersonTypedef = {
+    var id                : String; 
+    var first             : String; 
+    var last              : String;  
+}
+
+
 /**
  * Most commonly failing interface use case.
  */
@@ -68,6 +117,13 @@ class @:final ClassForStandaloneFunc
         }
         #end // TIVOCONFIG_COVERAGE
 
+        // another way of using TIVOCONFIG 
+        #if TIVOCONFIG_UNSAFE_PRIVACY
+        {
+            trace("roar");
+        }
+        #end // TIVOCONFIG_UNSAFE_PRIVACY
+
         #if TIVOCONFIG_ASSERT 
         {
             if (object != null)
@@ -108,7 +164,116 @@ interface ISomeInterface
 class @:final Main extends MyClass implements ISomeInterface
 {
     static public var someMonths : Array<Dynamic>= [ "January", "February", "March" ];
+
+    // apparently, if there is an extra comma (,) after the last value in an array/vector
+    // declaration (or creating when passing as a param to function) is allowed in AS3
+    // there were several places such as these in code hence, need to handle it.
     static public var someDay : Array<Dynamic>= [ "January", 1, 1970, "AD" ]; 
+
+    //---------- this is the most commonly occurring type of data declarations that we missed -
+    //---------- yes, we are done :)
+
+    static var VIDEO_PROVIDER_INFO_ITEMS : Array<VideoProviderInfoItemsTypedef> = [
+           {
+             name : "Amazon",
+             imageUrl : "images/providers/Source_Amazon_icon_sm.png",
+             partnerId : "Amazon-Id",
+             uiDestinationId : "Amazon-Des-Id",
+           },
+           {
+             name : "Netflix",
+             imageUrl : "images/providers/Source_Netflix_icon_sm.png",
+             partnerId : "Netflix-Id",
+             uiDestinationId : "Netflix-Des-Id",
+           }
+    ];
+
+    // --- more examples --- I know this is too many examples... you don't have to code for all these
+    // just code for the one above ... these are just additional test data for validation :)
+
+    // here is another example of the above type
+    static var DESTINATION_ITEMS : Array<DestinationItemsTypedef> = [
+           {
+             name : "amazon",
+             uiDestinationId : "Amazon-Des-Id",
+             uri : "Amazon-transition-uri",
+           },
+           {
+             name : "netflix",
+             uiDestinationId : "Netflix-Des-Id",
+             uri : "Netflix-transition-uri",
+           }
+    ];
+
+    static var COLLECTION : Array<CollectionTypedef> = [
+           {
+             id : "1",
+             title : "Collection1",
+             type : CollectionType.SERIES,
+             imageType : ImageType.TV_SHOW_SERIES_LOGO,
+             imageUrl : "images/discovery/flyout6.jpg",
+             height : 150,
+             width : 200,
+           },
+           {
+             id : "2",
+             title : "Collection2",
+             type : CollectionType.SERIES,
+             imageType : ImageType.TV_SHOW_SERIES_LOGO,
+             imageUrl : "images/discovery/flyout7.jpg",
+             height : 150,
+             width : 200,
+           }
+    ];
+
+    static var CONTENT : Array<ContentTypedef> = [
+           {
+             id : "1",
+             title : "Content1",
+             match : MatchedField.TITLE,
+             includeInSearch : true,
+           },
+           {
+             id : "2",
+             title : "Content2",
+             match : MatchedField.TITLE,
+             includeInSearch : true,
+           }
+    ];
+
+    static var OFFER : Array<OfferTypedef> = [
+           {
+             id : "1",
+             contentId : "1",
+             transportType : OfferTransportType.STREAM,
+             channelCallSign : "CBS",
+             channelId : "5",
+             channelNumber : 5,
+             title : "Some title",
+           },
+           {
+             id : "2",
+             contentId : "2",
+             transportType : OfferTransportType.STREAM,
+             channelCallSign : "CBS",
+             channelId : "6",
+             channelNumber : 6,
+             title : "Some title",
+           }
+    ];
+
+    static var PERSON : Array<PersonTypedef> = [
+           {
+             id : "1",
+             first : "First1",
+             last : "Last1",
+           },
+           {
+             id : "2",
+             first : "First2",
+             last : "Last2",
+           }
+    ];
 
     static private inline ROLE_PRIORITY : Int = 99; 
 
@@ -308,6 +473,12 @@ class @:final Main extends MyClass implements ISomeInterface
                  trace("expression value is value1");
          }
 
+         // making sure this succeeds
+         functionGHIJ(
+         param1,
+         param2
+         );
+
         /**
          * Function call: Parameters across different
          * lines with concatenation of parameters across
@@ -320,6 +491,25 @@ class @:final Main extends MyClass implements ISomeInterface
                 // last comment
                 paramD);
 
+        // this should not fail
+        someObject.
+         methodIsOnNextLine(); 
+
+        // this should not be failing either
+        (someObject
+         as SomeClass).someMethod(new<Int>(5), new<Int>(10)); // <int> & <Int> should both be allowed for <Int>,
+                                                              // whether it is here or in Dictionary declaration
+
+         // this is tricky...whenever you see { ... } inside a method call, don't try to convert it
+         // pass it as-is into haxe  
+         someFunction( param1,
+                      {season:"Winter",
+                       wish:"Snow",
+                       intent:"Skiing, Exercise, Loose Weight", 
+                       offered:"Hot Chocolate",
+                       result:"Gained Weight",
+                       }, param3
+         );
 
         /**
           * IF / ELSE IF STATEMENTS
@@ -337,6 +527,11 @@ class @:final Main extends MyClass implements ISomeInterface
             isResult1 = true;
         }
 
+        // this should not be failing
+        if (expression1 /* some comment */ && class.Method() /* returns boolean */ && Std.is(Type.typeof(anObjetc), classType))
+        {
+            isResult112 = true;
+        }
 
         /**
          * if statement:
@@ -588,9 +783,8 @@ class @:final Main extends MyClass implements ISomeInterface
         return true;
     }
 
-    /* order=value parts can be moved to top of the annotations (in comments)
-       see below... note: order should not be in any annotation itself */
-       
+    // order=value parts can be moved to top of the annotations (in comments)
+    // see below... note: order should not be in any annotation itself
     // order=-1
     @Before
     public function firstMostBefore():Void
@@ -637,3 +831,18 @@ class @:final Main extends MyClass implements ISomeInterface
         super();
     }
 }
+
+
+
+// last way left , for using TIVOCONFIG ... at top level of the file,
+// i.e. not inside a package or class or method scope but, at file scope
+#if TIVOCONFIG_DEBUG
+{
+    interface IGlobalInterface
+    {
+        function summerMethod():Int;
+    }
+}
+#end // TIVOCONFIG_DEBUG
+
+
