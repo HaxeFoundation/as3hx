@@ -453,6 +453,46 @@ package as3tohx
             }
 
             /**
+             * Below are couple of simple ways ... variants ...
+             * of coding switch statements in our AS3 code.
+             * These seem to spread all over the code and
+             * developers coming on board expressed that as3tohx
+             * converter tool should handle this.
+             */
+
+            // I did not provide corresponding haxe golden code --- hopefully, that's simple.
+
+            switch(something)
+            {
+                case 1:
+                {
+                    a = 3;
+                }
+                break;
+            
+                case 2:
+                {
+                    a = 4;
+                }
+                return;
+            }
+            
+            switch(something)
+            {
+                case 1:
+                {
+                    a = 3;
+                    break;
+                }
+            
+                case 2:
+                {
+                    a = 4;
+                    return;
+                }
+            }
+
+            /**
              * SWITCH STATEMENT
              * Below is a switch with some comment variations
              * interspersed inbetween cases and white space
