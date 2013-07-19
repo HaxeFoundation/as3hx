@@ -378,7 +378,7 @@ package as3tohx
 
             // this should not be failing either
             (someObject
-            as SomeClass).someMethod(new<Int>(5), new<int>(10)); // <int> & <Int> should both be allowed for <Int>,
+            as SomeClass).someMethod(new<Int>[5], new<int>[10]); // <int> & <Int> should both be allowed for <Int>,
                                                                  // whether it is here or in Dictionary declaration
 
             // this is tricky...whenever you see { ... } inside a method call, don't try to convert it
