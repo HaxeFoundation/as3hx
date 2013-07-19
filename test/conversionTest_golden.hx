@@ -496,8 +496,8 @@ class @:final Main extends MyClass implements ISomeInterface
          methodIsOnNextLine(); 
 
         // this should not be failing either
-        (someObject
-         as SomeClass).someMethod(new<Int>(5), new<Int>(10)); // <int> & <Int> should both be allowed for <Int>,
+        (cast(someObject, 
+         SomeClass)).someMethod(new<Int>[5], new<Int>[10]); // <int> & <Int> should both be allowed for <Int>,
                                                               // whether it is here or in Dictionary declaration
 
          // this is tricky...whenever you see { ... } inside a method call, don't try to convert it
