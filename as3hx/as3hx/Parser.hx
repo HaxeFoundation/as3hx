@@ -429,6 +429,7 @@ class Parser {
         var meta : Array<Expr> = [];
         var closed = false;
         var inNamespace = false;
+        var inCondBlock = false;
 
         var pf : Bool->Void = null;
         pf = function(included:Bool) {
@@ -442,6 +443,10 @@ class Parser {
                 }
                 else if( !closed ) {
                     closed = true;
+                    continue;
+                }
+                else if (inCondBlock) {
+                    inCondBlock = false;
                     continue;
                 }
             case TBrOpen: // {
@@ -508,19 +513,40 @@ class Parser {
                     }
                     continue;
                 default:
+
                     if(opt(TNs)) {
-                        var ns : String = id + "::";
+                        var ns : String = id;
                         var t = uncomment(token());
+
                         switch(t) {
                             case TId(id2):
-                                ns += id2;
+                                id = id2;
                             default:
                                 unexpected(t);
                         }
-                        inNamespace = true;
-                        meta.push(ECommented("/* AS3HX WARNING : Discarded namespace "+ns+"*/",true,false,null));
-                        continue;
-                    } else if(opt(TSemicolon)) {
+
+                        if (Lambda.has(cfg.conditionalVars, ns + "::" + id)) {
+                            // this is a user supplied conditional compilation variable
+                            openDebug("conditional compilation: " + ns + "::" + id);
+                           // condVars.push(ns + "_" + id);
+                            meta.push(ECondComp(ns + "_" + id, null));
+                            inCondBlock = true;
+                            t = token();
+                            switch (t) {
+                                case TBrOpen:
+                                    pf(false);
+                                default:
+                                    add(t);
+                                    pf(false);
+                            }
+                           // condVars.pop();
+                            closeDebug("end conditional compilation: " + ns + "::" + id);
+                            continue;
+                        } else {
+                            unexpected(t);
+                        }
+                    }
+                    else if(opt(TSemicolon)) {
                         // class names without an import statement used
                         // for forcing compilation and linking.
                         inits.push(EIdent(id));

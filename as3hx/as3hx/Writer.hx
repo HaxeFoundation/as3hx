@@ -310,6 +310,9 @@ class Writer
         
         lvl--;
         write(closeb());
+
+        //close conditional compilation block if needed
+        writeECondCompEnd(getECondComp(c.meta));
     }
     
     function writeProperties(c : ClassDef)
@@ -525,20 +528,7 @@ class Writer
         }
 
         //close conditional compilation block
-        var condComps = getECondComp(field.meta);
-        for (i in 0...condComps.length) {
-            if (i == 0) {
-                writeNL();
-                writeIndent("#end // ");
-            } else {
-                write(" && ");
-            }
-            switch (condComps[i]) {
-                case ECondComp(v,e):
-                   write(v);
-                default:   
-            }
-        }
+        writeECondCompEnd(getECondComp(field.meta));
     }
     
    /**
@@ -559,6 +549,27 @@ class Writer
             }
        }
        return condComps;
+    }
+
+    /**
+    * Write closing statement ("#end") for conditional 
+    * conpilation if any
+    */
+    function writeECondCompEnd(condComps : Array<Expr>) : Void
+    {
+        for (i in 0...condComps.length) {
+            if (i == 0) {
+                writeNL();
+                writeIndent("#end // ");
+            } else {
+                write(" && ");
+            }
+            switch (condComps[i]) {
+                case ECondComp(v,e):
+                   write(v);
+                default:   
+            }
+        }
     }
     
     function writeArgs(args : Array<{ name : String, t : Null<T>, val : Null<Expr>, exprs : Array<Expr> }>)
