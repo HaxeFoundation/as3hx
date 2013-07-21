@@ -1607,6 +1607,12 @@ class Writer
                             case EBreak(lbl):
                                 if(lbl == null) 
                                     def.el.pop(); // remove break
+                            case EBlock(exprs):
+                                switch (exprs[exprs.length -1]) {
+                                    case EBreak(lbl):
+                                        def.el.pop();
+                                    default:  
+                                }
                             default:
                         }
                     }
@@ -2435,22 +2441,26 @@ class Writer
             falls = true;
         } else {
 
-            var f:Expr->Void = null;
-            f = function(e) {
+            var f:Expr->Array<Expr>->Void = null;
+            f = function(e, els) {
                 switch(e) {
                     case EBreak(lbl):
                         if(lbl == null) 
-                            c.el.pop(); // remove break
+                            els.pop(); // remove break
                         falls = false;
                     case EReturn(ex):
                         falls = false;
                     case ENL(e): //newline might wrap a break or return
-                        f(e);
+                        f(e, els);
+                    case EBlock(exprs): //block might wrap a break or return, check last expr of block
+                        f(exprs[exprs.length - 1], exprs);
+                        trace(exprs[exprs.length - 1]);
+                        falls = false;
                     default:
                         falls = true;
                 }
             }
-            f(c.el[c.el.length-1]);
+            f(c.el[c.el.length-1], c.el);
             
         }
 
