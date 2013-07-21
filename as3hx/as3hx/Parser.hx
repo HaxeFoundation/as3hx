@@ -1794,6 +1794,10 @@ class Parser {
                     add(t);
                     return parseExprNext(e1, true);  
             }
+
+        case TCommented(s,b,t):
+            add(t);
+            return ECommented(s,b,false, parseExprNext(e1));
            
         default:
             dbgln("parseExprNext stopped at " + tk);
