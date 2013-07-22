@@ -81,6 +81,7 @@ class Parser {
     var cfg : Config;
     var typesSeen : Array<Dynamic>;
     var typesDefd : Array<Dynamic>;
+    var genTypes : Array<GenType>;
 
     public function new(config:Config) {
         line = 1;
@@ -112,6 +113,7 @@ class Parser {
         this.cfg = config;
         this.typesSeen = new Array<Dynamic>();
         this.typesDefd = new Array<Dynamic>();
+        this.genTypes = new Array<GenType>();
     }
 
     public function parseString( s : String, path : String, filename : String ) {
@@ -588,6 +590,7 @@ class Parser {
             imports : imports,
             typesSeen : typesSeen,
             typesDefd : typesDefd,
+            genTypes : genTypes,
             defs : defs,
             footer : meta
         };
@@ -1061,6 +1064,7 @@ class Parser {
             t = parseType();
         if( opt(TOp("=")) )
             val = parseExpr();
+
         var rv = {
             meta : meta,
             kwds : kwds,
@@ -1068,8 +1072,62 @@ class Parser {
             kind : FVar(t, val),
             condVars : condVars
         };
+        
+        generateTypeIfNeeded(rv);
+
         closeDebug("parseClassVar -> " + rv);
         return rv;
+    }
+
+    function generateTypeIfNeeded(classVar : ClassField) : Void
+    {
+        if (!Lambda.has(classVar.kwds, "static")) {
+            return;
+        }
+
+        var expr = null;
+        switch (classVar.kind) {
+            case FVar(t, val):
+                switch (t) {
+                    case TPath(t):
+                        if (t[0] != "Array" || t.length > 1) {
+                            return;
+                        }
+                        expr = val;  
+                    default:
+                        return;     
+                }
+            default:
+                return;
+        }
+
+       
+        var arrayDecl = null;
+        switch (expr) {
+            case EArrayDecl(decl):
+                arrayDecl = decl;
+            default:
+                return;    
+        }
+
+        if (arrayDecl.length == 0) {
+            return;
+        }
+        
+        var fields = [];
+        switch (removeNewLineExpr(arrayDecl[0])) {
+            case EObject(fl):
+                for (f in fl) {
+                    switch (f.e) {
+                        case EConst(const):
+                            fields.push({name: f.name, e:f.e });
+                        default:
+                            return;    
+                    }
+                }
+            default:
+                return;    
+        }
     }
 
     function parseClassFun(kwds:Array<String>,meta,condVars:Array<String>, isInterface:Bool) : ClassField {

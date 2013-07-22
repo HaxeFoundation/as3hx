@@ -2462,7 +2462,6 @@ class Writer
                         f(e, els);
                     case EBlock(exprs): //block might wrap a break or return, check last expr of block
                         f(exprs[exprs.length - 1], exprs);
-                        trace(exprs[exprs.length - 1]);
                         falls = false;
                     default:
                         falls = true;
