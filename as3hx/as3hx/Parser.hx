@@ -2003,9 +2003,14 @@ class Parser {
                         buf.add("</");
                         break;
                     }
-                    this.char = c;
-                    buf.add(readXML());
-                    continue;
+                    if (c == "!".code) { // CDATA element
+                        buf.add("<");
+                    }
+                    else {
+                        this.char = c;
+                        buf.add(readXML());
+                        continue;
+                    }
                 }
                 buf.addChar(c);
             }
