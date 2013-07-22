@@ -1625,6 +1625,14 @@ class Writer
                     writeFinish(writeExpr(e));
                     writeIndent("");
                 }
+
+                //start the switch on a new line
+                if (lineIsDirty) {
+                    writeNL();
+                    writeNL();
+                    writeIndent();
+                }
+
                 write("switch (" + testVar + ")" + openb());
                 
                 lvl++;
