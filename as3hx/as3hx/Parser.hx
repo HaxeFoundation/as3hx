@@ -1124,8 +1124,26 @@ class Parser {
             return;
         }
         
+        //return the type of an object field
         var getType:Expr->String = function(e) {
-            return "String";
+            switch (e) {
+                case EConst(c):
+                    switch(c) {
+                        case CInt(v):
+                            return "Int";
+                        case CFloat(v):
+                            return "Float";
+                        case CString(v):
+                            return "String";      
+                    }
+                case EIdent(id):
+                    if (id == "true" || id == "false") {
+                        return "Bool";
+                    }    
+                    return "Dynamic";
+                default:
+                    return "Dynamic";
+            }
         }
 
         //Type declaration is only created for array of objects,.
@@ -1139,33 +1157,40 @@ class Parser {
             switch(el) {
                 case EObject(fl):
                     for (f in fl) {
-                        switch (f.e) {
-                            case EConst(const):
-                                if (i == 0) { //first object, we get the types
-                                    fields.push({name: f.name, t:getType(f.e) });
-                                }
-                                else { //for subsequent objects, check if they match the type
-                                    var match = false;
-                                    for (field in fields) {
-                                        if (field.name == f.name) {
-                                            match = true;
-                                        }
-                                    }
-                                    if (!match) {
-                                        return;
-                                    }
-                                }
-                            default:
-                                return;    
+                        if (i == 0) { //first object, we get the types
+                            fields.push({name: f.name, t:getType(f.e)});
                         }
+                        else { //for subsequent objects, check if they match the type
+                            var match = false;
+                            for (field in fields) {
+                                if (field.name == f.name) {
+                                    match = true;
+                                }
+                            }
+                            if (!match) {
+                                return;
+                            }
+                        }   
                     }
                 default:
                     return;    
             }
         }
 
+        //turn class attribute name to pascal case
+        var getPascalCase:String->String = function(id) {
+            id = id.toLowerCase();
+            var arr = id.split("_");
+            var ret = "";
+            for (el in arr) {
+                el = el.charAt(0).toUpperCase() + el.substr(1);
+                ret += el;
+            }
+            return ret;
+        }
+
         //type declaration is stored, will be written
-        this.genTypes.push({name:classVar.name, fields:fields});
+        this.genTypes.push({name:getPascalCase(classVar.name), fields:fields, fieldName:classVar.name});
     }
 
     function parseClassFun(kwds:Array<String>,meta,condVars:Array<String>, isInterface:Bool) : ClassField {

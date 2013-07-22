@@ -63,6 +63,7 @@ class Writer
     var rvalue : Expr;
     var typeImportMap : Map<String,String>;
     var lineIsDirty : Bool; // current line contains some non-whitespace/indent characters
+    var genTypes : Array<GenType>; //typedef generated while parsing
     
     public function new(config:Config)
     {
@@ -77,6 +78,7 @@ class Writer
         this.lineIsDirty = false;
 
         this.typeImportMap = new Map<String,String>();
+        this.genTypes = [];
 
         var doNotImportClasses = [
             "Array", "Bool", "Boolean", "Class", "Date",
@@ -476,6 +478,15 @@ class Writer
             case FVar( t, val ):
                 start(field.name, false);
                 write("var " + getModifiedIdent(field.name));
+
+                var type = tstring(t, false); //check wether a specific type was defined for this array
+                if (type.indexOf("Array") != -1) {
+                    for (genType in this.genTypes) {
+                        if (field.name == genType.fieldName) {
+                            t = TVector(TPath([genType.name]));
+                        }
+                    }
+                }
                 writeVarType(t);
                 context.set(field.name, tstring(t, false));
 
@@ -2570,7 +2581,7 @@ class Writer
     {
         for (genType in genTypes) {
             writeNL();
-            write("typedef "+genType.name + "= {");
+            write("typedef "+genType.name + " = {");
             for(field in genType.fields) {
                 writeNL();
                 writeIndent(cfg.indentChars);
@@ -2612,6 +2623,7 @@ class Writer
     {
         this.warnings = new Map();
         this.o = writer;
+        this.genTypes = program.genTypes;
         writeComments(program.header);
         writePackage(program.pack);
         writeImports(program.imports);
