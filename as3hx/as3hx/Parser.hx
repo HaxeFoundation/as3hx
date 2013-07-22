@@ -1079,12 +1079,20 @@ class Parser {
         return rv;
     }
 
+   /**
+    * In certain cases, a typedef will be generated 
+    * for a class attribute, for better type safety
+    */
     function generateTypeIfNeeded(classVar : ClassField) : Void
     {
+        //this only applies to satic field attributes, as
+        //they only define constants values
         if (!Lambda.has(classVar.kwds, "static")) {
             return;
         }
 
+        //this only applies to class attributes defining
+        //an array
         var expr = null;
         switch (classVar.kind) {
             case FVar(t, val):
@@ -1101,7 +1109,8 @@ class Parser {
                 return;
         }
 
-       
+        //only applies if the array is initialised at
+        //declaration
         var arrayDecl = null;
         switch (expr) {
             case EArrayDecl(decl):
@@ -1109,25 +1118,54 @@ class Parser {
             default:
                 return;    
         }
-
+        
+        //if the arary is empty, type can't be defined
         if (arrayDecl.length == 0) {
             return;
         }
         
-        var fields = [];
-        switch (removeNewLineExpr(arrayDecl[0])) {
-            case EObject(fl):
-                for (f in fl) {
-                    switch (f.e) {
-                        case EConst(const):
-                            fields.push({name: f.name, e:f.e });
-                        default:
-                            return;    
-                    }
-                }
-            default:
-                return;    
+        var getType:Expr->String = function(e) {
+            return "String";
         }
+
+        //Type declaration is only created for array of objects,.
+        //Type is retrieved from the first object fields, then 
+        //all remaining objects in the array are check against this
+        //type. If the type is different, then it is a mixed type
+        //array and no type declaration should be created
+        var fields = [];
+        for (i in 0...arrayDecl.length) {
+            var el = removeNewLineExpr(arrayDecl[i]);
+            switch(el) {
+                case EObject(fl):
+                    for (f in fl) {
+                        switch (f.e) {
+                            case EConst(const):
+                                if (i == 0) { //first object, we get the types
+                                    fields.push({name: f.name, t:getType(f.e) });
+                                }
+                                else { //for subsequent objects, check if they match the type
+                                    var match = false;
+                                    for (field in fields) {
+                                        if (field.name == f.name) {
+                                            match = true;
+                                        }
+                                    }
+                                    if (!match) {
+                                        return;
+                                    }
+                                }
+                            default:
+                                return;    
+                        }
+                    }
+                default:
+                    return;    
+            }
+        }
+
+        //type declaration is stored, will be written
+        this.genTypes.push({name:classVar.name, fields:fields});
     }
 
     function parseClassFun(kwds:Array<String>,meta,condVars:Array<String>, isInterface:Bool) : ClassField {

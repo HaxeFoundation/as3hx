@@ -2563,6 +2563,25 @@ class Writer
         }
     }
 
+   /**
+    * Write typedef that were generated during parsing
+    */
+    function writeGeneratedTypes(genTypes : Array<GenType>) : Void 
+    {
+        for (genType in genTypes) {
+            writeNL();
+            write("typedef "+genType.name + "= {");
+            for(field in genType.fields) {
+                writeNL();
+                writeIndent(cfg.indentChars);
+                write("var "+field.name + " : " + field.t + ";");
+            }
+            writeNL();
+            write("}");
+            writeNL();
+        }
+    }
+
     function containsOnlyWhiteSpace(s : String) : Bool
     {
         return StringTools.trim(s) == "";
@@ -2597,6 +2616,7 @@ class Writer
         writePackage(program.pack);
         writeImports(program.imports);
         writeAdditionalImports(program.pack, program.typesSeen, program.typesDefd);
+        writeGeneratedTypes(program.genTypes);
         writeDefinitions(program.defs);
         writeComments(program.footer);
         return this.warnings;

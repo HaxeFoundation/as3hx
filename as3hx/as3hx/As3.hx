@@ -165,5 +165,5 @@ typedef Program = {
 
 typedef GenType = {
     var name : String;
-    var fields : Array<{ name : String, e : Expr }>;
+    var fields : Array<{ name : String, t : String }>;
 }
