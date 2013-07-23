@@ -2102,6 +2102,11 @@ class Parser {
         var input = input;
         buf.addChar("<".code);
         buf.addChar(this.char);
+
+        //corner case : check wether this is a satndalone CDATA element
+        //(not wrapped in XML element)
+        var isCDATA = this.char == "!".code; 
+        
         this.char = 0;
         try {
             var prev = 0;
@@ -2114,6 +2119,8 @@ class Parser {
             }
             if( prev == "/".code )
                 return buf.toString();
+            if (isCDATA)
+                return buf.toString();    
             while(true) {
                 var c = input.readByte();
                 if(c == "\n".code) line++;
