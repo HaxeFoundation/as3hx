@@ -157,13 +157,14 @@ package as3tohx
         ];
 
         static private const ROLE_PRIORITY : int = 99; 
-        
+
         private var mIntKeyMap:Dictionary/*.<Int, ValueClass>*/ = null;
         private var mStringKeyMap:Dictionary/*.<String, ValueClass>*/ = null;
         private var mObjectKeyMap:Dictionary/*.<KeyClass, ValueClass>*/ = null;
         private var mMapOfArray:Dictionary/*.<Int, Vector.<AnotherClass>>*/ = null;
         private var mMapOfMap:Dictionary/*.<Int, Dictionary.<String, AnotherClass>>*/ = null;
-        
+        private var mDynamicKeyMap:Dictionary/*.<Object, String>*/ = null;
+
         public final function get intKeyMap():Dictionary/*.<Int, ValueClass>*/
         {
             if (mIntKeyMap == null) {
@@ -202,6 +203,14 @@ package as3tohx
                 mMapOfMap = new Dictionary/*.<Int, Dictionary.<String, AnotherClass>>*/();
             }
             return mMapOfMap;
+        }
+
+        public final function get dynamicKeyMap():Dictionary/*.<Object, String>*/
+        {
+            if (mDynamicKeyMap == null) {
+                mDynamicKeyMap = new Dictionary/*.<Object, String>*/();
+            }
+            return mDynamicKeyMap;
         }
 
         var isResult1: Boolean = true;
@@ -762,19 +771,19 @@ package as3tohx
             }
 
             for each (var obj:SomeType in array) {
-                trace ( obj.specialMethod() ); 
+                trace (obj.specialMethod()); 
             } 
 
             // this is failing
             for (var obj:String in array)
             {
-                trace ( obj ); 
+                trace (obj); 
             }
 
             // this is failing too 
             for (var obj:Object in array)
             {
-                trace ( obj ); 
+                trace (obj); 
             }
 
             var multiLineStringConstruction : String = "This kind of String construction is failing to convert: "
@@ -782,11 +791,11 @@ package as3tohx
                                                 + ". "; 
 
             // this kind of method calling (or construtor calling) is also failing to convert
-            someClass.someStaticMethod (param1,
-                                        param2 + // this comment should not break conversion 
-                                        value22, // so does this 
-                                        param3   // or this :) (should not choke on these parantheses)
-                                        );
+            someClass.someStaticMethod(param1,
+                                       param2 + // this comment should not break conversion 
+                                       value22, // so does this 
+                                       param3   // or this :) (should not choke on these parantheses)
+                                      );
 
             var flag : Boolean = (someMonths.indexOf("June") != -1);   // indexOf not supported by Haxe array, but Lambda does
                                                                        // when converted, this should insert "using Lambda"
