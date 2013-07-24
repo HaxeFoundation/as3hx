@@ -744,6 +744,30 @@ class @:final Main extends MyClass implements ISomeInterface
         return; 
     }
 
+    function configGc(configuration : Xml) : Void
+    {
+        if (configuration != null) 
+        {
+            var xmlList : Iterator<Xml>;
+
+            xmlList = configuration.elementsNamed("enableGcHack");
+            if (xmlList.hasNext())
+            {
+                mEnableGcHack = xmlList.next().nodeValue == "true";
+            }
+
+            xmlList = configuration.elementsNamed("gcInterval");
+            if (xmlList.hasNext())
+            {
+                var gcInterval : Int = Std.parseInt(xmlList.next().nodeValue);
+                if (gcInterval > 0) 
+                {
+                    // some code 
+                }
+            }
+        }
+    }
+
     /**
      * Conditionally compiled code with comments
      */

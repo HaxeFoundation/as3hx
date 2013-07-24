@@ -803,6 +803,37 @@ package as3tohx
             return;
         }
 
+        private function configGc(configuration:XML):void
+        {
+            if (configuration != null)
+            {
+                var xmlList:XMLList = configuration.child("enableGcHack");
+                var item:XML;
+                if (xmlList.length() > 0)
+                {
+                    item = xmlList[0];
+                    if (item.name() == "enableGcHack")
+                    {
+                       mEnableGcHack = Boolean(item.valueOf().toString()=="true");
+                    }
+                }
+
+                xmlList = configuration.child("gcInterval");
+                if (xmlList.length() > 0)
+                {
+                    item = xmlList[0];
+                    if (item.name() == "gcInterval")
+                    {
+                        var gcInterval:int = int(item.valueOf());
+                        if (gcInterval > 0)
+                        {
+                            // some code 
+                        }
+                    }
+                }
+            }
+        }
+
         /**
          * Conditionally compiled code with comments
          */
