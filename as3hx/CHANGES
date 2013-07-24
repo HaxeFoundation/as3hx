@@ -1,3 +1,4 @@
+2013-08-01 - Yanhick, Richard, Todd
  - added many improvements to generated code style
  - replaced as3 "toString" by Haxe "Std.string"
  - replaced as3 "Date" by Haxe "Date.now" for current time
@@ -15,7 +16,7 @@
  - Fixed bug where comment made semicolon appear on new lines
  - Class attribute can now be initialised inline
  - Implemented Haxe 3 getter/setter syntax
-=====
+
 
  - Removed writing var type in for(var x : String in y)
  - Created "in" as Binop : for(i in x)
