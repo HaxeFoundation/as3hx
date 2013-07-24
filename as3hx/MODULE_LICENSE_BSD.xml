@@ -2,7 +2,7 @@
   <name>as3hx</name>
   <version>r754</version>
   <license>BSD 3-clause</license>
-  <url>svn checkout http://caffeine-hx.googlecode.com/svn/trunk/projects/as3hx as3hx</url>
+  <url>svn checkout https://github.com/HaxeFoundation/as3hx as3hx</url>
   <ships>false</ships>
   <notice>yes</notice>
   <noticetext>Copyright (c) 2012, Nicolas Cannasse, Russell Weir, Niel Drummond, Franco Ponticelli</noticetext>
