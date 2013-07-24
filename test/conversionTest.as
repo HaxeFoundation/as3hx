@@ -20,8 +20,6 @@
 
 package as3tohx
 {
-    import somepackage.SomeClass;
-
     /**
      * Most commonly failing interface use case.
      */
@@ -77,8 +75,6 @@ package as3tohx
         return false;
     }
 
-    import Anotherpackage.AnotherClass; // they can do this in AS3
-
     /**
      * This interface is implemented by classes that want to receive
      * ICE commands. 
@@ -90,8 +86,6 @@ package as3tohx
          */
         function sendCommand(args:String):void;
     }    
-
-    import SomeAnotherpackage.SomeOtherClass; // they can do this in AS3
 
     /**
      *  This class is marked with final and
@@ -885,3 +879,4 @@ TIVOCONFIG::DEBUG {
         function summerMethod():Int;
     }
 }
+
