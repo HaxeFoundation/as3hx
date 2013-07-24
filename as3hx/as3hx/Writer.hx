@@ -162,14 +162,19 @@ class Writer
     {
         if (imports.length > 0)
         {
+            var imported = []; //holds already written types to prevent duplicates
             for(i in imports) {
                 if (i[0] == "flash") {
                     i[0] = "nme";
                 }
-                writeLine("import " + properCaseA(i,true).join(".") + ";");
-                // do not add an implicit import for
-                // this type since it has an explicit one.
-                typeImportMap.set(i[i.length-1], null);
+                var type = properCaseA(i,true).join(".");
+                if (!Lambda.has(imported, type)) { //prevent duplicate import
+                    writeLine("import " + type + ";");
+                    imported.push(type);
+                    // do not add an implicit import for
+                    // this type since it has an explicit one.
+                    typeImportMap.set(i[i.length-1], null);
+                }
             }
             writeLine();
 

@@ -19,6 +19,8 @@
  */
 
 package as3tohx;
+//converter should remove duplicates
+import my.duplicated.class;
 
 import as3tohx.MyClass;
 import as3tohx.UInt;

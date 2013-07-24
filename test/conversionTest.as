@@ -20,6 +20,10 @@
 
 package as3tohx
 {
+    //converter should remove duplicates
+    import my.duplicated.class;
+    import my.duplicated.class;
+
     /**
      * Most commonly failing interface use case.
      */
