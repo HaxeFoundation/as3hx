@@ -2379,8 +2379,8 @@ class Writer
                     case "void"     : "Void";
                     case "Function" : cfg.functionToDynamic ? "Dynamic" : c;
                     case "Object"   : isNativeGetSet ? "{}" : "Dynamic";
-                    case "XML"      : "FastXML";
-                    case "XMLList"  : "FastXMLList";
+                    case "XML"      : cfg.useFastXML ? "FastXML" : "Xml";
+                    case "XMLList"  : cfg.useFastXML ? "FastXMLList" : "Iterator<Xml>";
                     default         : fixCase? properCase(c,true) : c;
                 }
             case TComplex(e):

@@ -13,6 +13,7 @@
 	<forcePrivateGetter value="true" />
 	<!-- Style of getter and setter output. haxe, flash or combined -->
 	<getterSetterStyle value="haxe" />
+	<useFastXML value="false" />
 	<testCase value="false" />
 	<excludeList />
 	<conditionalCompilationList>
