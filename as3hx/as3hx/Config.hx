@@ -67,7 +67,7 @@ class Config {
     public var testCase : Bool;
     /** conditional compilation variables **/
     public var conditionalVars: List<String>;
-    /** Transform Dictionary.<Key, Value> to IntHash/DynamicHash/ObjectHash/Hash? **/
+    /** Transform Dictionary.<Key, Value> to Map **/
     public var dictionaryToHash : Bool;
     /** write inferred type information into output **/
     public var debugInferredType : Bool;
@@ -240,23 +240,23 @@ class Config {
     public function fromXml(f:Fast) {
         for(el in f.elements) {
             switch(el.name) {
-            case "indentChars":         setCharField(el, "\t");
+            case "indentChars":         setCharField(el, "    ");
             case "newlineChars":        setCharField(el, "\n");
             case "bracesOnNewline":     setBoolField(el, true);
-            case "uintToInt":           setBoolField(el, false);
-            case "vectorToArray":       setBoolField(el, false);
+            case "uintToInt":           setBoolField(el, true);
+            case "vectorToArray":       setBoolField(el, true);
             case "guessCasts":          setBoolField(el, true);
             case "functionToDynamic":   setBoolField(el, false);
-            case "getterMethods":       setCharField(el, "get%I");
-            case "setterMethods":       setCharField(el, "set%I");
+            case "getterMethods":       setCharField(el, "get_%I");
+            case "setterMethods":       setCharField(el, "set_%I");
             case "getterSetterStyle":   setCharField(el, "haxe", ["haxe","flash","combined"]);
-            case "forcePrivateGetter":  setBoolField(el, false);
-            case "forcePrivateSetter":  setBoolField(el, false);
-            case "errorContinue":       setBoolField(el, false);
+            case "forcePrivateGetter":  setBoolField(el, true);
+            case "forcePrivateSetter":  setBoolField(el, true);
+            case "errorContinue":       setBoolField(el, true);
             case "testCase":            setBoolField(el, false);
             case "excludeList":         setExcludeField(el, new List());
             case "conditionalCompilationList": setConditionalVars(el, new List());
-            case "dictionaryToHash":    setBoolField(el, false);
+            case "dictionaryToHash":    setBoolField(el, true);
             default:
                 Sys.println("Unrecognized config var " + el.name);
             }
@@ -331,22 +331,24 @@ class Config {
     public static function defaultConfig() {
         return
 '<as3hx>
-    <errorContinue value="false" />
-    <indentChars value="\\t" />
+    <errorContinue value="true" />
+    <indentChars value="    " />
     <newlineChars value="\\n" />
     <bracesOnNewline value="true" />
-    <uintToInt value="false" />
-    <vectorToArray value="false" />
+    <uintToInt value="true" />
+    <vectorToArray value="true" />
     <guessCasts value="true" />
     <functionToDynamic value="false" />
-    <getterMethods value="get%I" />
-    <setterMethods value="set%I" />
+    <getterMethods value="get_%I" />
+    <setterMethods value="set_%I" />
+	<forcePrivateSetter value="true" />
+	<forcePrivateGetter value="true" />
     <!-- Style of getter and setter output. haxe, flash or combined -->
     <getterSetterStyle value="haxe" />
     <testCase value="false" />
     <excludeList />
     <conditionalCompilationList />
-    <dictionaryToHash value="false" />
+    <dictionaryToHash value="true" />
 </as3hx>';
     }
 }
