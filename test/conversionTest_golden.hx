@@ -112,20 +112,15 @@ class @:final ClassForStandaloneFunc
     public function standaloneFunc(object:Dynamic):Bool
     {
         #if TIVOCONFIG_COVERAGE
-        {
             trace("blah");
-        }
         #end // TIVOCONFIG_COVERAGE
 
         // another way of using TIVOCONFIG 
         #if TIVOCONFIG_UNSAFE_PRIVACY
-        {
             trace("roar");
-        }
         #end // TIVOCONFIG_UNSAFE_PRIVACY
 
         #if TIVOCONFIG_ASSERT 
-        {
             if (object != null)
             {
                 #if TIVOCONFIG_DEBUG_PRINT 
@@ -138,7 +133,6 @@ class @:final ClassForStandaloneFunc
             {
                 trace("blah");
             }
-        }
         #end // TIVOCONFIG_ASSERT
 
         return false;
@@ -282,12 +276,14 @@ class @:final Main extends MyClass implements ISomeInterface
     var mObjectKeyMap : Map<KeyClass, ValueClass>;
     var mMapOfArray : Map<Int, Array<AnotherClass>>;
     var mMapOfMap : Map<Int, Map<String, AnotherClass>>;
+    var mDynamicKeyMap : Map<Dynamic, String>;
 
     public var intKeyMap (get_intKeyMap, never) : Map<Int, ValueClass>;
     public var stringKeyMap (get_stringKeyMap, never) : Map<String, ValueClass>;
     public var objectKeyMap (get_objectKeyMap, never) : Map<KeyClass, ValueClass>;
     public var mapOfArray (get_mapOfArray, never) : Map<Int, Array<AnotherClass>>;
     public var mapOfMap (get_mapOfMap, never) : Map<Int, Map<String, AnotherClass>>;
+    public var dynamicKeyMap (get_dynamicKeyMap, never) : Map<Dynamic, String>;
 
     public function get_intKeyMap() : Map<Int, ValueClass>
     {
@@ -333,6 +329,15 @@ class @:final Main extends MyClass implements ISomeInterface
           mMapOfMap = new Map<Int, Map<String, AnotherClass>>();
        }
        return mMapOfMap;
+    }
+
+    public function get_dynamicKeyMap() : Map<Dynamic, String>
+    {
+       if (mDynamicKeyMap == null) 
+       {
+          mDynamicKeyMap = new Map<Dynamic, String>();
+       }
+       return mDynamicKeyMap;
     }
 
     public var sampleProperty(get_sampleProperty, set_sampleProperty) : Dynamic;
@@ -559,14 +564,14 @@ class @:final Main extends MyClass implements ISomeInterface
             {
                 // Testing that "hasAnyProperties(map)" is
                 // replaced with "map.keys().hasNext()"
-                value = map.keys().hasNext();
+                value = map.keys().hasNext();  // which is more efficient: map.keys().hasNext() or map.iterator().hasNext()
             }
         }
         /* comment line */
         else if (isResult3) // coment at the end of the line
         {
             // one nested if
-            if (!isResult1) 
+            if (!isResult1)
                 trace("trace line");
         }
 
@@ -677,10 +682,10 @@ class @:final Main extends MyClass implements ISomeInterface
 
         var y : String = (anObj != null) ? Std.string( anObj ) : "";
 
-        var f : SomeType = 0.0;
-        if (Std.is (anObj, SomeType))
+        var f : Float = 0.0;
+        if (Std.is(Type.typeof(anObj), SomeType))
         {
-            f = cast (anObj, SomeType).specialMethod(); 
+            f = cast(anObj, SomeType).specialMethod(); 
         }
 
         var i : Int = 0; 
@@ -711,15 +716,15 @@ class @:final Main extends MyClass implements ISomeInterface
         }
 
         for (obj /* inferred type: SomeType */ in array) {
-            trace ( obj.specialMethod() ); 
+            trace (obj.specialMethod()); 
         } 
 
         for (obj /* inferred type: String */ in array) {
-                trace ( obj ); 
+                trace (obj); 
         } 
 
         for (obj /* inferred type: Dynamic */ in array) {
-                trace ( obj ); 
+                trace (obj); 
         } 
 
         var multiLineStringConstruction : String = "This kind of String construction is failing to convert: "
@@ -727,14 +732,14 @@ class @:final Main extends MyClass implements ISomeInterface
                                             + ". "; 
 
         // this kind of method calling (or construtor calling) is also failing to convert
-        someClass.someStaticMethod (param1,
-                                    param2 + // this comment should not break conversion 
-                                    value22, // so does this 
-                                    param3   // or this :) (should not choke on these parantheses)
-                                    );
+        someClass.someStaticMethod(param1,
+                                   param2 + // this comment should not break conversion 
+                                   value22, // so does this 
+                                   param3   // or this :) (should not choke on these parantheses)
+                                  );
 
-        var flag : Bool = (Lambda.indexOf(someMonths, "June") != -1);   // indexOf not supported by Haxe array, but Lambda does
-                                                                        // when converted, this should insert "using Lambda"
+        var flag : Bool = (someMonths.indexOf("June") != -1);  // indexOf not supported by Haxe array, but Lambda does
+                                                               // when converted, this should insert "using Lambda"
 
         return; 
     }
@@ -844,5 +849,4 @@ class @:final Main extends MyClass implements ISomeInterface
     }
 }
 #end // TIVOCONFIG_DEBUG
-
 
