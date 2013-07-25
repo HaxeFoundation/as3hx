@@ -535,7 +535,7 @@ class @:final Main extends MyClass implements ISomeInterface
         }
 
         // this should not be failing
-        if (expression1 /* some comment */ && class.Method() /* returns boolean */ && Std.is(Type.typeof(anObjetc), classType))
+        if (expression1 /* some comment */ && class.Method() /* returns boolean */ && Std.is(anObjetc, classType))
         {
             isResult112 = true;
         }
@@ -685,7 +685,7 @@ class @:final Main extends MyClass implements ISomeInterface
         var y : String = (anObj != null) ? Std.string( anObj ) : "";
 
         var f : Float = 0.0;
-        if (Std.is(Type.typeof(anObj), SomeType))
+        if (Std.is(anObj, SomeType))
         {
             f = cast(anObj, SomeType).specialMethod(); 
         }
@@ -875,4 +875,3 @@ class @:final Main extends MyClass implements ISomeInterface
     }
 }
 #end // TIVOCONFIG_DEBUG
-
