@@ -76,6 +76,20 @@ package as3tohx
             }
         }
 
+        // consistently failing in this example, with error message:
+        // 'unexpected else'
+        if (TIVOCONFIG::UNSAFE_PRIVACY)
+        {
+          Logger.get().log(LogLevel.INFO,
+           "No ContentView definition is available for this mix: " + mix.mixId +
+            " used the default view");
+        }
+        else // No IDs in production logs, for privacy.
+        {
+           Logger.get().log(LogLevel.INFO,
+            "No ContentView definition is available for a mix; used the default view");
+        }
+
         return false;
     }
 
