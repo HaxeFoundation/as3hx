@@ -770,6 +770,9 @@ package as3tohx
                 trace (array[i]);
             }
 
+            var newX:int = int(x + (x < 0 ? -0.5 : 0.5));         // should result in cast
+            var newY:int = int(xyzObj.getString("YCoordinate"));  // should result in Std.parseInt
+
             if( ( mBoolVar1
                 && mBoolVar2
                 && ! mBoolVar3)
