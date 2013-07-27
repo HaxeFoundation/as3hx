@@ -265,7 +265,7 @@ class Writer
             case ENL(e):
                 writeNL(); 
                 writeIndent();
-            case ECondComp(v,e):
+            case ECondComp(v,e, e2):
                 if (isFirstCondComp) {
                     write("#if ");
                     isFirstCondComp = false;
@@ -558,7 +558,7 @@ class Writer
        for (expr in exprs) 
        {
             switch (expr) {
-                case ECondComp(v,e):
+                case ECondComp(v,e,e2):
                     condComps.push(expr);
 
                 default:    
@@ -581,7 +581,7 @@ class Writer
                 write(" && ");
             }
             switch (condComps[i]) {
-                case ECondComp(v,e):
+                case ECondComp(v,e,e2):
                    write(v);
                 default:   
             }
@@ -1789,28 +1789,41 @@ class Writer
                         writeIndent("delete ");
                         writeExpr(e);
                 }
-            case ECondComp( kwd, e ):
-                write("#if " + kwd);
-                switch(e) {
-                    case EBlock(elist):
+            case ECondComp( kwd, e , e2):
 
-                        writeNL();
-                        writeIndent("{");
-                        lvl++;
-                        for (ex in elist) {
+                var writeECondComp:Expr->Void = function(e) {
+                    switch(e) {
+                        case EBlock(elist):
+
+                            writeNL();
+                            writeIndent("{");
+                            lvl++;
+                            for (ex in elist) {
+                                writeIndent();
+                                writeFinish(writeExpr(ex));
+                            }
+                            lvl--;
+                            writeNL();
+                            writeIndent("}");
+                        default:
                             writeIndent();
-                            writeFinish(writeExpr(ex));
-                        }
-                        lvl--;
-                        writeNL();
-                        writeIndent("}");
-                    default:
-                        writeIndent();
-                        writeFinish(writeExpr(e));
+                            writeFinish(writeExpr(e));
+                    }
                 }
-                writeNL( );
+
+                write("#if " + kwd);
+                writeECondComp(e);
+                writeNL();
+                if (e2 != null) {
+                    writeIndent("#else");
+                    writeECondComp(e2);
+                    writeNL();
+                }
                 writeIndent("#end // " + kwd);
+                writeNL();
+                writeIndent();
                 rv = Ret;
+
             case ENL( e ): 
                 //newline starts new indented line before parsing
                 //wrapped expression

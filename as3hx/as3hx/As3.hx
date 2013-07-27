@@ -71,7 +71,7 @@ enum Expr {
     EMeta( m : Metadata );
     ETypedExpr( e : Expr, t : Null<T> );
     EDelete( e : Expr );
-    ECondComp( v : String, e : Expr );
+    ECondComp( v : String, e : Expr, e2 : Expr );
     ENL( e : Expr);
 }
 

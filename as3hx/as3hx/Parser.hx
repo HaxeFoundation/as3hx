@@ -531,7 +531,7 @@ class Parser {
                             // this is a user supplied conditional compilation variable
                             openDebug("conditional compilation: " + ns + "::" + id);
                            // condVars.push(ns + "_" + id);
-                            meta.push(ECondComp(ns + "_" + id, null));
+                            meta.push(ECondComp(ns + "_" + id, null, null));
                             inCondBlock = true;
                             t = token();
                             switch (t) {
@@ -897,7 +897,7 @@ class Parser {
                                 // this is a user supplied conditional compilation variable
                                 openDebug("conditional compilation: " + ns + "::" + id);
                                 condVars.push(ns + "_" + id);
-                                meta.push(ECondComp(ns + "_" + id, null));
+                                meta.push(ECondComp(ns + "_" + id, null, null));
                                 t = token();
                                 switch (t) {
                                     case TBrOpen:
@@ -1558,17 +1558,17 @@ class Parser {
             ensure(TPClose);
             var e1 = parseExpr();
             end();
-            
+            var elseExpr = if( opt(TId("else"), true) ) parseExpr() else null;
             switch (cond) {
-                case ECondComp(v, e):
+                case ECondComp(v, e, e2):
                     //corner case, the condition is an AS3 preprocessor 
                     //directive, it must contain the block to wrap it 
                     //in Haxe #if #end preprocessor directive
-                    ECondComp(v, e1);
+                    ECondComp(v, e1, elseExpr);
                 default:
                     //regular if statement,,check for an "else" block
-                    var e2 = if( opt(TId("else"), true) ) parseExpr() else null;
-                    EIf(cond,e1,e2);
+                    
+                    EIf(cond,e1,elseExpr);
             }
 
         case "var", "const":
@@ -1831,11 +1831,11 @@ class Parser {
                                     //corner case, the conditional compilation is within an "if" statement
                                     //example if(CONFIG::MY_CONFIG) { //code block }
                                     //normal "if" statement parsing will take care of it
-                                    return ECondComp(i + "_" + id, null);
+                                    return ECondComp(i + "_" + id, null, null);
                                 default:    
                                     var e = parseExpr();
                                     closeDebug("end conditional compilation: " + i + "::" + id);
-                                    return ECondComp(i + "_" + id, e);
+                                    return ECondComp(i + "_" + id, e, null);
                             }
 
                         } else switch(peek()) {
