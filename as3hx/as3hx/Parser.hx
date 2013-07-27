@@ -1797,7 +1797,7 @@ class Parser {
         return el;
     }
     
-    function parseExprNext( e1 : Expr, pendingNewLine : Bool = false ) {
+    function parseExprNext( e1 : Expr, pendingNewLines : Int = 0 ) {
         var tk = token();
         dbgln("parseExprNext("+e1+") ("+tk+")");
         switch( tk ) {
@@ -1810,7 +1810,7 @@ class Parser {
                     }
                     return parseExprNext(EUnop(op,false,e1));
                 }
-            return makeBinop(op,e1,parseExpr(), pendingNewLine);
+            return makeBinop(op,e1,parseExpr(), pendingNewLines != 0);
         case TNs:
             switch(e1) {
             case EIdent(i):
@@ -1912,10 +1912,19 @@ class Parser {
             return ETernary(e1, e2, e3);
         case TId(s):
             switch( s ) {
-            case "is": return makeBinop("is", e1, parseExpr(), pendingNewLine);
-            case "as": return makeBinop("as",e1,parseExpr(), pendingNewLine);
-            case "in": return makeBinop("in",e1,parseExpr(), pendingNewLine);
+            case "is": return makeBinop("is", e1, parseExpr(), pendingNewLines != 0);
+            case "as": return makeBinop("as",e1,parseExpr(), pendingNewLines != 0);
+            case "in": return makeBinop("in",e1,parseExpr(), pendingNewLines != 0);
             default:
+
+                if (pendingNewLines != 0) {
+                    //add all newlines which were declared before
+                    //the identifier
+                    while(pendingNewLines > 0) {
+                        tk = TNL(tk);
+                        pendingNewLines--;
+                    }
+                }
                 add(tk);
                 return e1;
             }
@@ -1924,7 +1933,7 @@ class Parser {
             //push a token back and wrap it in newline if previous
             //token was newline
             var addToken : Token->Void = function(tk) {
-                if (pendingNewLine)
+                if (pendingNewLines != 0)
                     add(TNL(tk));
                 else 
                     add(tk);       
@@ -1939,7 +1948,7 @@ class Parser {
                     return e1; 
                 default:  
                     add(t);
-                    return parseExprNext(e1, true);  
+                    return parseExprNext(e1, ++pendingNewLines);  
             }
 
         case TCommented(s,b,t):
