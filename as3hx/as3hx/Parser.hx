@@ -1944,7 +1944,7 @@ class Parser {
 
         case TCommented(s,b,t):
             add(t);
-            return ECommented(s,b,false, parseExprNext(e1));
+            return ECommented(s,b,true, parseExprNext(e1));
            
         default:
             dbgln("parseExprNext stopped at " + tk);
@@ -1966,7 +1966,6 @@ class Parser {
         while( true ) {
             args.push(parseExpr());
             var tk = token();
-            
             switch( tk ) {
             case TComma:
             case TCommented(_,_,_):
@@ -1988,6 +1987,12 @@ class Parser {
                 }
             case TNL(t):
                 args.push(ENL(null));
+                switch (t) {
+                    case TCommented(s,b,t2):
+                        f(t);
+                    default:    
+                }
+                 var t = uncomment(t);
                 if (t == etk) break;
             default:
                 if( tk == etk ) break;
