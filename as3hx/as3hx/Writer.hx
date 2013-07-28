@@ -1168,9 +1168,26 @@ class Writer
                             write(")");
                             handled = true;
                         case "int":
-                            write("as3hx.Compat.parseInt(");
+                            if (cfg.useCompat) {
+                                write("as3hx.Compat.parseInt(");
+                            }
+                            else {
+                                //if compat class not used, fallback to Haxe
+                                //standard lib. 
+                                //Add overhead as values need all to be
+                                //converted to string beforehand, as there is
+                                //no way to know what the type of the expression
+                                //at this point and "Std.parseInt" only accepts
+                                //strings
+                                write("Std.parseInt(Std.string(");
+                            }
+                            
                             writeExpr(params[0]);
+
                             write(")");
+                            if (!cfg.useCompat) {
+                                write(")");
+                            }
                             handled = true;
                         }
                     case EVector(t):
@@ -1768,9 +1785,16 @@ class Writer
                     writeExpr(e2);
                 //case EIdent(id):
                 default:
-                    write("as3hx.Compat.typeof(");
-                    writeExpr(e);
-                    write(")");
+                    if (cfg.useCompat) {
+                        write("as3hx.Compat.typeof(");
+                        writeExpr(e);
+                        write(")");
+                    }
+                    else {
+                        throw "typeof can't be converted without the Compat class";
+                    }
+                    
+                    
                 }
                 addWarning("ETypeof");
             case EDelete(e):

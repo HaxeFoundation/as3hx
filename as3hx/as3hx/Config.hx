@@ -79,6 +79,8 @@ class Config {
     public var forcePrivateGetter : Bool;
     /** use Haxe compatiblity classes for XML */
     public var useFastXML : Bool;
+    /** use Haxe general compatibility class */
+    public var useCompat : Bool;
 
     /** source directory **/
     public var src : String;
@@ -260,6 +262,7 @@ class Config {
             case "conditionalCompilationList": setConditionalVars(el, new List());
             case "dictionaryToHash":    setBoolField(el, true);
             case "useFastXML":          setBoolField(el, true);
+            case "useCompat":          setBoolField(el, true);
             default:
                 Sys.println("Unrecognized config var " + el.name);
             }
@@ -353,6 +356,7 @@ class Config {
     <conditionalCompilationList />
     <dictionaryToHash value="true" />
     <useFastXML value="true" />
+    <useCompat value="true" />
 </as3hx>';
     }
 }
