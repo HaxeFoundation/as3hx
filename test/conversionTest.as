@@ -111,6 +111,12 @@ package as3tohx
      */
     public final class Main extends myClass implements ISomeInterface
     {
+        /**
+         * assert fires an AssertionFailedEvent of this type.
+         */
+        public static const ASSERTION_FAILED:String =
+            "assertion failed";
+
         static public var someMonths  : Array = [ "January", "February", "March" ];
 
         // apparently, if there is an extra comma (,) after the last value in an array/vector
@@ -577,6 +583,27 @@ package as3tohx
                      value = 0;
             }
             return true;
+        }
+
+        public function sendReport(msg:String):void
+        {
+            TIVOCONFIG::DEBUG_PRINT {
+                // Make sure msg is newline terminated...
+                if (msg.charAt(msg.length - 1) != '\n')
+                {
+                    msg = msg + '\n';
+                }
+
+                // Now send it to each connection...
+                for (var obj:Object in mConnections)
+                {
+                    const conn:TelnetConnection = obj as TelnetConnection;
+                    conn.write(msg);
+                }
+            }
+
+            var obj:Object;
+            var foo:Dictionary.<frob, nab> = Dictionary.<frob, nab>(obj);
         }
         
         // I do not have a converted golden version for this next one !
