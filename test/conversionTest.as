@@ -604,6 +604,10 @@ package as3tohx
 
             var obj:Object;
             var foo:Dictionary.<frob, nab> = Dictionary.<frob, nab>(obj);
+
+            someFunc(param1, /* this is so as it is so so */
+                param2 /* this is because that reason */
+                /* not passing 3rd param as it default to blah */); 
         }
         
         // I do not have a converted golden version for this next one !
