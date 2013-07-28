@@ -498,7 +498,9 @@ class Writer
                 //initialise class property
                 if(val != null) {
                     write(" = ");
+                    lvl++; //extra indenting if init is on multiple lines
                     writeExpr(val);
+                    lvl--;
                 }
 
                 write(";");
