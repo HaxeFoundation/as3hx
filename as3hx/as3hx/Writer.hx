@@ -610,13 +610,22 @@ class Writer
                     case EIdent(s):
 
                         if (s == arg.name) { //this is the start of a new argument
-                            if (null == fst)
+
+                            var isFirst = null == fst;
+                            if (isFirst)
                             {
                                 fst = arg; // no comma for the first
                             } else if (pendingComma) {
                                 pendingComma = false;
                                 write(",");
                             }
+                            
+                            //if arg is not first element on the line, add space
+                            //before it, unless first argument which never has space
+                            if (lineIsDirty && !isFirst) {
+                                write(" ");
+                            }
+
                             write(s);
                         }
                        
