@@ -1860,8 +1860,20 @@ class Parser {
                 if( opt(TNs) )
                     field = field + "::" + this.id();
             case TOp(op):
-                if( op != "<" || switch(e1) { case EIdent(v): v != "Vector"; default: true; } ) unexpected(tk);
+                if( op != "<" || switch(e1) { case EIdent(v): v != "Vector" && v != "Dictionary"; default: true; } ) unexpected(tk);
                 var t = parseType();
+
+                var v = switch (e1) {
+                    case EIdent(v): v;
+                    default: null; 
+                }
+                
+                //for Dictionary, expected syntax is "Dictionary.<Key, Value>"
+                if (v == "Dictionary") {
+                    ensure(TComma);
+                    id();
+                }
+
                 ensure(TOp(">"));
                 return parseExprNext(EVector(t));
             case TPOpen:
