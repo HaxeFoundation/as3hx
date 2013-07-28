@@ -1,0 +1,2 @@
+#!/bin/sh
+haxe -debug as3hx.hxml && mv as3hx.n as3tohx.n && nekotools boot as3tohx.n && cp as3tohx ~/bin/

@@ -1,0 +1,10 @@
+#!/bin/sh
+rm -f as3hx_source.zip
+./clean
+cd ../ && 
+find ./as3hx -name "*.hx" -print | zip as3hx_source -@ && 
+find ./as3hx -name "CHANGES" -print | zip as3hx_source -@ && 
+find ./as3hx -name "README" -print | zip as3hx_source -@ && 
+find ./as3hx -name "*.hxml" -print | zip as3hx_source -@ &&
+find ./as3hx -name "*.as" -print | zip as3hx_source -@ &&
+mv as3hx_source.zip as3hx
