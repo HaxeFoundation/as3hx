@@ -1353,37 +1353,89 @@ class Writer
                 }
             case EFor( inits, conds, incrs, e ):
                 openContext();
-                for (init in inits)
-                {
-                    writeExpr(init);
-                    writeNL(";");
+                
+                //check wether it is safe to use a Haxe for loop instead of while loop
+                var canUseForLoop:Array<Expr>->Array<Expr>->Bool = function(incrs, inits) {
+                    //index must be incremented by 1
+                    var isIncrement = if (incrs.length == 1) {
+                        trace(incrs[0]);
+                        return switch (incrs[0]) {
+                            case EUnop(op, _, _): op == "++";
+                            default: false;
+                        }
+                    }
+                    else {
+                        false;
+                    }
+                    
+                    return isIncrement;
                 }
-                writeIndent();
-                write("while (");
-                for (i in 0...conds.length)
-                {
-                    if (i > 0)
-                        write(" && ");
-                    writeExpr(conds[i]);
+
+                //write "for" loop if possible
+                if (canUseForLoop(incrs, inits)) {
+                    write("for (");
+                    switch (inits[0]) {
+                        case EVars(v): 
+                            write(v[0].name);
+                            write(" in ");
+                            writeExpr(v[0].val);
+                            write("...");
+                        default:
+                    }
+
+                    switch(conds[0]) {
+                        case EBinop(op, e1, e2, nl):
+                            writeExpr(e2);
+                            write(")");
+                        default:
+                    }
+                   
+                    
                 }
-                write(")");
+                //else use "while" loop
+                else {
+                    for (init in inits)
+                    {
+                        writeExpr(init);
+                        writeNL(";");
+                    }
+                    writeIndent();
+                    write("while (");
+                    for (i in 0...conds.length)
+                    {
+                        if (i > 0)
+                            write(" && ");
+                        writeExpr(conds[i]);
+                    }
+                    write(")");
+                }
+                
                 var es = [];
-                
-                switch(e)
-                {
-                    case EBlock(ex):
-                        es = ex.copy();
-                    default:
-                        es.push(e);
+                var f:Expr->Void = null;
+                f = function(e) {
+                    switch(e) {
+                        case EBlock(ex):
+                            es = ex.copy();
+                        case ENL(e):
+                            f(e);
+                        default:
+                            es.push(e);
+                    }
                 }
-                
-                for (incr in incrs) {
-                    es.push(ENL(incr));
+                f(e);
+
+                //don't write increments for a "for" loop    
+                if (!canUseForLoop(incrs, inits)) {
+                    for (incr in incrs) {
+                        es.push(ENL(incr));
+                    }
                 }
+
                 writeLoop(incrs, function() { writeExpr(EBlock(es)); });
                 closeContext();
                 rv = None;
             case EForEach( ev, e, block ):
+
                 openContext();
                 var varName = null;
                 write("for (");
