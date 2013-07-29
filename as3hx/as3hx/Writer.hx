@@ -388,7 +388,9 @@ class Writer
                     write("#if !flash ");
                 if (property.pub)
                     write("public ");
-                 if (property.sta)
+                else 
+                    write("private ");    
+                if (property.sta)
                     write("static ");
                 write("var " + property.name + "(" + property.get + ", " + property.set + ")");
                 writeVarType(property.ret);
@@ -470,6 +472,12 @@ class Writer
                 if (!(isGet && cfg.forcePrivateGetter) //check if forced private getter
                     && !(isSet && cfg.forcePrivateSetter)) //check if forced private setter
                     write("public ");
+                else {
+                    write("private ");
+                }    
+            }
+            else {
+                write("private ");
             }
             if (isStatic(field.kwds))
                 write("static ");
