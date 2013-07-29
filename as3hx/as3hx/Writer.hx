@@ -386,10 +386,10 @@ class Writer
                 writeIndent();
                 if(cfg.getterSetterStyle == "combined")
                     write("#if !flash ");
-                if (property.sta)
-                    write("static ");
                 if (property.pub)
                     write("public ");
+                 if (property.sta)
+                    write("static ");
                 write("var " + property.name + "(" + property.get + ", " + property.set + ")");
                 writeVarType(property.ret);
                 if(cfg.getterSetterStyle == "combined")
@@ -465,13 +465,14 @@ class Writer
             
             if (isOverride(field.kwds))
                 write((isFlashNative && (isGet || isSet)) ? "" : "override ");
-            if (isStatic(field.kwds))
-                write("static ");
+           
             if (isPublic(field.kwds)) {
                 if (!(isGet && cfg.forcePrivateGetter) //check if forced private getter
                     && !(isSet && cfg.forcePrivateSetter)) //check if forced private setter
                     write("public ");
             }
+            if (isStatic(field.kwds))
+                write("static ");
             if (isFinal(field.kwds))
                 write("@:final ");  
                 
