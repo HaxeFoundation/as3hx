@@ -1289,7 +1289,7 @@ class Writer
                 else
                     writeExpr(cond);
                 lvl--;
-                write(")");
+                write(") ");
 
                 //check if if expr is one line
                 //with no block bracket
