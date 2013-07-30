@@ -17,13 +17,31 @@ class Run {
     }
     
     static function loop( src: String, dst : String, excludes: List<String> ) {
-        var subs = [];
+
+        if (src == null) {
+            Sys.println("source path cannot be null");
+        }
+        if (dst == null) {
+            Sys.println("destination path cannot be null");
+        }
+
+        var subDirList : Array<String> = new Array<String>();
+
         var writer = new Writer(cfg);
+
         for( f in FileSystem.readDirectory(src) ) {
-            if( f.endsWith(".as") && !isExcludeFile(excludes, src + "/" + f) ) {
+
+            var srcChildAbsPath : String = src + "/" + f;
+            var dstChildAbsPath : String = dst + "/" + f;
+
+            if ( FileSystem.isDirectory(srcChildAbsPath) ) {
+                subDirList.push(f);
+            }
+            else 
+            if( f.endsWith(".as") && !isExcludeFile(excludes, srcChildAbsPath) ) {
+                var file = srcChildAbsPath;
+                Sys.println("source AS3 file: " + file);
                 var p = new as3hx.Parser(cfg);
-                var file = src + "/" + f;
-                Sys.println(file);
                 var content = sys.io.File.getContent(file);
                 var program = try p.parseString(content,src,f) catch( e : as3hx.Parser.Error ) {
                     #if macro
@@ -36,22 +54,19 @@ class Run {
                     else
                         neko.Lib.rethrow("In " + file + "("+p.line+") : " + errorString(e));
                 }
-                var out = dst + "/" + Writer.properCaseA(program.pack,false).join("/");
+                var out = dst;
                 ensureDirectoryExists(out);
                 var name = out + "/" + Writer.properCase(f.substr(0, -3),true) + ".hx";
-                Sys.println(name);
+                Sys.println("target HX file: " + name);
                 var fw = File.write(name, false);
                 warnings.set(name, writer.process(program, fw));
                 fw.close();
             }
-            var sub = src + "/" + f;
-            if ( FileSystem.isDirectory(sub) )
-            {
-                subs.push(sub);
-            }
         }
-        for ( sub in subs )
-            loop(sub, dst, excludes);
+
+        for (name in subDirList) {
+            loop((src + "/" + name), (dst + "/" + name), excludes);
+        }
     }
 
     static function isExcludeFile(excludes: List<String>, file: String) 

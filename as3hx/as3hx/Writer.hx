@@ -473,11 +473,15 @@ class Writer
                     && !(isSet && cfg.forcePrivateSetter)) //check if forced private setter
                     write("public ");
                 else {
-                    write("private ");
+                    if (! isInterface) {
+                        write("private ");
+                    }
                 }    
             }
             else {
-                write("private ");
+              if (! isInterface) {
+                  write("private ");
+              }
             }
             if (isStatic(field.kwds))
                 write("static ");
@@ -1358,7 +1362,7 @@ class Writer
                 var canUseForLoop:Array<Expr>->Array<Expr>->Bool = function(incrs, inits) {
                     //index must be incremented by 1
                     var isIncrement = if (incrs.length == 1) {
-                        trace(incrs[0]);
+                        //trace(incrs[0]);
                         return switch (incrs[0]) {
                             case EUnop(op, _, _): op == "++";
                             default: false;
@@ -1506,7 +1510,7 @@ class Writer
                             } else if (regexp.matched(1) == "Int") {
                                 context.set(vars[0].name, "Int");
                             } else {
-                                context.set(vars[0].name, regexp.matched(2));
+                                context.set(vars[0].name, regexp.matched(1));
                             }
                             if (cfg.debugInferredType) {
                                 write("/* inferred type: " + context.get(vars[0].name) + " */" );
@@ -2695,7 +2699,7 @@ class Writer
     {
         for (genType in genTypes) {
             writeNL();
-            write("typedef "+genType.name + " = {");
+            write("typedef "+genType.name+"Typedef" + " = {");
             for(field in genType.fields) {
                 writeNL();
                 writeIndent(cfg.indentChars);
