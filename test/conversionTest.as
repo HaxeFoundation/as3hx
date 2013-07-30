@@ -602,6 +602,15 @@ package as3tohx
                 }
             }
 
+
+            if (mNoChangeCount > MAX_NO_CHANGE_COUNT ||
+                ++mTimeoutCount > (MAX_IDLE_LOG_TIME / TIMEOUT))
+            {
+                mTimer.stop();
+                mTimeoutCount = 0;
+                mNoChangeCount = 0;
+            }
+
             var obj:Object;
             var foo:Dictionary.<frob, nab> = Dictionary.<frob, nab>(obj);
 

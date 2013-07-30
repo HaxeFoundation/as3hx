@@ -1280,12 +1280,15 @@ class Writer
                 }
                 lvl -= 2;
             case EIf( cond, e1, e2 ):
+
                 write("if (");
+                lvl++; //extra indenting if condition on multiple lines
                 var rb = rebuildIfExpr(cond);
                 if(rb != null)
                     writeExpr(rb);
                 else
                     writeExpr(cond);
+                lvl--;
                 write(")");
 
                 //check if if expr is one line
@@ -2221,7 +2224,15 @@ class Writer
         case ECall(e2, params): //These would require a full typer
         case EField(e2, f):
             null;
-        case ENL(e): return ENL(rebuildIfExpr(e));    
+        case ENL(e): 
+            var expr = rebuildIfExpr(e);
+            if (expr != null) {
+                return ENL(expr);    
+            }
+            else {
+                return null;
+            }
+            
         default:
         }
         return null;
