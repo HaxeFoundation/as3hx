@@ -1380,7 +1380,10 @@ class Writer
 
                 //write "for" loop if possible
                 if (canUseForLoop(incrs, inits)) {
+
                     write("for (");
+                        trace(incrs);
+                        trace(inits);
                     switch (inits[0]) {
                         case EVars(v): 
                             write(v[0].name);
@@ -1392,7 +1395,26 @@ class Writer
 
                     switch(conds[0]) {
                         case EBinop(op, e1, e2, nl):
-                            writeExpr(e2);
+
+                            //corne case, for "<=" binop, limit value should be incremented
+                            if (op == "<=") {
+                                switch (e2) {
+                                    case EConst(CInt(v)):
+                                        //increment int constants
+                                        var e = EConst(CInt(Std.string(Std.parseInt(v) + 1)));
+                                        writeExpr(e2);
+                                    default:
+                                        //when var used (like <= array.length), no choice but
+                                        //to append "+1"
+                                        writeExpr(e2);
+                                        write(" + 1");
+                                }
+                            }
+                            else {
+                                writeExpr(e2);
+                            }
+                            
+                            
                             write(")");
                         default:
                     }
