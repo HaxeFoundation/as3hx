@@ -286,11 +286,11 @@ class Writer
 
         var buf = new StringBuf();
         this.isInterface = c.isInterface;
-        
-        buf.add(c.isInterface ? "interface " : "class ");
         if (!c.isInterface && isFinal(c.kwds)) {
             buf.add("@:final ");
         }
+        buf.add(c.isInterface ? "interface " : "class ");
+        
         buf.add(properCase(c.name,true));
         
         var parents = [];
@@ -464,7 +464,8 @@ class Writer
                     write("@:protected ");
                 }
             }
-            
+            if (isFinal(field.kwds))
+                write("@:final ");  
             if (isOverride(field.kwds))
                 write((isFlashNative && (isGet || isSet)) ? "" : "override ");
            
@@ -485,8 +486,7 @@ class Writer
             }
             if (isStatic(field.kwds))
                 write("static ");
-            if (isFinal(field.kwds))
-                write("@:final ");  
+            
                 
             if (isConst(field.kwds) && isStatic(field.kwds))
                 write("inline ");
