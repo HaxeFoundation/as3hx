@@ -474,6 +474,20 @@ class Parser {
                 case "import":
                     var impt = parseImport();
                     if (impt.length > 0) imports.push(impt);
+
+                    //remove newline after imports, added when
+                    //written
+                    var f:Void->Void = null;
+                    f = function() { 
+                        var t = token();
+                        switch (t) {
+                            case TNL(t):add(t);
+                            case TSemicolon: f();
+                            default: add(t);
+                        }
+                    }
+                    f();
+
                     end();
                     continue;
                 case "use":

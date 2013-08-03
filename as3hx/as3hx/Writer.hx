@@ -1382,8 +1382,6 @@ class Writer
                 if (canUseForLoop(incrs, inits)) {
 
                     write("for (");
-                        trace(incrs);
-                        trace(inits);
                     switch (inits[0]) {
                         case EVars(v): 
                             write(v[0].name);
