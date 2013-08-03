@@ -1914,20 +1914,17 @@ class Writer
                 }
             case ECondComp( kwd, e , e2):
 
-                var writeECondComp:Expr->Void = function(e) {
+                var writeECondComp:Expr->Void = null;
+                writeECondComp = function(e) {
                     switch(e) {
                         case EBlock(elist):
-
-                            writeNL();
-                            writeIndent("{");
-                            lvl++;
                             for (ex in elist) {
                                 writeIndent();
                                 writeFinish(writeExpr(ex));
                             }
-                            lvl--;
-                            writeNL();
-                            writeIndent("}");
+                        case ENL(e): 
+                            writeECondComp(e);
+                        case ECommented(s,b,t,e): writeECondComp(e);
                         default:
                             writeIndent();
                             writeFinish(writeExpr(e));
