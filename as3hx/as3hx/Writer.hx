@@ -1725,14 +1725,18 @@ class Writer
                 var writeTestVar = false;
                 var testVar = switch(e) {
                 case EParent(ex):
-                    switch(ex) { case EIdent(i): i; default: null; }
+                    switch(ex) { 
+                        case EIdent(i): ex;
+                        case ECall(_): ex;
+                        default: null; }
                 default:
                     null;
                 }
                 if(testVar == null) {
                     writeTestVar = true;
-                    testVar = "_sw"+(varCount++)+"_";
+                    testVar = EIdent("_sw"+(varCount++)+"_");
                 }
+
                 if(def != null) {
                     if (def.el.length > 0) {
                         switch(def.el[def.el.length-1]) {
@@ -1751,9 +1755,11 @@ class Writer
                     
                 }
                 newCases = loopCases(cases.slice(0), def == null ? null : def.el.slice(0), testVar, newCases);
-
+  
                 if(writeTestVar) {
-                    write("var " + testVar + " = ");
+                    write("var ");
+                    writeExpr(testVar);
+                    write(" = ");
                     writeFinish(writeExpr(e));
                     writeIndent("");
                 }
@@ -1765,7 +1771,9 @@ class Writer
                     writeIndent();
                 }
 
-                write("switch (" + testVar + ")" + openb());
+                write("switch (");
+                writeExpr(testVar);
+                write(")" + openb());
                 
                 lvl++;
                 for(c in newCases) {
@@ -2590,7 +2598,7 @@ class Writer
         
     }
 
-    function loopCases(cases : Array<SwitchCase>, def: Null<Array<Expr>>, testVar:String, out:Array<CaseDef>) {
+    function loopCases(cases : Array<SwitchCase>, def: Null<Array<Expr>>, testVar:Expr, out:Array<CaseDef>) {
         var c : { val : Expr, el : Array<Expr>, meta : Array<Expr> } = cases.pop();
         if(c == null)
             return out;
@@ -2636,7 +2644,7 @@ class Writer
             var el = c.el.slice(0);
             if(el.length > 0) {
                 el.push(EBreak(null));
-                nextCase.el.unshift(ESwitch(EParent(EIdent(testVar)), [{val:c.val, el: el, meta:[]}], null));
+                nextCase.el.unshift(ESwitch(EParent(testVar), [{val:c.val, el: el, meta:[]}], null));
             }
         } else { 
             outCase.vals.push(c .val);
