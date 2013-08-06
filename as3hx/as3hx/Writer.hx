@@ -155,6 +155,7 @@ class Writer
         if (pack.length > 0)
         {
             writeLine("package " + properCaseA(pack,false).join(".") + ";");
+            writeNL(); 
         }
     }
     
@@ -176,9 +177,8 @@ class Writer
                     typeImportMap.set(i[i.length-1], null);
                 }
             }
-            writeLine();
-
-            }
+            writeNL(); 
+        }
     }
         
     function writeAdditionalImports(defPackage : Array<String>, allTypes : Array<Dynamic>,
@@ -216,8 +216,6 @@ class Writer
         // Finally, if any additional implicit imports were found
         // to be needed, output them.
         if (addnImports.length > 0) {
-        writeLine();
-        writeLine("// Additional implicit imports...");
         addnImports.sort(
             function(a : String, b : String) : Int {
             if (a<b) return -1;
@@ -286,6 +284,7 @@ class Writer
 
         var buf = new StringBuf();
         this.isInterface = c.isInterface;
+        
         if (!c.isInterface && isFinal(c.kwds)) {
             buf.add("@:final ");
         }
@@ -386,10 +385,14 @@ class Writer
                 writeIndent();
                 if(cfg.getterSetterStyle == "combined")
                     write("#if !flash ");
-                if (property.pub)
+                if (property.pub) { 
                     write("public ");
-                else 
-                    write("private ");    
+                }    
+                else {
+                    if (! isInterface) {
+                        write("private ");
+                    }
+                }    
                 if (property.sta)
                     write("static ");
                 write("var " + property.name + "(" + property.get + ", " + property.set + ")");
@@ -1262,7 +1265,7 @@ class Writer
                     {
                         if (i > 0) {
                             //check if arguments remain before adding comma
-                        	if(!isLastArgument(params, i))
+                            if(!isLastArgument(params, i))
                                 write(",");
 
                             //minor formatting fix, if arg is newline or 
