@@ -60,6 +60,9 @@ package as3tohx
             trace("blah");
         }
 
+        assertEquals("21474836480", longValue.toString());
+        assertEquals("Error message if equality fails", "21474836480", longValue.toString());
+
         // another way of using TIVOCONFIG 
         if (TIVOCONFIG::UNSAFE_PRIVACY) {
             trace("roar");

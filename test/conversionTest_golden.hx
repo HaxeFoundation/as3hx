@@ -18,16 +18,18 @@
  * Please refer to "conversionTest_golden.hx" as the golden file.
  */
 
-package as3tohx;
-//converter should remove duplicates
-import my.duplicated.class;
+package as3tohx; // a blank line is expected right before & after package declaration
 
+import my.duplicated.class; //converter should remove duplicates
 import as3tohx.MyClass;
 import as3tohx.UInt;
 
 using Lambda;
 
 // typedef declarations
+
+// please note: 'Typedef' is appended to these names to avoid conflicts with same
+//              named classes e.g. Collection, Content, Offer are actual classes.
 
 typedef VideoProviderInfoItemsTypedef = {
     var name                : String; 
@@ -116,6 +118,26 @@ class @:final ClassForStandaloneFunc
         #if TIVOCONFIG_COVERAGE
             trace("blah");
         #end // TIVOCONFIG_COVERAGE
+
+	// ---------------------------------------------------------------------------------------
+	// in below example: 
+        //   as3posttidy.sed script should NOT blindly move the 1st param to end as comments. For:  
+        //   It should move the FIRST arg (could be a string literal or string variable) to 
+        //   end of the line as comments , IFF (if and only if) below condition is met: 
+        //          a) for assertThat:      if there are 3 args
+        //          b) for Assert.areEqual: if there are 3 args
+        //          c) for Assert.isTrue:   if there are 2 args
+        //          d) for Assert.isFalse:  if there are 2 args
+
+	// IN-CORRECT
+        Assert.areEqual(longValue.toString());                // "21474836480"
+	// Correct
+        Assert.areEqual("21474836480", longValue.toString());
+
+	// Correct
+        Assert.areEqual("21474836480", longValue.toString()); // "Error message if equality fails"
+
+	// ---------------------------------------------------------------------------------------
 
         // another way of using TIVOCONFIG 
         #if TIVOCONFIG_UNSAFE_PRIVACY
@@ -280,12 +302,18 @@ class @:final Main extends MyClass implements ISomeInterface
     var mMapOfMap : Map<Int, Map<String, AnotherClass>>;
     var mDynamicKeyMap : Map<Dynamic, String>;
 
-    public var intKeyMap (get_intKeyMap, never) : Map<Int, ValueClass>;
-    public var stringKeyMap (get_stringKeyMap, never) : Map<String, ValueClass>;
-    public var objectKeyMap (get_objectKeyMap, never) : Map<KeyClass, ValueClass>;
-    public var mapOfArray (get_mapOfArray, never) : Map<Int, Array<AnotherClass>>;
-    public var mapOfMap (get_mapOfMap, never) : Map<Int, Map<String, AnotherClass>>;
-    public var dynamicKeyMap (get_dynamicKeyMap, never) : Map<Dynamic, String>;
+    // for property declarations: converter should not generate full method name
+    // it should only indicate get or set
+    // in Haxe 3, these will be auto-assumed to be get_<property> & set_<property>
+
+    public var intKeyMap (get, never) : Map<Int, ValueClass>;
+    public var stringKeyMap (get, never) : Map<String, ValueClass>;
+    public var objectKeyMap (get, never) : Map<KeyClass, ValueClass>;
+    public var mapOfArray (get, never) : Map<Int, Array<AnotherClass>>;
+    public var mapOfMap (get, never) : Map<Int, Map<String, AnotherClass>>;
+    public var dynamicKeyMap (get, never) : Map<Dynamic, String>;
+
+    // however, actual method definition should have full name :) 
 
     public function get_intKeyMap() : Map<Int, ValueClass>
     {
@@ -342,7 +370,7 @@ class @:final Main extends MyClass implements ISomeInterface
        return mDynamicKeyMap;
     }
 
-    public var sampleProperty(get_sampleProperty, set_sampleProperty) : Dynamic;
+    public var sampleProperty(get, set) : Dynamic;
 
     var isResult1 : Bool;
     var isResult2 : Bool;
@@ -410,9 +438,9 @@ class @:final Main extends MyClass implements ISomeInterface
          * white space to preserve
          */
         funcC(paramA,    // comment on paramA
-                paramB,    /* comment describing paramB */
-                paramC,
-                paramD);   // one more comment
+              paramB,    /* comment describing paramB */
+              paramC,
+              paramD);   // one more comment
 
 
         /**
@@ -421,8 +449,8 @@ class @:final Main extends MyClass implements ISomeInterface
          * white space
          */
         retValue = funcD(paramA,  // comment on paramA
-                paramB, paramC, /* comment describing paramB */
-                paramD);
+                         paramB, paramC, /* comment describing paramB */
+                         paramD);
 
          // this is failing 
          anotherObjType.templateArray.push(
