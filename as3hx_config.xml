@@ -7,8 +7,8 @@
 	<vectorToArray value="true" />
 	<guessCasts value="true" />
 	<functionToDynamic value="false" />
-	<getterMethods value="get_%i" />
-	<setterMethods value="set_%i" />
+	<getterMethods value="get" />
+	<setterMethods value="set" />
 	<forcePrivateSetter value="true" />
 	<forcePrivateGetter value="true" />
 	<!-- Style of getter and setter output. haxe, flash or combined -->
