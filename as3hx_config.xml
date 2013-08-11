@@ -7,14 +7,14 @@
 	<vectorToArray value="true" />
 	<guessCasts value="true" />
 	<functionToDynamic value="false" />
-	<getterMethods value="get" />
-	<setterMethods value="set" />
+	<getterMethods value="get_%i" />
+	<setterMethods value="set_%i" />
 	<forcePrivateSetter value="true" />
 	<forcePrivateGetter value="true" />
 	<!-- Style of getter and setter output. haxe, flash or combined -->
 	<getterSetterStyle value="haxe" />
 	<useFastXML value="false" />
-        <useCompat value="false" />
+	<useCompat value="false" />
 	<testCase value="false" />
 	<excludeList />
 	<conditionalCompilationList>
@@ -28,6 +28,7 @@
 	  <variable value="TIVOCONFIG::COVERAGE" />
 	  <variable value="TIVOCONFIG::UNSAFE_PRIVACY" />
 	  <variable value="TIVOCONFIG::BACKDOOR_SHORTCUTS" />
+	  <variable value="TIVOCONFIG::SONGBIRD" />
 	  <variable value="CONFIG::EXTENSION_REAL" />
 	  <variable value="CONFIG::EXTENSION_STUB" />
 	</conditionalCompilationList>

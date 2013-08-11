@@ -353,22 +353,30 @@ class Writer
                         continue;
                     if (isGetter(field.kwds))
                     {
+                        var getterDirective : String = "get"; // haxe 3
+                                                              // haxe 2: cfg.makeGetterName(field.name);
+
                         var property = getOrCreateProperty(field.name, f.ret.t, isStatic(field.kwds));
                         if (isPublic(field.kwds))
                         {
-                            property.get = cfg.makeGetterName(field.name);
+                            property.get = getterDirective; 
                             property.pub = true;
                         } else {
-                            property.get = cfg.makeGetterName(field.name);
+                            property.get = getterDirective; 
                         }
-                    } else if (isSetter(field.kwds)) {
+                    }
+                    else if (isSetter(field.kwds))
+                    {
+                        var setterDirective : String = "set"; // haxe 3 
+                                                              // haxe 2: cfg.makeSetterName(field.name);
+
                         var property = getOrCreateProperty(field.name, f.args[0].t, isStatic(field.kwds));
                         if (isPublic(field.kwds))
                         {
-                            property.set = cfg.makeSetterName(field.name);
+                            property.set = setterDirective; 
                             property.pub = true;
                         } else {
-                            property.set = cfg.makeSetterName(field.name);
+                            property.set = setterDirective; 
                         }
                     }
                 default:
