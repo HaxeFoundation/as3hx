@@ -1143,11 +1143,28 @@ class Writer
                 }
             case ECall( e, params ):
                 //write("/*ECall " + e + "(" + params + ")*/\n");
+
                 //rebuild call expr if necessary
-                var eCall = rebuildCallExpr(e, params);
+                var eCall = rebuildCallExpr(expr, e, params);
                 if (eCall != null) {
-                    e = eCall.e;
-                    params = eCall.params;
+
+                    switch(eCall) {
+                        case ECall(e2, params2):
+                            e = e2;
+                            params = params2;
+
+                        case ECommented(s, b, t, e2):
+                            //This is a hack for the AS3 unit test to 
+                            //Haxe unit test conversion. In some cases,
+                            //the first param of the test if converted
+                            //to an end-of-line comment
+                            writeExpr(e2);
+                            write(";");
+                            write("  // "+ s);
+                            return None;
+
+                        default:    
+                    }
                 }
 
                 //func call use 2 levels of indentation if
@@ -1281,6 +1298,7 @@ class Writer
                     }
                     write(")");
                 }
+
                 lvl -= 2;
             case EIf( cond, e1, e2 ):
 
@@ -2274,7 +2292,7 @@ class Writer
      * 
      * @return the new expression, or null if no change were needed
      */
-    function rebuildCallExpr(expr : Expr, params : Array<Expr>) : {e : Expr, params : Array<Expr> } {
+    function rebuildCallExpr(fullExpr : Expr, expr : Expr, params : Array<Expr>) : Expr {
         
         var rebuiltCall = null;
 
@@ -2295,12 +2313,12 @@ class Writer
                 //replace "myVar.hasOwnProperty(myProperty)" by "myVar.exists(myProperty)"
                 if (f == "hasOwnProperty") {
                     var rebuiltExpr = EField(e, "exists");
-                    rebuiltCall = {e : rebuiltExpr, params : params};
+                    rebuiltCall = ECall(rebuiltExpr, params);
                 }
                 else if (f == "slice") {
                     //replace AS3 slice by Haxe substr
                     var rebuiltExpr = EField(e, "substr");
-                    rebuiltCall = {e : rebuiltExpr, params : params};
+                    rebuiltCall = ECall(rebuiltExpr, params);
                 }
                 else if (f == "indexOf") {
                     //in AS3, indexOf is a method in Array while it is not in Haxe
@@ -2312,38 +2330,74 @@ class Writer
                         if (type.indexOf("Array") != -1 || type.indexOf("Map") != -1) {
                             var rebuiltExpr = EField(EIdent("Lambda"), "indexOf");
                             params.unshift(e);
-                            rebuiltCall = {e : rebuiltExpr, params : params};
+                            rebuiltCall = ECall(rebuiltExpr, params);
                         }
                     }
                 }
                 else if (f == "toString") {
                     //replace AS3 toString by Haxe Std.string
                     var rebuiltExpr = EField(EIdent("Std"), "string");
-                    rebuiltCall = {e : rebuiltExpr, params : [e]};
+                    rebuiltCall = ECall(rebuiltExpr, [e]);
                 }
                 else if (getIdentString(e) != null) {
                     var ident = getIdentString(e);
                     //replace AS3 StringUtil by Haxe StringTools
                     if (ident == "StringUtil" ) {
                         var rebuiltExpr = EField(EIdent("StringTools"), f);
-                        rebuiltCall = {e : rebuiltExpr, params : params};
+                        rebuiltCall = ECall(rebuiltExpr, params);
                     }
                 }
 
             default:
+
                 var ident = getIdentString(expr);
                 if (ident != null) {
-                    //replace "hasAnyProperty(myVar)" by "myVar.keys().hasNext()"
-                    // "myVar" is assumed to be an iterable
-                    if (ident == "hasAnyProperties" && params.length == 1) {
-                        
-                        //there should be one and only one identifier param
-                        var paramIdent = getIdentString(params[0]);
-                        if (paramIdent != null ) {
-                            var keysExpr =  ECall(EField(EIdent(paramIdent), "keys"), []);
-                            var rebuiltExpr = EField(keysExpr, "hasNext");
-                            rebuiltCall = { e : rebuiltExpr, params : [] };
+
+                    //utils returning a string representation
+                    //of the provided param
+                    var getCommentedParam = function(param) {
+                        return switch(param) {
+                            case EConst(CString(s)):
+                                return s;
+                            case EIdent(id):
+                                return id;    
+
+                            default: null;
                         }
+                    }
+
+                    //helper to convert an AS3 test case to an Haxe one
+                    var getUnitTestExpr = function(rebuiltExpr, params, commentFirstParam) {
+                        var rebuiltCall = ECall(rebuiltExpr, params);
+                        
+                        //in some cases, the first param is a description of the test, 
+                        //which should be converted to a comment
+                        if (commentFirstParam) {
+                            var comment = getCommentedParam(params.shift());
+                            rebuiltCall = ECommented(comment, false, true, rebuiltCall);
+                        }
+
+                        return rebuiltCall;
+                    }
+
+                    
+                    switch (ident) {
+                        //replace "hasAnyProperty(myVar)" by "myVar.keys().hasNext()"
+                        // "myVar" is assumed to be an iterable
+                        case "hasAnyProperties":
+                            if (params.length == 1) {
+                                //there should be one and only one identifier param
+                                var paramIdent = getIdentString(params[0]);
+                                if (paramIdent != null ) {
+                                    var keysExpr =  ECall(EField(EIdent(paramIdent), "keys"), []);
+                                    var rebuiltExpr = EField(keysExpr, "hasNext");
+                                    rebuiltCall = ECall(rebuiltExpr, []);
+                                }
+                            }
+                        //    
+                        case "assertTrue":
+                            var rebuiltExpr = EField(EIdent("Assert"), "isTrue");
+                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 2);
                     }
                 }
         }
