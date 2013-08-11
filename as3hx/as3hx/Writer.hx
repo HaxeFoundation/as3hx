@@ -2402,10 +2402,31 @@ class Writer
                                     rebuiltCall = ECall(rebuiltExpr, []);
                                 }
                             }
-                        //    
+
+                        //convert AS3 unit tests to Haxe tests
                         case "assertTrue":
                             var rebuiltExpr = EField(EIdent("Assert"), "isTrue");
                             rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 2);
+
+                        case "assertFalse":
+                            var rebuiltExpr = EField(EIdent("Assert"), "isFalse");
+                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 2); 
+
+                         case "assertEquals":
+                            var rebuiltExpr = EField(EIdent("Assert"), "areEqual");
+                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 3);     
+
+                        case "assertNull":
+                            var rebuiltExpr = EField(EIdent("Assert"), "isNull");
+                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, false);    
+
+                        case "assertNotNull":
+                            var rebuiltExpr = EField(EIdent("Assert"), "isNotNull");
+                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, false);   
+
+                        case "fail":
+                            var rebuiltExpr = EField(EIdent("Assert"), "fail");
+                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, false);            
                     }
                 }
         }

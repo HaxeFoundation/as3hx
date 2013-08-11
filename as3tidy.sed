@@ -42,23 +42,6 @@ s,Dictionary/\*\.<([^*]+)\*/,Dictionary.<\1,g
 # massive.munit.Assert
 s,import org\.flexunit\.asserts\..*;$,import massive.munit.Assert;,g
 
-# replace all calls to assertTrue(), assertFalse(), assertEquals(), 
-# assertNull, assertNotNull, and fail() with
-# Assert.isTrue(), Assert.isFalse(), Assert.areEqual(), Assert.isNull(),
-# Assert.isNotNull(), Assert.fail().  On all but fail(), move any
-# string description to a comment.
-s, assertTrue\([ ]*("[^"]*"\, ?)([^;]*);, Assert.isTrue(\2; // \1,g
-s, assertTrue\(, Assert.isTrue(,g
-s, assertFalse\([ ]*("[^"]*"\, ?)([^;]*);, Assert.isFalse(\2; // \1,g
-s, assertFalse\(, Assert.isFalse(,g
-s, assertEquals\([ ]*("[^"]*"\, ?)([^;]*);, Assert.areEqual(\2; // \1,g
-s, assertEquals\(, Assert.areEqual(,g
-s, assertNull\([ ]*("[^"]*"\, ?)([^;]*);, Assert.isNull(\2; // \1,g
-s, assertNull\(, Assert.isNull(,g
-s, assertNotNull\([ ]*("[^"]*"\, ?)([^;]*);, Assert.isNotNull(\2; // \1,g
-s, assertNotNull\(, Assert.isNotNull(,g
-s, fail\(, Assert.fail(,g
-
 # remove all imports of org.hamcrest.*, as they are accessible (for now)
 # via BaseTest inheritance
 s,import org\.hamcrest\..*$,,g
