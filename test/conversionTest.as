@@ -62,6 +62,13 @@ package as3tohx
 
         assertEquals("21474836480", longValue.toString());
         assertEquals("Error message if equality fails", "21474836480", longValue.toString());
+        assertTrue("21474836480", longValue.toString());
+        assertTrue("Error message if equality fails", "21474836480", longValue.toString());
+        assertFalse("21474836480", longValue.toString());
+        assertFalse("Error message if equality fails", "21474836480", longValue.toString());
+        assertNotNull("Error message if equality fails", "21474836480", longValue.toString());
+        assertNull("Error message if equality fails", "21474836480", longValue.toString());
+        fail("21474836480", longValue.toString());
 
         // another way of using TIVOCONFIG 
         if (TIVOCONFIG::UNSAFE_PRIVACY) {
