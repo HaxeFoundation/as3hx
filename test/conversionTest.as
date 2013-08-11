@@ -22,7 +22,15 @@ package as3tohx
 {
     //converter should remove duplicates
     import my.duplicated.class;
-    import my.duplicated.class;
+    import my.duplicated.class2;
+
+    import another.class; //here is a comment for my import
+
+    /* and another comment  */
+    import and.another.class;
+    import and.another.class2;
+    import and.another.class3;
+    import and.another.class4;
 
     /**
      * Most commonly failing interface use case.
