@@ -473,21 +473,9 @@ class Parser {
                 switch( id ) {
                 case "import":
                     var impt = parseImport();
-                    if (impt.length > 0) imports.push(impt);
-
-                    //remove newline after imports, added when
-                    //written
-                    var f:Void->Void = null;
-                    f = function() { 
-                        var t = token();
-                        switch (t) {
-                            case TNL(t):add(t);
-                            case TSemicolon: f();
-                            default: add(t);
-                        }
-                    }
-                    f();
-
+                    //note : when parsing package, user defined imports
+                    //are stored as meta, this way, comments can be kept
+                    if (impt.length > 0) meta.push(EImport(impt));
                     end();
                     continue;
                 case "use":

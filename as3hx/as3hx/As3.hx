@@ -73,6 +73,7 @@ enum Expr {
     EDelete( e : Expr );
     ECondComp( v : String, e : Expr, e2 : Expr );
     ENL( e : Expr);
+    EImport(v : Array<String>);
 }
 
 enum T {

@@ -64,6 +64,7 @@ class Writer
     var typeImportMap : Map<String,String>;
     var lineIsDirty : Bool; // current line contains some non-whitespace/indent characters
     var genTypes : Array<GenType>; //typedef generated while parsing
+    var imported : Array<String>; // store written imports to prevent duplicated
     
     public function new(config:Config)
     {
@@ -79,6 +80,7 @@ class Writer
 
         this.typeImportMap = new Map<String,String>();
         this.genTypes = [];
+        this.imported = [];
 
         var doNotImportClasses = [
             "Array", "Bool", "Boolean", "Class", "Date",
@@ -142,6 +144,8 @@ class Writer
                             throw "Unexpected " + e + " in comments";
                     }
                 }
+            case EImport(i):
+                writeImport(i);
             case ENL(e):
                 writeNL();  
             default:
@@ -165,19 +169,24 @@ class Writer
         {
             var imported = []; //holds already written types to prevent duplicates
             for(i in imports) {
-                if (i[0] == "flash") {
-                    i[0] = "nme";
-                }
-                var type = properCaseA(i,true).join(".");
-                if (!Lambda.has(imported, type)) { //prevent duplicate import
-                    writeLine("import " + type + ";");
-                    imported.push(type);
-                    // do not add an implicit import for
-                    // this type since it has an explicit one.
-                    typeImportMap.set(i[i.length-1], null);
-                }
+                writeImport(i);
             }
             writeNL(); 
+        }
+    }
+
+    function writeImport(i : Array<String>)
+    {
+        if (i[0] == "flash") {
+            i[0] = "nme";
+        }
+        var type = properCaseA(i,true).join(".");
+        if (!Lambda.has(this.imported, type)) { //prevent duplicate import
+            write("import " + type + ";");
+            imported.push(type);
+            // do not add an implicit import for
+            // this type since it has an explicit one.
+            typeImportMap.set(i[i.length-1], null);
         }
     }
         
@@ -272,6 +281,8 @@ class Writer
                     write(" && ");
                 } 
                 write(v);
+            case EImport(i):
+                writeImport(i);    
             default:
                 throw "Unexpected " + d;
             }
@@ -1987,6 +1998,7 @@ class Writer
                 writeNL( );
                 writeIndent( );
                 rv = writeExpr(e);
+            case EImport(s):   
         }
         return rv;
     }
@@ -2865,6 +2877,7 @@ class Writer
         this.o = writer;
         this.genTypes = program.genTypes;
         writeComments(program.header);
+        trace(program.footer);
         writePackage(program.pack);
         writeImports(program.imports);
         writeAdditionalImports(program.pack, program.typesSeen, program.typesDefd);
