@@ -22,6 +22,7 @@ package as3tohx
 {
     //converter should remove duplicates
     import my.duplicated.class;
+    import my.duplicated.class;
     import my.duplicated.class2;
 
     import another.class; //here is a comment for my import
@@ -31,6 +32,9 @@ package as3tohx
     import and.another.class2;
     import and.another.class3;
     import and.another.class4;
+
+    internal final class ConstructorCookie 
+    { }
 
     /**
      * Most commonly failing interface use case.
@@ -206,6 +210,23 @@ package as3tohx
         private var mMapOfArray:Dictionary/*.<Int, Vector.<AnotherClass>>*/ = null;
         private var mMapOfMap:Dictionary/*.<Int, Dictionary.<String, AnotherClass>>*/ = null;
         private var mDynamicKeyMap:Dictionary/*.<Object, String>*/ = null;
+
+        internal function blahBlah(command : String, client : String):void
+        {
+           switch (command.charAt(0))                
+           {
+              case 'A' : 
+                           switch (client.charAt(0))
+                           {   
+                              case 'B': 
+                                         trace(0); 
+                              default : 
+                                         trace(1); 
+                           }
+              default : 
+                           trace(2); 
+           } 
+	} 
 
         public final function get intKeyMap():Dictionary/*.<Int, ValueClass>*/
         {
@@ -404,7 +425,48 @@ package as3tohx
                     return aValueOfSomeType; // could be another function call 
                 }
             );
-            
+
+            // ---------------------------------------------------------------------
+            //   Below if-else_if-else block was not getting converted correctly
+            //   due to comments near the "else if" (please verify)
+            // ---------------------------------------------------------------------
+            // Send the completions request to the app.
+            const completions:Vector.<String> =
+            app.getCompletions(this, args, tokenIndex, offsetIntoToken);
+
+            // If the app came up with nothing, beep the user's terminal.
+            if (completions == null || completions.length == 0)
+            {
+                beep();
+                return;
+            }
+            // If the app came up with a single completion, simply inline
+            // it into their command.
+            else if (completions.length == 1)
+            {
+                // If the completion is for a new word, simply append it.
+                if (tokenIndex == args.length)
+                {
+                    editorSetLine(TelnetStringUtils.join(args, " ", 0, -1) + " " + completions[0]);
+                }
+                // Otherwise splice it in.
+                else
+                {
+                    args[tokenIndex] = completions[0];
+                    editorSetLine(TelnetStringUtils.join(args, " ", 0, -1),
+                        TelnetStringUtils.joinLength(args, 0, tokenIndex + 1));
+                }
+            }
+            // Ok, the app came up with many completions, so we
+            // want to present them to the user in some helpful
+            // way.
+            else
+            {
+                // See if there's some one common prefix to all of
+                // the completions.
+            }
+            // ---------------------------------------------------------------------
+
              // making sure this succeeds
              functionGHIJ(
              param1,
@@ -422,6 +484,16 @@ package as3tohx
                     paramA, paramB, /* comment */ paramC,    /* comment describing paramC */
                     // last comment
                     paramD);
+
+            // assertThat: 2 param vs 3 param 
+            assertThat("isBiscuit", equalTo("isBiscuit")); 
+            assertThat("message111", "theCake", equalTo("theCake"));
+
+            // assertNotNull, assertNull: 2 param vs 1 param 
+            assertNull(expression2); 
+            assertNull("message-222", expression1); 
+            assertNotNull(expression3); 
+            assertNotNull("message-333", expression4); 
 
             // this should not fail
             someObject.

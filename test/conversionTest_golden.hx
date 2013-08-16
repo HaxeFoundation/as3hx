@@ -77,6 +77,9 @@ typedef PersonTypedef = {
     var last              : String;  
 }
 
+@:allow(as3hx) // current package name 
+private class @:final ConstructorCookie
+{ }
 
 /**
  * Most commonly failing interface use case.
@@ -313,6 +316,24 @@ class @:final Main extends MyClass implements ISomeInterface
     public var mapOfMap (get, never) : Map<Int, Map<String, AnotherClass>>;
     public var dynamicKeyMap (get, never) : Map<Dynamic, String>;
 
+    @:allow(as3hx) // current package name 
+    private function blahBlah(command : String, client : String):Void
+    {
+           switch (command.charAt(0))
+           {
+              case 'A' :
+                           switch (client.charAt(0))
+                           {
+                              case 'B':
+                                         trace(0);
+                              default :
+                                         trace(1);
+                           }
+              default :
+                           trace(2);
+           }
+    }
+
     // however, actual method definition should have full name :) 
 
     public function get_intKeyMap() : Map<Int, ValueClass>
@@ -442,7 +463,6 @@ class @:final Main extends MyClass implements ISomeInterface
               paramC,
               paramD);   // one more comment
 
-
         /**
          * Function call: Parameters across different
          * lines, with comments interspersed and
@@ -508,6 +528,45 @@ class @:final Main extends MyClass implements ISomeInterface
                  trace("expression value is value1");
          }
 
+         // ---------------------------------------------------------------------
+         //   Below if-else_if-else block was not getting converted correctly
+         //   due to comments near the "else if" (please verify)
+         // ---------------------------------------------------------------------
+         // Send the completions request to the app.
+         var completions : Array<String> =
+         app.getCompletions(this, args, tokenIndex, offsetIntoToken);
+
+         // If the app came up with nothing, beep the user's terminal.
+         if (completions == null || completions.length == 0)
+         {
+             beep();
+             return;
+         }
+         // If the app came up with a single completion, simply inline
+         // it into their command.
+         else if (completions.length == 1)
+         {
+             // If the completion is for a new word, simply append it.
+             if (tokenIndex == args.length)
+             {
+                 editorSetLine(TelnetStringUtils.join(args, " ", 0, -1) + " " + completions[0]);
+             }
+             // Otherwise splice it in.
+             else
+             {
+                 args[tokenIndex] = completions[0];
+                 editorSetLine(TelnetStringUtils.join(args, " ", 0, -1),
+                         TelnetStringUtils.joinLength(args, 0, tokenIndex + 1));
+             }
+         }
+         // Ok, the app came up with many completions, so we
+         else   // want to present them to the user in some helpful    // way.
+         {
+             // See if there's some one common prefix to all of
+             // the completions.
+         }
+         // ---------------------------------------------------------------------
+
          // making sure this succeeds
          functionGHIJ(
          param1,
@@ -525,6 +584,17 @@ class @:final Main extends MyClass implements ISomeInterface
                 paramA, paramB, /* comment */ paramC, /* comment describing paramC */
                 // last comment
                 paramD);
+
+
+        // assertThat: 2 param vs 3 param
+        assertThat("isBiscuit", equalTo("isBiscuit"));
+        assertThat("theCake", equalTo("theCake")); // "message111" 
+
+        // assertNotNull, assertNull: 2 param vs 1 param
+        assertNull(expression2);
+        assertNull(expression1); // "message-222" 
+        assertNotNull(expression3);
+        assertNotNull(expression4); // "message-333" 
 
         // this should not fail
         someObject.
