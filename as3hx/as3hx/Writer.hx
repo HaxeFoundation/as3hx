@@ -2428,13 +2428,11 @@ class Writer
                             var rebuiltExpr = EField(EIdent("Assert"), "areEqual");
                             rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 3);     
 
-                        case "assertNull":
-                            var rebuiltExpr = EField(EIdent("Assert"), "isNull");
-                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, false);    
+                        case "assertNull", "assertNotNull":
+                            rebuiltCall = getUnitTestExpr(EIdent(ident), params, params.length == 2); 
 
-                        case "assertNotNull":
-                            var rebuiltExpr = EField(EIdent("Assert"), "isNotNull");
-                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, false);   
+                          case "assertThat":
+                            rebuiltCall = getUnitTestExpr(EIdent(ident), params, params.length == 3);     
 
                         case "fail":
                             var rebuiltExpr = EField(EIdent("Assert"), "fail");
@@ -2877,7 +2875,6 @@ class Writer
         this.o = writer;
         this.genTypes = program.genTypes;
         writeComments(program.header);
-        trace(program.footer);
         writePackage(program.pack);
         writeImports(program.imports);
         writeAdditionalImports(program.pack, program.typesSeen, program.typesDefd);
