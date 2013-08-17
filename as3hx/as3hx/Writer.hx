@@ -65,6 +65,7 @@ class Writer
     var lineIsDirty : Bool; // current line contains some non-whitespace/indent characters
     var genTypes : Array<GenType>; //typedef generated while parsing
     var imported : Array<String>; // store written imports to prevent duplicated
+    var pack : Array<String>; // stores the haxe file package
     
     public function new(config:Config)
     {
@@ -299,8 +300,17 @@ class Writer
         if (!c.isInterface && isFinal(c.kwds)) {
             buf.add("@:final ");
         }
+
+        //conversion of AS3 'internal' keyword into 
+        //Haxe '@:allow' meta, allowing access from current
+        //package
+        if (!c.isInterface && isInternal(c.kwds)) {
+            writeLine("@:allow("+properCaseA(this.pack,false).join(".")+")");
+            buf.add("private ");
+        }
+
         buf.add(c.isInterface ? "interface " : "class ");
-        
+
         buf.add(properCase(c.name,true));
         
         var parents = [];
@@ -501,10 +511,16 @@ class Writer
                     }
                 }    
             }
-            else {
-              if (! isInterface) {
-                  write("private ");
-              }
+            else if(!isInterface) {
+                //if func uses AS3 'internal', convert to Haxe
+                //equivalent, which is to allow access to the current
+                //package
+                if (isInternal(field.kwds)) {
+                    write("@:allow("+properCaseA(this.pack,false).join(".")+")");
+                    writeNL();
+                    writeIndent();
+                }
+                write("private ");
             }
             if (isStatic(field.kwds))
                 write("static ");
@@ -2567,6 +2583,11 @@ class Writer
     {
         return Lambda.has(kwds, "public");
     }
+
+    function isInternal(kwds : Array<String>)
+    {
+        return Lambda.has(kwds, "internal");
+    }
     
     function isFinal(kwds : Array<String>)
     {
@@ -2883,6 +2904,7 @@ class Writer
         this.warnings = new Map();
         this.o = writer;
         this.genTypes = program.genTypes;
+        this.pack = program.pack;
         writeComments(program.header);
         writePackage(program.pack);
         writeImports(program.imports);
