@@ -1356,14 +1356,23 @@ class Writer
                 {
                     //corner case : comment located
                     //before the "else" keyword in the
-                    //source file
-                    switch (e2) {
-                        case ECommented(s,b,t,e):
-                            writeNL();
-                            writeIndent(s);
-                            e2 = e; //skip the comment
-                        default:
+                    //source file.
+                    //As to be called recursively, in 
+                    //case of multiple one-line comment
+                    //before the "else"
+                    var f:Expr->Expr = null;
+                    f = function(e2) {
+                        
+                        return switch (e2) {
+                            case ECommented(s,b,t,e):
+                                writeNL();
+                                writeIndent(s);
+                                f(e); //skip the comment
+                            default:
+                                e2;
+                        }
                     }
+                    e2 = f(e2);
 
                     writeNL();
                     writeIndent("else ");
@@ -2431,7 +2440,7 @@ class Writer
                         case "assertNull", "assertNotNull":
                             rebuiltCall = getUnitTestExpr(EIdent(ident), params, params.length == 2); 
 
-                          case "assertThat":
+                        case "assertThat":
                             rebuiltCall = getUnitTestExpr(EIdent(ident), params, params.length == 3);     
 
                         case "fail":
