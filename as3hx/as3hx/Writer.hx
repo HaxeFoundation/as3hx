@@ -1991,7 +1991,6 @@ class Writer
                     switch(e) {
                         case EBlock(elist):
                             for (ex in elist) {
-                                writeIndent();
                                 writeFinish(writeExpr(ex));
                             }
                         case ENL(e): 
