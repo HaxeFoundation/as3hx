@@ -1462,6 +1462,7 @@ class Parser {
             return parseExprNext(EParent(e));
         case TBrOpen:
             tk = token();
+          
             dbgln("parseExpr: "+tk);
             switch( tk ) {
             case TBrClose:
@@ -1480,6 +1481,21 @@ class Parser {
                 add(tk);
             }
             var a = new Array();
+
+            //check for corner case, block contains only comments and
+            //newlines. In this case, get all comments and add them to 
+            //content of block expression
+            if (uncomment(removeNewLine(tk)) == TBrClose) {
+                var ta = explodeComment(tk);
+                for (t in ta) {
+                    switch (t) {
+                        case TCommented(s,b,t): a.push(ECommented(s,b,false, null));
+                        case TNL(t): a.push(ENL(null));
+                        default:
+                    }
+                }
+            }
+                
             while( !opt(TBrClose) ) {
                 var e = parseFullExpr();
                 a.push(e);
