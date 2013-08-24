@@ -1429,7 +1429,6 @@ class Writer
                 var canUseForLoop:Array<Expr>->Array<Expr>->Bool = function(incrs, inits) {
                     //index must be incremented by 1
                     var isIncrement = if (incrs.length == 1) {
-                        //trace(incrs[0]);
                         return switch (incrs[0]) {
                             case EUnop(op, _, _): op == "++";
                             default: false;
@@ -1554,9 +1553,9 @@ class Writer
                     context.set(varName, t);
                 } else if (t != null && regexpMap.match(t)) {
                     if (cfg.debugInferredType) {
-                        write("/* inferred type: " + regexpMap.matched(3) + " */" );
+                        write("/* inferred type: " + regexpMap.matched(1) + " */" );
                     }
-                    context.set(varName, regexpMap.matched(3));
+                    context.set(varName, regexpMap.matched(1));
                 } else if (t != null && regexpArray.match(t)) {
                     if (cfg.debugInferredType) {
                         write("/* inferred type: " + regexpArray.matched(1) + " */" );
@@ -1575,10 +1574,6 @@ class Writer
                     case EBlock(_):
                         null;
                     default:
-                        lvl++;
-                        writeNL();
-                        writeIndent();
-                        lvl--;
                 }
                 rv = writeExpr(block);
                 closeContext();

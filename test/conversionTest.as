@@ -840,6 +840,25 @@ package as3tohx
                         }
                                                 ]]>);
         }
+
+        /**
+        * Test for Dictionnary used as iterator
+        * conversion
+        */
+        private var mTasks:Dictionary/*.<int, ITask>*/;
+        public function testPublicMethod():void
+        {
+            for each (var task:ITask in mTasks)
+            {
+                if (task != null)
+                {
+                    // Must be an active query if we get here.
+                    // Cancel the query, but don't cancel the task itself.
+                    // We need the task for resume.
+                    cancelTaskAndStayActive(task);
+                }
+            }
+        }
         
         /**
         * FUNCTION DEFINITION FORMATS
