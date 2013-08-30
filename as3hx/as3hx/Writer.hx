@@ -305,14 +305,6 @@ class Writer
             buf.add("@:final ");
         }
 
-        //conversion of AS3 'internal' keyword into 
-        //Haxe '@:allow' meta, allowing access from current
-        //package
-        if (!c.isInterface && isInternal(c.kwds)) {
-            writeLine("@:allow("+properCaseA(this.pack,false).join(".")+")");
-            buf.add("private ");
-        }
-
         buf.add(c.isInterface ? "interface " : "class ");
 
         buf.add(properCase(c.name,true));
@@ -462,7 +454,13 @@ class Writer
             writeNL();
             writeNL();
             writeIndent();
-            write("public ");
+            if (isInternal(c.kwds)) {
+                writeAllow();    
+                write("private ");
+            }
+            else {
+                write("public ");
+            }
             writeConstructor({
                 args : [],
                 varArgs : null,
@@ -480,7 +478,7 @@ class Writer
 
         writeMetaData(field.meta);
         
-        var start = function(name:String, isFlashNative:Bool=false) {
+        var start = function(name:String, isFlashNative:Bool=false, isConstructor=false) {
             if((isGet || isSet) && cfg.getterSetterStyle == "combined") {
                 writeNL(isFlashNative ? "#if flash" : "#else");
                 //writeNL("");
@@ -504,8 +502,14 @@ class Writer
                 write("@:final ");  
             if (isOverride(field.kwds))
                 write((isFlashNative && (isGet || isSet)) ? "" : "override ");
-           
-            if (isPublic(field.kwds)) {
+            
+            //coner-case, constructor of internal AS3 class is set to private in 
+            //Haxe with a meta allowing access from same package
+            if (isConstructor && isInternal(c.kwds)) {
+                writeAllow();
+                write("private ");
+            }
+            else if (isPublic(field.kwds)) {
                 if (!(isGet && cfg.forcePrivateGetter) //check if forced private getter
                     && !(isSet && cfg.forcePrivateSetter)) //check if forced private setter
                     write("public ");
@@ -520,9 +524,7 @@ class Writer
                 //equivalent, which is to allow access to the current
                 //package
                 if (isInternal(field.kwds)) {
-                    write("@:allow("+properCaseA(this.pack,false).join(".")+")");
-                    writeNL();
-                    writeIndent();
+                    writeAllow();
                 }
                 write("private ");
             }
@@ -562,7 +564,7 @@ class Writer
             case FFun( f ):
                 if (field.name == c.name)
                 {
-                    start("new", false);
+                    start("new", false, true);
                     writeConstructor(f);
                 } else {
                     var ret = f.ret;
@@ -2810,6 +2812,13 @@ class Writer
         o.writeString(s);
     }
     
+    /** write Haxe "allow" metadata using current package */
+    function writeAllow() {
+        write("@:allow("+properCaseA(this.pack,false).join(".")+")");
+        writeNL();
+        writeIndent();
+    }
+
    /**
     * Writing for block and line comment. If 
     * comment written on dirty line (not first text on line),
