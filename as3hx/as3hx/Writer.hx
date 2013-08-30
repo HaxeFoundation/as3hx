@@ -322,7 +322,7 @@ class Writer
             parents.push((isInterface ? "implements " : "extends ") + tstring(c.extend));
         }
         for (i in c.implement)
-            parents.push("extends " + tstring(i));
+            parents.push((c.isInterface ? "extends " : "implements ") + tstring(i));
         if(parents.length > 0)
             buf.add(" " + parents.join(" "));
         buf.add(openb());
