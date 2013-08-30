@@ -28,6 +28,7 @@ package as3hx;
 import haxe.xml.Fast;
 import sys.FileSystem;
 import sys.io.File;
+import haxe.ds.StringMap;
 
 using StringTools;
 
@@ -82,6 +83,22 @@ class Config {
     /** use Haxe general compatibility class */
     public var useCompat : Bool;
 
+    /** 
+     * a list of absolute or relative directory paths.
+     * Haxe files are found in this path and added to a map
+     * of imported types used for implicit imports used
+     * in converted code 
+     */
+    public var importPaths : Array<String>;
+
+    /**
+     * A map where the key is the name fo a Haxe type
+     * and the value is its' fully qualified name, 
+     * as found in one of the provided importPaths
+     */
+    public var importTypes : StringMap<Array<String>>;
+
+
     /** source directory **/
     public var src : String;
     /** output directory **/
@@ -97,6 +114,7 @@ class Config {
         processEnvConfig();
         processLocalConfig();
         processCommandLine();
+        processImportPaths();
 
     }
 
@@ -170,6 +188,48 @@ class Config {
     function processLocalConfig() {
         if(FileSystem.exists("./.as3hx_config.xml")) {
             fromXmlString(File.getContent("./.as3hx_config.xml"));
+        }
+    }
+
+    /**
+     * Store fuly qualified names of Haxe files found
+     * at provided directories */
+    function processImportPaths() {
+        importTypes = new StringMap<Array<String>>();
+        for(path in importPaths) {
+            processImportPath(path, "", importTypes);
+        }
+    }
+
+    /**
+     * Traverse an import path directory recursively.
+     * For each found Haxe file, store its fully qualified
+     * name, using its path starting from the import path
+     */
+    function processImportPath(base : String, path : String, importTypes : StringMap<Array<String>>) : Void {
+
+        /** check if valid base path was provided */
+        if (FileSystem.exists(base)) {
+
+            /** get all files from the path */
+            var fullPath = FileSystem.fullPath(base + path);
+            var fileNames = FileSystem.readDirectory(fullPath);
+            for (fileName in fileNames) {
+
+                /* recurse down the directories */
+                if (FileSystem.isDirectory(fullPath + "/" + fileName)) {
+                    processImportPath(base, path + "/" + fileName, importTypes);
+                }
+                else {
+                    /* store the Haxe files names + path */
+                    if (fileName.substr(-3) == ".hx") {
+                        var typeFullyQualifiedName = path.split("/");
+                        var typeName = fileName.substr(0, fileName.length - 3);
+                        typeFullyQualifiedName.push(typeName);
+                        importTypes.set(typeName, typeFullyQualifiedName);
+                    }
+                }
+            }
         }
     }
 
@@ -263,6 +323,7 @@ class Config {
             case "dictionaryToHash":    setBoolField(el, true);
             case "useFastXML":          setBoolField(el, true);
             case "useCompat":          setBoolField(el, true);
+            case "importPaths":          setImportPaths(el, []);
             default:
                 Sys.println("Unrecognized config var " + el.name);
             }
@@ -304,6 +365,15 @@ class Config {
         for (conditionalVar in f.nodes.variable) {
             if (conditionalVar.has.value) {
                 conditionalVars.add(conditionalVar.att.value);
+            }
+        }
+    }
+
+    function setImportPaths(f:Fast, defaultVars:Array<String>) {
+        importPaths = defaultVars;
+        for (importPath in f.nodes.variable) {
+            if (importPath.has.value) {
+                importPaths.push(importPath.att.value);
             }
         }
     }
@@ -357,6 +427,7 @@ class Config {
     <dictionaryToHash value="true" />
     <useFastXML value="true" />
     <useCompat value="true" />
+    <importPaths></importPaths>
 </as3hx>';
     }
 }
