@@ -107,7 +107,6 @@ class Writer
 
         for (c in cfg.importTypes.keys()) {
             this.typeImportMap.set(c, cfg.importTypes.get(c));
-            trace(c);
         }
     }
 
@@ -323,7 +322,7 @@ class Writer
             parents.push((isInterface ? "implements " : "extends ") + tstring(c.extend));
         }
         for (i in c.implement)
-            parents.push("implements " + tstring(i));
+            parents.push("extends " + tstring(i));
         if(parents.length > 0)
             buf.add(" " + parents.join(" "));
         buf.add(openb());
