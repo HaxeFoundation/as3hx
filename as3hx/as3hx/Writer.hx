@@ -104,6 +104,11 @@ class Writer
         for (c in nmeErrorsClasses) {
             this.typeImportMap.set(c, "nme.errors." + c);
         }
+
+        for (c in cfg.importTypes.keys()) {
+            this.typeImportMap.set(c, cfg.importTypes.get(c));
+            trace(c);
+        }
     }
 
     /**

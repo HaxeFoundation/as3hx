@@ -96,7 +96,7 @@ class Config {
      * and the value is its' fully qualified name, 
      * as found in one of the provided importPaths
      */
-    public var importTypes : StringMap<Array<String>>;
+    public var importTypes : StringMap<String>;
 
 
     /** source directory **/
@@ -195,7 +195,7 @@ class Config {
      * Store fuly qualified names of Haxe files found
      * at provided directories */
     function processImportPaths() {
-        importTypes = new StringMap<Array<String>>();
+        importTypes = new StringMap<String>();
         for(path in importPaths) {
             processImportPath(path, "", importTypes);
         }
@@ -206,7 +206,7 @@ class Config {
      * For each found Haxe file, store its fully qualified
      * name, using its path starting from the import path
      */
-    function processImportPath(base : String, path : String, importTypes : StringMap<Array<String>>) : Void {
+    function processImportPath(base : String, path : String, importTypes : StringMap<String>) : Void {
 
         /** check if valid base path was provided */
         if (FileSystem.exists(base)) {
@@ -226,7 +226,7 @@ class Config {
                         var typeFullyQualifiedName = path.split("/");
                         var typeName = fileName.substr(0, fileName.length - 3);
                         typeFullyQualifiedName.push(typeName);
-                        importTypes.set(typeName, typeFullyQualifiedName);
+                        importTypes.set(typeName, typeFullyQualifiedName.join(".").substr(1));
                     }
                 }
             }
