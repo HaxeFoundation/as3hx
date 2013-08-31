@@ -353,7 +353,9 @@ class Writer
                     set : "never",
                     ret : t,
                     sta : stat,
-                    pub : false
+                    pub : false,
+                    getMeta : null,
+                    setMeta : null
                 };
                 p.push(property);
                 h.set(name, property);
@@ -374,6 +376,7 @@ class Writer
                                                               // haxe 2: cfg.makeGetterName(field.name);
 
                         var property = getOrCreateProperty(field.name, f.ret.t, isStatic(field.kwds));
+                        property.getMeta = field.meta;
                         if (isPublic(field.kwds))
                         {
                             property.get = getterDirective; 
@@ -388,6 +391,7 @@ class Writer
                                                               // haxe 2: cfg.makeSetterName(field.name);
 
                         var property = getOrCreateProperty(field.name, f.args[0].t, isStatic(field.kwds));
+                        property.setMeta = field.meta;
                         if (isPublic(field.kwds))
                         {
                             property.set = setterDirective; 
@@ -401,13 +405,16 @@ class Writer
             }
         }
         
-        if (p.length > 0)
-            writeNL();
-
         if(cfg.getterSetterStyle == "haxe" || cfg.getterSetterStyle == "combined") {
             for (property in p)
             {
-                writeIndent();
+                //for insterface, func prototype will be removed,
+                //so write meta on top of properties instead
+                if (c.isInterface) {
+                    writeMetaData(property.setMeta);
+                    writeMetaData(property.getMeta);
+                }
+
                 if(cfg.getterSetterStyle == "combined")
                     write("#if !flash ");
                 if (property.pub) { 
@@ -425,10 +432,11 @@ class Writer
                 if(cfg.getterSetterStyle == "combined")
                     writeNL("; #end");
                 else
-                    writeNL(";");
+                    write(";");
                 context.set(property.name, tstring(property.ret, false));
             }
         }
+        writeNL();
     }
     
     function writeFields(c : ClassDef)
@@ -475,6 +483,11 @@ class Writer
         var isGet : Bool = isGetter(field.kwds);
         var isSet : Bool = isSetter(field.kwds);
         var isFun : Bool = switch(field.kind) {case FFun(_): true; default: false;};
+
+        //if writing an Interface, get/set field will be added
+        //as a property instead of func
+        if (isGet || isSet && c.isInterface)
+            return;
 
         writeMetaData(field.meta);
         
