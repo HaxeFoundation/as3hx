@@ -72,6 +72,8 @@ package as3tohx
             trace("blah");
         }
 
+        var stamp:Number = getTimer();
+
         assertEquals("21474836480", longValue.toString());
         assertEquals("Error message if equality fails", "21474836480", longValue.toString());
         assertTrue("21474836480", longValue.toString());

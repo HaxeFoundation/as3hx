@@ -1793,7 +1793,13 @@ class Parser {
             ensure(TPClose);
             ECall(EField(EIdent("Type"), "resolveClass"), [e]);
         case "getTimer":
-            ECall(EField(EIdent("Math"), "round"), [EBinop("*", ECall(EField(EIdent("haxe.Timer"), "getStamp"), []), EConst(CInt("1000")), false)]);
+            
+            //consume the parenthesis from the getTimer AS3 call
+            while(!opt(TPClose)) {
+                token();
+            }
+            
+            ECall(EField(EIdent("Math"), "round"), [EBinop("*", ECall(EField(EIdent("haxe.Timer"), "stamp"), []), EConst(CInt("1000")), false)]);
         default:
             null;
         }
