@@ -364,6 +364,8 @@ class Writer
             }
             return property;
         }
+
+
         for (field in c.fields)
         {
             switch(field.kind)
@@ -406,9 +408,14 @@ class Writer
             }
         }
         
+        if (p.length > 0) {
+            writeNL();
+        }
+
         if(cfg.getterSetterStyle == "haxe" || cfg.getterSetterStyle == "combined") {
             for (property in p)
             {
+                writeIndent();
                 //for insterface, func prototype will be removed,
                 //so write meta on top of properties instead
                 if (c.isInterface) {
@@ -432,12 +439,22 @@ class Writer
                 writeVarType(property.ret);
                 if(cfg.getterSetterStyle == "combined")
                     writeNL("; #end");
-                else
-                    write(";");
+                else {
+                    if (c.isInterface) { //if interface, newline handled be metadata
+                        write(";");
+                    }
+                    else {
+                        writeNL(";");
+                    }
+                }
+
                 context.set(property.name, tstring(property.ret, false));
             }
         }
-        writeNL();
+        if (c.isInterface) {
+            writeNL();
+        }
+        
     }
     
     function writeFields(c : ClassDef)
@@ -487,7 +504,7 @@ class Writer
 
         //if writing an Interface, get/set field will be added
         //as a property instead of func
-        if (isGet || isSet && c.isInterface)
+        if ((isGet || isSet) && c.isInterface)
             return;
 
         writeMetaData(field.meta);
