@@ -432,6 +432,7 @@ class Parser {
         var closed = false;
         var inNamespace = false;
         var inCondBlock = false;
+        var outsidePackage = false;
 
         var pf : Bool->Void = null;
         pf = function(included:Bool) {
@@ -445,6 +446,7 @@ class Parser {
                 }
                 else if( !closed ) {
                     closed = true;
+                    outsidePackage = true;
                     continue;
                 }
                 else if (inCondBlock) {
@@ -473,9 +475,27 @@ class Parser {
                 switch( id ) {
                 case "import":
                     var impt = parseImport();
+
+                    //outsidePackage = false;
                     //note : when parsing package, user defined imports
                     //are stored as meta, this way, comments can be kept
-                    if (impt.length > 0) meta.push(EImport(impt));
+                    if (impt.length > 0) {
+                        if (!outsidePackage) {
+                            meta.push(EImport(impt));
+                        }
+                        //coner case : import for AS3 private class, for those,
+                        //need to add them to regular import list so that they
+                        //get written at the top of file, as in Haxe all imports
+                        //must be at the top of the file
+                        //
+                        //Tradeof is that formatting and comment is lost for 
+                        //these imports
+                        else {
+                            imports.push(impt);
+                        }
+                        
+                    }
+                       
                     end();
                     continue;
                 case "use":

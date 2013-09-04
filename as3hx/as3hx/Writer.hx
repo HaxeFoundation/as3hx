@@ -175,6 +175,7 @@ class Writer
             var imported = []; //holds already written types to prevent duplicates
             for(i in imports) {
                 writeImport(i);
+                writeNL(); 
             }
             writeNL(); 
         }
