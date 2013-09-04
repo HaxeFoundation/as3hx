@@ -433,6 +433,7 @@ class Parser {
         var inNamespace = false;
         var inCondBlock = false;
         var outsidePackage = false;
+        var hasOustidePackageMetaImport = false;
 
         var pf : Bool->Void = null;
         pf = function(included:Bool) {
@@ -484,16 +485,54 @@ class Parser {
                             meta.push(EImport(impt));
                         }
                         //coner case : import for AS3 private class, for those,
-                        //need to add them to regular import list so that they
+                        //need to add them to regular import list or to first
+                        //class metadata so that they
                         //get written at the top of file, as in Haxe all imports
                         //must be at the top of the file
                         //
-                        //Tradeof is that formatting and comment is lost for 
-                        //these imports
+                        //note : this is very hackish
                         else {
-                            imports.push(impt);
+                            //no class def available, put in general import list
+                            if (defs.length == 0) {
+                                imports.push(impt);
+                            }
+
+                            //else check if can add to first class meta
+                            switch (defs[0]) {
+                                case CDef(c):
+
+                                    //also put the newline preceding the import
+                                    //in the first class meta
+                                    switch(meta[meta.length-1]) {
+                                        case ENL(e):
+                                            if (e == null) {
+                                                c.meta.push(meta.pop());
+                                            }
+                                        default:
+                                    }
+
+                                    //remove extra new line generated for before
+                                    //class generation if not first moved import
+                                    if (hasOustidePackageMetaImport) {
+                                        c.meta.pop();
+                                        c.meta.pop();
+                                    }
+                                    
+                                    //put the import in the first class meta
+                                    c.meta.push(EImport(impt));
+
+                                    //add new line before class definition
+                                    c.meta.push(ENL(null));
+                                    c.meta.push(ENL(null));
+
+                                    hasOustidePackageMetaImport = true;
+
+                                //put in regular import list
+                                default:    
+                                    imports.push(impt);
+                            }
                         }
-                        
+
                     }
                        
                     end();
