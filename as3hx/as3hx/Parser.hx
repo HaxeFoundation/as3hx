@@ -960,13 +960,27 @@ class Parser {
                                 condVars.push(ns + "_" + id);
                                 meta.push(ECondComp(ns + "_" + id, null, null));
                                 t = token();
-                                switch (t) {
-                                    case TBrOpen:
-                                        pf(false, true);
-                                    default:
-                                        add(t);
-                                        pf(false, false);
+
+                                var f:Token->Void = null;
+                                f = function(t) {
+                                    switch (t) {
+                                        case TBrOpen:
+                                            pf(false, true);
+
+                                        case TCommented(s,b,t):
+                                            f(t);   
+
+                                        case TNL(t):
+                                            meta.push(ENL(null));
+                                            f(t);    
+
+                                        default:
+                                            add(t);
+                                            pf(false, false);
+                                        } 
                                 }
+                                f(t);
+                              
                                 condVars.pop();
                                 closeDebug("end conditional compilation: " + ns + "::" + id);
                                 break;
