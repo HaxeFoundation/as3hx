@@ -141,13 +141,15 @@ package as3tohx
         public static const ASSERTION_FAILED:String =
             "assertion failed";
 
-        static public var someMonths  : Array = [ "January", "February", "March" ];
+        TIVOCONFIG::UNSAFE_PRIVACY      // Log recent traffic feature
+        {
+            static public var someMonths  : Array = [ "January", "February", "March" ];
 
-        // apparently, if there is an extra comma (,) after the last value in an array/vector
-        // declaration (or creating when passing as a param to function) is allowed in AS3
-        // there were several places such as these in code hence, need to handle it.
-        static public var someDay     : Array = [ "January", 1, 1970, "AD", ]; 
-
+            // apparently, if there is an extra comma (,) after the last value in an array/vector
+            // declaration (or creating when passing as a param to function) is allowed in AS3
+            // there were several places such as these in code hence, need to handle it.
+            static public var someDay     : Array = [ "January", 1, 1970, "AD", ]; 
+        }
         //---------- this is the most commonly occurring type of data declarations that we missed -
         //---------- yes, we are done :)
 
@@ -975,6 +977,7 @@ package as3tohx
             return;
         }
 
+        TIVOCONFIG::UNSAFE_PRIVACY      // Log recent traffic feature
         private function configGc(configuration:XML):void
         {
             if (configuration != null)
