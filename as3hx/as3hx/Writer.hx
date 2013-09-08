@@ -336,7 +336,7 @@ class Writer
         write(closeb());
 
         //close conditional compilation block if needed
-        writeECondCompEnd(getECondComp(c.meta));
+        writeECondCompEnd(getCondComp(c.meta));
     }
     
     function writeProperties(c : ClassDef)
@@ -633,17 +633,68 @@ class Writer
                 null;
         }
 
+        //if this field is not wrapped in conditional compilation, 
+        //do nothing
+        if (field.condVars.length == 0)
+            return;
+       
+        //here we will find wether this field is the last field
+        //of some conditional compilation and write the conditional
+        //compilation ending statement if it is
+        var foundSelf = false;
+        var condVars = field.condVars.copy();
+        //loop in all the class field
+        for (f in c.fields) {
+            //once the current field was found
+            if (foundSelf) {
+                //check for each conditional compilation directive
+                //wrapping the current field wheter the current field
+                //is the last one for it
+                for (condVar in condVars) {
+                    //if it is not remove the conditional compilation constant
+                    if (Lambda.has(f.condVars, condVar) && !hasCondComp(condVar, getECondComp(f.meta))) {
+                        condVars.remove(condVar);
+                    }
+                }
+                break;
+            }
+            else if (field == f){
+                foundSelf = true;
+            }
+        } 
+
         //close conditional compilation block
-        writeECondCompEnd(getECondComp(field.meta));
+        writeECondCompEnd(condVars);
     }
     
    /**
-    * Return a new array containing all the expressions
-    * of type ECondComp from the provided array
+    * Return a new array containing all the conditional
+    * compilation constants from the provided array
+    */
+    function getCondComp(exprs : Array<Expr>) : Array<String>
+    {
+       var condComps = [];
+
+       for (expr in exprs) 
+       {
+            switch (expr) {
+                case ECondComp(v,e,e2):
+                    condComps.push(v);
+
+                default:    
+            }
+       }
+       return condComps;
+    }
+
+
+   /**
+    * Return a new array containing all the conditional
+    * compilation expressions from the provided array
     */
     function getECondComp(exprs : Array<Expr>) : Array<Expr>
     {
-       var condComps : Array<Expr> = [];
+       var condComps = [];
 
        for (expr in exprs) 
        {
@@ -657,11 +708,33 @@ class Writer
        return condComps;
     }
 
+    /***
+     * Return wether the provided array of expressions
+     * contains a conditional compilation expr for the
+     * condComp compilation constant
+     */
+    function hasCondComp(condComp : String, exprs : Array<Expr>) : Bool 
+    {
+        for (expr in exprs) 
+       {
+            switch (expr) {
+                case ECondComp(v,e,e2):
+                    if (condComp == v) {
+                        return true;
+                    }
+
+                default:    
+            }
+       }
+
+       return false;
+    }
+
     /**
     * Write closing statement ("#end") for conditional 
     * conpilation if any
     */
-    function writeECondCompEnd(condComps : Array<Expr>) : Void
+    function writeECondCompEnd(condComps : Array<String>) : Void
     {
         for (i in 0...condComps.length) {
             if (i == 0) {
@@ -670,11 +743,7 @@ class Writer
             } else {
                 write(" && ");
             }
-            switch (condComps[i]) {
-                case ECondComp(v,e,e2):
-                   write(v);
-                default:   
-            }
+            write(condComps[i]);
         }
     }
     
