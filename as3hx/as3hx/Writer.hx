@@ -1377,7 +1377,6 @@ class Writer
                     case EVector(t):
                         handled = true;
                         if(cfg.vectorToArray) {
-                            write("cast ");
                             writeExpr(params[0]);
                         } else {
                             write("Vector.ofArray(cast ");
@@ -2173,9 +2172,10 @@ class Writer
             case "Test":
                 var testTag:String = "Test";
                 var args:Array<Expr> = [];
+                var dumpArgs = [];
                 for (arg in m.args) {
                                     if (arg.name != null) {
-                    switch (arg.name) {
+                                        switch (arg.name) {
                                             case "description":
                                                 args.push(arg.val);
                                                 continue;
@@ -2185,6 +2185,8 @@ class Writer
                                                 writeNL(")");
                                                 writeIndent();
                                                 continue;
+                                            default:
+                                                dumpArgs.push(arg);
                                         }
                                     } else {
                                         switch (arg.val) {
@@ -2205,7 +2207,7 @@ class Writer
                 }
                 write("@" + testTag);
                 if (args.length > 0) {
-                    write("(");
+                    write("");
                     var first = true;
                     for (arg in args) {
                         if (!first) {
@@ -2215,6 +2217,25 @@ class Writer
                         writeExpr(arg);
                     }
                     write(")");
+                }
+
+                //dump args not used in commented line
+                if (dumpArgs.length > 0) {
+                    writeNL();
+                    writeIndent();
+                    write("//");
+                    var first = true;
+                    for (arg in dumpArgs) {
+                        if (!first) {
+                            write(", ");
+                            first = false;
+                        }
+                        if (arg.name != null) {
+                            write(arg.name); 
+                            write("="); 
+                        }
+                        writeExpr(arg.val);
+                    }
                 }
                 rv = true;
             case "Theory":
