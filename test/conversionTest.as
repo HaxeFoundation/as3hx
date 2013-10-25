@@ -711,6 +711,21 @@ package as3tohx
             someFunc(param1, /* this is so as it is so so */
                 param2 /* this is because that reason */
                 /* not passing 3rd param as it default to blah */); 
+
+
+             if (purchaseType == MdoUtil.PRI_BUY ||
+                            purchaseType == MdoUtil.PRI_DOWNLOAD ||
+                            purchaseType == MdoUtil.PRI_RENT ||
+                            purchaseType == MdoUtil.PRI_SUBSCRIBE ||
+                            purchaseType == MdoUtil.PRI_ENTITLEMENT_UNKNOWN
+                            // add watchable items if they are NOT on Watch Now menu item
+                            || (purchaseType == MdoUtil.PRI_WATCH
+                                && ! test_overridable::isProviderIncludedForWatchNow))
+                    {
+
+                        return true;
+
+                    }
         }
         
         // I do not have a converted golden version for this next one !
