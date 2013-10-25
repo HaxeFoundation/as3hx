@@ -2053,8 +2053,8 @@ class Parser {
                     addToken(tk);
                     return e1;    
                 case TCommented(s,b,t):
-                    addToken(tk);
-                    return e1; 
+                    addToken(t);
+                    return ECommented(s,b,true, parseExprNext(e1, ++pendingNewLines));
                 default:  
                     add(t);
                     return parseExprNext(e1, ++pendingNewLines);  
