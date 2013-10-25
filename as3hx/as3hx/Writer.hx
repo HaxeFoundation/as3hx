@@ -2482,7 +2482,7 @@ class Writer
                 }
                 else if (f == "slice") {
                     //replace AS3 slice by Haxe substr
-                    var rebuiltExpr = EField(e, "substr");
+                    var rebuiltExpr = EField(e, "substring");
                     rebuiltCall = ECall(rebuiltExpr, params);
                 }
                 else if (f == "indexOf") {
