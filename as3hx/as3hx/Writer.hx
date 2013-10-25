@@ -3034,6 +3034,11 @@ class Writer
     public function process(program : Program, writer : Output)
     {
         this.warnings = new Map();
+
+        //list of imported types must be reseted for each file,
+        //as only one instance of Writer write all the files
+        this.imported = [];
+
         this.o = writer;
         this.genTypes = program.genTypes;
         this.pack = program.pack;
