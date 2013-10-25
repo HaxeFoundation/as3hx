@@ -563,8 +563,25 @@ class Writer
                 write("static ");
             
                 
-            if (isConst(field.kwds) && isStatic(field.kwds))
-                write("inline ");
+            //check wheter the field is an AS3 constants, which can be inlined in Haxe
+            if (isConst(field.kwds) && isStatic(field.kwds)) {
+                switch(field.kind) {
+                    case FVar(t, val):
+                        //only constants (bool, string, int/float) field can
+                        //be safely inlined for Haxe as we don't havve full typing
+                        //available. For instance trying to inline a field referencing another
+                        //static non-inlined field would prevent Haxe compilation
+                        switch (val) {
+                            case EConst(c):
+                                write("inline ");
+
+                            default:
+                        }
+
+                    default:
+                }
+            }
+               
         }
         switch(field.kind)
         {
