@@ -564,7 +564,11 @@ class Writer
             
                 
             //check wheter the field is an AS3 constants, which can be inlined in Haxe
-            if (isConst(field.kwds) && isStatic(field.kwds)) {
+            //the field must be either a static constant or a private constant. 
+            //If it is a non-static public constant it can't be inlined as Haxe can only inline
+            //static field. Converting non-static public field to static will likely cause compilation
+            //errors, whereas it won't for private field as they will be accessed in the same way
+            if (isConst(field.kwds) && (isStatic(field.kwds) || isPrivate(field.kwds))) {
                 switch(field.kind) {
                     case FVar(t, val):
                         //only constants (bool, string, int/float) field can
@@ -2724,6 +2728,11 @@ class Writer
     function isPublic(kwds : Array<String>)
     {
         return Lambda.has(kwds, "public");
+    }
+
+    function isPrivate(kwds : Array<String>)
+    {
+        return Lambda.has(kwds, "private");
     }
 
     function isInternal(kwds : Array<String>)

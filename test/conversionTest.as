@@ -208,6 +208,10 @@ package as3tohx
 
         static private const ROLE_PRIORITY : int = 99; 
 
+        /* only private non-static constants are inlined */
+        private const ROLE_PRIORITY2 : int = 99; 
+        public const ROLE_PRIORITY3 : int = 99;
+
         private var mIntKeyMap:Dictionary/*.<Int, ValueClass>*/ = null;
         private var mStringKeyMap:Dictionary/*.<String, ValueClass>*/ = null;
         private var mObjectKeyMap:Dictionary/*.<KeyClass, ValueClass>*/ = null;
