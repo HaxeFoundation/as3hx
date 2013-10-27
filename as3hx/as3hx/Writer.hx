@@ -2424,6 +2424,8 @@ class Writer
                 return null;
             if(op == "?:")
                 return null;
+            if(op == "&" || op == "|" || op == "^")
+                return EBinop("!=", e, EConst(CInt("0")), false);
             var r1 = rebuildIfExpr(e2);
             var r2 = rebuildIfExpr(e3);
             if(r1 == null) r1 = e2;
