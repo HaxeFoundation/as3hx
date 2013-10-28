@@ -5,6 +5,9 @@
  - Removed conversion of escape sequences in Parser.readString
  - Added odd as3 vector constructor style: mStringVec = new <String>["a","b"];
 
+2013-10-28 - Scott Lee
+ - Move to Haxe 3 and neko 2
+ 
 2011-10-19 - Russell
  - Added writing out class inits
  - Fixed empty functions returning f.expr = Object (messed up metadata parsing)
