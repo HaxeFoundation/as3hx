@@ -26,7 +26,9 @@
 package as3hx;
 
 import haxe.xml.Fast;
-import neko.io.File;
+import neko.Lib;
+import sys.FileSystem;
+import sys.io.File;
 
 using StringTools;
 
@@ -84,7 +86,7 @@ class Config {
 	}
 
 	public function init() {
-		var env = neko.Sys.environment();
+		var env = Sys.environment();
 		if (env.exists("AS3HX_CONFIG")) {
 			cfgFile = env.get("AS3HX_CONFIG");
 			return;
@@ -131,26 +133,26 @@ class Config {
 	function processEnvConfig() {
 		// $HOME/.as3hx_config.xml or env
 		if(cfgFile != null) {
-			if(!neko.FileSystem.exists(cfgFile)) {
-				neko.Lib.println("Creating " + cfgFile);
+			if(!FileSystem.exists(cfgFile)) {
+				Lib.println("Creating " + cfgFile);
 				var fo = File.write(cfgFile, false);
 				fo.writeString(defaultConfig());
 				fo.close();
 			}
-			if(neko.FileSystem.exists(cfgFile)) {
+			if(FileSystem.exists(cfgFile)) {
 				fromXmlString(File.getContent(cfgFile));
 			}
 		}
 	}
 
 	function processLocalConfig() {
-		if(neko.FileSystem.exists("./.as3hx_config.xml")) {
+		if(FileSystem.exists("./.as3hx_config.xml")) {
 			fromXmlString(File.getContent("./.as3hx_config.xml"));
 		}
 	}
 
 	public static function usage() {
-		var println = neko.Lib.println;
+		var println = Lib.println;
 		println("Usage: as3tohx [options] sourceDir [outdir]");
 		println("\tOptions:");
 		println("\t-no-cast-guess\tas3tohx will not try to handle MyClass(obj) casts");
@@ -162,14 +164,14 @@ class Config {
 	}
 
 	function processCommandLine() {
-		var args = neko.Sys.args().slice(0);
+		var args = Sys.args().slice(0);
 		var arg = "";
 		while(true) {
 			arg = args.shift();
 			switch(arg) {
 			case "-help", "--help":
 				usage();
-				neko.Sys.exit(0);
+				Sys.exit(0);
 			case "-uint2int", "--uint2int":
 				uintToInt = true;
 			case "-no-cast-guess", "--no-cast-guess":
@@ -190,7 +192,7 @@ class Config {
 		}
 		if(arg == null) {
 			usage();
-			neko.Sys.exit(1);
+			Sys.exit(1);
 		}
 		src = Run.directory(arg);
 		dst = Run.directory(args.shift(), "./out");
@@ -228,7 +230,7 @@ class Config {
 			case "testCase":			setBoolField(el, false);
 			case "excludeList":			setExcludeField(el, new List());
 			default:
-				neko.Lib.println("Unrecognized config var " + el.name);
+				Lib.println("Unrecognized config var " + el.name);
 			}
 		}
 	}
@@ -271,7 +273,7 @@ class Config {
 	}
 
 	public static function isWindows() : Bool {
-		var os = neko.Sys.systemName();
+		var os = Sys.systemName();
 		return (new EReg("window","i")).match(os);
 	}
 

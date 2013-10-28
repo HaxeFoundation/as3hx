@@ -24,6 +24,12 @@
  */
 package as3hx;
 import as3hx.As3;
+import haxe.ds.StringMap;
+import haxe.ds.IntMap;
+import haxe.io.Input;
+import haxe.io.StringInput;
+import sys.FileSystem;
+import sys.io.File;
 
 enum Error {
 	EInvalidChar( c : Int );
@@ -66,16 +72,16 @@ class Parser {
 	public var line : Int;
 	public var pc : Int;
 	public var identChars : String;
-	public var opPriority : Hash<Int>;
+	public var opPriority : StringMap<Int>;
 	public var unopsPrefix : Array<String>;
 	public var unopsSuffix : Array<String>;
 
 	// implementation
-	var input : haxe.io.Input;
+	var input : Input;
 	var char : Int;
 	var ops : Array<Bool>;
 	var idents : Array<Bool>;
-	var tokens : haxe.FastList<Token>;
+	var tokens :List<Token>;
 	var path : String;
 	var filename : String;
 	var cfg : Config;
@@ -98,7 +104,7 @@ class Parser {
 			["?:"],
 			["=", "+=", "-=", "*=", "%=", "/=", "<<=", ">>=", ">>>=", "&=", "^=", "|=", "&&=", "||="]
 		];
-		opPriority = new Hash();
+		opPriority = new StringMap();
 		for( i in 0...p.length )
 			for( op in p[i] )
 				opPriority.set(op, i);
@@ -114,15 +120,15 @@ class Parser {
 		line = 1;
 		this.path = path;
 		this.filename = filename;
-		return parse( new haxe.io.StringInput(s) );
+		return parse( new StringInput(s) );
 	}
 
-	public function parse( s : haxe.io.Input ) {
+	public function parse( s : Input ) {
 		char = 0;
 		input = s;
 		ops = new Array();
 		idents = new Array();
-		tokens = new haxe.FastList<Token>();
+		tokens = new List<Token>();
 		for( op in opPriority.keys() )
 			for( i in 0...op.length )
 				ops[op.charCodeAt(i)] = true;
@@ -141,10 +147,10 @@ class Parser {
 		filename = parts.pop();
 		path = parts.join("/");
 		openDebug("Parsing included file " + file + "\n");
-		if (!neko.FileSystem.exists(file)) throw "Error: file '" + file + "' does not exist, at " + oldLine;
-		var content = neko.io.File.getContent(file);
+		if (!FileSystem.exists(file)) throw "Error: file '" + file + "' does not exist, at " + oldLine;
+		var content = File.getContent(file);
 		line = 1;
-		input = new haxe.io.StringInput(content);
+		input = new StringInput(content);
 		try {
 			call();
 		} catch(e:Dynamic) {
@@ -434,7 +440,8 @@ class Parser {
 								case CString(path):
 									var oldClosed = closed;
 									closed = false;
-									parseInclude(path,callback(pf, true));
+									//parseInclude(path,callback(pf, true));
+									parseInclude(path, pf.bind(true));
 									end();
 									closed = oldClosed;
 								default:
@@ -758,7 +765,8 @@ class Parser {
 							case TConst(c):
 								switch(c) {
 									case CString(path):
-										parseInclude(path,callback(pf, true));
+										//parseInclude(path,callback(pf, true));
+										parseInclude(path, pf.bind(true));
 										end();
 									default:
 										unexpected(t);
@@ -1275,11 +1283,17 @@ class Parser {
 										case ECall(e4, a): 
 											EBinop(op, ECall(EField(EIdent("Type"), "createInstance"), [e4, EArrayDecl(a)]), e3);
 										default: 
+											null;
 									}
-								} 
+								} else
+								{
+									null;
+								}
 							default: 
+								null;
 						}
 					default: 
+						null;
 				}
 				if (cc != null) cc; else ENew(t,if( opt(TPOpen) ) parseExprList(TPClose) else []);
 			}
