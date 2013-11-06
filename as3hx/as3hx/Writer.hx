@@ -2228,7 +2228,7 @@ class Writer
                 }
                 write("@" + testTag);
                 if (args.length > 0) {
-                    write("");
+                    write("(");
                     var first = true;
                     for (arg in args) {
                         if (!first) {
