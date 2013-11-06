@@ -1056,7 +1056,6 @@ class Writer
             case "int":                 "Int";
             case "uint":                cfg.uintToInt ? "Int" : "UInt";
             case "number","Number":     "Float";
-            case "array":               "Array";
             case "boolean","Boolean":   "Bool";
             case "Function":            cfg.functionToDynamic ? "Dynamic" : s;
             case "Object":              "Dynamic";
@@ -1178,7 +1177,7 @@ class Writer
                             write("Std.parseFloat(");
                             writeExpr(e1);
                             write(")");
-                        case "array":
+                        case "Array":
                             write("try cast(");
                             writeExpr(e1);
                             write(", Array</*AS3HX WARNING no type*/>) catch(e:Dynamic) null");
