@@ -492,7 +492,7 @@ class Writer
                 varArgs : null,
                 ret : null,
                 expr : EBlock(((null != c.extend) ? [ENL(ECall(EIdent("super"),[]))] : []))
-            });
+            }, c.extend != null);
         }
     }
     
@@ -617,7 +617,7 @@ class Writer
                 if (field.name == c.name)
                 {
                     start("new", false, true);
-                    writeConstructor(f);
+                    writeConstructor(f, c.extend != null);
                 } else {
                     var ret = f.ret;
                     var name = if (isGetter(field.kwds)) {
@@ -844,10 +844,10 @@ class Writer
         return fst;
     }
     
-    function writeConstructor(f : Function)
+    function writeConstructor(f : Function, isSubClass:Bool)
     {
-        //add super if missing, as it is mandatory in Haxe
-        if (constructorHasSuper(f.expr) == false) {
+        //add super if missing, as it is mandatory in Haxe for subclasses
+        if (isSubClass == true && constructorHasSuper(f.expr) == false) {
             switch(f.expr) {
                 case EBlock(exprs):
                     exprs.unshift(ENL(ECall(EIdent("super"), [])));
