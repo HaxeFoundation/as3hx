@@ -846,6 +846,16 @@ class Writer
     
     function writeConstructor(f : Function)
     {
+        //add super if missing, as it is mandatory in Haxe
+        if (constructorHasSuper(f.expr) == false) {
+            switch(f.expr) {
+                case EBlock(exprs):
+                    exprs.unshift(ENL(ECall(EIdent("super"), [])));
+                
+                default:
+            }
+        }
+
         write("function new(");
         writeArgs(f.args);
         write(")");
@@ -853,6 +863,35 @@ class Writer
         writeIndent();
         writeExpr(f.expr);
     }
+
+    /**
+     * Wether constructor method has a super() call
+     */
+    function constructorHasSuper(expr : Expr) : Bool
+    {
+        if (expr == null)
+            return false;
+
+        return switch(expr) {
+            case ECall(EIdent("super"), _):
+                true;
+
+            case EBlock(exprs): 
+                for (expr in exprs){
+                    if (constructorHasSuper(expr)) {
+                        return true;
+                    }
+                }
+                false;
+
+            case ENL(expr):
+                constructorHasSuper(expr);
+
+            default:
+                false;    
+        }
+    }
+
     
     function writeFunction(f : Function, isGetter:Bool, isSetter:Bool, isNative:Bool, name : Null<String>, ?ret : FunctionRet)
     {
