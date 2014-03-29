@@ -1445,8 +1445,6 @@ class Parser {
     }
 
     function unexpected( tk ) : Dynamic {
-        neko.Lib.print(tk);
-        neko.Lib.print(haxe.CallStack.toString(haxe.CallStack.callStack()));
         throw EUnexpected(tokenString(tk));
         return null;
     }
@@ -1966,7 +1964,7 @@ class Parser {
                 }
                 
                 //for Dictionary, expected syntax is "Dictionary.<Key, Value>"
-                if (v == "Dictionary") {
+                if (v == "Dictionary" && cfg.dictionaryToHash) {
                     ensure(TComma);
                     id();
                 }
