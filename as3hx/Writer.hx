@@ -1606,12 +1606,26 @@ class Writer
                 if (canUseForLoop(incrs, inits)) {
 
                     write("for (");
+
                     switch (inits[0]) {
                         case EVars(v): 
                             write(v[0].name);
                             write(" in ");
                             writeExpr(v[0].val);
                             write("...");
+                        // var i:int = 0;
+                        // for (i = 0; i < size; i++)
+                        case EBinop(op, e1, e2, newLineAfterOp):
+                            if (op == "=") {
+                                switch (e1) {
+                                case EIdent(v):
+                                    write(v);
+                                default:
+                                }
+                                write(" in ");
+                                writeExpr(e2);
+                                write("...");
+                            }
                         default:
                     }
 
