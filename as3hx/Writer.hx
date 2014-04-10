@@ -1588,6 +1588,10 @@ class Writer
                 
                 //check wether it is safe to use a Haxe for loop instead of while loop
                 var canUseForLoop:Array<Expr>->Array<Expr>->Bool = function(incrs, inits) {
+                    
+                    if (inits.length == 0)
+                        return false;
+
                     //index must be incremented by 1
                     var isIncrement = if (incrs.length == 1) {
                         return switch (incrs[0]) {

@@ -1160,7 +1160,7 @@ class Parser {
     */
     function generateTypeIfNeeded(classVar : ClassField) : Void
     {
-        //this only applies to satic field attributes, as
+        //this only applies to static field attributes, as
         //they only define constants values
         if (!Lambda.has(classVar.kwds, "static")) {
             return;
@@ -1183,6 +1183,9 @@ class Parser {
             default:
                 return;
         }
+
+        if (expr == null)
+            return;
 
         //only applies if the array is initialised at
         //declaration
@@ -1445,8 +1448,6 @@ class Parser {
     }
 
     function unexpected( tk ) : Dynamic {
-        neko.Lib.print(tk);
-        neko.Lib.print(haxe.CallStack.toString(haxe.CallStack.callStack()));
         throw EUnexpected(tokenString(tk));
         return null;
     }
@@ -1966,7 +1967,7 @@ class Parser {
                 }
                 
                 //for Dictionary, expected syntax is "Dictionary.<Key, Value>"
-                if (v == "Dictionary") {
+                if (v == "Dictionary" && cfg.dictionaryToHash) {
                     ensure(TComma);
                     id();
                 }
