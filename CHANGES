@@ -1,3 +1,6 @@
+2013-10-28 - Scott Lee
+ - Move to Haxe 3 and neko 2
+
 2013-08-01 - Yanhick, Richard, Todd
  - added many improvements to generated code style
  - replaced as3 "toString" by Haxe "Std.string"

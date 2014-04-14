@@ -320,7 +320,7 @@ class Config {
             case "testCase":            setBoolField(el, false);
             case "excludeList":         setExcludeField(el, new List());
             case "conditionalCompilationList": setConditionalVars(el, new List());
-            case "dictionaryToHash":    setBoolField(el, true);
+            case "dictionaryToHash":    setBoolField(el, false);
             case "useFastXML":          setBoolField(el, true);
             case "useCompat":          setBoolField(el, true);
             case "importPaths":          setImportPaths(el, []);
@@ -424,7 +424,7 @@ class Config {
     <testCase value="false" />
     <excludeList />
     <conditionalCompilationList />
-    <dictionaryToHash value="true" />
+    <dictionaryToHash value="false" />
     <useFastXML value="true" />
     <useCompat value="true" />
     <importPaths></importPaths>
