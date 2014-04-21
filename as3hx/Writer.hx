@@ -183,9 +183,6 @@ class Writer
 
     function writeImport(i : Array<String>)
     {
-        if (i[0] == "flash") {
-            i[0] = "nme";
-        }
         var type = properCaseA(i,true).join(".");
         if (!Lambda.has(this.imported, type)) { //prevent duplicate import
             write("import " + type + ";");
@@ -197,13 +194,13 @@ class Writer
     }
         
     function writeAdditionalImports(defPackage : Array<String>, allTypes : Array<Dynamic>,
-                    definedTypes : Array<Dynamic>)
+                    definedTypes : Array<String>)
     {
         // We don't want to import any type that is defined within
         // this file, so add each of those to the type import map
         // first.
         for(d in definedTypes) {
-        typeImportMap.set(d.name, null);
+        typeImportMap.set(d, null);
         }
 
         // Now convert each seen type enum into the corresponding
@@ -1613,12 +1610,26 @@ class Writer
                 if (canUseForLoop(incrs, inits)) {
 
                     write("for (");
+
                     switch (inits[0]) {
                         case EVars(v): 
                             write(v[0].name);
                             write(" in ");
                             writeExpr(v[0].val);
                             write("...");
+                        // var i:int = 0;
+                        // for (i = 0; i < size; i++)
+                        case EBinop(op, e1, e2, newLineAfterOp):
+                            if (op == "=") {
+                                switch (e1) {
+                                case EIdent(v):
+                                    write(v);
+                                default:
+                                }
+                                write(" in ");
+                                writeExpr(e2);
+                                write("...");
+                            }
                         default:
                     }
 
@@ -3109,13 +3120,30 @@ class Writer
         //as only one instance of Writer write all the files
         this.imported = [];
 
+        var defined:Array<String> = [];
+
+        for (type in program.typesDefd)
+            defined.push(type.name);
+
+        switch(program.defs[0]) {
+            case CDef(c):
+                for (meta in c.meta) {
+                    switch (meta) {
+                    case EImport(v):
+                        defined.push(v[v.length-1]);
+                    default:
+                    }
+                }
+            default:
+        }
+
         this.o = writer;
         this.genTypes = program.genTypes;
         this.pack = program.pack;
         writeComments(program.header);
         writePackage(program.pack);
         writeImports(program.imports);
-        writeAdditionalImports(program.pack, program.typesSeen, program.typesDefd);
+        writeAdditionalImports(program.pack, program.typesSeen, defined);
         writeGeneratedTypes(program.genTypes);
         writeDefinitions(program.defs);
         writeComments(program.footer);

@@ -29,6 +29,7 @@ import haxe.xml.Fast;
 import sys.FileSystem;
 import sys.io.File;
 import haxe.ds.StringMap;
+import haxe.io.Path;
 
 using StringTools;
 
@@ -249,6 +250,14 @@ class Config {
 
     function processCommandLine() {
         var args = Sys.args().slice(0);
+        var last = new Path (args[args.length - 1]).toString ();
+        if (((StringTools.endsWith (last, "/") && last != "/") || StringTools.endsWith (last, "\\")) && !StringTools.endsWith (last, ":\\")) {
+            last = last.substr (0, last.length - 1);
+        }
+        if (FileSystem.exists (last) && FileSystem.isDirectory (last)) {
+            Sys.setCwd (last);
+            args.pop ();
+        }
         var arg = "";
         while(true) {
             arg = args.shift();
