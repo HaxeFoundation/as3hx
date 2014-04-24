@@ -503,12 +503,14 @@ class Parser {
 
                                     //also put the newline preceding the import
                                     //in the first class meta
-                                    switch(meta[meta.length-1]) {
-                                        case ENL(e):
-                                            if (e == null) {
-                                                c.meta.push(meta.pop());
-                                            }
-                                        default:
+                                    if (meta.length > 0) {
+                                        switch(meta[meta.length-1]) {
+                                            case ENL(e):
+                                                if (e == null) {
+                                                    c.meta.push(meta.pop());
+                                                }
+                                            default:
+                                        }
                                     }
 
                                     //remove extra new line generated for before

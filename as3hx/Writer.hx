@@ -575,11 +575,15 @@ class Writer
                         //be safely inlined for Haxe as we don't havve full typing
                         //available. For instance trying to inline a field referencing another
                         //static non-inlined field would prevent Haxe compilation
-                        switch (val) {
-                            case EConst(c):
-                                write("inline ");
 
-                            default:
+                        if (val != null) {
+                            switch (val) {
+
+                                case EConst(c):
+                                    write("inline ");
+
+                                default:
+                            }
                         }
 
                     default:
