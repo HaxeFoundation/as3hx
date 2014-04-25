@@ -8,4 +8,4 @@ clean:
 	rm -rf bin
 
 run-test:
-	bin/as3hx test/ bin/out
+	bin/as3hx test/ bin/test
