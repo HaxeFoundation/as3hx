@@ -1,7 +1,7 @@
-2013-10-28 - Scott Lee
+##2013-10-28 - Scott Lee
  - Move to Haxe 3 and neko 2
 
-2013-08-01 - Yanhick, Richard, Todd
+##2013-08-01 - Yanhick, Richard, Todd
  - added many improvements to generated code style
  - replaced as3 "toString" by Haxe "Std.string"
  - replaced as3 "Date" by Haxe "Date.now" for current time
@@ -19,8 +19,6 @@
  - Fixed bug where comment made semicolon appear on new lines
  - Class attribute can now be initialised inline
  - Implemented Haxe 3 getter/setter syntax
-
-
  - Removed writing var type in for(var x : String in y)
  - Created "in" as Binop : for(i in x)
  - Handle of if(x in y) as Lambda.has
@@ -28,7 +26,7 @@
  - Removed conversion of escape sequences in Parser.readString
  - Added odd as3 vector constructor style: mStringVec = new <String>["a","b"];
 
-2011-10-19 - Russell
+##2011-10-19 - Russell
  - Added writing out class inits
  - Fixed empty functions returning f.expr = Object (messed up metadata parsing)
  - Improved metadata support for [Bindable("move")]
@@ -49,12 +47,12 @@
  - Skip comments in object create or fuction calls
  - Support for Vector added to Writer
 
-2011-10-14 - Russell
+##2011-10-14 - Russell
  - cleaned formatting on comments
  - added === support (missed)
  - added -no-cast-guess 
 
-2011-10-12 - Russell
+##2011-10-12 - Russell
  - added comments
  - fixed static var initializations were not output
  - added output for the "as" keyword
