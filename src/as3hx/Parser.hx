@@ -127,42 +127,6 @@ class Parser {
     }
 
     /**
-     * Checks that the next token is of type 'tk', returning
-     * true if so, and the token is consumed. If keepComments
-     * is set, all the comments will be pushed onto the token
-     * stack along with the next token after 'tk'.
-     **/
-    function opt(tk,keepComments:Bool=false) : Bool {
-        var t = token();
-        var tu = ParserUtils.uncomment(ParserUtils.removeNewLine(t));
-        Debug.dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk), line);
-        if( Type.enumEq(tu, tk) ) {
-            if(keepComments) {
-                var ta = ParserUtils.explodeComment(t);
-                // if only 'tk' exists in ta, we're done
-                if(ta.length < 2) return true;
-                ta.pop();
-                t = token();
-                var l = ta.length - 1;
-                while(l >= 0) {
-                    switch(ta[l]) {
-                    case TCommented(s,b,t2):
-                        if(t2 != null) throw "Assert error";
-                        t = TCommented(s,b,t);
-                    case TNL(t):    
-                    default: throw "Assert error";
-                    }
-                    l--;
-                }
-                add(t);
-            }
-            return true;
-        }
-        add(t);
-        return false;
-    }
-
-    /**
      * Version of opt that will search for tk, and if it is the next token,
      * all the comments before it will be pushed to array 'cmntOut'
      **/
@@ -217,7 +181,7 @@ class Parser {
             case TId(s):
                 if( s != "package" )
                     ParserUtils.unexpected(t);
-                if( opt(TBrOpen) )
+                if( ParserUtils.opt(token, add, TBrOpen) )
                     pack = []
                 else {
                     pack = parsePackageName();
@@ -389,7 +353,7 @@ class Parser {
                     continue;
                 default:
 
-                    if(opt(TNs)) {
+                    if(ParserUtils.opt(token, add, TNs)) {
                         var ns : String = id;
                         var t = ParserUtils.uncomment(token());
 
@@ -421,7 +385,7 @@ class Parser {
                             ParserUtils.unexpected(t);
                         }
                     }
-                    else if(opt(TSemicolon)) {
+                    else if(ParserUtils.opt(token, add, TSemicolon)) {
                         // class names without an import statement used
                         // for forcing compilation and linking.
                         inits.push(EIdent(id));
@@ -525,15 +489,15 @@ class Parser {
         ensure(TBkOpen);
         var name = id();
         var args = [];
-        if( opt(TPOpen) )
-            while( !opt(TPClose) ) {
+        if( ParserUtils.opt(token, add, TPOpen) )
+            while( !ParserUtils.opt(token, add, TPClose) ) {
                 var n = null;
                 switch(peek()) {
                 case TId(i):
                     n = id();
-                    if(!opt(TOp("="))) {
+                    if(!ParserUtils.opt(token, add, TOp("="))) {
                         args.push( { name : null, val : EIdent(n) } );
-                        opt(TComma);
+                        ParserUtils.opt(token, add, TComma);
                         continue;
                     }
                 case TConst(_):
@@ -543,7 +507,7 @@ class Parser {
                 }
                 var e = parseExpr();
                 args.push( { name : n, val :e } );
-                opt(TComma);
+                ParserUtils.opt(token, add, TComma);
             }
         ensure(TBkClose);
         Debug.dbgln(" -> " + { name : name, args : args }, line);
@@ -594,7 +558,7 @@ class Parser {
         Debug.dbgln("parseNsDef()", line);
         var name = id();
         var value = null;
-        if( opt(TOp("=")) ) {
+        if( ParserUtils.opt(token, add, TOp("=")) ) {
             var t = token();
             value = switch( t ) {
             case TConst(c):
@@ -624,13 +588,13 @@ class Parser {
         var impl = [], extend = null, inits = [];
         var condVars:Array<String> = [];
         while( true ) {
-            if( opt(TId("implements")) ) {
+            if( ParserUtils.opt(token, add, TId("implements")) ) {
                 impl.push(parseType());
-                while( opt(TComma) )
+                while( ParserUtils.opt(token, add, TComma) )
                     impl.push(parseType());
                 continue;
             }
-            if( opt(TId("extends")) ) {
+            if( ParserUtils.opt(token, add, TId("extends")) ) {
                 if(!isInterface) {
                     extend = parseType();
                     if(cfg.testCase) {
@@ -645,7 +609,7 @@ class Parser {
                 }
                 else {
                     impl.push(parseType());
-                    while( opt(TComma) )
+                    while( ParserUtils.opt(token, add, TComma) )
                         impl.push(parseType());
                 }
                 continue;
@@ -699,7 +663,7 @@ class Parser {
                         do {
                             fields.push(parseClassVar(kwds, meta, condVars.copy()));
                             meta = [];
-                        } while( opt(TComma) );
+                        } while( ParserUtils.opt(token, add, TComma) );
                         end();
                         if (condVars.length != 0 && !inCondBlock) {
                             return;
@@ -709,7 +673,7 @@ class Parser {
                         do {
                             fields.push(parseClassVar(kwds, meta, condVars.copy()));
                             meta = [];
-                        } while( opt(TComma) );
+                        } while( ParserUtils.opt(token, add, TComma) );
                         end();
                         if (condVars.length != 0 && !inCondBlock) {
                             return;
@@ -875,7 +839,7 @@ class Parser {
         // this is a ugly hack in order to fix lexer issue with "var x:*=0"
         var tmp = opPriority.get("*=");
         opPriority.remove("*=");
-        if( opt(TOp("*")) ) {
+        if( ParserUtils.opt(token, add, TOp("*")) ) {
             opPriority.set("*=",tmp);
             return TStar;
         }
@@ -947,9 +911,9 @@ class Parser {
         var name = id();
         Debug.dbgln(name + ")", line, false);
         var t = null, val = null;
-        if( opt(TColon) )
+        if( ParserUtils.opt(token, add, TColon) )
             t = parseType();
-        if( opt(TOp("=")) )
+        if( ParserUtils.opt(token, add, TOp("=")) )
             val = parseExpr();
 
         var rv = {
@@ -1010,7 +974,7 @@ class Parser {
         //store the whole expression, including
         //comments and newline
         var expressions:Array<Expr> = [];
-        if( !opt(TPClose) ) {
+        if( !ParserUtils.opt(token, add, TPClose) ) {
  
             while( true ) {
                
@@ -1020,7 +984,7 @@ class Parser {
                         ensure(TDot);
                         ensure(TDot);
                         f.varArgs = id();
-                        if( opt(TColon) )
+                        if( ParserUtils.opt(token, add, TColon) )
                             ensure(TId("Array"));
                         ensure(TPClose);
                         break;
@@ -1029,12 +993,12 @@ class Parser {
                         var name = s, t = null, val = null;
                         expressions.push(EIdent(s));
 
-                        if( opt(TColon) ) { // ":" 
+                        if( ParserUtils.opt(token, add, TColon) ) { // ":" 
                             t = parseType(); //arguments type
                             expressions.push(ETypedExpr(null, t));
                         }
 
-                        if( opt(TOp("=")) ) {
+                        if( ParserUtils.opt(token, add, TOp("=")) ) {
                             val = parseExpr(); //optional argument's default value
                             expressions.push(val);
                         }
@@ -1042,7 +1006,7 @@ class Parser {
                         f.args.push( { name : name, t : t, val : val, exprs:expressions } );
                         expressions = []; // reset for next argument
 
-                        if( opt(TPClose) ) // ")" end of arguments
+                        if( ParserUtils.opt(token, add, TPClose) ) // ")" end of arguments
                             break;
                         ensure(TComma);
 
@@ -1066,7 +1030,7 @@ class Parser {
         var retExpressions:Array<Expr> = [];
 
         //parse return type 
-        if( opt(TColon) ) {
+        if( ParserUtils.opt(token, add, TColon) ) {
             var t = parseType();
             retExpressions.push(ETypedExpr(null, t));
             f.ret.t = t;
@@ -1147,7 +1111,7 @@ class Parser {
 
     function end() {
         Debug.openDebug("function end()", line, true);
-        while( opt(TSemicolon) ) {
+        while( ParserUtils.opt(token, add, TSemicolon) ) {
         }
         Debug.closeDebug("function end()", line);
     }
@@ -1155,13 +1119,13 @@ class Parser {
     function parseFullExpr() {
         Debug.dbgln("parseFullExpr()", line);
         var e = parseExpr();
-        if( opt(TColon) ) {
+        if( ParserUtils.opt(token, add, TColon) ) {
             switch( e ) {
             case EIdent(l): e = ELabel(l);
             default: add(TColon);
             }
         }
-        if( !opt(TComma) )
+        if( !ParserUtils.opt(token, add, TComma) )
             end();
         return e;
     }
@@ -1263,7 +1227,7 @@ class Parser {
                 }
             }
                 
-            while( !opt(TBrClose) ) {
+            while( !ParserUtils.opt(token, add, TBrClose) ) {
                 var e = parseFullExpr();
                 a.push(e);
             }
@@ -1343,7 +1307,7 @@ class Parser {
             ensure(TPClose);
             var e1 = parseExpr();
             end();
-            var elseExpr = if( opt(TId("else"), true) ) parseExpr() else null;
+            var elseExpr = if( ParserUtils.opt(token, add, TId("else"), true) ) parseExpr() else null;
             switch (cond) {
                 case ECondComp(v, e, e2):
                     //corner case, the condition is an AS3 preprocessor 
@@ -1360,12 +1324,12 @@ class Parser {
             var vars = [];
             while( true ) {
                 var name = id(), t = null, val = null;
-                if( opt(TColon) )
+                if( ParserUtils.opt(token, add, TColon) )
                     t = parseType();
-                if( opt(TOp("=")) )
+                if( ParserUtils.opt(token, add, TOp("=")) )
                     val = ETypedExpr(parseExpr(), t);
                 vars.push( { name : name, t : t, val : val } );
-                if( !opt(TComma) )
+                if( !ParserUtils.opt(token, add, TComma) )
                     break;
             }
             EVars(vars);
@@ -1376,7 +1340,7 @@ class Parser {
             var e = parseExpr();
             EWhile(econd,e, false);
         case "for":
-            if( opt(TId("each")) ) {
+            if( ParserUtils.opt(token, add, TId("each")) ) {
                 ensure(TPOpen);
                 var ev = parseExpr();
                 switch(ev) {
@@ -1392,7 +1356,7 @@ class Parser {
             } else {
                 ensure(TPOpen);
                 var inits = [];
-                if( !opt(TSemicolon) ) {
+                if( !ParserUtils.opt(token, add, TSemicolon) ) {
                     var e = parseExpr();
                     switch(e) {
                         case EBinop(op, e1, e2, n):
@@ -1402,7 +1366,7 @@ class Parser {
                             }
                         default:
                     }
-                    if( opt(TComma) ) {
+                    if( ParserUtils.opt(token, add, TComma) ) {
                         inits = parseExprList(TSemicolon);
                         inits.unshift(e);
                     } else {
@@ -1431,7 +1395,7 @@ class Parser {
         case "return":
             EReturn(if( peek() == TSemicolon ) null else parseExpr());
         case "new":
-            if(opt(TOp("<"))) {
+            if(ParserUtils.opt(token, add, TOp("<"))) {
                 // o = new <VectorType>[a,b,c..]
                 var t = parseType();
                 ensure(TOp(">"));
@@ -1460,14 +1424,14 @@ class Parser {
                                     default: 
                                     null;
                 }
-                if (cc != null) cc; else ENew(t,if( opt(TPOpen) ) parseExprList(TPClose) else []);
+                if (cc != null) cc; else ENew(t,if( ParserUtils.opt(token, add, TPOpen) ) parseExprList(TPClose) else []);
             }
         case "throw":
             EThrow( parseExpr() );
         case "try":
             var e = parseExpr();
             var catches = new Array();
-            while( opt(TId("catch")) ) {
+            while( ParserUtils.opt(token, add, TId("catch")) ) {
                 ensure(TPOpen);
                 var name = id();
                 ensure(TColon);
@@ -1562,7 +1526,7 @@ class Parser {
         case "getTimer":
             
             //consume the parenthesis from the getTimer AS3 call
-            while(!opt(TPClose)) {
+            while(!ParserUtils.opt(token, add, TPClose)) {
                 token();
             }
             
@@ -1648,7 +1612,7 @@ class Parser {
             switch(ParserUtils.uncomment(ParserUtils.removeNewLine(tk))) {
             case TId(id):
                 field = StringTools.replace(id, "$", "__DOLLAR__");
-                if( opt(TNs) )
+                if( ParserUtils.opt(token, add, TNs) )
                     field = field + "::" + this.id();
             case TOp(op):
                 if( op != "<" || switch(e1) { case EIdent(v): v != "Vector" && v != "Dictionary"; default: true; } ) ParserUtils.unexpected(tk);
@@ -1674,7 +1638,7 @@ class Parser {
             case TAt:
                 //xml.attributes() is equivalent to xml.@*.
                 var i : String = null;
-                if(opt(TBkOpen)) {
+                if(ParserUtils.opt(token, add, TBkOpen)) {
                     tk = token();
                     switch(ParserUtils.uncomment(tk)) {
                         case TConst(c):
@@ -1773,7 +1737,7 @@ class Parser {
             if(args.length == 0) return;
             args[args.length-1] = ParserUtils.tailComment(args[args.length-1], t);
         }
-        if( opt(etk) )
+        if( ParserUtils.opt(token, add, etk) )
             return args;
         while( true ) {
             args.push(parseExpr());
@@ -1820,7 +1784,7 @@ class Parser {
         switch(tk) {
             case TAt:
                 var i : String = null;
-                if(opt(TBkOpen)) {
+                if(ParserUtils.opt(token, add, TBkOpen)) {
                     tk = token();
                     switch(ParserUtils.uncomment(tk)) {
                         case TConst(c):
@@ -1875,11 +1839,11 @@ class Parser {
                 switch(ParserUtils.uncomment(tk)) {
                     case TId(id):
                         field = StringTools.replace(id, "$", "__DOLLAR__");
-                        if( opt(TNs) )
+                        if( ParserUtils.opt(token, add, TNs) )
                             field = field + "::" + this.id();
                     case TAt:
                         var i : String = null;
-                        if(opt(TBkOpen)) {
+                        if(ParserUtils.opt(token, add, TBkOpen)) {
                             tk = token();
                             switch(ParserUtils.uncomment(tk)) {
                                 case TConst(c):

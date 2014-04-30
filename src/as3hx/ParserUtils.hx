@@ -273,4 +273,40 @@ class ParserUtils {
         //type declaration is stored, will be written
         return {name:getPascalCase(classVar.name), fields:fields, fieldName:classVar.name};
     }
+
+    /**
+     * Checks that the next token is of type 'tk', returning
+     * true if so, and the token is consumed. If keepComments
+     * is set, all the comments will be pushed onto the token
+     * stack along with the next token after 'tk'.
+     **/
+    public static function opt(token, add, tk,keepComments:Bool=false) : Bool {
+        var t = token();
+        var tu = ParserUtils.uncomment(ParserUtils.removeNewLine(t));
+        Debug.dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk));
+        if( Type.enumEq(tu, tk) ) {
+            if(keepComments) {
+                var ta = ParserUtils.explodeComment(t);
+                // if only 'tk' exists in ta, we're done
+                if(ta.length < 2) return true;
+                ta.pop();
+                t = token();
+                var l = ta.length - 1;
+                while(l >= 0) {
+                    switch(ta[l]) {
+                    case TCommented(s,b,t2):
+                        if(t2 != null) throw "Assert error";
+                        t = TCommented(s,b,t);
+                    case TNL(t):    
+                    default: throw "Assert error";
+                    }
+                    l--;
+                }
+                add(t);
+            }
+            return true;
+        }
+        add(t);
+        return false;
+    }
 }
