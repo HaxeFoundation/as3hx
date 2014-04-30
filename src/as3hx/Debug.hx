@@ -33,7 +33,7 @@ class Debug {
         #end
     }
 
-    public static function dbgln(s:String, line:Int, ind:Bool=true,?p:haxe.PosInfos) {
+    public static function dbgln(s:String, line:Int=0, ind:Bool=true,?p:haxe.PosInfos) {
         #if debug
         var o = ind ? indent() : "";
         o += "(" + line + ") " + s + " [Parser " + p.lineNumber + "]\r\n";

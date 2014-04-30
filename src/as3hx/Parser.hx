@@ -126,7 +126,6 @@ class Parser {
         tokens.add(tk);
     }
 
-
     /**
      * Checks that the next token is of type 'tk', returning
      * true if so, and the token is consumed. If keepComments
@@ -198,7 +197,7 @@ class Parser {
         var trnl = ParserUtils.removeNewLine(tu);
 
         if( !Type.enumEq(trnl, tk) )
-            unexpected(trnl);
+            ParserUtils.unexpected(trnl);
         var ta = ParserUtils.explodeComment(t);
         ta.pop();
         return ta;
@@ -217,7 +216,7 @@ class Parser {
             switch(t) {
             case TId(s):
                 if( s != "package" )
-                    unexpected(t);
+                    ParserUtils.unexpected(t);
                 if( opt(TBrOpen) )
                     pack = []
                 else {
@@ -231,7 +230,7 @@ class Parser {
             case TNL(t):    
                 header.push(ENL(null));
             default:
-                unexpected(t);
+                ParserUtils.unexpected(t);
             }
         }
         
@@ -272,7 +271,7 @@ class Parser {
                     continue;
                 // private classes outside of first package {}
                 if( !closed ) {
-                    unexpected(tk);
+                    ParserUtils.unexpected(tk);
                 }
                 closed = false;
                 continue;
@@ -382,10 +381,10 @@ class Parser {
                                     end();
                                     closed = oldClosed;
                                 default:
-                                    unexpected(tk);
+                                    ParserUtils.unexpected(tk);
                             }
                         default:
-                            unexpected(tk);
+                            ParserUtils.unexpected(tk);
                     }
                     continue;
                 default:
@@ -398,7 +397,7 @@ class Parser {
                             case TId(id2):
                                 id = id2;
                             default:
-                                unexpected(t);
+                                ParserUtils.unexpected(t);
                         }
 
                         if (Lambda.has(cfg.conditionalVars, ns + "::" + id)) {
@@ -419,7 +418,7 @@ class Parser {
                             Debug.closeDebug("end conditional compilation: " + ns + "::" + id, line);
                             continue;
                         } else {
-                            unexpected(t);
+                            ParserUtils.unexpected(t);
                         }
                     }
                     else if(opt(TSemicolon)) {
@@ -428,7 +427,7 @@ class Parser {
                         inits.push(EIdent(id));
                         continue;
                     } else {
-                        unexpected(tk);
+                        ParserUtils.unexpected(tk);
                     }
                 }
             case TSemicolon:
@@ -451,12 +450,12 @@ class Parser {
                 continue;
             default:
             }
-            unexpected(tk);
+            ParserUtils.unexpected(tk);
         }
         };
         pf(false);
         if( !closed )
-            unexpected(TEof);
+            ParserUtils.unexpected(TEof);
 
         return {
             header : header,
@@ -505,8 +504,8 @@ class Parser {
                         a.push(op);
                         break;
                     }
-                    unexpected(tk);
-                default: unexpected(tk);
+                    ParserUtils.unexpected(tk);
+                default: ParserUtils.unexpected(tk);
                 }
             case TCommented(s,b,t):
                 add(t);
@@ -540,7 +539,7 @@ class Parser {
                 case TConst(_):
                     null;
                 default:
-                    unexpected(peek());
+                    ParserUtils.unexpected(peek());
                 }
                 var e = parseExpr();
                 args.push( { name : n, val :e } );
@@ -573,7 +572,7 @@ class Parser {
                 return FDef(parseFunDef(kwds, meta));
             case "namespace":
                 return NDef(parseNsDef(kwds, meta));
-            default: unexpected(TId(id));
+            default: ParserUtils.unexpected(TId(id));
             }
         }
         return null;
@@ -601,10 +600,10 @@ class Parser {
             case TConst(c):
                 switch( c ) {
                 case CString(str): str;
-                default: unexpected(t);
+                default: ParserUtils.unexpected(t);
                 }
             default:
-                unexpected(t);
+                ParserUtils.unexpected(t);
             };
         }
         return {
@@ -740,10 +739,10 @@ class Parser {
                                         parseInclude(path,pf.bind(true, false));
                                         end();
                                     default:
-                                        unexpected(t);
+                                        ParserUtils.unexpected(t);
                                 }
                             default:
-                                unexpected(t);
+                                ParserUtils.unexpected(t);
                         }
                     default:
                         kwds.push(id);
@@ -761,7 +760,7 @@ class Parser {
                     end();
                 case TNs:
                     if (kwds.length != 1) {
-                        unexpected(t);
+                        ParserUtils.unexpected(t);
                     }
                     var ns = kwds.pop();
                     t = token();
@@ -798,10 +797,10 @@ class Parser {
                                 Debug.closeDebug("end conditional compilation: " + ns + "::" + id, line);
                                 break;
                             } else {
-                                unexpected(t);
+                                ParserUtils.unexpected(t);
                             }
                         default:
-                            unexpected(t);
+                            ParserUtils.unexpected(t);
                     }
                 case TNL(t):
                     add(t);
@@ -918,7 +917,7 @@ class Parser {
                 tk = token();
                 switch(ParserUtils.uncomment(tk)) {
                 case TId(id): a.push(id);
-                default: unexpected(ParserUtils.uncomment(tk));
+                default: ParserUtils.unexpected(ParserUtils.uncomment(tk));
                 }
             case TCommented(s,b,t):
 
@@ -961,127 +960,12 @@ class Parser {
             condVars : condVars
         };
         
-        generateTypeIfNeeded(rv);
+        var genType = ParserUtils.generateTypeIfNeeded(rv);
+        if (genType != null)
+            this.genTypes.push(genType);
 
         Debug.closeDebug("parseClassVar -> " + rv, line);
         return rv;
-    }
-
-   /**
-    * In certain cases, a typedef will be generated 
-    * for a class attribute, for better type safety
-    */
-    function generateTypeIfNeeded(classVar : ClassField) : Void
-    {
-        //this only applies to static field attributes, as
-        //they only define constants values
-        if (!Lambda.has(classVar.kwds, "static")) {
-            return;
-        }
-
-        //this only applies to class attributes defining
-        //an array
-        var expr = null;
-        switch (classVar.kind) {
-            case FVar(t, val):
-                switch (t) {
-                    case TPath(t):
-                        if (t[0] != "Array" || t.length > 1) {
-                            return;
-                        }
-                        expr = val;  
-                    default:
-                        return;     
-                }
-            default:
-                return;
-        }
-
-        if (expr == null)
-            return;
-
-        //only applies if the array is initialised at
-        //declaration
-        var arrayDecl = null;
-        switch (expr) {
-            case EArrayDecl(decl):
-                arrayDecl = decl;
-            default:
-                return;    
-        }
-        
-        //if the arary is empty, type can't be defined
-        if (arrayDecl.length == 0) {
-            return;
-        }
-        
-        //return the type of an object field
-        var getType:Expr->String = function(e) {
-            switch (e) {
-                case EConst(c):
-                    switch(c) {
-                        case CInt(v):
-                            return "Int";
-                        case CFloat(v):
-                            return "Float";
-                        case CString(v):
-                            return "String";      
-                    }
-                case EIdent(id):
-                    if (id == "true" || id == "false") {
-                        return "Bool";
-                    }    
-                    return "Dynamic";
-                default:
-                    return "Dynamic";
-            }
-        }
-
-        //Type declaration is only created for array of objects,.
-        //Type is retrieved from the first object fields, then 
-        //all remaining objects in the array are check against this
-        //type. If the type is different, then it is a mixed type
-        //array and no type declaration should be created
-        var fields = [];
-        for (i in 0...arrayDecl.length) {
-            var el = ParserUtils.removeNewLineExpr(arrayDecl[i]);
-            switch(el) {
-                case EObject(fl):
-                    for (f in fl) {
-                        if (i == 0) { //first object, we get the types
-                            fields.push({name: f.name, t:getType(f.e)});
-                        }
-                        else { //for subsequent objects, check if they match the type
-                            var match = false;
-                            for (field in fields) {
-                                if (field.name == f.name) {
-                                    match = true;
-                                }
-                            }
-                            if (!match) {
-                                return;
-                            }
-                        }   
-                    }
-                default:
-                    return;    
-            }
-        }
-
-        //turn class attribute name to pascal case
-        var getPascalCase:String->String = function(id) {
-            id = id.toLowerCase();
-            var arr = id.split("_");
-            var ret = "";
-            for (el in arr) {
-                el = el.charAt(0).toUpperCase() + el.substr(1);
-                ret += el;
-            }
-            return ret;
-        }
-
-        //type declaration is stored, will be written
-        this.genTypes.push({name:getPascalCase(classVar.name), fields:fields, fieldName:classVar.name});
     }
 
     function parseClassFun(kwds:Array<String>,meta,condVars:Array<String>, isInterface:Bool) : ClassField {
@@ -1249,7 +1133,7 @@ class Parser {
                 tk = token();
                 switch(tk) {
                 case TId(id): a.push(id);
-                default: unexpected(tk);
+                default: ParserUtils.unexpected(tk);
                 }
             default:
                 add(tk);
@@ -1260,10 +1144,6 @@ class Parser {
         return a;
     }
 
-    function unexpected( tk ) : Dynamic {
-        throw EUnexpected(Tokenizer.tokenString(tk));
-        return null;
-    }
 
     function end() {
         Debug.openDebug("function end()", line, true);
@@ -1307,7 +1187,7 @@ class Parser {
                 add(t);
                 continue;
             default:
-                unexpected(tk);
+                ParserUtils.unexpected(tk);
             }
             ensure(TColon);
             fl.push({ name : id, e : parseExpr() });
@@ -1324,7 +1204,7 @@ class Parser {
             case TComma:
                 null;
             default:
-                unexpected(tk);
+                ParserUtils.unexpected(tk);
             }
         }
         var rv = parseExprNext(EObject(fl));
@@ -1411,7 +1291,7 @@ class Parser {
                     return makeUnop(op, parseExpr());
             if( op == "<" )
                 return EXML(readXML());
-            return unexpected(tk);
+            return ParserUtils.unexpected(tk);
         case TBkOpen:
             var a = new Array();
             tk = token();
@@ -1430,7 +1310,7 @@ class Parser {
             add(t);
             return ENL(parseExpr());
         default:
-            return unexpected(tk);
+            return ParserUtils.unexpected(tk);
         }
     }
 
@@ -1505,9 +1385,9 @@ class Parser {
                             ensure(TPClose);
                             return EForEach(e1, e2, parseExpr());
                         }
-                        unexpected(TId(op));
+                        ParserUtils.unexpected(TId(op));
                     default:
-                        unexpected(TId(Std.string(ev)));
+                        ParserUtils.unexpected(TId(Std.string(ev)));
                 }
             } else {
                 ensure(TPOpen);
@@ -1541,7 +1421,7 @@ class Parser {
             };
             EBreak(label);
         case "continue": EContinue;
-        case "else": unexpected(TId(kwd));
+        case "else": ParserUtils.unexpected(TId(kwd));
         case "function":
             var name = switch( peek() ) {
             case TId(n): token(); n;
@@ -1556,7 +1436,7 @@ class Parser {
                 var t = parseType();
                 ensure(TOp(">"));
                 if(peek() != TBkOpen)
-                    unexpected(peek());
+                    ParserUtils.unexpected(peek());
                 ECall(EVector(t), [parseExpr()]);
             } else {
                 var t = parseType();
@@ -1627,7 +1507,7 @@ class Parser {
                             meta = [];
                         }
                         else {
-                            unexpected(tk);
+                            ParserUtils.unexpected(tk);
                         }
                     case TNL(t): //keep newline as meta for a case/default
                         add(t);
@@ -1637,7 +1517,7 @@ class Parser {
                         meta.push(ECommented(s,b,false,null));        
 
                     default:
-                        unexpected(tk);     
+                        ParserUtils.unexpected(tk);     
                 }
             }
             
@@ -1652,12 +1532,12 @@ class Parser {
             switch(e) {
             case EBinop(op, e1, e2, n):
                 //if(op != "==" && op != "!=")
-                //  unexpected(TOp(op));
+                //  ParserUtils.unexpected(TOp(op));
             case EParent(e1):
             case EIdent(id):
                 null;
             default:
-                unexpected(TId(Std.string(e)));
+                ParserUtils.unexpected(TId(Std.string(e)));
             }
             ETypeof(e);
         case "delete":
@@ -1771,7 +1651,7 @@ class Parser {
                 if( opt(TNs) )
                     field = field + "::" + this.id();
             case TOp(op):
-                if( op != "<" || switch(e1) { case EIdent(v): v != "Vector" && v != "Dictionary"; default: true; } ) unexpected(tk);
+                if( op != "<" || switch(e1) { case EIdent(v): v != "Vector" && v != "Dictionary"; default: true; } ) ParserUtils.unexpected(tk);
                 var t = parseType();
 
                 var v = switch (e1) {
@@ -1802,12 +1682,12 @@ class Parser {
                                 case CString(s):
                                     i = s;
                                 default:
-                                    unexpected(tk);
+                                    ParserUtils.unexpected(tk);
                             }
                         case TId(s):
                             i = s;
                         default:
-                            unexpected(tk);
+                            ParserUtils.unexpected(tk);
                     }
                     ensure(TBkClose);
                 }
@@ -1817,7 +1697,7 @@ class Parser {
             case TDot:
                 var id = id();
                 return parseExprNext(EE4XDescend(e1, EIdent(id)));
-            default: unexpected(tk);
+            default: ParserUtils.unexpected(tk);
             }
             return parseExprNext(EField(e1,field));
         case TPOpen:
@@ -1825,12 +1705,12 @@ class Parser {
         case TBkOpen:
             var e2 = parseExpr();
             tk = token();
-            if( tk != TBkClose ) unexpected(tk);
+            if( tk != TBkClose ) ParserUtils.unexpected(tk);
             return parseExprNext(EArray(e1,e2));
         case TQuestion:
             var e2 = parseExpr();
             tk = token();
-            if( tk != TColon ) unexpected(tk);
+            if( tk != TColon ) ParserUtils.unexpected(tk);
             var e3 = parseExpr();
             return ETernary(e1, e2, e3);
         case TId(s):
@@ -1915,7 +1795,7 @@ class Parser {
                     if (t == etk) break;
                 default:
                     if( tk == etk ) break;
-                    unexpected(tk);
+                    ParserUtils.unexpected(tk);
                 }
             case TNL(t):
                 args.push(ENL(null));
@@ -1928,7 +1808,7 @@ class Parser {
                 if (t == etk) break;
             default:
                 if( tk == etk ) break;
-                unexpected(tk);
+                ParserUtils.unexpected(tk);
             }
         }
         return args;
@@ -1948,10 +1828,10 @@ class Parser {
                                 case CString(s):
                                     i = s;
                                 default:
-                                    unexpected(tk);
+                                    ParserUtils.unexpected(tk);
                             }
                         default:
-                            unexpected(tk);
+                            ParserUtils.unexpected(tk);
                     }
                     ensure(TBkClose);
                 }
@@ -1963,7 +1843,7 @@ class Parser {
             case TId(id):
                 var e = parseStructure(id);
                 if( e != null )
-                    return unexpected(tk);
+                    return ParserUtils.unexpected(tk);
                 return parseE4XFilterNext(EIdent(id));
             case TConst(c):
                 return parseE4XFilterNext(EConst(c));
@@ -1971,7 +1851,7 @@ class Parser {
                 add(t);
                 return ECommented(s,b,false,parseE4XFilter());
             default:
-                return unexpected(tk);
+                return ParserUtils.unexpected(tk);
         }
     }
 
@@ -1983,7 +1863,7 @@ class Parser {
             case TOp(op):
                 for( x in unopsSuffix )
                     if( x == op )
-                        unexpected(tk);
+                        ParserUtils.unexpected(tk);
                 return makeBinop(op,e1,parseE4XFilter());
             case TPClose:
                 Debug.dbgln("parseE4XFilterNext stopped at " + tk, line);
@@ -2007,10 +1887,10 @@ class Parser {
                                         case CString(s):
                                             i = s;
                                         default:
-                                            unexpected(tk);
+                                            ParserUtils.unexpected(tk);
                                     }
                                 default:
-                                    unexpected(tk);
+                                    ParserUtils.unexpected(tk);
                             }
                             ensure(TBkClose);
                         }
@@ -2018,7 +1898,7 @@ class Parser {
                             i = id();
                         return parseE4XFilterNext(EE4XAttr(e1, EIdent(i)));
                     default:
-                        unexpected(tk);
+                        ParserUtils.unexpected(tk);
                 }
                 return parseE4XFilterNext(EField(e1,field));
             case TPOpen:
@@ -2026,10 +1906,10 @@ class Parser {
             case TBkOpen:
                 var e2 = parseExpr();
                 tk = token();
-                if( tk != TBkClose ) unexpected(tk);
+                if( tk != TBkClose ) ParserUtils.unexpected(tk);
                 return parseE4XFilterNext(EArray(e1, e2));
             default:
-                return unexpected( tk );
+                return ParserUtils.unexpected( tk );
         }
     }
     
@@ -2180,7 +2060,7 @@ class Parser {
         var t = token();
         return switch( ParserUtils.uncomment(ParserUtils.removeNewLine(t)) ) {
         case TId(i): i;
-        default: unexpected(t);
+        default: ParserUtils.unexpected(t);
         }
     }
     

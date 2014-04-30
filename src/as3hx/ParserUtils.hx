@@ -1,6 +1,7 @@
 package as3hx;
 
 import as3hx.Tokenizer;
+import as3hx.Parser;
 import as3hx.As3;
 
 class ParserUtils {
@@ -149,5 +150,127 @@ class ParserUtils {
             default:
                 return e;    
         }
+    }
+
+    public static function unexpected( tk ) : Dynamic {
+        throw EUnexpected(Tokenizer.tokenString(tk));
+        return null;
+    }
+
+   /**
+    * In certain cases, a typedef will be generated 
+    * for a class attribute, for better type safety
+    */
+    public static function generateTypeIfNeeded(classVar : ClassField)
+    {
+        //this only applies to static field attributes, as
+        //they only define constants values
+        if (!Lambda.has(classVar.kwds, "static")) {
+            return null;
+        }
+
+        //this only applies to class attributes defining
+        //an array
+        var expr = null;
+        switch (classVar.kind) {
+            case FVar(t, val):
+                switch (t) {
+                    case TPath(t):
+                        if (t[0] != "Array" || t.length > 1) {
+                            return null;
+                        }
+                        expr = val;
+                    default:
+                        return null;
+                }
+            default:
+                return null;
+        }
+
+        if (expr == null)
+            return null;
+
+        //only applies if the array is initialised at
+        //declaration
+        var arrayDecl = null;
+        switch (expr) {
+            case EArrayDecl(decl):
+                arrayDecl = decl;
+            default:
+                return null;
+        }
+        
+        //if the arary is empty, type can't be defined
+        if (arrayDecl.length == 0) {
+            return null;
+        }
+        
+        //return the type of an object field
+        var getType:Expr->String = function(e) {
+            switch (e) {
+                case EConst(c):
+                    switch(c) {
+                        case CInt(v):
+                            return "Int";
+                        case CFloat(v):
+                            return "Float";
+                        case CString(v):
+                            return "String";      
+                    }
+                case EIdent(id):
+                    if (id == "true" || id == "false") {
+                        return "Bool";
+                    }    
+                    return "Dynamic";
+                default:
+                    return "Dynamic";
+            }
+        }
+
+        //Type declaration is only created for array of objects,.
+        //Type is retrieved from the first object fields, then 
+        //all remaining objects in the array are check against this
+        //type. If the type is different, then it is a mixed type
+        //array and no type declaration should be created
+        var fields = [];
+        for (i in 0...arrayDecl.length) {
+            var el = ParserUtils.removeNewLineExpr(arrayDecl[i]);
+            switch(el) {
+                case EObject(fl):
+                    for (f in fl) {
+                        if (i == 0) { //first object, we get the types
+                            fields.push({name: f.name, t:getType(f.e)});
+                        }
+                        else { //for subsequent objects, check if they match the type
+                            var match = false;
+                            for (field in fields) {
+                                if (field.name == f.name) {
+                                    match = true;
+                                }
+                            }
+                            if (!match) {
+                                return null;
+                            }
+                        }
+                    }
+                default:
+                    return null;
+            }
+        }
+
+        //turn class attribute name to pascal case
+        var getPascalCase:String->String = function(id) {
+            id = id.toLowerCase();
+            var arr = id.split("_");
+            var ret = "";
+            for (el in arr) {
+                el = el.charAt(0).toUpperCase() + el.substr(1);
+                ret += el;
+            }
+            return ret;
+        }
+
+        //type declaration is stored, will be written
+        return {name:getPascalCase(classVar.name), fields:fields, fieldName:classVar.name};
     }
 }
