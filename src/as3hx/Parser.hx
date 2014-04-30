@@ -1,6 +1,8 @@
 package as3hx;
 import as3hx.As3;
 
+using as3hx.Debug;
+
 enum Error {
     EInvalidChar( c : Int );
     EUnexpected( s : String );
@@ -123,7 +125,7 @@ class Parser {
         var parts = file.split("/");
         filename = parts.pop();
         path = parts.join("/");
-        openDebug("Parsing included file " + file + "\n");
+        Debug.openDebug("Parsing included file " + file + "\n", line);
         if (!sys.FileSystem.exists(file)) throw "Error: file '" + file + "' does not exist, at " + oldLine;
         var content = sys.io.File.getContent(file);
         line = 1;
@@ -137,7 +139,7 @@ class Parser {
         line = oldLine;
         path = oldPath;
         filename = oldFilename;
-        closeDebug("Finished parsing file " + file);
+        Debug.closeDebug("Finished parsing file " + file, line);
     }
     
     inline function add(tk) {
@@ -299,7 +301,7 @@ class Parser {
     function opt(tk,keepComments:Bool=false) : Bool {
         var t = token();
         var tu = uncomment(removeNewLine(t));
-        dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk));
+        Debug.dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk), line);
         if( Type.enumEq(tu, tk) ) {
             if(keepComments) {
                 var ta = explodeComment(t);
@@ -334,7 +336,7 @@ class Parser {
         var t = token();
         var tu = uncomment(t);
         var trnl = removeNewLine(tu);
-        dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk));
+        Debug.dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk), line);
         if( ! Type.enumEq(trnl, tk) ) {
             add(t);
             return false;
@@ -368,7 +370,7 @@ class Parser {
     }
     
     function parseProgram() : Program {
-        dbgln("parseProgram()");
+        Debug.dbgln("parseProgram()", line);
         var pack = [];
         var header:Array<Expr> = [];
 
@@ -566,7 +568,7 @@ class Parser {
 
                         if (Lambda.has(cfg.conditionalVars, ns + "::" + id)) {
                             // this is a user supplied conditional compilation variable
-                            openDebug("conditional compilation: " + ns + "::" + id);
+                            Debug.openDebug("conditional compilation: " + ns + "::" + id, line);
                            // condVars.push(ns + "_" + id);
                             meta.push(ECondComp(ns + "_" + id, null, null));
                             inCondBlock = true;
@@ -579,7 +581,7 @@ class Parser {
                                     pf(false);
                             }
                            // condVars.pop();
-                            closeDebug("end conditional compilation: " + ns + "::" + id);
+                            Debug.closeDebug("end conditional compilation: " + ns + "::" + id, line);
                             continue;
                         } else {
                             unexpected(t);
@@ -640,7 +642,7 @@ class Parser {
     }
 
     function parseImport() {
-        dbg("parseImport()");
+        Debug.dbg("parseImport()", line);
         var a = [id()];
         while( true ) {
             var tk = token();
@@ -678,14 +680,14 @@ class Parser {
                 break;
             }
         }
-        dbgln(" -> " + a);
+        Debug.dbgln(" -> " + a, line);
         if(cfg.testCase && a.join(".") == "flash.display.Sprite")
             return [];
         return a;
     }
 
     function parseMetadata() : Expr {
-        dbg("parseMetadata()");
+        Debug.dbg("parseMetadata()", line);
         ensure(TBkOpen);
         var name = id();
         var args = [];
@@ -710,12 +712,12 @@ class Parser {
                 opt(TComma);
             }
         ensure(TBkClose);
-        dbgln(" -> " + { name : name, args : args });
+        Debug.dbgln(" -> " + { name : name, args : args }, line);
         return EMeta({ name : name, args : args });
     }
     
     function parseDefinition(meta:Array<Expr>) : Definition {
-        dbgln("parseDefinition()" + meta);
+        Debug.dbgln("parseDefinition()" + meta, line);
         var kwds = [];
         while( true ) {
             var id = id();
@@ -743,7 +745,7 @@ class Parser {
     }
     
     function parseFunDef(kwds, meta) : FunctionDef {
-        dbgln("parseFunDef()");
+        Debug.dbgln("parseFunDef()", line);
         var fname = id();
         var f = parseFun();
         return {
@@ -755,7 +757,7 @@ class Parser {
     }
     
     function parseNsDef(kwds, meta) : NamespaceDef {
-        dbgln("parseNsDef()");
+        Debug.dbgln("parseNsDef()", line);
         var name = id();
         var value = null;
         if( opt(TOp("=")) ) {
@@ -783,7 +785,7 @@ class Parser {
         var classMeta = meta;
         var imports = [];
         meta = [];
-        openDebug("parseClass("+cname+")", true);
+        Debug.openDebug("parseClass("+cname+")", line, true);
         var fields = new Array();
         var impl = [], extend = null, inits = [];
         var condVars:Array<String> = [];
@@ -932,7 +934,7 @@ class Parser {
                         case TId(id):
                             if (Lambda.has(cfg.conditionalVars, ns + "::" + id)) {
                                 // this is a user supplied conditional compilation variable
-                                openDebug("conditional compilation: " + ns + "::" + id);
+                                Debug.openDebug("conditional compilation: " + ns + "::" + id, line);
                                 condVars.push(ns + "_" + id);
                                 meta.push(ECondComp(ns + "_" + id, null, null));
                                 t = token();
@@ -958,7 +960,7 @@ class Parser {
                                 f(t);
                               
                                 condVars.pop();
-                                closeDebug("end conditional compilation: " + ns + "::" + id);
+                                Debug.closeDebug("end conditional compilation: " + ns + "::" + id, line);
                                 break;
                             } else {
                                 unexpected(t);
@@ -971,7 +973,7 @@ class Parser {
                     meta.push(ENL(null));
 
                 default:
-                    dbgln("init block: " + t);
+                    Debug.dbgln("init block: " + t, line);
                     add(t);
                     while( kwds.length > 0 )
                         add(TId(kwds.pop()));
@@ -1003,7 +1005,7 @@ class Parser {
                 throw "Assert error: " + m;
             }
         }
-        closeDebug("parseClass("+cname+") finished");
+        Debug.closeDebug("parseClass("+cname+") finished", line);
         return {
             meta : classMeta,
             kwds : kwds,
@@ -1035,7 +1037,7 @@ class Parser {
     }
 
     function parseType() {
-        dbgln("parseType()");
+        Debug.dbgln("parseType()", line);
         // this is a ugly hack in order to fix lexer issue with "var x:*=0"
         var tmp = opPriority.get("*=");
         opPriority.remove("*=");
@@ -1107,9 +1109,9 @@ class Parser {
     }
 
     function parseClassVar(kwds,meta,condVars:Array<String>) : ClassField {
-        openDebug("parseClassVar(");
+        Debug.openDebug("parseClassVar(", line);
         var name = id();
-        dbgln(name + ")",false);
+        Debug.dbgln(name + ")", line, false);
         var t = null, val = null;
         if( opt(TColon) )
             t = parseType();
@@ -1126,7 +1128,7 @@ class Parser {
         
         generateTypeIfNeeded(rv);
 
-        closeDebug("parseClassVar -> " + rv);
+        Debug.closeDebug("parseClassVar -> " + rv, line);
         return rv;
     }
 
@@ -1248,7 +1250,7 @@ class Parser {
     }
 
     function parseClassFun(kwds:Array<String>,meta,condVars:Array<String>, isInterface:Bool) : ClassField {
-        openDebug("parseClassFun(");
+        Debug.openDebug("parseClassFun(", line);
         var name = id();
         if( name == "get" || name == "set" ) {
             switch (peek()) {
@@ -1261,10 +1263,10 @@ class Parser {
                     name = id();
             }
         }
-        dbgln(Std.string(kwds) + " " + name + ")", false);
+        Debug.dbgln(Std.string(kwds) + " " + name + ")", line, false);
         var f = parseFun(isInterface);
         end();
-        closeDebug("end parseClassFun()");
+        Debug.closeDebug("end parseClassFun()", line);
         return {
             meta : meta,
             kwds : kwds,
@@ -1275,7 +1277,7 @@ class Parser {
     }
     
     function parseFun(isInterfaceFun : Bool = false) : Function {
-        openDebug("parseFun()",true);
+        Debug.openDebug("parseFun()",line, true);
         var f = {
             args : [],
             varArgs : null,
@@ -1398,12 +1400,12 @@ class Parser {
                 throw "unexpected " + Std.string(f.expr);
             }
         }
-        closeDebug("end parseFun()");
+        Debug.closeDebug("end parseFun()", line);
         return f;
     }
     
     function parsePackageName() {
-        dbg("parsePackageName()");
+        Debug.dbg("parsePackageName()", line);
         var a = [id()];
         while( true ) {
             var tk = token();
@@ -1419,7 +1421,7 @@ class Parser {
                 break;
             }
         }
-        dbgln(" -> " + a);
+        Debug.dbgln(" -> " + a, line);
         return a;
     }
 
@@ -1429,14 +1431,14 @@ class Parser {
     }
 
     function end() {
-        openDebug("function end()", true);
+        Debug.openDebug("function end()", line, true);
         while( opt(TSemicolon) ) {
         }
-        closeDebug("function end()");
+        Debug.closeDebug("function end()", line);
     }
     
     function parseFullExpr() {
-        dbgln("parseFullExpr()");
+        Debug.dbgln("parseFullExpr()", line);
         var e = parseExpr();
         if( opt(TColon) ) {
             switch( e ) {
@@ -1450,7 +1452,7 @@ class Parser {
     }
 
     function parseObject() {
-        openDebug("parseObject()", true);
+        Debug.openDebug("parseObject()", line, true);
         var fl = new Array();
 
         while( true ) {
@@ -1491,13 +1493,13 @@ class Parser {
             }
         }
         var rv = parseExprNext(EObject(fl));
-        closeDebug("parseObject() -> " + rv);
+        Debug.closeDebug("parseObject() -> " + rv, line);
         return rv;
     }
 
     function parseExpr(funcStart:Bool=false) : Expr {
         var tk = token();
-        dbgln("parseExpr("+tk+")");
+        Debug.dbgln("parseExpr("+tk+")", line);
         switch( tk ) {
         case TId(id):
             var e = parseStructure(id);
@@ -1513,7 +1515,7 @@ class Parser {
         case TBrOpen:
             tk = token();
           
-            dbgln("parseExpr: "+tk);
+            Debug.dbgln("parseExpr: "+tk, line);
             switch( tk ) {
             case TBrClose:
                 if(funcStart) return EBlock([]);
@@ -1618,7 +1620,7 @@ class Parser {
     }
 
     function parseStructure(kwd) : Expr {
-        dbgln("parseStructure("+kwd+")");
+        Debug.dbgln("parseStructure("+kwd+")", line);
         return switch( kwd ) {
         case "if":
             ensure(TPOpen);
@@ -1856,7 +1858,7 @@ class Parser {
     }
 
     function parseCaseBlock() {
-        dbgln("parseCaseBlock()");
+        Debug.dbgln("parseCaseBlock()", line);
         var el = [];
         while( true ) {
             var tk = peek();
@@ -1873,7 +1875,7 @@ class Parser {
     
     function parseExprNext( e1 : Expr, pendingNewLines : Int = 0 ) {
         var tk = token();
-        dbgln("parseExprNext("+e1+") ("+tk+")");
+        Debug.dbgln("parseExprNext("+e1+") ("+tk+")", line);
         switch( tk ) {
         case TOp(op):
             for( x in unopsSuffix )
@@ -1898,17 +1900,17 @@ class Parser {
                     case TId(id):
                         if (Lambda.has(cfg.conditionalVars, i + "::" + id)) {
                             // this is a user supplied conditional compilation variable
-                            openDebug("conditional compilation: " + i + "::" + id);
+                            Debug.openDebug("conditional compilation: " + i + "::" + id, line);
                             switch (peek()) {
                                 case TPClose:
-                                    closeDebug("end conditional compilation: " + i + "::" + id);
+                                    Debug.closeDebug("end conditional compilation: " + i + "::" + id, line);
                                     //corner case, the conditional compilation is within an "if" statement
                                     //example if(CONFIG::MY_CONFIG) { //code block }
                                     //normal "if" statement parsing will take care of it
                                     return ECondComp(i + "_" + id, null, null);
                                 default:    
                                     var e = parseExpr();
-                                    closeDebug("end conditional compilation: " + i + "::" + id);
+                                    Debug.closeDebug("end conditional compilation: " + i + "::" + id, line);
                                     return ECondComp(i + "_" + id, e, null);
                             }
 
@@ -1921,12 +1923,12 @@ class Parser {
                 }
             default:
             }
-            dbgln("WARNING parseExprNext unable to create namespace for " + Std.string(e1));
+            Debug.dbgln("WARNING parseExprNext unable to create namespace for " + Std.string(e1), line);
             add(tk);
             return e1;
         case TDot:
             tk = token();
-            dbgln(Std.string(uncomment(tk)));
+            Debug.dbgln(Std.string(uncomment(tk)), line);
             var field = null;
             switch(uncomment(removeNewLine(tk))) {
             case TId(id):
@@ -2042,14 +2044,14 @@ class Parser {
             return ECommented(s,b,true, parseExprNext(e1));
            
         default:
-            dbgln("parseExprNext stopped at " + tk);
+            Debug.dbgln("parseExprNext stopped at " + tk, line);
             add(tk);
             return e1;
         }
     }
 
     function parseExprList( etk ) : Array<Expr> {
-        dbgln("parseExprList()");
+        Debug.dbgln("parseExprList()", line);
 
         var args = new Array();
         var f = function(t) {
@@ -2099,7 +2101,7 @@ class Parser {
 
     function parseE4XFilter() : Expr {
         var tk = token();
-        dbgln("parseE4XFilter("+tk+")");
+        Debug.dbgln("parseE4XFilter("+tk+")", line);
         switch(tk) {
             case TAt:
                 var i : String = null;
@@ -2140,7 +2142,7 @@ class Parser {
 
     function parseE4XFilterNext( e1 : Expr ) : Expr {
         var tk = token();
-        dbgln("parseE4XFilterNext("+e1+") ("+tk+")");
+        Debug.dbgln("parseE4XFilterNext("+e1+") ("+tk+")", line);
         //parseE4XFilterNext(EIdent(groups)) (TBkOpen) [Parser 1506]
         switch( tk ) {
             case TOp(op):
@@ -2149,7 +2151,7 @@ class Parser {
                         unexpected(tk);
                 return makeBinop(op,e1,parseE4XFilter());
             case TPClose:
-                dbgln("parseE4XFilterNext stopped at " + tk);
+                Debug.dbgln("parseE4XFilterNext stopped at " + tk, line);
                 add(tk);
                 return e1;
             case TDot:
@@ -2197,7 +2199,7 @@ class Parser {
     }
     
     function readXML() {
-        dbgln("readXML()");
+        Debug.dbgln("readXML()", line);
         var buf = new StringBuf();
         var input = input;
         buf.addChar("<".code);
@@ -2255,7 +2257,7 @@ class Parser {
     }
     
     function readString( until ) {
-        dbgln("readString()");
+        Debug.dbgln("readString()", line);
         var c;
         var b = new haxe.io.BytesOutput();
         var esc = false;
@@ -2595,50 +2597,6 @@ class Parser {
         }
     }
 
-    static var lvl : Int = 0;
 
-    function printDebug(s) {
-        Sys.stderr().write(haxe.io.Bytes.ofString(s));
-    }
-    
-    function openDebug(s:String,newline:Bool=false,?p:haxe.PosInfos) {
-        #if debug
-        var o = indent() + "(" + line + ") " + s  + " [Parser " + p.lineNumber + "]";
-        if(newline)
-            o = o + "\r\n";
-        printDebug(o);
-        lvl++;
-        #end
-    }
 
-    function closeDebug(s,?p:haxe.PosInfos) {
-        #if debug
-        lvl--;
-        printDebug(indent() + "(" + line + ") " + s + " [Parser " + p.lineNumber + "]\r\n");
-        #end
-    }
-
-    function dbg(s,ind:Bool=true,?p:haxe.PosInfos) {
-        #if debug
-        var o = ind ? indent() : "";
-        o += "(" + line + ") " + s + " [Parser " + p.lineNumber + "]";
-        printDebug(o);
-        #end
-    }
-
-    function dbgln(s,ind:Bool=true,?p:haxe.PosInfos) {
-        #if debug
-        var o = ind ? indent() : "";
-        o += "(" + line + ") " + s + " [Parser " + p.lineNumber + "]\r\n";
-        printDebug(o);
-        #end
-    }
-
-    function indent()
-    {
-        var b = [];
-        for (i in 0...lvl)
-            b.push("\t");
-        return b.join("");
-    }
 }
