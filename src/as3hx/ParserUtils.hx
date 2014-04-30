@@ -309,4 +309,25 @@ class ParserUtils {
         add(t);
         return false;
     }
+
+    /**
+     * Version of opt that will search for tk, and if it is the next token,
+     * all the comments before it will be pushed to array 'cmntOut'
+     **/
+    public static function opt2(token, add, tk, cmntOut : Array<Expr>) : Bool {
+        var t = token();
+        var tu = ParserUtils.uncomment(t);
+        var trnl = ParserUtils.removeNewLine(tu);
+        Debug.dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk));
+        if( ! Type.enumEq(trnl, tk) ) {
+            add(t);
+            return false;
+        }
+        switch(t) {
+            case TCommented(_,_,_):
+                cmntOut.push(ParserUtils.makeECommented(t, null));
+            default:
+        }
+        return true;
+    }
 }

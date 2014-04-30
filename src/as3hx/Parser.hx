@@ -127,27 +127,6 @@ class Parser {
     }
 
     /**
-     * Version of opt that will search for tk, and if it is the next token,
-     * all the comments before it will be pushed to array 'cmntOut'
-     **/
-    function opt2(tk, cmntOut : Array<Expr>) : Bool {
-        var t = token();
-        var tu = ParserUtils.uncomment(t);
-        var trnl = ParserUtils.removeNewLine(tu);
-        Debug.dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk), line);
-        if( ! Type.enumEq(trnl, tk) ) {
-            add(t);
-            return false;
-        }
-        switch(t) {
-            case TCommented(_,_,_):
-                cmntOut.push(ParserUtils.makeECommented(t, null));
-            default:
-        }
-        return true;
-    }
-
-    /**
      * Ensures the next token (ignoring comments and newlines) is 'tk'.
      * @return array of comments before 'tk'
      **/
@@ -623,7 +602,7 @@ class Parser {
         pf = function(included:Bool,inCondBlock:Bool) {
         while( true ) {
             // check for end of class
-            if( opt2(TBrClose, meta) ) break;
+            if( ParserUtils.opt2(token, add, TBrClose, meta) ) break;
             var kwds = [];
             // parse all comments and metadata before next field
             while( true ) {
