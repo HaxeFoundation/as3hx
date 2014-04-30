@@ -1,6 +1,7 @@
 package as3hx;
 import as3hx.As3;
 import as3hx.Tokenizer;
+import as3hx.ParserUtils;
 
 using as3hx.Debug;
 
@@ -11,7 +12,6 @@ enum Error {
     EUnterminatedComment;
     EUnterminatedXML;
 }
-
 
 /**
  * ...
@@ -126,54 +126,6 @@ class Parser {
         tokens.add(tk);
     }
 
-    function uncomment(tk) {
-        if(tk == null)
-            return null;
-        return switch(tk) {
-        case TCommented(s,b,e):
-            uncomment(e);
-        default:
-            tk;
-        }
-    }
-
-    function uncommentExpr(e) {
-        if(e == null)
-            return null;
-        return switch(e) {
-        case ECommented(s,b,t,e2):
-            uncommentExpr(e2);
-        default:
-            e;
-        }
-    }   
-
-    /**
-     * Takes a token that may be a comment and returns
-     * an array of tokens that will have the comments
-     * at the beginning
-     **/
-    function explodeComment(tk) : Array<Token> {
-        var a = [];
-        var f : Token->Void = null;
-        f = function(t) {
-            if(t == null)
-                return;
-            switch(t) {
-            case TCommented(s,b,t2):
-                a.push(TCommented(s,b,null));
-                f(t2);
-            case TNL(t):
-                a.push(TNL(null));
-                f(t);
-            default:
-                a.push(t);
-            }
-        }
-        f(tk);
-        return a;
-    }
-
     function explodeCommentExpr(e) : Array<Expr> {
         var a = [];
         var f : Expr->Void = null;
@@ -280,11 +232,11 @@ class Parser {
      **/
     function opt(tk,keepComments:Bool=false) : Bool {
         var t = token();
-        var tu = uncomment(removeNewLine(t));
+        var tu = ParserUtils.uncomment(removeNewLine(t));
         Debug.dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk), line);
         if( Type.enumEq(tu, tk) ) {
             if(keepComments) {
-                var ta = explodeComment(t);
+                var ta = ParserUtils.explodeComment(t);
                 // if only 'tk' exists in ta, we're done
                 if(ta.length < 2) return true;
                 ta.pop();
@@ -314,7 +266,7 @@ class Parser {
      **/
     function opt2(tk, cmntOut : Array<Expr>) : Bool {
         var t = token();
-        var tu = uncomment(t);
+        var tu = ParserUtils.uncomment(t);
         var trnl = removeNewLine(tu);
         Debug.dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk), line);
         if( ! Type.enumEq(trnl, tk) ) {
@@ -337,14 +289,14 @@ class Parser {
         var t = token();
 
         //remove comment token
-        var tu = uncomment(t);
+        var tu = ParserUtils.uncomment(t);
 
         //remove newline token
         var trnl = removeNewLine(tu);
 
         if( !Type.enumEq(trnl, tk) )
             unexpected(trnl);
-        var ta = explodeComment(t);
+        var ta = ParserUtils.explodeComment(t);
         ta.pop();
         return ta;
     }
@@ -356,7 +308,7 @@ class Parser {
 
         // look for first 'package'
         var tk = token();
-        var a = explodeComment(tk);
+        var a = ParserUtils.explodeComment(tk);
 
         for(t in a) {
             switch(t) {
@@ -537,7 +489,7 @@ class Parser {
 
                     if(opt(TNs)) {
                         var ns : String = id;
-                        var t = uncomment(token());
+                        var t = ParserUtils.uncomment(token());
 
                         switch(t) {
                             case TId(id2):
@@ -583,7 +535,7 @@ class Parser {
                 add(t);
                 continue;   
             case TCommented(s,b,t):
-                var t = uncomment(tk);
+                var t = ParserUtils.uncomment(tk);
                 switch(t) {
                 case TBkOpen:
                     add(t);
@@ -970,7 +922,7 @@ class Parser {
         for(m in meta) {
             switch(m) {
             case ECommented(s,b,t,e):
-                if(uncommentExpr(m) != null)
+                if(ParserUtils.uncommentExpr(m) != null)
                     throw "Assert error: " + m;
                 var a = explodeCommentExpr(m);
                 for(i in a) {
@@ -1061,9 +1013,9 @@ class Parser {
             switch( tk ) {
             case TDot:
                 tk = token();
-                switch(uncomment(tk)) {
+                switch(ParserUtils.uncomment(tk)) {
                 case TId(id): a.push(id);
-                default: unexpected(uncomment(tk));
+                default: unexpected(ParserUtils.uncomment(tk));
                 }
             case TCommented(s,b,t):
 
@@ -1438,7 +1390,7 @@ class Parser {
         while( true ) {
             var tk = token();
             var id = null;
-            switch( uncomment(tk) ) {
+            switch( ParserUtils.uncomment(tk) ) {
             case TId(i): id = i;
             case TConst(c):
                 switch( c ) {
@@ -1463,7 +1415,7 @@ class Parser {
                 o.e = tailComment(o.e, tk);
             default:
             }
-            switch( uncomment(tk) ) {
+            switch( ParserUtils.uncomment(tk) ) {
             case TBrClose:
                 break;
             case TComma:
@@ -1517,8 +1469,8 @@ class Parser {
             //check for corner case, block contains only comments and
             //newlines. In this case, get all comments and add them to 
             //content of block expression
-            if (uncomment(removeNewLine(tk)) == TBrClose) {
-                var ta = explodeComment(tk);
+            if (ParserUtils.uncomment(removeNewLine(tk)) == TBrClose) {
+                var ta = ParserUtils.explodeComment(tk);
                 for (t in ta) {
                     switch (t) {
                         case TCommented(s,b,t): a.push(ECommented(s,b,false, null));
@@ -1908,9 +1860,9 @@ class Parser {
             return e1;
         case TDot:
             tk = token();
-            Debug.dbgln(Std.string(uncomment(tk)), line);
+            Debug.dbgln(Std.string(ParserUtils.uncomment(tk)), line);
             var field = null;
-            switch(uncomment(removeNewLine(tk))) {
+            switch(ParserUtils.uncomment(removeNewLine(tk))) {
             case TId(id):
                 field = StringTools.replace(id, "$", "__DOLLAR__");
                 if( opt(TNs) )
@@ -1941,7 +1893,7 @@ class Parser {
                 var i : String = null;
                 if(opt(TBkOpen)) {
                     tk = token();
-                    switch(uncomment(tk)) {
+                    switch(ParserUtils.uncomment(tk)) {
                         case TConst(c):
                             switch(c) {
                                 case CString(s):
@@ -2046,7 +1998,7 @@ class Parser {
             switch( tk ) {
             case TComma:
             case TCommented(_,_,_):
-                var t = uncomment(tk);
+                var t = ParserUtils.uncomment(tk);
                 if(t == etk) {
                     f(tk);
                     break;
@@ -2069,7 +2021,7 @@ class Parser {
                         f(t);
                     default:    
                 }
-                 var t = uncomment(t);
+                 var t = ParserUtils.uncomment(t);
                 if (t == etk) break;
             default:
                 if( tk == etk ) break;
@@ -2087,7 +2039,7 @@ class Parser {
                 var i : String = null;
                 if(opt(TBkOpen)) {
                     tk = token();
-                    switch(uncomment(tk)) {
+                    switch(ParserUtils.uncomment(tk)) {
                         case TConst(c):
                             switch(c) {
                                 case CString(s):
@@ -2137,7 +2089,7 @@ class Parser {
             case TDot:
                 tk = token();
                 var field = null;
-                switch(uncomment(tk)) {
+                switch(ParserUtils.uncomment(tk)) {
                     case TId(id):
                         field = StringTools.replace(id, "$", "__DOLLAR__");
                         if( opt(TNs) )
@@ -2146,7 +2098,7 @@ class Parser {
                         var i : String = null;
                         if(opt(TBkOpen)) {
                             tk = token();
-                            switch(uncomment(tk)) {
+                            switch(ParserUtils.uncomment(tk)) {
                                 case TConst(c):
                                     switch(c) {
                                         case CString(s):
@@ -2318,12 +2270,12 @@ class Parser {
     function peek() : Token {
         if( tokens.isEmpty() )
             add(token());
-        return uncomment(removeNewLine(tokens.first()));
+        return ParserUtils.uncomment(removeNewLine(tokens.first()));
     }
     
     function id() {
         var t = token();
-        return switch( uncomment(removeNewLine(t)) ) {
+        return switch( ParserUtils.uncomment(removeNewLine(t)) ) {
         case TId(i): i;
         default: unexpected(t);
         }
