@@ -126,103 +126,6 @@ class Parser {
         tokens.add(tk);
     }
 
-    function explodeCommentExpr(e) : Array<Expr> {
-        var a = [];
-        var f : Expr->Void = null;
-        f = function(e) {
-            if(e == null)
-                return;
-            switch(e) {
-            case ECommented(s,b,t,e2):
-                a.push(ECommented(s,b,t,null));
-                f(e2);
-            default:
-                a.push(e);
-            }
-        }
-        f(e);
-        return a;
-    }
-
-    /**
-     * Takes an expression e and adds the comment 'tk' to it
-     * as a trailing comment, iif tk is a TCommented, discarding
-     * whatever the comment target token is.
-     **/
-    function tailComment(e:Expr, tk:Token) : Expr {
-        //TCommented( s : String, isBlock:Bool, t : Token );
-        // to
-        //ECommented(s : String, isBlock:Bool, isTail:Bool, e : Expr);
-        return switch(tk) {
-        case TCommented(s,b,t):
-            switch(t) {
-            case TCommented(s2,b2,t2):
-                return tailComment(ECommented(s, b, true, e), t2);
-            default:
-                return ECommented(s, b, true, e);
-            }
-        default:
-            e;
-        }
-    }
-
-    /**
-     * Takes ctk, a TCommented, and replaces the target token
-     * with 'e', creating an ECommented
-     **/
-    function makeECommented(ctk:Token, e:Expr) : Expr {
-        return switch(ctk) {
-        case TCommented(s,b,t):
-            return switch(t) {
-            case TCommented(_,_,_):
-                ECommented(s,b,false,makeECommented(t, e));
-            default:
-                ECommented(s,b,false,e);
-            }
-        default:
-            throw "Assert error: unexpected " + ctk;
-        }
-    }
-    
-    /**
-     * Takes a token which may be a newline. If it
-     * is, return the token wrapped by the newline,
-     * else return the token. If the token is a comment,
-     * it may also return the wrapped tokent inside optionnaly
-     */
-    function removeNewLine(t : Token, removeComments : Bool = true) : Token {
-        return switch(t) {
-            case TNL(t2):
-                return removeNewLine(t2, removeComments);
-            case TCommented(s,b,t2):
-                //remove comment by default
-                if (removeComments) {
-                    return removeNewLine(t2, removeComments);
-                } else {
-                    return t;
-                }
-            default:
-                return t;    
-        }
-    }
-
-    /**
-     * Same as removeNewLine but for expression instead of token
-     */
-    function removeNewLineExpr(e : Expr, removeComments : Bool = true) : Expr {
-        return switch(e) {
-            case ENL(e2):
-                return removeNewLineExpr(e2, removeComments);
-            case ECommented(s,b,t,e2):
-                if (removeComments) {
-                    return removeNewLineExpr(e2, removeComments);
-                } else {
-                    return e;
-                }
-            default:
-                return e;    
-        }
-    }
 
     /**
      * Checks that the next token is of type 'tk', returning
@@ -232,7 +135,7 @@ class Parser {
      **/
     function opt(tk,keepComments:Bool=false) : Bool {
         var t = token();
-        var tu = ParserUtils.uncomment(removeNewLine(t));
+        var tu = ParserUtils.uncomment(ParserUtils.removeNewLine(t));
         Debug.dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk), line);
         if( Type.enumEq(tu, tk) ) {
             if(keepComments) {
@@ -267,7 +170,7 @@ class Parser {
     function opt2(tk, cmntOut : Array<Expr>) : Bool {
         var t = token();
         var tu = ParserUtils.uncomment(t);
-        var trnl = removeNewLine(tu);
+        var trnl = ParserUtils.removeNewLine(tu);
         Debug.dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk), line);
         if( ! Type.enumEq(trnl, tk) ) {
             add(t);
@@ -275,7 +178,7 @@ class Parser {
         }
         switch(t) {
             case TCommented(_,_,_):
-                cmntOut.push(makeECommented(t, null));
+                cmntOut.push(ParserUtils.makeECommented(t, null));
             default:
         }
         return true;
@@ -292,7 +195,7 @@ class Parser {
         var tu = ParserUtils.uncomment(t);
 
         //remove newline token
-        var trnl = removeNewLine(tu);
+        var trnl = ParserUtils.removeNewLine(tu);
 
         if( !Type.enumEq(trnl, tk) )
             unexpected(trnl);
@@ -539,11 +442,11 @@ class Parser {
                 switch(t) {
                 case TBkOpen:
                     add(t);
-                    meta.push(makeECommented(tk, parseMetadata()));
+                    meta.push(ParserUtils.makeECommented(tk, parseMetadata()));
                     continue;
                 default:
                     add(t);
-                    meta.push(makeECommented(tk, null));
+                    meta.push(ParserUtils.makeECommented(tk, null));
                 }
                 continue;
             default:
@@ -924,7 +827,7 @@ class Parser {
             case ECommented(s,b,t,e):
                 if(ParserUtils.uncommentExpr(m) != null)
                     throw "Assert error: " + m;
-                var a = explodeCommentExpr(m);
+                var a = ParserUtils.explodeCommentExpr(m);
                 for(i in a) {
                     switch(i) {
                         case ECommented(s,b,t,e):
@@ -1141,7 +1044,7 @@ class Parser {
         //array and no type declaration should be created
         var fields = [];
         for (i in 0...arrayDecl.length) {
-            var el = removeNewLineExpr(arrayDecl[i]);
+            var el = ParserUtils.removeNewLineExpr(arrayDecl[i]);
             switch(el) {
                 case EObject(fl):
                     for (f in fl) {
@@ -1261,7 +1164,7 @@ class Parser {
 
                     case TCommented(s,b,t): //comment in between arguments
                         add(t);
-                        expressions.push(makeECommented(tk, null));
+                        expressions.push(ParserUtils.makeECommented(tk, null));
 
                     case TNL(t):  //newline in between arguments
                         add(t);
@@ -1306,7 +1209,7 @@ class Parser {
 
                  case TCommented(s,b,t): //comment before '{' or ';'
                    add(t);
-                   retExpressions.push(makeECommented(tk, null));    
+                   retExpressions.push(ParserUtils.makeECommented(tk, null));    
 
                 case TBrOpen, TSemicolon: //end of method return 
                     add(tk);
@@ -1319,7 +1222,7 @@ class Parser {
 
         if( peek() == TBrOpen ) {
             f.expr = parseExpr(true);
-            switch(removeNewLineExpr(f.expr)) {
+            switch(ParserUtils.removeNewLineExpr(f.expr)) {
             case EObject(fl):
                 if(fl.length == 0) {
                     f.expr = EBlock([]);
@@ -1412,7 +1315,7 @@ class Parser {
             switch(tk) {
             case TCommented(s,b,e):
                 var o = fl[fl.length-1];
-                o.e = tailComment(o.e, tk);
+                o.e = ParserUtils.tailComment(o.e, tk);
             default:
             }
             switch( ParserUtils.uncomment(tk) ) {
@@ -1469,7 +1372,7 @@ class Parser {
             //check for corner case, block contains only comments and
             //newlines. In this case, get all comments and add them to 
             //content of block expression
-            if (ParserUtils.uncomment(removeNewLine(tk)) == TBrClose) {
+            if (ParserUtils.uncomment(ParserUtils.removeNewLine(tk)) == TBrClose) {
                 var ta = ParserUtils.explodeComment(tk);
                 for (t in ta) {
                     switch (t) {
@@ -1512,7 +1415,7 @@ class Parser {
         case TBkOpen:
             var a = new Array();
             tk = token();
-            while( removeNewLine(tk) != TBkClose ) {
+            while( ParserUtils.removeNewLine(tk) != TBkClose ) {
                 add(tk);
                 a.push(parseExpr());
                 tk = token();
@@ -1862,7 +1765,7 @@ class Parser {
             tk = token();
             Debug.dbgln(Std.string(ParserUtils.uncomment(tk)), line);
             var field = null;
-            switch(ParserUtils.uncomment(removeNewLine(tk))) {
+            switch(ParserUtils.uncomment(ParserUtils.removeNewLine(tk))) {
             case TId(id):
                 field = StringTools.replace(id, "$", "__DOLLAR__");
                 if( opt(TNs) )
@@ -1988,7 +1891,7 @@ class Parser {
         var args = new Array();
         var f = function(t) {
             if(args.length == 0) return;
-            args[args.length-1] = tailComment(args[args.length-1], t);
+            args[args.length-1] = ParserUtils.tailComment(args[args.length-1], t);
         }
         if( opt(etk) )
             return args;
@@ -2270,12 +2173,12 @@ class Parser {
     function peek() : Token {
         if( tokens.isEmpty() )
             add(token());
-        return ParserUtils.uncomment(removeNewLine(tokens.first()));
+        return ParserUtils.uncomment(ParserUtils.removeNewLine(tokens.first()));
     }
     
     function id() {
         var t = token();
-        return switch( ParserUtils.uncomment(removeNewLine(t)) ) {
+        return switch( ParserUtils.uncomment(ParserUtils.removeNewLine(t)) ) {
         case TId(i): i;
         default: unexpected(t);
         }
