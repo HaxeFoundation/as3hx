@@ -1,5 +1,6 @@
 package as3hx;
 import as3hx.As3;
+import as3hx.Tokenizer;
 
 using as3hx.Debug;
 
@@ -11,27 +12,6 @@ enum Error {
     EUnterminatedXML;
 }
 
-enum Token {
-    TEof;
-    TConst( c : Const );
-    TId( s : String );
-    TOp( s : String );
-    TPOpen;
-    TPClose;
-    TBrOpen;
-    TBrClose;
-    TDot;
-    TComma;
-    TSemicolon;
-    TBkOpen;
-    TBkClose;
-    TQuestion;
-    TColon;
-    TAt;
-    TNs;
-    TNL( t : Token );
-    TCommented( s : String, isBlock:Bool, t : Token );
-}
 
 /**
  * ...
@@ -391,7 +371,7 @@ class Parser {
                 }
                 
             case TCommented(s,b,t):
-                if(t != null) throw "Assert error " + tokenString(t);
+                if(t != null) throw "Assert error " + Tokenizer.tokenString(t);
                 header.push(ECommented(s,b,false,null));
             case TNL(t):    
                 header.push(ENL(null));
@@ -1426,7 +1406,7 @@ class Parser {
     }
 
     function unexpected( tk ) : Dynamic {
-        throw EUnexpected(tokenString(tk));
+        throw EUnexpected(Tokenizer.tokenString(tk));
         return null;
     }
 
@@ -2565,37 +2545,6 @@ class Parser {
         return null;
     }
 
-    function constString( c ) {
-        return switch(c) {
-        case CInt(v): v;
-        case CFloat(f): f;
-        case CString(s): s; // TODO : escape + quote
-        }
-    }
-
-    function tokenString( t ) {
-        return switch( t ) {
-        case TEof: "<eof>";
-        case TConst(c): constString(c);
-        case TId(s): s;
-        case TOp(s): s;
-        case TPOpen: "(";
-        case TPClose: ")";
-        case TBrOpen: "{";
-        case TBrClose: "}";
-        case TDot: ".";
-        case TComma: ",";
-        case TSemicolon: ";";
-        case TBkOpen: "[";
-        case TBkClose: "]";
-        case TQuestion: "?";
-        case TColon: ":";
-        case TAt: "@";
-        case TNs: "::";
-        case TNL(t): "<newline>";
-        case TCommented(s,b,t): s + " " + tokenString(t);
-        }
-    }
 
 
 
