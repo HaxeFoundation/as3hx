@@ -445,4 +445,11 @@ class Tokenizer {
         }
         return b.getBytes().toString();
     }
+    
+    public function end() {
+        Debug.openDebug("function end()", line, true);
+        while( ParserUtils.opt(token, add, TSemicolon) ) {
+        }
+        Debug.closeDebug("function end()", line);
+    }
 }

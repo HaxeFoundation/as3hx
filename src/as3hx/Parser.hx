@@ -218,7 +218,7 @@ class Parser {
 
                     }
                        
-                    end();
+                    tokenizer.end();
                     continue;
                 case "use":
                     parseUse();
@@ -249,7 +249,7 @@ class Parser {
                                     var oldClosed = closed;
                                     closed = false;
                                     parseInclude(path,pf.bind(true));
-                                    end();
+                                    tokenizer.end();
                                     closed = oldClosed;
                                 default:
                                     ParserUtils.unexpected(tk);
@@ -343,7 +343,7 @@ class Parser {
     function parseUse() {
         tokenizer.ensure(TId("namespace"));
         var ns = tokenizer.id();
-        end();
+        tokenizer.end();
     }
 
     function parseImport() {
@@ -571,7 +571,7 @@ class Parser {
                             fields.push(parseClassVar(kwds, meta, condVars.copy()));
                             meta = [];
                         } while( ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) );
-                        end();
+                        tokenizer.end();
                         if (condVars.length != 0 && !inCondBlock) {
                             return;
                         }
@@ -581,7 +581,7 @@ class Parser {
                             fields.push(parseClassVar(kwds, meta, condVars.copy()));
                             meta = [];
                         } while( ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) );
-                        end();
+                        tokenizer.end();
                         if (condVars.length != 0 && !inCondBlock) {
                             return;
                         }
@@ -596,7 +596,7 @@ class Parser {
                     case "import":
                         var impt = parseImport();
                         if (impt.length > 0) imports.push(impt);
-                        end();
+                        tokenizer.end();
                         break;
                     case "use":
                         parseUse();
@@ -608,7 +608,7 @@ class Parser {
                                 switch(c) {
                                     case CString(path):
                                         parseInclude(path,pf.bind(true, false));
-                                        end();
+                                        tokenizer.end();
                                     default:
                                         ParserUtils.unexpected(t);
                                 }
@@ -628,7 +628,7 @@ class Parser {
                     while( kwds.length > 0 )
                         tokenizer.add(TId(kwds.pop()));
                     inits.push(parseExpr());
-                    end();
+                    tokenizer.end();
                 case TNs:
                     if (kwds.length != 1) {
                         ParserUtils.unexpected(t);
@@ -683,7 +683,7 @@ class Parser {
                     while( kwds.length > 0 )
                         tokenizer.add(TId(kwds.pop()));
                     inits.push(parseExpr());
-                    end();
+                    tokenizer.end();
                     break;
                 }
             }
@@ -855,7 +855,7 @@ class Parser {
         }
         Debug.dbgln(Std.string(kwds) + " " + name + ")", tokenizer.line, false);
         var f = parseFun(isInterface);
-        end();
+        tokenizer.end();
         Debug.closeDebug("end parseClassFun()", tokenizer.line);
         return {
             meta : meta,
@@ -1016,12 +1016,6 @@ class Parser {
     }
 
 
-    function end() {
-        Debug.openDebug("function end()", tokenizer.line, true);
-        while( ParserUtils.opt(tokenizer.token, tokenizer.add, TSemicolon) ) {
-        }
-        Debug.closeDebug("function end()", tokenizer.line);
-    }
     
     function parseFullExpr() {
         Debug.dbgln("parseFullExpr()", tokenizer.line);
@@ -1033,7 +1027,7 @@ class Parser {
             }
         }
         if( !ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) )
-            end();
+            tokenizer.end();
         return e;
     }
 
@@ -1171,7 +1165,7 @@ class Parser {
             var cond = parseExpr();
             tokenizer.ensure(TPClose);
             var e1 = parseExpr();
-            end();
+            tokenizer.end();
             var elseExpr = if( ParserUtils.opt(tokenizer.token, tokenizer.add, TId("else"), true) ) parseExpr() else null;
             switch (cond) {
                 case ECondComp(v, e, e2):
@@ -1371,7 +1365,7 @@ class Parser {
             ETypeof(e);
         case "delete":
             var e = parseExpr();
-            end();
+            tokenizer.end();
             EDelete(e);
         case "getQualifiedClassName":
             tokenizer.ensure(TPOpen);
@@ -1412,7 +1406,7 @@ class Parser {
             default:
             }
             el.push(parseExpr());
-            end();
+            tokenizer.end();
         }
         return el;
     }
