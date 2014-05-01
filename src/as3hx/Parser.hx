@@ -3,6 +3,7 @@ import as3hx.As3;
 import as3hx.Tokenizer;
 import as3hx.ParserUtils;
 import as3hx.parsers.ObjectParser;
+import as3hx.parsers.TypeParser;
 import as3hx.parsers.E4XParser;
 import as3hx.parsers.ImportParser;
 import as3hx.Error;
@@ -453,14 +454,14 @@ class Parser {
         var condVars:Array<String> = [];
         while( true ) {
             if( ParserUtils.opt(tokenizer.token, tokenizer.add, TId("implements")) ) {
-                impl.push(parseType());
+                impl.push(TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg));
                 while( ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) )
-                    impl.push(parseType());
+                    impl.push(TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg));
                 continue;
             }
             if( ParserUtils.opt(tokenizer.token, tokenizer.add, TId("extends")) ) {
                 if(!isInterface) {
-                    extend = parseType();
+                    extend = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
                     if(cfg.testCase) {
                         switch(extend) {
                             case TPath(a):
@@ -472,9 +473,9 @@ class Parser {
                     }
                 }
                 else {
-                    impl.push(parseType());
+                    impl.push(TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg));
                     while( ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) )
-                        impl.push(parseType());
+                        impl.push(TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg));
                 }
                 continue;
             }
@@ -681,102 +682,13 @@ class Parser {
         };
     }
 
-    function splitEndTemplateOps() {
-        switch( tokenizer.peek() ) {
-            case TOp(s):
-                tokenizer.token();
-                var tl = [];
-                while( s.charAt(0) == ">" ) {
-                    tl.unshift(">");
-                    s = s.substr(1);
-                }
-                if( s.length > 0 )
-                    tl.unshift(s);
-                for( op in tl )
-                tokenizer.add(TOp(op));
-            default:
-        }
-    }
-
-    function parseType() {
-        Debug.dbgln("parseType()", tokenizer.line);
-        // this is a ugly hack in order to fix lexer issue with "var x:*=0"
-        var tmp = tokenizer.opPriority.get("*=");
-        tokenizer.opPriority.remove("*=");
-        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TOp("*")) ) {
-            tokenizer.opPriority.set("*=",tmp);
-            return TStar;
-        }
-        tokenizer.opPriority.set("*=",tmp);
-
-        // for _i = new (obj as Class)() as DisplayObject;
-        switch(tokenizer.peek()) {
-        case TPOpen: return TComplex(parseExpr());
-        default:
-        }
-
-        var t = tokenizer.id();
-        if( t == "Vector" ) {
-            tokenizer.ensure(TDot);
-            tokenizer.ensure(TOp("<"));
-            var t = parseType();
-            splitEndTemplateOps();
-            tokenizer.ensure(TOp(">"));
-            typesSeen.push(TVector(t));
-            return TVector(t);
-        } else if (cfg.dictionaryToHash && t == "Dictionary") {
-            tokenizer.ensure(TDot);
-            tokenizer.ensure(TOp("<"));
-            var k = parseType();
-            tokenizer.ensure(TComma);
-            var v = parseType();
-            splitEndTemplateOps();
-            tokenizer.ensure(TOp(">"));
-            typesSeen.push(TDictionary(k, v));
-            return TDictionary(k, v);
-        }
-
-        var a = [t];
-        var tk = tokenizer.token();
-        while( true ) {
-            //trace(Std.string(tk));
-            switch( tk ) {
-            case TDot:
-                tk = tokenizer.token();
-                switch(ParserUtils.uncomment(tk)) {
-                case TId(id): a.push(id);
-                default: ParserUtils.unexpected(ParserUtils.uncomment(tk));
-                }
-            case TCommented(s,b,t):
-
-                //this check prevents from losing the comment
-                //token
-                if (t == TDot) {
-                    tk = t;
-                    continue;
-                }
-                else {
-                    tokenizer.add(tk);
-                    break;
-                }
-                
-            default:
-                tokenizer.add(tk);
-                break;
-            }
-            tk = tokenizer.token();
-        }
-        typesSeen.push(TPath(a));
-        return TPath(a);
-    }
-
     function parseClassVar(kwds,meta,condVars:Array<String>) : ClassField {
         Debug.openDebug("parseClassVar(", tokenizer.line);
         var name = tokenizer.id();
         Debug.dbgln(name + ")", tokenizer.line, false);
         var t = null, val = null;
         if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) )
-            t = parseType();
+            t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
         if( ParserUtils.opt(tokenizer.token, tokenizer.add, TOp("=")) )
             val = parseExpr();
 
@@ -858,7 +770,7 @@ class Parser {
                         expressions.push(EIdent(s));
 
                         if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) ) { // ":" 
-                            t = parseType(); //arguments type
+                            t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg); //arguments type
                             expressions.push(ETypedExpr(null, t));
                         }
 
@@ -895,7 +807,7 @@ class Parser {
 
         //parse return type 
         if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) ) {
-            var t = parseType();
+            var t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
             retExpressions.push(ETypedExpr(null, t));
             f.ret.t = t;
         }
@@ -1137,7 +1049,7 @@ class Parser {
             while( true ) {
                 var name = tokenizer.id(), t = null, val = null;
                 if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) )
-                    t = parseType();
+                    t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
                 if( ParserUtils.opt(tokenizer.token, tokenizer.add, TOp("=")) )
                     val = ETypedExpr(parseExpr(), t);
                 vars.push( { name : name, t : t, val : val } );
@@ -1209,13 +1121,13 @@ class Parser {
         case "new":
             if(ParserUtils.opt(tokenizer.token, tokenizer.add, TOp("<"))) {
                 // o = new <VectorType>[a,b,c..]
-                var t = parseType();
+                var t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
                 tokenizer.ensure(TOp(">"));
                 if(tokenizer.peek() != TBkOpen)
                     ParserUtils.unexpected(tokenizer.peek());
                 ECall(EVector(t), [parseExpr()]);
             } else {
-                var t = parseType();
+                var t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
                 // o = new (iconOrLabel as Class)() as DisplayObject
                 var cc = switch (t) {
                                     case TComplex(e1) : 
@@ -1247,7 +1159,7 @@ class Parser {
                 tokenizer.ensure(TPOpen);
                 var name = tokenizer.id();
                 tokenizer.ensure(TColon);
-                var t = parseType();
+                var t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
                 tokenizer.ensure(TPClose);
                 var e = parseExpr();
                 catches.push( { name : name, t : t, e : e } );
@@ -1428,7 +1340,7 @@ class Parser {
                     field = field + "::" + tokenizer.id();
             case TOp(op):
                 if( op != "<" || switch(e1) { case EIdent(v): v != "Vector" && v != "Dictionary"; default: true; } ) ParserUtils.unexpected(tk);
-                var t = parseType();
+                var t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
 
                 var v = switch (e1) {
                     case EIdent(v): v;
