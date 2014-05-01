@@ -3,6 +3,7 @@ import as3hx.As3;
 import as3hx.Tokenizer;
 import as3hx.ParserUtils;
 import as3hx.parsers.ObjectParser;
+import as3hx.parsers.FunctionParser;
 import as3hx.parsers.TypeParser;
 import as3hx.parsers.E4XParser;
 import as3hx.parsers.ImportParser;
@@ -410,7 +411,7 @@ class Parser {
     function parseFunDef(kwds, meta) : FunctionDef {
         Debug.dbgln("parseFunDef()", tokenizer.line);
         var fname = tokenizer.id();
-        var f = parseFun();
+        var f = FunctionParser.parse(tokenizer, parseExpr, typesSeen, cfg);
         return {
             kwds : kwds,
             meta : meta,
@@ -723,7 +724,7 @@ class Parser {
             }
         }
         Debug.dbgln(Std.string(kwds) + " " + name + ")", tokenizer.line, false);
-        var f = parseFun(isInterface);
+        var f = FunctionParser.parse(tokenizer, parseExpr, typesSeen, cfg, isInterface);
         tokenizer.end();
         Debug.closeDebug("end parseClassFun()", tokenizer.line);
         return {
@@ -733,134 +734,6 @@ class Parser {
             kind : FFun(f),
             condVars : condVars
         };
-    }
-    
-    function parseFun(isInterfaceFun : Bool = false) : Function {
-        Debug.openDebug("parseFun()", tokenizer.line, true);
-        var f = {
-            args : [],
-            varArgs : null,
-            ret : {t:null, exprs:[]},
-            expr : null
-        };
-        tokenizer.ensure(TPOpen);
-
-                   
-        //for each method argument (except var args)
-        //store the whole expression, including
-        //comments and newline
-        var expressions:Array<Expr> = [];
-        if( !ParserUtils.opt(tokenizer.token, tokenizer.add, TPClose) ) {
- 
-            while( true ) {
-               
-                var tk = tokenizer.token();
-                switch (tk) {
-                    case TDot: //as3 var args start with "..."
-                        tokenizer.ensure(TDot);
-                        tokenizer.ensure(TDot);
-                        f.varArgs = tokenizer.id();
-                        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) )
-                            tokenizer.ensure(TId("Array"));
-                        tokenizer.ensure(TPClose);
-                        break;
-
-                    case TId(s): //argument's name
-                        var name = s, t = null, val = null;
-                        expressions.push(EIdent(s));
-
-                        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) ) { // ":" 
-                            t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg); //arguments type
-                            expressions.push(ETypedExpr(null, t));
-                        }
-
-                        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TOp("=")) ) {
-                            val = parseExpr(); //optional argument's default value
-                            expressions.push(val);
-                        }
-
-                        f.args.push( { name : name, t : t, val : val, exprs:expressions } );
-                        expressions = []; // reset for next argument
-
-                        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TPClose) ) // ")" end of arguments
-                            break;
-                        tokenizer.ensure(TComma);
-
-                    case TCommented(s,b,t): //comment in between arguments
-                        tokenizer.add(t);
-                        expressions.push(ParserUtils.makeECommented(tk, null));
-
-                    case TNL(t):  //newline in between arguments
-                        tokenizer.add(t);
-                        expressions.push(ENL(null));
-
-                    default: 
-
-                }
-            }
-        }
-
-        //hold each expr for the function return until
-        //the opening bracket, including comments and
-        //newlines
-        var retExpressions:Array<Expr> = [];
-
-        //parse return type 
-        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) ) {
-            var t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
-            retExpressions.push(ETypedExpr(null, t));
-            f.ret.t = t;
-        }
-            
-        //parse until '{' or ';' (for interface method)   
-        while (true) {
-            var tk = tokenizer.token();
-            switch (tk) {
-                case TNL(t): //parse new line before '{' or ';'
-                    tokenizer.add(t);
-                    
-                    //corner case, in AS3 interface method don't
-                    //have to end with a ";". So If we encounter a
-                    //newline after the return definition, we assume
-                    //this is the end of the method definition
-                    if (isInterfaceFun) {
-                         f.ret.exprs = retExpressions;
-                         break;
-                    }
-                    else {
-                        retExpressions.push(ENL(null));
-                    }
-
-                 case TCommented(s,b,t): //comment before '{' or ';'
-                   tokenizer.add(t);
-                   retExpressions.push(ParserUtils.makeECommented(tk, null));    
-
-                case TBrOpen, TSemicolon: //end of method return 
-                    tokenizer.add(tk);
-                    f.ret.exprs = retExpressions;
-                    break;
-
-                default:
-            }
-        }       
-
-        if( tokenizer.peek() == TBrOpen ) {
-            f.expr = parseExpr(true);
-            switch(ParserUtils.removeNewLineExpr(f.expr)) {
-            case EObject(fl):
-                if(fl.length == 0) {
-                    f.expr = EBlock([]);
-                } else {
-                    throw "unexpected " + Std.string(f.expr);
-                }
-            case EBlock(_):
-                null;
-            default:
-                throw "unexpected " + Std.string(f.expr);
-            }
-        }
-        Debug.closeDebug("end parseFun()", tokenizer.line);
-        return f;
     }
     
     function parsePackageName() {
@@ -1115,7 +988,7 @@ class Parser {
             case TId(n): tokenizer.token(); n;
             default: null;
             };
-            EFunction(parseFun(),name);
+            EFunction(FunctionParser.parse(tokenizer, parseExpr, typesSeen, cfg),name);
         case "return":
             EReturn(if( tokenizer.peek() == TSemicolon ) null else parseExpr());
         case "new":
