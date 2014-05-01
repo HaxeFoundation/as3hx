@@ -93,6 +93,8 @@ class Parser {
     }
 
     public function parseString( s : String, path : String, filename : String ) {
+        //convert Windows newline to Unix ones
+        s = StringTools.replace(s, '\r\n', '\n');
         line = 1;
         this.path = path;
         this.filename = filename;
