@@ -1,11 +1,12 @@
 default:
-	haxe --no-traces as3hx.hxml && nekotools boot as3hx.n && mkdir -p bin && mv as3hx as3hx.n bin
+	haxe --no-traces as3hx.hxml
 
 debug:
-	haxe -debug as3hx.hxml && nekotools boot as3hx.n && mkdir -p bin && mv as3hx as3hx.n bin
+	haxe -debug as3hx.hxml
 
 clean:
-	rm -rf bin
+	rm -rf run.n test-out/
 
 run-test:
-	bin/as3hx test/ bin/test
+	rm -rf test-out
+	neko run.n test/ test-out/
