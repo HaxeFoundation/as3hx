@@ -3,6 +3,8 @@ import as3hx.As3;
 import as3hx.Tokenizer;
 import as3hx.ParserUtils;
 import as3hx.parsers.ObjectParser;
+import as3hx.parsers.E4XParser;
+import as3hx.parsers.ImportParser;
 import as3hx.Error;
 
 using as3hx.Debug;
@@ -156,7 +158,7 @@ class Parser {
             case TId(id):
                 switch( id ) {
                 case "import":
-                    var impt = parseImport();
+                    var impt = ImportParser.parse(tokenizer, cfg);
 
                     //outsidePackage = false;
                     //note : when parsing package, user defined imports
@@ -344,51 +346,6 @@ class Parser {
         tokenizer.ensure(TId("namespace"));
         var ns = tokenizer.id();
         tokenizer.end();
-    }
-
-    function parseImport() {
-        Debug.dbg("parseImport()", tokenizer.line);
-        var a = [tokenizer.id()];
-        while( true ) {
-            var tk = tokenizer.token();
-            switch( tk ) {
-            case TDot:
-                tk = tokenizer.token();
-                switch(tk) {
-                case TId(id): 
-                    if (id == "getQualifiedClassName") return [];
-                    if (id == "getQualifiedSuperclassName") return [];
-                    if (id == "getTimer") return [];
-                    if (id == "getDefinitionByName") return [];
-                    // TODO: this is flash.utils.Proxy need to create a compat class
-                    // http://blog.int3ractive.com/2010/05/using-flash-proxy-class.html
-                    // Will put this into the nme namespace for now, and merge it
-                    // to nme if it works
-                    if (id == "flash_proxy") return ["nme","utils","Proxy"];
-                    // import __AS3__.vec.Vector;
-                    if (id == "Vector" && a[0] == "__AS3__") return [];
-                    // import flash.utils.Dictionary;
-                    if (cfg.dictionaryToHash && id == "Dictionary" && a.length == 2 && a[0] == "flash" && a[1] == "utils") return [];
-                    a.push(id);
-                case TOp(op):
-                    if( op == "*" ) {
-                        a.push(op);
-                        break;
-                    }
-                    ParserUtils.unexpected(tk);
-                default: ParserUtils.unexpected(tk);
-                }
-            case TCommented(s,b,t):
-                tokenizer.add(t);
-            default:
-                tokenizer.add(tk);
-                break;
-            }
-        }
-        Debug.dbgln(" -> " + a, tokenizer.line);
-        if(cfg.testCase && a.join(".") == "flash.display.Sprite")
-            return [];
-        return a;
     }
 
     function parseMetadata() : Expr {
@@ -594,7 +551,7 @@ class Parser {
                         }
                         break;
                     case "import":
-                        var impt = parseImport();
+                        var impt = ImportParser.parse(tokenizer, cfg);
                         if (impt.length > 0) imports.push(impt);
                         tokenizer.end();
                         break;
@@ -1060,11 +1017,7 @@ class Parser {
                 tokenizer.add(tk);
                 switch( tk2 ) {
                 case TColon:
-                    return parseExprNext(
-                            ObjectParser.parse(tokenizer.token, tokenizer.add, tokenizer.ensure,
-                                parseExpr, 
-                                parseExprNext,
-                                tokenizer.line));
+                    return parseExprNext(ObjectParser.parse(tokenizer, parseExpr, parseExprNext));
                 default:
                 }
             default:
@@ -1491,7 +1444,7 @@ class Parser {
                 tokenizer.ensure(TOp(">"));
                 return parseExprNext(EVector(t));
             case TPOpen:
-                var e2 = parseE4XFilter();
+                var e2 = E4XParser.parse(tokenizer, parseStructure, makeBinop, parseExpr, parseExprList);
                 tokenizer.ensure(TPClose);
                 return EE4XFilter(e1, e2);
             case TAt:
@@ -1635,105 +1588,6 @@ class Parser {
             }
         }
         return args;
-    }
-
-    function parseE4XFilter() : Expr {
-        var tk = tokenizer.token();
-        Debug.dbgln("parseE4XFilter("+tk+")", tokenizer.line);
-        switch(tk) {
-            case TAt:
-                var i : String = null;
-                if(ParserUtils.opt(tokenizer.token, tokenizer.add, TBkOpen)) {
-                    tk = tokenizer.token();
-                    switch(ParserUtils.uncomment(tk)) {
-                        case TConst(c):
-                            switch(c) {
-                                case CString(s):
-                                    i = s;
-                                default:
-                                    ParserUtils.unexpected(tk);
-                            }
-                        default:
-                            ParserUtils.unexpected(tk);
-                    }
-                    tokenizer.ensure(TBkClose);
-                }
-                else
-                    i = tokenizer.id();
-                if(i.charAt(0) != "@")
-                    i = "@" + i;
-                return parseE4XFilterNext(EIdent(i));
-            case TId(id):
-                var e = parseStructure(id);
-                if( e != null )
-                    return ParserUtils.unexpected(tk);
-                return parseE4XFilterNext(EIdent(id));
-            case TConst(c):
-                return parseE4XFilterNext(EConst(c));
-            case TCommented(s,b,t):
-                tokenizer.add(t);
-                return ECommented(s,b,false,parseE4XFilter());
-            default:
-                return ParserUtils.unexpected(tk);
-        }
-    }
-
-    function parseE4XFilterNext( e1 : Expr ) : Expr {
-        var tk = tokenizer.token();
-        Debug.dbgln("parseE4XFilterNext("+e1+") ("+tk+")", tokenizer.line);
-        //parseE4XFilterNext(EIdent(groups)) (TBkOpen) [Parser 1506]
-        switch( tk ) {
-            case TOp(op):
-                for( x in tokenizer.unopsSuffix )
-                    if( x == op )
-                        ParserUtils.unexpected(tk);
-                return makeBinop(op,e1,parseE4XFilter());
-            case TPClose:
-                Debug.dbgln("parseE4XFilterNext stopped at " + tk, tokenizer.line);
-                tokenizer.add(tk);
-                return e1;
-            case TDot:
-                tk = tokenizer.token();
-                var field = null;
-                switch(ParserUtils.uncomment(tk)) {
-                    case TId(id):
-                        field = StringTools.replace(id, "$", "__DOLLAR__");
-                        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TNs) )
-                            field = field + "::" + tokenizer.id();
-                    case TAt:
-                        var i : String = null;
-                        if(ParserUtils.opt(tokenizer.token, tokenizer.add, TBkOpen)) {
-                            tk = tokenizer.token();
-                            switch(ParserUtils.uncomment(tk)) {
-                                case TConst(c):
-                                    switch(c) {
-                                        case CString(s):
-                                            i = s;
-                                        default:
-                                            ParserUtils.unexpected(tk);
-                                    }
-                                default:
-                                    ParserUtils.unexpected(tk);
-                            }
-                            tokenizer.ensure(TBkClose);
-                        }
-                        else
-                            i = tokenizer.id();
-                        return parseE4XFilterNext(EE4XAttr(e1, EIdent(i)));
-                    default:
-                        ParserUtils.unexpected(tk);
-                }
-                return parseE4XFilterNext(EField(e1,field));
-            case TPOpen:
-                return parseE4XFilterNext(ECall(e1,parseExprList(TPClose)));
-            case TBkOpen:
-                var e2 = parseExpr();
-                tk = tokenizer.token();
-                if( tk != TBkClose ) ParserUtils.unexpected(tk);
-                return parseE4XFilterNext(EArray(e1, e2));
-            default:
-                return ParserUtils.unexpected( tk );
-        }
     }
     
     function readXML() {

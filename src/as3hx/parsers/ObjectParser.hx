@@ -5,14 +5,12 @@ import as3hx.As3;
 
 class ObjectParser {
 
-    public static function parse(token:Void->Token, add,
-            ensure, parseExpr:?Bool->Expr, 
-            parseExprNext:Expr->?Int->Expr, line):Expr {
-        Debug.openDebug("parseObject()", line, true);
+    public static function parse(tokenizer:Tokenizer, parseExpr:?Bool->Expr, parseExprNext:Expr->?Int->Expr):Expr {
+        Debug.openDebug("parseObject()", tokenizer.line, true);
         var fl = new Array();
 
         while( true ) {
-            var tk = token();
+            var tk = tokenizer.token();
             var id = null;
             switch( ParserUtils.uncomment(tk) ) {
             case TId(i): id = i;
@@ -25,14 +23,14 @@ class ObjectParser {
             case TBrClose:
                 break;
             case TNL(t):
-                add(t);
+                tokenizer.add(t);
                 continue;
             default:
                 ParserUtils.unexpected(tk);
             }
-            ensure(TColon);
+            tokenizer.ensure(TColon);
             fl.push({ name : id, e : parseExpr() });
-            tk = token();
+            tk = tokenizer.token();
             switch(tk) {
             case TCommented(s,b,e):
                 var o = fl[fl.length-1];
@@ -49,7 +47,7 @@ class ObjectParser {
             }
         }
         var rv = parseExprNext(EObject(fl));
-        Debug.closeDebug("parseObject() -> " + rv, line);
+        Debug.closeDebug("parseObject() -> " + rv, tokenizer.line);
         return rv;
     }
 
