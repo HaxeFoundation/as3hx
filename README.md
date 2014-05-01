@@ -11,7 +11,7 @@ Build the as3hx tool.
 Build with debug output when converting files.
 
 ###Use 
-    as3hx test/ out/
+    neko run.n test/ out/
     
 This will take all the ActionScript 3 files in the test/ directory 
 and generate the corresponding Haxe files in out/
@@ -20,9 +20,11 @@ To generate the tests you can also use :
 
     make run-test
 
-This will generate the tests in bin/test
+This will generate the tests in test-out
 
-Run the as3hx binaries in bin/ to get the basic tool usage.
+To get the basic tool usage :
+
+    neko run.n -help
 
 There are many configuration options to choose how the Haxe code
 is generated, check the src/as3hx/Config.hx file for the full list.
