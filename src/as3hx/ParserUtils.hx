@@ -1,6 +1,7 @@
 package as3hx;
 
 import as3hx.Tokenizer;
+import as3hx.Error;
 import as3hx.Parser;
 import as3hx.As3;
 

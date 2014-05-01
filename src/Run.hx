@@ -1,12 +1,13 @@
 using StringTools;
 
 import as3hx.Writer;
+import as3hx.Error;
 import sys.FileSystem;
 import sys.io.File;
 
 class Run {
     
-    static function errorString( e : as3hx.Parser.Error ) {
+    static function errorString( e : Error ) {
         return switch(e) {
         case EInvalidChar(c): "Invalid char '" + String.fromCharCode(c)+"' 0x"+StringTools.hex(c,2);
         case EUnexpected(src): "Unexpected " + src;
@@ -43,16 +44,16 @@ class Run {
                 Sys.println("source AS3 file: " + file);
                 var p = new as3hx.Parser(cfg);
                 var content = sys.io.File.getContent(file);
-                var program = try p.parseString(content,src,f) catch( e : as3hx.Parser.Error ) {
+                var program = try p.parseString(content,src,f) catch( e : Error ) {
                     #if macro
-                    sys.io.File.stderr().writeString(file+":"+p.line+": "+errorString(e)+"\n");
+                    sys.io.File.stderr().writeString(file+":"+p.tokenizer.line+": "+errorString(e)+"\n");
                     #end
                     if(cfg.errorContinue) {
-                        errors.push("In " + file + "("+p.line+") : " + errorString(e));
+                        errors.push("In " + file + "("+p.tokenizer.line+") : " + errorString(e));
                         continue;
                     }
                     else
-                        neko.Lib.rethrow("In " + file + "("+p.line+") : " + errorString(e));
+                        neko.Lib.rethrow("In " + file + "("+p.tokenizer.line+") : " + errorString(e));
                 }
                 var out = dst;
                 ensureDirectoryExists(out);

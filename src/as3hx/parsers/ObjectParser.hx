@@ -7,7 +7,7 @@ class ObjectParser {
 
     public static function parse(token:Void->Token, add,
             ensure, parseExpr:?Bool->Expr, 
-            parseExprNext:Expr->?Int->Expr, line) {
+            parseExprNext:Expr->?Int->Expr, line):Expr {
         Debug.openDebug("parseObject()", line, true);
         var fl = new Array();
 
