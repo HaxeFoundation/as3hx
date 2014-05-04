@@ -5,7 +5,7 @@ import as3hx.Tokenizer;
 
 class ClassParser {
 
-    public static function parseClass(tokenizer, typesSeen, cfg, genTypes, path, filename, kwds,meta:Array<Expr>,isInterface:Bool) : ClassDef {
+    public static function parse(tokenizer, typesSeen, cfg, genTypes, path, filename, kwds,meta:Array<Expr>,isInterface:Bool) : ClassDef {
         var parseType = TypeParser.parse.bind(tokenizer, typesSeen, cfg);
         var parseMetadata = MetadataParser.parse.bind(tokenizer, typesSeen, cfg);
         var parseClassVar = parseVar.bind(tokenizer, typesSeen, cfg, genTypes);
