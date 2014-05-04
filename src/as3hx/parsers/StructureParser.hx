@@ -5,17 +5,16 @@ import as3hx.Tokenizer;
 
 class StructureParser {
 
-    public static function parseStructure(kwd, parseType, token, 
-            parseCaseBlock, line, parseFun, peek, add, id, ensure, parseExpr, end, parseExprList) : Expr {
-        Debug.dbgln("parseStructure("+kwd+")", line);
+    public static function parse(kwd, tokenizer:Tokenizer, typesSeen, cfg, parseCaseBlock, parseExpr:?Bool->Expr, parseExprList) : Expr {
+        Debug.dbgln("parseStructure("+kwd+")", tokenizer.line);
         return switch( kwd ) {
         case "if":
-            ensure(TPOpen);
+            tokenizer.ensure(TPOpen);
             var cond = parseExpr();
-            ensure(TPClose);
+            tokenizer.ensure(TPClose);
             var e1 = parseExpr();
-            end();
-            var elseExpr = if( ParserUtils.opt(token, add, TId("else"), true) ) parseExpr() else null;
+            tokenizer.end();
+            var elseExpr = if( ParserUtils.opt(tokenizer.token, tokenizer.add, TId("else"), true) ) parseExpr() else null;
             switch (cond) {
                 case ECondComp(v, e, e2):
                     //corner case, the condition is an AS3 preprocessor 
@@ -31,30 +30,30 @@ class StructureParser {
         case "var", "const":
             var vars = [];
             while( true ) {
-                var name = id(), t = null, val = null;
-                if( ParserUtils.opt(token, add, TColon) )
-                    t = parseType();
-                if( ParserUtils.opt(token, add, TOp("=")) )
+                var name = tokenizer.id(), t = null, val = null;
+                if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) )
+                    t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
+                if( ParserUtils.opt(tokenizer.token, tokenizer.add, TOp("=")) )
                     val = ETypedExpr(parseExpr(), t);
                 vars.push( { name : name, t : t, val : val } );
-                if( !ParserUtils.opt(token, add, TComma) )
+                if( !ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) )
                     break;
             }
             EVars(vars);
         case "while":
-            ensure(TPOpen);
+            tokenizer.ensure(TPOpen);
             var econd = parseExpr();
-            ensure(TPClose);
+            tokenizer.ensure(TPClose);
             var e = parseExpr();
             EWhile(econd,e, false);
         case "for":
-            if( ParserUtils.opt(token, add, TId("each")) ) {
-                ensure(TPOpen);
+            if( ParserUtils.opt(tokenizer.token, tokenizer.add, TId("each")) ) {
+                tokenizer.ensure(TPOpen);
                 var ev = parseExpr();
                 switch(ev) {
                     case EBinop(op, e1, e2, n):
                         if(op == "in") {
-                            ensure(TPClose);
+                            tokenizer.ensure(TPClose);
                             return EForEach(e1, e2, parseExpr());
                         }
                         ParserUtils.unexpected(TId(op));
@@ -62,23 +61,23 @@ class StructureParser {
                         ParserUtils.unexpected(TId(Std.string(ev)));
                 }
             } else {
-                ensure(TPOpen);
+                tokenizer.ensure(TPOpen);
                 var inits = [];
-                if( !ParserUtils.opt(token, add, TSemicolon) ) {
+                if( !ParserUtils.opt(tokenizer.token, tokenizer.add, TSemicolon) ) {
                     var e = parseExpr();
                     switch(e) {
                         case EBinop(op, e1, e2, n):
                             if(op == "in") {
-                                ensure(TPClose);
+                                tokenizer.ensure(TPClose);
                                 return EForIn(e1, e2, parseExpr());
                             }
                         default:
                     }
-                    if( ParserUtils.opt(token, add, TComma) ) {
+                    if( ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) ) {
                         inits = parseExprList(TSemicolon);
                         inits.unshift(e);
                     } else {
-                        ensure(TSemicolon);
+                        tokenizer.ensure(TSemicolon);
                         inits = [e];
                     }
                 }
@@ -87,31 +86,31 @@ class StructureParser {
                 EFor(inits, conds, incrs, parseExpr());
             }
         case "break":
-            var label = switch( peek() ) {
-            case TId(n): token(); n;
+            var label = switch( tokenizer.peek() ) {
+            case TId(n): tokenizer.token(); n;
             default: null;
             };
             EBreak(label);
         case "continue": EContinue;
         case "else": ParserUtils.unexpected(TId(kwd));
         case "function":
-            var name = switch( peek() ) {
-            case TId(n): token(); n;
+            var name = switch( tokenizer.peek() ) {
+            case TId(n): tokenizer.token(); n;
             default: null;
             };
-            EFunction(parseFun(),name);
+            EFunction(FunctionParser.parse(tokenizer, parseExpr, typesSeen, cfg),name);
         case "return":
-            EReturn(if( peek() == TSemicolon ) null else parseExpr());
+            EReturn(if( tokenizer.peek() == TSemicolon ) null else parseExpr());
         case "new":
-            if(ParserUtils.opt(token, add, TOp("<"))) {
+            if(ParserUtils.opt(tokenizer.token, tokenizer.add, TOp("<"))) {
                 // o = new <VectorType>[a,b,c..]
-                var t = parseType();
-                ensure(TOp(">"));
-                if(peek() != TBkOpen)
-                    ParserUtils.unexpected(peek());
+                var t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
+                tokenizer.ensure(TOp(">"));
+                if(tokenizer.peek() != TBkOpen)
+                    ParserUtils.unexpected(tokenizer.peek());
                 ECall(EVector(t), [parseExpr()]);
             } else {
-                var t = parseType();
+                var t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
                 // o = new (iconOrLabel as Class)() as DisplayObject
                 var cc = switch (t) {
                                     case TComplex(e1) : 
@@ -132,46 +131,46 @@ class StructureParser {
                                     default: 
                                     null;
                 }
-                if (cc != null) cc; else ENew(t,if( ParserUtils.opt(token, add, TPOpen) ) parseExprList(TPClose) else []);
+                if (cc != null) cc; else ENew(t,if( ParserUtils.opt(tokenizer.token, tokenizer.add, TPOpen) ) parseExprList(TPClose) else []);
             }
         case "throw":
             EThrow( parseExpr() );
         case "try":
             var e = parseExpr();
             var catches = new Array();
-            while( ParserUtils.opt(token, add, TId("catch")) ) {
-                ensure(TPOpen);
-                var name = id();
-                ensure(TColon);
-                var t = parseType();
-                ensure(TPClose);
+            while( ParserUtils.opt(tokenizer.token, tokenizer.add, TId("catch")) ) {
+                tokenizer.ensure(TPOpen);
+                var name = tokenizer.id();
+                tokenizer.ensure(TColon);
+                var t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
+                tokenizer.ensure(TPClose);
                 var e = parseExpr();
                 catches.push( { name : name, t : t, e : e } );
             }
             ETry(e, catches);
         case "switch":
-            ensure(TPOpen);
+            tokenizer.ensure(TPOpen);
             var e = EParent(parseExpr());
-            ensure(TPClose);
+            tokenizer.ensure(TPClose);
 
             var def = null, cl = [], meta = [];
-            ensure(TBrOpen);
+            tokenizer.ensure(TBrOpen);
 
             //parse all "case" and "default"
             while(true) {
-                var tk = token();
+                var tk = tokenizer.token();
                 switch (tk) {
                     case TBrClose: //end of switch
                         break;
                     case TId(s):
                         if (s == "default") {
-                            ensure(TColon);
+                            tokenizer.ensure(TColon);
                             def = { el : parseCaseBlock(), meta : meta };
                             meta = [];
                         }
                         else if (s == "case"){
                             var val = parseExpr();
-                            ensure(TColon);
+                            tokenizer.ensure(TColon);
                             var el = parseCaseBlock();
                             cl.push( { val : val, el : el, meta : meta } );
                             
@@ -182,10 +181,10 @@ class StructureParser {
                             ParserUtils.unexpected(tk);
                         }
                     case TNL(t): //keep newline as meta for a case/default
-                        add(t);
+                        tokenizer.add(t);
                         meta.push(ENL(null));
                     case TCommented(s,b,t): //keep comment as meta for a case/default
-                        add(t);
+                        tokenizer.add(t);
                         meta.push(ECommented(s,b,false,null));        
 
                     default:
@@ -196,7 +195,7 @@ class StructureParser {
             ESwitch(e, cl, def);
         case "do":
             var e = parseExpr();
-            ensure(TId("while"));
+            tokenizer.ensure(TId("while"));
             var cond = parseExpr();
             EWhile(cond, e, true);
         case "typeof":
@@ -214,28 +213,28 @@ class StructureParser {
             ETypeof(e);
         case "delete":
             var e = parseExpr();
-            end();
+            tokenizer.end();
             EDelete(e);
         case "getQualifiedClassName":
-            ensure(TPOpen);
+            tokenizer.ensure(TPOpen);
             var e = parseExpr();
-            ensure(TPClose);
+            tokenizer.ensure(TPClose);
             ECall(EField(EIdent("Type"), "getClassName"), [e]);
         case "getQualifiedSuperclassName":
-            ensure(TPOpen);
+            tokenizer.ensure(TPOpen);
             var e = parseExpr();
-            ensure(TPClose);
+            tokenizer.ensure(TPClose);
             ECall(EField(EIdent("Type"), "getClassName"), [ECall(EField(EIdent("Type"), "getSuperClass"), [e])]);
         case "getDefinitionByName":
-            ensure(TPOpen);
+            tokenizer.ensure(TPOpen);
             var e = parseExpr();
-            ensure(TPClose);
+            tokenizer.ensure(TPClose);
             ECall(EField(EIdent("Type"), "resolveClass"), [e]);
         case "getTimer":
             
             //consume the parenthesis from the getTimer AS3 call
-            while(!ParserUtils.opt(token, add, TPClose)) {
-                token();
+            while(!ParserUtils.opt(tokenizer.token, tokenizer.add, TPClose)) {
+                tokenizer.token();
             }
             
             ECall(EField(EIdent("Math"), "round"), [EBinop("*", ECall(EField(EIdent("haxe.Timer"), "stamp"), []), EConst(CInt("1000")), false)]);
