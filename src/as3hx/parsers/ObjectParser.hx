@@ -1,11 +1,14 @@
 package as3hx.parsers;
 
 import as3hx.Tokenizer;
+import as3hx.parsers.ExprParser;
 import as3hx.As3;
 
 class ObjectParser {
 
-    public static function parse(tokenizer:Tokenizer, parseExpr:?Bool->Expr, parseExprNext:Expr->?Int->Expr):Expr {
+    public static function parse(tokenizer:Tokenizer, typesSeen, cfg):Expr {
+        var parseExprNext = ExprParser.parseNext.bind(tokenizer, typesSeen, cfg);
+        var parseExpr = ExprParser.parse.bind(tokenizer, typesSeen, cfg);
         Debug.openDebug("parseObject()", tokenizer.line, true);
         var fl = new Array();
 
@@ -29,7 +32,7 @@ class ObjectParser {
                 ParserUtils.unexpected(tk);
             }
             tokenizer.ensure(TColon);
-            fl.push({ name : id, e : parseExpr() });
+            fl.push({ name : id, e : parseExpr(false) });
             tk = tokenizer.token();
             switch(tk) {
             case TCommented(s,b,e):
@@ -46,9 +49,8 @@ class ObjectParser {
                 ParserUtils.unexpected(tk);
             }
         }
-        var rv = parseExprNext(EObject(fl));
+        var rv = parseExprNext(EObject(fl), 0);
         Debug.closeDebug("parseObject() -> " + rv, tokenizer.line);
         return rv;
     }
-
 }

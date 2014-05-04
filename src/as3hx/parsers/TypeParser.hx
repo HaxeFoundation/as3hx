@@ -5,8 +5,10 @@ import as3hx.As3;
 
 class TypeParser {
 
-    public static function parse(tokenizer:Tokenizer, 
-            parseExpr:?Bool->Expr, typesSeen, cfg) {
+    public static function parse(tokenizer:Tokenizer, typesSeen, cfg) {
+        var parseType = parse.bind(tokenizer, typesSeen, cfg);
+        var parseExpr = ExprParser.parse.bind(tokenizer, typesSeen, cfg);
+
         Debug.dbgln("parseType()", tokenizer.line);
         // this is a ugly hack in order to fix lexer issue with "var x:*=0"
         var tmp = tokenizer.opPriority.get("*=");
@@ -19,7 +21,7 @@ class TypeParser {
 
         // for _i = new (obj as Class)() as DisplayObject;
         switch(tokenizer.peek()) {
-        case TPOpen: return TComplex(parseExpr());
+        case TPOpen: return TComplex(parseExpr(false));
         default:
         }
 
@@ -27,7 +29,7 @@ class TypeParser {
         if( t == "Vector" ) {
             tokenizer.ensure(TDot);
             tokenizer.ensure(TOp("<"));
-            var t = parse(tokenizer, parseExpr, typesSeen, cfg);
+            var t = parseType();
             splitEndTemplateOps(tokenizer);
             tokenizer.ensure(TOp(">"));
             typesSeen.push(TVector(t));
@@ -35,9 +37,9 @@ class TypeParser {
         } else if (cfg.dictionaryToHash && t == "Dictionary") {
             tokenizer.ensure(TDot);
             tokenizer.ensure(TOp("<"));
-            var k = parse(tokenizer, parseExpr, typesSeen, cfg);
+            var k = parseType();
             tokenizer.ensure(TComma);
-            var v = parse(tokenizer, parseExpr, typesSeen, cfg);
+            var v = parseType();
             splitEndTemplateOps(tokenizer);
             tokenizer.ensure(TOp(">"));
             typesSeen.push(TDictionary(k, v));
@@ -67,7 +69,7 @@ class TypeParser {
                     tokenizer.add(tk);
                     break;
                 }
-                
+
             default:
                 tokenizer.add(tk);
                 break;

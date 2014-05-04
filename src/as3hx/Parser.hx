@@ -3,7 +3,9 @@ import as3hx.As3;
 import as3hx.Tokenizer;
 import as3hx.ParserUtils;
 import as3hx.parsers.ObjectParser;
+import as3hx.parsers.ExprParser;
 import as3hx.parsers.FunctionParser;
+import as3hx.parsers.CaseBlockParser;
 import as3hx.parsers.XMLReader;
 import as3hx.parsers.StructureParser;
 import as3hx.parsers.TypeParser;
@@ -373,7 +375,7 @@ class Parser {
                 default:
                     ParserUtils.unexpected(tokenizer.peek());
                 }
-                var e = parseExpr();
+                var e = ExprParser.parse(tokenizer, typesSeen, cfg, false);
                 args.push( { name : n, val :e } );
                 ParserUtils.opt(tokenizer.token, tokenizer.add, TComma);
             }
@@ -413,7 +415,7 @@ class Parser {
     function parseFunDef(kwds, meta) : FunctionDef {
         Debug.dbgln("parseFunDef()", tokenizer.line);
         var fname = tokenizer.id();
-        var f = FunctionParser.parse(tokenizer, parseExpr, typesSeen, cfg);
+        var f = FunctionParser.parse(tokenizer, typesSeen, cfg);
         return {
             kwds : kwds,
             meta : meta,
@@ -457,14 +459,14 @@ class Parser {
         var condVars:Array<String> = [];
         while( true ) {
             if( ParserUtils.opt(tokenizer.token, tokenizer.add, TId("implements")) ) {
-                impl.push(TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg));
+                impl.push(TypeParser.parse(tokenizer, typesSeen, cfg));
                 while( ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) )
-                    impl.push(TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg));
+                    impl.push(TypeParser.parse(tokenizer, typesSeen, cfg));
                 continue;
             }
             if( ParserUtils.opt(tokenizer.token, tokenizer.add, TId("extends")) ) {
                 if(!isInterface) {
-                    extend = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
+                    extend = TypeParser.parse(tokenizer, typesSeen, cfg);
                     if(cfg.testCase) {
                         switch(extend) {
                             case TPath(a):
@@ -476,9 +478,9 @@ class Parser {
                     }
                 }
                 else {
-                    impl.push(TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg));
+                    impl.push(TypeParser.parse(tokenizer, typesSeen, cfg));
                     while( ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) )
-                        impl.push(TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg));
+                        impl.push(TypeParser.parse(tokenizer, typesSeen, cfg));
                 }
                 continue;
             }
@@ -588,7 +590,7 @@ class Parser {
                     tokenizer.add(t);
                     while( kwds.length > 0 )
                         tokenizer.add(TId(kwds.pop()));
-                    inits.push(parseExpr());
+                    inits.push(ExprParser.parse(tokenizer, typesSeen, cfg, false));
                     tokenizer.end();
                 case TNs:
                     if (kwds.length != 1) {
@@ -643,7 +645,7 @@ class Parser {
                     tokenizer.add(t);
                     while( kwds.length > 0 )
                         tokenizer.add(TId(kwds.pop()));
-                    inits.push(parseExpr());
+                    inits.push(ExprParser.parse(tokenizer, typesSeen, cfg, false));
                     tokenizer.end();
                     break;
                 }
@@ -691,9 +693,9 @@ class Parser {
         Debug.dbgln(name + ")", tokenizer.line, false);
         var t = null, val = null;
         if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) )
-            t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
+            t = TypeParser.parse(tokenizer, typesSeen, cfg);
         if( ParserUtils.opt(tokenizer.token, tokenizer.add, TOp("=")) )
-            val = parseExpr();
+            val = ExprParser.parse(tokenizer, typesSeen, cfg, false);
 
         var rv = {
             meta : meta,
@@ -726,7 +728,7 @@ class Parser {
             }
         }
         Debug.dbgln(Std.string(kwds) + " " + name + ")", tokenizer.line, false);
-        var f = FunctionParser.parse(tokenizer, parseExpr, typesSeen, cfg, isInterface);
+        var f = FunctionParser.parse(tokenizer, typesSeen, cfg, isInterface);
         tokenizer.end();
         Debug.closeDebug("end parseClassFun()", tokenizer.line);
         return {
@@ -757,367 +759,5 @@ class Parser {
         }
         Debug.dbgln(" -> " + a, tokenizer.line);
         return a;
-    }
-
-
-    
-    function parseFullExpr() {
-        Debug.dbgln("parseFullExpr()", tokenizer.line);
-        var e = parseExpr();
-        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) ) {
-            switch( e ) {
-            case EIdent(l): e = ELabel(l);
-            default: tokenizer.add(TColon);
-            }
-        }
-        if( !ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) )
-            tokenizer.end();
-        return e;
-    }
-
-    function parseExpr(funcStart:Bool=false) : Expr {
-        var tk = tokenizer.token();
-        Debug.dbgln("parseExpr("+tk+")", tokenizer.line);
-        switch( tk ) {
-        case TId(id):
-            var e = StructureParser.parse(id, tokenizer, typesSeen, cfg, parseCaseBlock, parseExpr, parseExprList );
-            if( e == null )
-                e = EIdent(id);
-            return parseExprNext(e);
-        case TConst(c):
-            return parseExprNext(EConst(c));
-        case TPOpen:
-            var e = parseExpr();
-            tokenizer.ensure(TPClose);
-            return parseExprNext(EParent(e));
-        case TBrOpen:
-            tk = tokenizer.token();
-          
-            Debug.dbgln("parseExpr: "+tk, tokenizer.line);
-            switch( tk ) {
-            case TBrClose:
-                if(funcStart) return EBlock([]);
-                return parseExprNext(EObject([]));
-            case TId(_),TConst(_):
-                var tk2 = tokenizer.token();
-                tokenizer.add(tk2);
-                tokenizer.add(tk);
-                switch( tk2 ) {
-                case TColon:
-                    return parseExprNext(ObjectParser.parse(tokenizer, parseExpr, parseExprNext));
-                default:
-                }
-            default:
-                tokenizer.add(tk);
-            }
-            var a = new Array();
-
-            //check for corner case, block contains only comments and
-            //newlines. In this case, get all comments and add them to 
-            //content of block expression
-            if (ParserUtils.uncomment(ParserUtils.removeNewLine(tk)) == TBrClose) {
-                var ta = ParserUtils.explodeComment(tk);
-                for (t in ta) {
-                    switch (t) {
-                        case TCommented(s,b,t): a.push(ECommented(s,b,false, null));
-                        case TNL(t): a.push(ENL(null));
-                        default:
-                    }
-                }
-            }
-                
-            while( !ParserUtils.opt(tokenizer.token, tokenizer.add, TBrClose) ) {
-                var e = parseFullExpr();
-                a.push(e);
-            }
-            return EBlock(a);
-        case TOp(op):
-            if( op.charAt(0) == "/" ) {
-                var str = op.substr(1);
-                var c = tokenizer.nextChar();
-                while( c != "/".code ) {
-                    str += String.fromCharCode(c);
-                    c = tokenizer.nextChar();
-                }
-                c = tokenizer.nextChar();
-                var opts = "";
-                while( c >= "a".code && c <= "z".code ) {
-                    opts += String.fromCharCode(c);
-                    c = tokenizer.nextChar();
-                }
-                tokenizer.pushBackChar(c);
-                return parseExprNext(ERegexp(str, opts));
-            }
-            var found;
-            for( x in tokenizer.unopsPrefix )
-                if( x == op )
-                    return ParserUtils.makeUnop(op, parseExpr());
-            if( op == "<" )
-                return EXML(XMLReader.read(tokenizer));
-            return ParserUtils.unexpected(tk);
-        case TBkOpen:
-            var a = new Array();
-            tk = tokenizer.token();
-            while( ParserUtils.removeNewLine(tk) != TBkClose ) {
-                tokenizer.add(tk);
-                a.push(parseExpr());
-                tk = tokenizer.token();
-                if( tk == TComma )
-                    tk = tokenizer.token();
-            }
-            return parseExprNext(EArrayDecl(a));
-        case TCommented(s,b,t):
-            tokenizer.add(t);
-            return ECommented(s,b,false,parseExpr());
-        case TNL(t):    
-            tokenizer.add(t);
-            return ENL(parseExpr());
-        default:
-            return ParserUtils.unexpected(tk);
-        }
-    }
-
-    function parseCaseBlock() {
-        Debug.dbgln("parseCaseBlock()", tokenizer.line);
-        var el = [];
-        while( true ) {
-            var tk = tokenizer.peek();
-            switch( tk ) {
-            case TId(id): if( id == "case" || id == "default" ) break;
-            case TBrClose: break;
-            default:
-            }
-            el.push(parseExpr());
-            tokenizer.end();
-        }
-        return el;
-    }
-    
-    function parseExprNext( e1 : Expr, pendingNewLines : Int = 0 ):Expr {
-        var tk = tokenizer.token();
-        Debug.dbgln("parseExprNext("+e1+") ("+tk+")", tokenizer.line);
-        switch( tk ) {
-        case TOp(op):
-            for( x in tokenizer.unopsSuffix )
-                if( x == op ) {
-                    if( switch(e1) { case EParent(_): true; default: false; } ) {
-                        tokenizer.add(tk);
-                        return e1;
-                    }
-                    return parseExprNext(EUnop(op,false,e1));
-                }
-            return ParserUtils.makeBinop(tokenizer, op,e1,parseExpr(), pendingNewLines != 0);
-        case TNs:
-            switch(e1) {
-            case EIdent(i):
-                switch(i) {
-                    case "public":
-                        return parseExprNext(ECommented("/* AS3HX WARNING namespace modifier " + i + ":: */", true, false, null));
-                    default: 
-                }
-                tk = tokenizer.token();
-                switch(tk) {
-                    case TId(id):
-                        if (Lambda.has(cfg.conditionalVars, i + "::" + id)) {
-                            // this is a user supplied conditional compilation variable
-                            Debug.openDebug("conditional compilation: " + i + "::" + id, tokenizer.line);
-                            switch (tokenizer.peek()) {
-                                case TPClose:
-                                    Debug.closeDebug("end conditional compilation: " + i + "::" + id, tokenizer.line);
-                                    //corner case, the conditional compilation is within an "if" statement
-                                    //example if(CONFIG::MY_CONFIG) { //code block }
-                                    //normal "if" statement parsing will take care of it
-                                    return ECondComp(i + "_" + id, null, null);
-                                default:    
-                                    var e = parseExpr();
-                                    Debug.closeDebug("end conditional compilation: " + i + "::" + id, tokenizer.line);
-                                    return ECondComp(i + "_" + id, e, null);
-                            }
-
-                        } else switch(tokenizer.peek()) {
-                            case TBrOpen: // functions inside a namespace
-                                return parseExprNext(ECommented("/* AS3HX WARNING namespace modifier " + i + "::"+id+" */", true, false, null));
-                            default:
-                        }
-                    default:
-                }
-            default:
-            }
-            Debug.dbgln("WARNING parseExprNext unable to create namespace for " + Std.string(e1), tokenizer.line);
-            tokenizer.add(tk);
-            return e1;
-        case TDot:
-            tk = tokenizer.token();
-            Debug.dbgln(Std.string(ParserUtils.uncomment(tk)), tokenizer.line);
-            var field = null;
-            switch(ParserUtils.uncomment(ParserUtils.removeNewLine(tk))) {
-            case TId(id):
-                field = StringTools.replace(id, "$", "__DOLLAR__");
-                if( ParserUtils.opt(tokenizer.token, tokenizer.add, TNs) )
-                    field = field + "::" + tokenizer.id();
-            case TOp(op):
-                if( op != "<" || switch(e1) { case EIdent(v): v != "Vector" && v != "Dictionary"; default: true; } ) ParserUtils.unexpected(tk);
-                var t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
-
-                var v = switch (e1) {
-                    case EIdent(v): v;
-                    default: null; 
-                }
-                
-                //for Dictionary, expected syntax is "Dictionary.<Key, Value>"
-                if (v == "Dictionary" && cfg.dictionaryToHash) {
-                    tokenizer.ensure(TComma);
-                    tokenizer.id();
-                }
-
-                tokenizer.ensure(TOp(">"));
-                return parseExprNext(EVector(t));
-            case TPOpen:
-
-                var e2 = E4XParser.parse(tokenizer,
-                        ParserUtils.makeBinop, parseExpr, parseExprList, typesSeen, cfg, parseCaseBlock);
-                tokenizer.ensure(TPClose);
-                return EE4XFilter(e1, e2);
-            case TAt:
-                //xml.attributes() is equivalent to xml.@*.
-                var i : String = null;
-                if(ParserUtils.opt(tokenizer.token, tokenizer.add, TBkOpen)) {
-                    tk = tokenizer.token();
-                    switch(ParserUtils.uncomment(tk)) {
-                        case TConst(c):
-                            switch(c) {
-                                case CString(s):
-                                    i = s;
-                                default:
-                                    ParserUtils.unexpected(tk);
-                            }
-                        case TId(s):
-                            i = s;
-                        default:
-                            ParserUtils.unexpected(tk);
-                    }
-                    tokenizer.ensure(TBkClose);
-                }
-                else
-                    i = tokenizer.id();
-                return parseExprNext(EE4XAttr(e1, EIdent(i)));
-            case TDot:
-                var id = tokenizer.id();
-                return parseExprNext(EE4XDescend(e1, EIdent(id)));
-            default: ParserUtils.unexpected(tk);
-            }
-            return parseExprNext(EField(e1,field));
-        case TPOpen:
-            return parseExprNext(ECall(e1,parseExprList(TPClose)));
-        case TBkOpen:
-            var e2 = parseExpr();
-            tk = tokenizer.token();
-            if( tk != TBkClose ) ParserUtils.unexpected(tk);
-            return parseExprNext(EArray(e1,e2));
-        case TQuestion:
-            var e2 = parseExpr();
-            tk = tokenizer.token();
-            if( tk != TColon ) ParserUtils.unexpected(tk);
-            var e3 = parseExpr();
-            return ETernary(e1, e2, e3);
-        case TId(s):
-            switch( s ) {
-            case "is": return ParserUtils.makeBinop(tokenizer, "is", e1, parseExpr(), pendingNewLines != 0);
-            case "as": return ParserUtils.makeBinop(tokenizer, "as",e1,parseExpr(), pendingNewLines != 0);
-            case "in": return ParserUtils.makeBinop(tokenizer, "in",e1,parseExpr(), pendingNewLines != 0);
-            default:
-
-                if (pendingNewLines != 0) {
-                    //add all newlines which were declared before
-                    //the identifier
-                    while(pendingNewLines > 0) {
-                        tk = TNL(tk);
-                        pendingNewLines--;
-                    }
-                }
-                tokenizer.add(tk);
-                return e1;
-            }
-        case TNL(t):
-
-            //push a token back and wrap it in newline if previous
-            //token was newline
-            var addToken : Token->Void = function(tk) {
-                if (pendingNewLines != 0)
-                    tokenizer.add(TNL(tk));
-                else 
-                    tokenizer.add(tk);
-            }
-
-            switch (t) {
-                case TPClose:
-                    addToken(tk);
-                    return e1;    
-                case TCommented(s,b,t):
-                    addToken(t);
-                    return ECommented(s,b,true, parseExprNext(e1, ++pendingNewLines));
-                default:  
-                    tokenizer.add(t);
-                    return parseExprNext(e1, ++pendingNewLines);  
-            }
-
-        case TCommented(s,b,t):
-            tokenizer.add(t);
-            return ECommented(s,b,true, parseExprNext(e1));
-           
-        default:
-            Debug.dbgln("parseExprNext stopped at " + tk, tokenizer.line);
-            tokenizer.add(tk);
-            return e1;
-        }
-    }
-
-    function parseExprList( etk ) : Array<Expr> {
-        Debug.dbgln("parseExprList()", tokenizer.line);
-
-        var args = new Array();
-        var f = function(t) {
-            if(args.length == 0) return;
-            args[args.length-1] = ParserUtils.tailComment(args[args.length-1], t);
-        }
-        if( ParserUtils.opt(tokenizer.token, tokenizer.add, etk) )
-            return args;
-        while( true ) {
-            args.push(parseExpr());
-            var tk = tokenizer.token();
-            switch( tk ) {
-            case TComma:
-            case TCommented(_,_,_):
-                var t = ParserUtils.uncomment(tk);
-                if(t == etk) {
-                    f(tk);
-                    break;
-                }
-                switch(t) {
-                case TComma:
-                    f(tk);
-                case TNL(t):
-                    f(tk);
-                    args.push(ENL(null));
-                    if (t == etk) break;
-                default:
-                    if( tk == etk ) break;
-                    ParserUtils.unexpected(tk);
-                }
-            case TNL(t):
-                args.push(ENL(null));
-                switch (t) {
-                    case TCommented(s,b,t2):
-                        f(t);
-                    default:    
-                }
-                 var t = ParserUtils.uncomment(t);
-                if (t == etk) break;
-            default:
-                if( tk == etk ) break;
-                ParserUtils.unexpected(tk);
-            }
-        }
-        return args;
     }
 }

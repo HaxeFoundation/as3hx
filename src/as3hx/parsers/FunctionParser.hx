@@ -5,7 +5,10 @@ import as3hx.Tokenizer;
 
 class FunctionParser {
 
-    public static function parse(tokenizer:Tokenizer, parseExpr:?Bool->Expr, typesSeen, cfg, isInterfaceFun : Bool = false) : Function {
+    public static function parse(tokenizer:Tokenizer, typesSeen, cfg, isInterfaceFun : Bool = false) : Function {
+        var parseType = TypeParser.parse.bind(tokenizer, typesSeen, cfg);
+        var parseExpr = ExprParser.parse.bind(tokenizer, typesSeen, cfg);
+
         Debug.openDebug("parseFun()", tokenizer.line, true);
         var f = {
             args : [],
@@ -40,12 +43,12 @@ class FunctionParser {
                         expressions.push(EIdent(s));
 
                         if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) ) { // ":" 
-                            t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg); //arguments type
+                            t = parseType(); //arguments type
                             expressions.push(ETypedExpr(null, t));
                         }
 
                         if( ParserUtils.opt(tokenizer.token, tokenizer.add, TOp("=")) ) {
-                            val = parseExpr(); //optional argument's default value
+                            val = parseExpr(false); //optional argument's default value
                             expressions.push(val);
                         }
 
@@ -77,7 +80,7 @@ class FunctionParser {
 
         //parse return type 
         if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) ) {
-            var t = TypeParser.parse(tokenizer, parseExpr, typesSeen, cfg);
+            var t = parseType();
             retExpressions.push(ETypedExpr(null, t));
             f.ret.t = t;
         }

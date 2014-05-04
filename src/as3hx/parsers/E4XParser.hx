@@ -6,10 +6,11 @@ import as3hx.parsers.StructureParser;
 
 class E4XParser {
 
-    public static function parse(tokenizer:Tokenizer,
-            makeBinop:Tokenizer->String->Expr->Expr->?Bool->Expr,
-            parseExpr:?Bool->Expr, parseExprList,
-            typesSeen, cfg, parseCaseBlock) : Expr {
+    public static function parse(tokenizer:Tokenizer, typesSeen:Array<Dynamic>, cfg:Config) : Expr {
+        var parseE4XNext = parseNext.bind(tokenizer, typesSeen, cfg);
+        var parseE4X = parse.bind(tokenizer, typesSeen, cfg);
+        var parseStructure = StructureParser.parse.bind(tokenizer, typesSeen, cfg);
+        
         var tk = tokenizer.token();
         Debug.dbgln("parseE4XFilter("+tk+")", tokenizer.line);
         switch(tk) {
@@ -34,25 +35,28 @@ class E4XParser {
                     i = tokenizer.id();
                 if(i.charAt(0) != "@")
                     i = "@" + i;
-                return parseNext(EIdent(i), tokenizer, makeBinop, parseExpr, parseExprList, typesSeen, cfg, parseCaseBlock);
+                return parseE4XNext(EIdent(i));
             case TId(id):
-                var e = StructureParser.parse(id, tokenizer, typesSeen, cfg, parseCaseBlock, parseExpr, parseExprList);
+                var e = parseStructure(id);
                 if( e != null )
                     return ParserUtils.unexpected(tk);
-                return parseNext(EIdent(id), tokenizer, makeBinop, parseExpr, parseExprList, typesSeen, cfg, parseCaseBlock);
+                return parseE4XNext(EIdent(id));
             case TConst(c):
-                return parseNext(EConst(c), tokenizer, makeBinop, parseExpr, parseExprList, typesSeen, cfg, parseCaseBlock);
+                return parseE4XNext(EConst(c));
             case TCommented(s,b,t):
                 tokenizer.add(t);
-                return ECommented(s,b,false, parse(tokenizer, makeBinop, parseExpr, parseExprList, typesSeen, cfg, parseCaseBlock));
+                return ECommented(s,b,false, parseE4X());
             default:
                 return ParserUtils.unexpected(tk);
         }
     }
 
-    private static function parseNext( e1 : Expr , tokenizer:Tokenizer,
-            makeBinop:Tokenizer->String->Expr->Expr->?Bool->Expr,
-            parseExpr, parseExprList, typesSeen, cfg, parseCaseBlock) : Expr {
+    private static function parseNext(tokenizer:Tokenizer, typesSeen, cfg, e1 : Expr ) : Expr {
+        var parseE4X = parse.bind(tokenizer, typesSeen, cfg);
+        var parseE4XNext = parseNext.bind(tokenizer, typesSeen, cfg);
+        var parseExprList = ExprParser.parseList.bind(tokenizer, typesSeen, cfg);
+        var parseExpr = ExprParser.parse.bind(tokenizer, typesSeen, cfg);
+
         var tk = tokenizer.token();
         Debug.dbgln("parseE4XFilterNext("+e1+") ("+tk+")", tokenizer.line);
         //parseE4XFilterNext(EIdent(groups)) (TBkOpen) [Parser 1506]
@@ -61,7 +65,7 @@ class E4XParser {
                 for( x in tokenizer.unopsSuffix )
                     if( x == op )
                         ParserUtils.unexpected(tk);
-                return makeBinop(tokenizer, op,e1, parse(tokenizer, makeBinop, parseExpr, parseExprList, typesSeen, cfg, parseCaseBlock));
+                return ParserUtils.makeBinop(tokenizer, op,e1, parseE4X());
             case TPClose:
                 Debug.dbgln("parseE4XFilterNext stopped at " + tk, tokenizer.line);
                 tokenizer.add(tk);
@@ -93,18 +97,18 @@ class E4XParser {
                         }
                         else
                             i = tokenizer.id();
-                        return parseNext(EE4XAttr(e1, EIdent(i)), tokenizer, makeBinop, parseExpr, parseExprList, typesSeen, cfg, parseCaseBlock);
+                        return parseE4XNext(EE4XAttr(e1, EIdent(i)));
                     default:
                         ParserUtils.unexpected(tk);
                 }
-                return parseNext(EField(e1,field), tokenizer, makeBinop, parseExpr, parseExprList, typesSeen, cfg, parseCaseBlock);
+                return parseE4XNext(EField(e1, field));
             case TPOpen:
-                return parseNext(ECall(e1,parseExprList(TPClose)), tokenizer, makeBinop, parseExpr, parseExprList, typesSeen, cfg, parseCaseBlock);
+                return parseE4XNext(ECall(e1, parseExprList(TPClose)));
             case TBkOpen:
-                var e2 = parseExpr();
+                var e2 = parseExpr(false);
                 tk = tokenizer.token();
                 if( tk != TBkClose ) ParserUtils.unexpected(tk);
-                return parseNext(EArray(e1, e2), tokenizer, makeBinop, parseExpr, parseExprList, typesSeen, cfg, parseCaseBlock);
+                return parseE4XNext(EArray(e1, e2));
             default:
                 return ParserUtils.unexpected( tk );
         }
