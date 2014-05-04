@@ -7,7 +7,7 @@ import as3hx.parsers.StructureParser;
 class E4XParser {
 
     public static function parse(tokenizer:Tokenizer,
-            makeBinop:String->Expr->Expr->?Bool->Expr,
+            makeBinop:Tokenizer->String->Expr->Expr->?Bool->Expr,
             parseExpr:?Bool->Expr, parseExprList,
             typesSeen, cfg, parseCaseBlock) : Expr {
         var tk = tokenizer.token();
@@ -51,7 +51,7 @@ class E4XParser {
     }
 
     private static function parseNext( e1 : Expr , tokenizer:Tokenizer,
-            makeBinop:String->Expr->Expr->?Bool->Expr,
+            makeBinop:Tokenizer->String->Expr->Expr->?Bool->Expr,
             parseExpr, parseExprList, typesSeen, cfg, parseCaseBlock) : Expr {
         var tk = tokenizer.token();
         Debug.dbgln("parseE4XFilterNext("+e1+") ("+tk+")", tokenizer.line);
@@ -61,7 +61,7 @@ class E4XParser {
                 for( x in tokenizer.unopsSuffix )
                     if( x == op )
                         ParserUtils.unexpected(tk);
-                return makeBinop(op,e1, parse(tokenizer, makeBinop, parseExpr, parseExprList, typesSeen, cfg, parseCaseBlock));
+                return makeBinop(tokenizer, op,e1, parse(tokenizer, makeBinop, parseExpr, parseExprList, typesSeen, cfg, parseCaseBlock));
             case TPClose:
                 Debug.dbgln("parseE4XFilterNext stopped at " + tk, tokenizer.line);
                 tokenizer.add(tk);

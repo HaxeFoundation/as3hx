@@ -851,7 +851,7 @@ class Parser {
             var found;
             for( x in tokenizer.unopsPrefix )
                 if( x == op )
-                    return makeUnop(op, parseExpr());
+                    return ParserUtils.makeUnop(op, parseExpr());
             if( op == "<" )
                 return EXML(XMLReader.read(tokenizer));
             return ParserUtils.unexpected(tk);
@@ -874,26 +874,6 @@ class Parser {
             return ENL(parseExpr());
         default:
             return ParserUtils.unexpected(tk);
-        }
-    }
-
-    function makeUnop( op, e ) {
-        return switch( e ) {
-        case EBinop(bop,e1,e2, n): EBinop(bop,makeUnop(op,e1),e2, n);
-        default: EUnop(op,true,e);
-        }
-    }
-
-    function makeBinop( op, e1, e, newLineBeforeOp : Bool = false ) {
-        return switch( e ) {
-        case EBinop(op2, e2, e3, n):
-            var p1 = tokenizer.opPriority.get(op);
-            var p2 = tokenizer.opPriority.get(op2);
-            if( p1 < p2 || (p1 == p2 && op.charCodeAt(op.length-1) != "=".code) )
-                EBinop(op2,makeBinop(op,e1,e2, newLineBeforeOp),e3, newLineBeforeOp);
-            else
-                EBinop(op,e1,e, newLineBeforeOp);
-        default: EBinop(op ,e1,e, newLineBeforeOp);
         }
     }
 
@@ -926,7 +906,7 @@ class Parser {
                     }
                     return parseExprNext(EUnop(op,false,e1));
                 }
-            return makeBinop(op,e1,parseExpr(), pendingNewLines != 0);
+            return ParserUtils.makeBinop(tokenizer, op,e1,parseExpr(), pendingNewLines != 0);
         case TNs:
             switch(e1) {
             case EIdent(i):
@@ -995,7 +975,7 @@ class Parser {
             case TPOpen:
 
                 var e2 = E4XParser.parse(tokenizer,
-                        makeBinop, parseExpr, parseExprList, typesSeen, cfg, parseCaseBlock);
+                        ParserUtils.makeBinop, parseExpr, parseExprList, typesSeen, cfg, parseCaseBlock);
                 tokenizer.ensure(TPClose);
                 return EE4XFilter(e1, e2);
             case TAt:
@@ -1042,9 +1022,9 @@ class Parser {
             return ETernary(e1, e2, e3);
         case TId(s):
             switch( s ) {
-            case "is": return makeBinop("is", e1, parseExpr(), pendingNewLines != 0);
-            case "as": return makeBinop("as",e1,parseExpr(), pendingNewLines != 0);
-            case "in": return makeBinop("in",e1,parseExpr(), pendingNewLines != 0);
+            case "is": return ParserUtils.makeBinop(tokenizer, "is", e1, parseExpr(), pendingNewLines != 0);
+            case "as": return ParserUtils.makeBinop(tokenizer, "as",e1,parseExpr(), pendingNewLines != 0);
+            case "in": return ParserUtils.makeBinop(tokenizer, "in",e1,parseExpr(), pendingNewLines != 0);
             default:
 
                 if (pendingNewLines != 0) {

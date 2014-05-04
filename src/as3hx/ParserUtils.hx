@@ -331,4 +331,24 @@ class ParserUtils {
         }
         return true;
     }
+
+    public static function makeUnop( op, e ) {
+        return switch( e ) {
+        case EBinop(bop,e1,e2, n): EBinop(bop,makeUnop(op,e1),e2, n);
+        default: EUnop(op,true,e);
+        }
+    }
+
+    public static function makeBinop(tokenizer:Tokenizer, op, e1, e, newLineBeforeOp : Bool = false ) {
+        return switch( e ) {
+        case EBinop(op2, e2, e3, n):
+            var p1 = tokenizer.opPriority.get(op);
+            var p2 = tokenizer.opPriority.get(op2);
+            if( p1 < p2 || (p1 == p2 && op.charCodeAt(op.length-1) != "=".code) )
+                EBinop(op2,makeBinop(tokenizer, op,e1,e2, newLineBeforeOp),e3, newLineBeforeOp);
+            else
+                EBinop(op,e1,e, newLineBeforeOp);
+        default: EBinop(op ,e1,e, newLineBeforeOp);
+        }
+    }
 }
