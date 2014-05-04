@@ -135,4 +135,16 @@ class FunctionParser {
         Debug.closeDebug("end parseFun()", tokenizer.line);
         return f;
     }
+
+    public static function parseDef(tokenizer:Tokenizer, typesSeen, cfg, kwds, meta) : FunctionDef {
+        Debug.dbgln("parseFunDef()", tokenizer.line);
+        var fname = tokenizer.id();
+        var f = FunctionParser.parse(tokenizer, typesSeen, cfg, false);
+        return {
+            kwds : kwds,
+            meta : meta,
+            name : fname,
+            f : f
+        };
+    }
 }
