@@ -12,6 +12,7 @@ class ExprParser {
         var parseExprList = parseList.bind(tokenizer, typesSeen, cfg);
         var parseStructure = StructureParser.parse.bind(tokenizer, typesSeen, cfg);
         var parseObject = ObjectParser.parse.bind(tokenizer, typesSeen, cfg);
+        var readXML = XMLReader.read.bind(tokenizer);
 
         var tk = tokenizer.token();
         Debug.dbgln("parseExpr("+tk+")", tokenizer.line);
@@ -90,7 +91,7 @@ class ExprParser {
                 if( x == op )
                     return ParserUtils.makeUnop(op, parseExpr(false));
             if( op == "<" )
-                return EXML(XMLReader.read(tokenizer));
+                return EXML(readXML());
             return ParserUtils.unexpected(tk);
         case TBkOpen:
             var a = new Array();

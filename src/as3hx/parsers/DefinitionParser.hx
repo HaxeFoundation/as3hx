@@ -8,6 +8,7 @@ class DefinitionParser {
         var parseClass = ClassParser.parse.bind(tokenizer, typesSeen, cfg);
         var parseFunDef = FunctionParser.parseDef.bind(tokenizer, typesSeen, cfg);
         var parseNsDef = NsParser.parse.bind(tokenizer);
+        var parseUse = UseParser.parse.bind(tokenizer);
 
         Debug.dbgln("parseDefinition()" + meta, tokenizer.line);
         var kwds = [];
@@ -16,7 +17,7 @@ class DefinitionParser {
             switch( id ) {
             case "public", "internal", "final", "dynamic": kwds.push(id);
             case "use":
-                UseParser.parse(tokenizer);
+                parseUse();
                 continue;
             case "class":
                 var c = parseClass(genTypes, path, filename, kwds,meta,false);

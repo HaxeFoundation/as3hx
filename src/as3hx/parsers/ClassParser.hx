@@ -9,9 +9,11 @@ class ClassParser {
         var parseType = TypeParser.parse.bind(tokenizer, typesSeen, cfg);
         var parseMetadata = MetadataParser.parse.bind(tokenizer, typesSeen, cfg);
         var parseClassVar = parseVar.bind(tokenizer, typesSeen, cfg, genTypes);
+        var parseExpr = ExprParser.parse.bind(tokenizer, typesSeen, cfg);
         var parseClassFun = parseFun.bind(tokenizer, typesSeen, cfg);
         var parseUse = UseParser.parse.bind(tokenizer);
         var parseInclude = IncludeParser.parse.bind(tokenizer, path, filename);
+        var parseImport = ImportParser.parse.bind(tokenizer, cfg);
 
         var cname = tokenizer.id();
         var classMeta = meta;
@@ -23,9 +25,9 @@ class ClassParser {
         var condVars:Array<String> = [];
         while( true ) {
             if( ParserUtils.opt(tokenizer, TId("implements")) ) {
-                impl.push(TypeParser.parse(tokenizer, typesSeen, cfg));
+                impl.push(parseType());
                 while( ParserUtils.opt(tokenizer, TComma) )
-                    impl.push(TypeParser.parse(tokenizer, typesSeen, cfg));
+                    impl.push(parseType());
                 continue;
             }
             if( ParserUtils.opt(tokenizer, TId("extends")) ) {
@@ -42,9 +44,9 @@ class ClassParser {
                     }
                 }
                 else {
-                    impl.push(TypeParser.parse(tokenizer, typesSeen, cfg));
+                    impl.push(parseType());
                     while( ParserUtils.opt(tokenizer, TComma) )
-                        impl.push(TypeParser.parse(tokenizer, typesSeen, cfg));
+                        impl.push(parseType());
                 }
                 continue;
             }
@@ -121,7 +123,7 @@ class ClassParser {
                         }
                         break;
                     case "import":
-                        var impt = ImportParser.parse(tokenizer, cfg);
+                        var impt = parseImport();
                         if (impt.length > 0) imports.push(impt);
                         tokenizer.end();
                         break;
@@ -154,7 +156,7 @@ class ClassParser {
                     tokenizer.add(t);
                     while( kwds.length > 0 )
                         tokenizer.add(TId(kwds.pop()));
-                    inits.push(ExprParser.parse(tokenizer, typesSeen, cfg, false));
+                    inits.push(parseExpr(false));
                     tokenizer.end();
                 case TNs:
                     if (kwds.length != 1) {
@@ -209,7 +211,7 @@ class ClassParser {
                     tokenizer.add(t);
                     while( kwds.length > 0 )
                         tokenizer.add(TId(kwds.pop()));
-                    inits.push(ExprParser.parse(tokenizer, typesSeen, cfg, false));
+                    inits.push(parseExpr(false));
                     tokenizer.end();
                     break;
                 }
@@ -254,6 +256,7 @@ class ClassParser {
     public static function parseVar(tokenizer, typesSeen, cfg, 
             genTypes, kwds,meta,condVars:Array<String>) : ClassField {
         var parseType = TypeParser.parse.bind(tokenizer, typesSeen, cfg);
+        var parseExpr = ExprParser.parse.bind(tokenizer, typesSeen, cfg);
 
         Debug.openDebug("parseClassVar(", tokenizer.line);
         var name = tokenizer.id();
@@ -262,7 +265,7 @@ class ClassParser {
         if( ParserUtils.opt(tokenizer, TColon) )
             t = parseType();
         if( ParserUtils.opt(tokenizer, TOp("=")) )
-            val = ExprParser.parse(tokenizer, typesSeen, cfg, false);
+            val = parseExpr(false);
 
         var rv = {
             meta : meta,
