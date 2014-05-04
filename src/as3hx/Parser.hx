@@ -4,6 +4,7 @@ import as3hx.Tokenizer;
 import as3hx.ParserUtils;
 import as3hx.parsers.ObjectParser;
 import as3hx.parsers.FunctionParser;
+import as3hx.parsers.XMLReader;
 import as3hx.parsers.StructureParser;
 import as3hx.parsers.TypeParser;
 import as3hx.parsers.E4XParser;
@@ -852,7 +853,7 @@ class Parser {
                 if( x == op )
                     return makeUnop(op, parseExpr());
             if( op == "<" )
-                return EXML(readXML());
+                return EXML(XMLReader.read(tokenizer));
             return ParserUtils.unexpected(tk);
         case TBkOpen:
             var a = new Array();
@@ -1138,63 +1139,5 @@ class Parser {
             }
         }
         return args;
-    }
-    
-    function readXML() {
-        Debug.dbgln("readXML()", tokenizer.line);
-        var buf = new StringBuf();
-        var input = tokenizer.input;
-        buf.addChar("<".code);
-        buf.addChar(tokenizer.char);
-
-        //corner case : check wether this is a satndalone CDATA element
-        //(not wrapped in XML element)
-        var isCDATA = tokenizer.char == "!".code; 
-        
-        tokenizer.char = 0;
-        try {
-            var prev = 0;
-            while(true) {
-                var c = input.readByte();
-                if(c == "\n".code) tokenizer.line++;
-                buf.addChar(c);
-                if( c == ">".code ) break;
-                prev = c;
-            }
-            if( prev == "/".code )
-                return buf.toString();
-            if (isCDATA)
-                return buf.toString();    
-            while(true) {
-                var c = input.readByte();
-                if(c == "\n".code) tokenizer.line++;
-                if( c == "<".code ) {
-                    c = input.readByte();
-                    if(c == "\n".code) tokenizer.line++;
-                    if( c == "/".code ) {
-                        buf.add("</");
-                        break;
-                    }
-                    if (c == "!".code) { // CDATA element
-                        buf.add("<");
-                    }
-                    else {
-                        tokenizer.char = c;
-                        buf.add(readXML());
-                        continue;
-                    }
-                }
-                buf.addChar(c);
-            }
-            while(true) {
-                var c = input.readByte();
-                if(c == "\n".code) tokenizer.line++;
-                buf.addChar(c);
-                if( c == ">".code ) break;
-            }
-            return buf.toString();
-        } catch( e : haxe.io.Eof ) {
-            throw EUnterminatedXML;
-        }
     }
 }
