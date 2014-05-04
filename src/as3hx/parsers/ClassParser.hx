@@ -22,13 +22,13 @@ class ClassParser {
         var impl = [], extend = null, inits = [];
         var condVars:Array<String> = [];
         while( true ) {
-            if( ParserUtils.opt(tokenizer.token, tokenizer.add, TId("implements")) ) {
+            if( ParserUtils.opt(tokenizer, TId("implements")) ) {
                 impl.push(TypeParser.parse(tokenizer, typesSeen, cfg));
-                while( ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) )
+                while( ParserUtils.opt(tokenizer, TComma) )
                     impl.push(TypeParser.parse(tokenizer, typesSeen, cfg));
                 continue;
             }
-            if( ParserUtils.opt(tokenizer.token, tokenizer.add, TId("extends")) ) {
+            if( ParserUtils.opt(tokenizer, TId("extends")) ) {
                 if(!isInterface) {
                     extend = parseType();
                     if(cfg.testCase) {
@@ -43,7 +43,7 @@ class ClassParser {
                 }
                 else {
                     impl.push(TypeParser.parse(tokenizer, typesSeen, cfg));
-                    while( ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) )
+                    while( ParserUtils.opt(tokenizer, TComma) )
                         impl.push(TypeParser.parse(tokenizer, typesSeen, cfg));
                 }
                 continue;
@@ -57,7 +57,7 @@ class ClassParser {
         pf = function(included:Bool,inCondBlock:Bool) {
         while( true ) {
             // check for end of class
-            if( ParserUtils.opt2(tokenizer.token, tokenizer.add, TBrClose, meta) ) break;
+            if( ParserUtils.opt2(tokenizer, TBrClose, meta) ) break;
             var kwds = [];
             // parse all comments and metadata before next field
             while( true ) {
@@ -97,7 +97,7 @@ class ClassParser {
                         do {
                             fields.push(parseClassVar(kwds, meta, condVars.copy()));
                             meta = [];
-                        } while( ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) );
+                        } while( ParserUtils.opt(tokenizer, TComma) );
                         tokenizer.end();
                         if (condVars.length != 0 && !inCondBlock) {
                             return;
@@ -107,7 +107,7 @@ class ClassParser {
                         do {
                             fields.push(parseClassVar(kwds, meta, condVars.copy()));
                             meta = [];
-                        } while( ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) );
+                        } while( ParserUtils.opt(tokenizer, TComma) );
                         tokenizer.end();
                         if (condVars.length != 0 && !inCondBlock) {
                             return;
@@ -259,9 +259,9 @@ class ClassParser {
         var name = tokenizer.id();
         Debug.dbgln(name + ")", tokenizer.line, false);
         var t = null, val = null;
-        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) )
+        if( ParserUtils.opt(tokenizer, TColon) )
             t = parseType();
-        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TOp("=")) )
+        if( ParserUtils.opt(tokenizer, TOp("=")) )
             val = ExprParser.parse(tokenizer, typesSeen, cfg, false);
 
         var rv = {

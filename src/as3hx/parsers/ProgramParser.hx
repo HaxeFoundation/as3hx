@@ -1,16 +1,17 @@
 package as3hx.parsers;
 
+import as3hx.Parser;
 import as3hx.As3;
 import as3hx.Tokenizer;
 
 class ProgramParser {
 
-    public static function parse(tokenizer:Tokenizer, typesSeen:Array<Dynamic>, cfg, genTypes:Array<GenType>, typesDefd:Array<Dynamic>, path, filename) : Program {
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg, path, filename) : Program {
         var parsePackageName = PackageNameParser.parse.bind(tokenizer);
-        var parseMetadata = MetadataParser.parse.bind(tokenizer, typesSeen, cfg);
+        var parseMetadata = MetadataParser.parse.bind(tokenizer, types.typesSeen, cfg);
         var parseImport = ImportParser.parse.bind(tokenizer, cfg);
         var parseInclude = IncludeParser.parse.bind(tokenizer);
-        var parseDefinition = DefinitionParser.parse.bind(tokenizer, typesSeen, cfg);
+        var parseDefinition = DefinitionParser.parse.bind(tokenizer, types.typesSeen, cfg);
         var parseUse = UseParser.parse.bind(tokenizer);
 
         Debug.dbgln("parseProgram()", tokenizer.line);
@@ -26,7 +27,7 @@ class ProgramParser {
             case TId(s):
                 if( s != "package" )
                     ParserUtils.unexpected(t);
-                if( ParserUtils.opt(tokenizer.token, tokenizer.add, TBrOpen) )
+                if( ParserUtils.opt(tokenizer, TBrOpen) )
                     pack = []
                 else {
                     pack = parsePackageName();
@@ -164,7 +165,7 @@ class ProgramParser {
                 case "final", "public", "class", "internal", "interface", "dynamic", "function":
                     inNamespace = false;
                     tokenizer.add(tk);
-                    var d = parseDefinition(genTypes, typesDefd, path, filename, meta);
+                    var d = parseDefinition(types.genTypes, types.typesDefd, path, filename, meta);
                     switch(d) {
                         case CDef(c):
                             for(i in c.imports)
@@ -198,7 +199,7 @@ class ProgramParser {
                     continue;
                 default:
 
-                    if(ParserUtils.opt(tokenizer.token, tokenizer.add, TNs)) {
+                    if(ParserUtils.opt(tokenizer, TNs)) {
                         var ns : String = id;
                         var t = ParserUtils.uncomment(tokenizer.token());
 
@@ -230,7 +231,7 @@ class ProgramParser {
                             ParserUtils.unexpected(t);
                         }
                     }
-                    else if(ParserUtils.opt(tokenizer.token, tokenizer.add, TSemicolon)) {
+                    else if(ParserUtils.opt(tokenizer, TSemicolon)) {
                         // class names without an import statement used
                         // for forcing compilation and linking.
                         inits.push(EIdent(id));
@@ -270,9 +271,9 @@ class ProgramParser {
             header : header,
             pack : pack,
             imports : imports,
-            typesSeen : typesSeen,
-            typesDefd : typesDefd,
-            genTypes : genTypes,
+            typesSeen : types.typesSeen,
+            typesDefd : types.typesDefd,
+            genTypes : types.genTypes,
             defs : defs,
             footer : meta
         };

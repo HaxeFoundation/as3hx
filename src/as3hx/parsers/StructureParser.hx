@@ -20,7 +20,7 @@ class StructureParser {
             tokenizer.ensure(TPClose);
             var e1 = parseExpr(false);
             tokenizer.end();
-            var elseExpr = if( ParserUtils.opt(tokenizer.token, tokenizer.add, TId("else"), true) ) parseExpr(false) else null;
+            var elseExpr = if( ParserUtils.opt(tokenizer, TId("else"), true) ) parseExpr(false) else null;
             switch (cond) {
                 case ECondComp(v, e, e2):
                     //corner case, the condition is an AS3 preprocessor 
@@ -37,12 +37,12 @@ class StructureParser {
             var vars = [];
             while( true ) {
                 var name = tokenizer.id(), t = null, val = null;
-                if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) )
+                if( ParserUtils.opt(tokenizer, TColon) )
                     t = parseType();
-                if( ParserUtils.opt(tokenizer.token, tokenizer.add, TOp("=")) )
+                if( ParserUtils.opt(tokenizer, TOp("=")) )
                     val = ETypedExpr(parseExpr(false), t);
                 vars.push( { name : name, t : t, val : val } );
-                if( !ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) )
+                if( !ParserUtils.opt(tokenizer, TComma) )
                     break;
             }
             EVars(vars);
@@ -53,7 +53,7 @@ class StructureParser {
             var e = parseExpr(false);
             EWhile(econd,e, false);
         case "for":
-            if( ParserUtils.opt(tokenizer.token, tokenizer.add, TId("each")) ) {
+            if( ParserUtils.opt(tokenizer, TId("each")) ) {
                 tokenizer.ensure(TPOpen);
                 var ev = parseExpr(false);
                 switch(ev) {
@@ -69,7 +69,7 @@ class StructureParser {
             } else {
                 tokenizer.ensure(TPOpen);
                 var inits = [];
-                if( !ParserUtils.opt(tokenizer.token, tokenizer.add, TSemicolon) ) {
+                if( !ParserUtils.opt(tokenizer, TSemicolon) ) {
                     var e = parseExpr(false);
                     switch(e) {
                         case EBinop(op, e1, e2, n):
@@ -79,7 +79,7 @@ class StructureParser {
                             }
                         default:
                     }
-                    if( ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) ) {
+                    if( ParserUtils.opt(tokenizer, TComma) ) {
                         inits = parseExprList(TSemicolon);
                         inits.unshift(e);
                     } else {
@@ -108,7 +108,7 @@ class StructureParser {
         case "return":
             EReturn(if( tokenizer.peek() == TSemicolon ) null else parseExpr(false));
         case "new":
-            if(ParserUtils.opt(tokenizer.token, tokenizer.add, TOp("<"))) {
+            if(ParserUtils.opt(tokenizer, TOp("<"))) {
                 // o = new <VectorType>[a,b,c..]
                 var t = parseType();
                 tokenizer.ensure(TOp(">"));
@@ -137,14 +137,14 @@ class StructureParser {
                                     default: 
                                     null;
                 }
-                if (cc != null) cc; else ENew(t,if( ParserUtils.opt(tokenizer.token, tokenizer.add, TPOpen) ) parseExprList(TPClose) else []);
+                if (cc != null) cc; else ENew(t,if( ParserUtils.opt(tokenizer, TPOpen) ) parseExprList(TPClose) else []);
             }
         case "throw":
             EThrow( parseExpr(false) );
         case "try":
             var e = parseExpr(false);
             var catches = new Array();
-            while( ParserUtils.opt(tokenizer.token, tokenizer.add, TId("catch")) ) {
+            while( ParserUtils.opt(tokenizer, TId("catch")) ) {
                 tokenizer.ensure(TPOpen);
                 var name = tokenizer.id();
                 tokenizer.ensure(TColon);
@@ -239,7 +239,7 @@ class StructureParser {
         case "getTimer":
             
             //consume the parenthesis from the getTimer AS3 call
-            while(!ParserUtils.opt(tokenizer.token, tokenizer.add, TPClose)) {
+            while(!ParserUtils.opt(tokenizer, TPClose)) {
                 tokenizer.token();
             }
             

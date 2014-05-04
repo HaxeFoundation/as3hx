@@ -16,7 +16,7 @@ class E4XParser {
         switch(tk) {
             case TAt:
                 var i : String = null;
-                if(ParserUtils.opt(tokenizer.token, tokenizer.add, TBkOpen)) {
+                if(ParserUtils.opt(tokenizer, TBkOpen)) {
                     tk = tokenizer.token();
                     switch(ParserUtils.uncomment(tk)) {
                         case TConst(c):
@@ -76,11 +76,11 @@ class E4XParser {
                 switch(ParserUtils.uncomment(tk)) {
                     case TId(id):
                         field = StringTools.replace(id, "$", "__DOLLAR__");
-                        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TNs) )
+                        if( ParserUtils.opt(tokenizer, TNs) )
                             field = field + "::" + tokenizer.id();
                     case TAt:
                         var i : String = null;
-                        if(ParserUtils.opt(tokenizer.token, tokenizer.add, TBkOpen)) {
+                        if(ParserUtils.opt(tokenizer, TBkOpen)) {
                             tk = tokenizer.token();
                             switch(ParserUtils.uncomment(tk)) {
                                 case TConst(c):

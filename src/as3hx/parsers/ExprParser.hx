@@ -63,7 +63,7 @@ class ExprParser {
                 }
             }
                 
-            while( !ParserUtils.opt(tokenizer.token, tokenizer.add, TBrClose) ) {
+            while( !ParserUtils.opt(tokenizer, TBrClose) ) {
                 var e = parseFullExpr();
                 a.push(e);
             }
@@ -180,7 +180,7 @@ class ExprParser {
             switch(ParserUtils.uncomment(ParserUtils.removeNewLine(tk))) {
             case TId(id):
                 field = StringTools.replace(id, "$", "__DOLLAR__");
-                if( ParserUtils.opt(tokenizer.token, tokenizer.add, TNs) )
+                if( ParserUtils.opt(tokenizer, TNs) )
                     field = field + "::" + tokenizer.id();
             case TOp(op):
                 if( op != "<" || switch(e1) { case EIdent(v): v != "Vector" && v != "Dictionary"; default: true; } ) ParserUtils.unexpected(tk);
@@ -207,7 +207,7 @@ class ExprParser {
             case TAt:
                 //xml.attributes() is equivalent to xml.@*.
                 var i : String = null;
-                if(ParserUtils.opt(tokenizer.token, tokenizer.add, TBkOpen)) {
+                if(ParserUtils.opt(tokenizer, TBkOpen)) {
                     tk = tokenizer.token();
                     switch(ParserUtils.uncomment(tk)) {
                         case TConst(c):
@@ -302,13 +302,13 @@ class ExprParser {
         var parseExpr = parse.bind(tokenizer, typesSeen, cfg);
         Debug.dbgln("parseFullExpr()", tokenizer.line);
         var e = parseExpr(false);
-        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) ) {
+        if( ParserUtils.opt(tokenizer, TColon) ) {
             switch( e ) {
             case EIdent(l): e = ELabel(l);
             default: tokenizer.add(TColon);
             }
         }
-        if( !ParserUtils.opt(tokenizer.token, tokenizer.add, TComma) )
+        if( !ParserUtils.opt(tokenizer, TComma) )
             tokenizer.end();
         return e;
     }
@@ -322,7 +322,7 @@ class ExprParser {
             if(args.length == 0) return;
             args[args.length-1] = ParserUtils.tailComment(args[args.length-1], t);
         }
-        if( ParserUtils.opt(tokenizer.token, tokenizer.add, etk) )
+        if( ParserUtils.opt(tokenizer, etk) )
             return args;
         while( true ) {
             args.push(parseExpr(false));

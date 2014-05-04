@@ -8,7 +8,7 @@ class NsParser {
         Debug.dbgln("parseNsDef()", tokenizer.line);
         var name = tokenizer.id();
         var value = null;
-        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TOp("=")) ) {
+        if( ParserUtils.opt(tokenizer, TOp("=")) ) {
             var t = tokenizer.token();
             value = switch( t ) {
             case TConst(c):

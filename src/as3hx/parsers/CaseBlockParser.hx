@@ -4,6 +4,7 @@ class CaseBlockParser {
 
     public static function parse(tokenizer:Tokenizer, typesSeen, cfg) {
         var parseExpr = ExprParser.parse.bind(tokenizer, typesSeen, cfg);
+
         Debug.dbgln("parseCaseBlock()", tokenizer.line);
         var el = [];
         while( true ) {

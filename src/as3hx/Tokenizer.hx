@@ -448,7 +448,7 @@ class Tokenizer {
     
     public function end() {
         Debug.openDebug("function end()", line, true);
-        while( ParserUtils.opt(token, add, TSemicolon) ) {
+        while( ParserUtils.opt(this, TSemicolon) ) {
         }
         Debug.closeDebug("function end()", line);
     }

@@ -13,7 +13,7 @@ class TypeParser {
         // this is a ugly hack in order to fix lexer issue with "var x:*=0"
         var tmp = tokenizer.opPriority.get("*=");
         tokenizer.opPriority.remove("*=");
-        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TOp("*")) ) {
+        if( ParserUtils.opt(tokenizer, TOp("*")) ) {
             tokenizer.opPriority.set("*=",tmp);
             return TStar;
         }

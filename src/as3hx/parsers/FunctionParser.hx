@@ -23,7 +23,7 @@ class FunctionParser {
         //store the whole expression, including
         //comments and newline
         var expressions:Array<Expr> = [];
-        if( !ParserUtils.opt(tokenizer.token, tokenizer.add, TPClose) ) {
+        if( !ParserUtils.opt(tokenizer, TPClose) ) {
  
             while( true ) {
                
@@ -33,7 +33,7 @@ class FunctionParser {
                         tokenizer.ensure(TDot);
                         tokenizer.ensure(TDot);
                         f.varArgs = tokenizer.id();
-                        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) )
+                        if( ParserUtils.opt(tokenizer, TColon) )
                             tokenizer.ensure(TId("Array"));
                         tokenizer.ensure(TPClose);
                         break;
@@ -42,12 +42,12 @@ class FunctionParser {
                         var name = s, t = null, val = null;
                         expressions.push(EIdent(s));
 
-                        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) ) { // ":" 
+                        if( ParserUtils.opt(tokenizer, TColon) ) { // ":" 
                             t = parseType(); //arguments type
                             expressions.push(ETypedExpr(null, t));
                         }
 
-                        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TOp("=")) ) {
+                        if( ParserUtils.opt(tokenizer, TOp("=")) ) {
                             val = parseExpr(false); //optional argument's default value
                             expressions.push(val);
                         }
@@ -55,7 +55,7 @@ class FunctionParser {
                         f.args.push( { name : name, t : t, val : val, exprs:expressions } );
                         expressions = []; // reset for next argument
 
-                        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TPClose) ) // ")" end of arguments
+                        if( ParserUtils.opt(tokenizer, TPClose) ) // ")" end of arguments
                             break;
                         tokenizer.ensure(TComma);
 
@@ -79,7 +79,7 @@ class FunctionParser {
         var retExpressions:Array<Expr> = [];
 
         //parse return type 
-        if( ParserUtils.opt(tokenizer.token, tokenizer.add, TColon) ) {
+        if( ParserUtils.opt(tokenizer, TColon) ) {
             var t = parseType();
             retExpressions.push(ETypedExpr(null, t));
             f.ret.t = t;
