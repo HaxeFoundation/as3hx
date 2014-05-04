@@ -5,7 +5,7 @@ import as3hx.Tokenizer;
 
 class FunctionParser {
 
-    public static function parse(tokenizer:Tokenizer, typesSeen, cfg, isInterfaceFun : Bool = false) : Function {
+    public static function parse(tokenizer:Tokenizer, typesSeen, cfg, isInterfaceFun : Bool) : Function {
         var parseType = TypeParser.parse.bind(tokenizer, typesSeen, cfg);
         var parseExpr = ExprParser.parse.bind(tokenizer, typesSeen, cfg);
 

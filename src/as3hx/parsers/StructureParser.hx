@@ -104,7 +104,7 @@ class StructureParser {
             case TId(n): tokenizer.token(); n;
             default: null;
             };
-            EFunction(parseFunction(),name);
+            EFunction(parseFunction(false),name);
         case "return":
             EReturn(if( tokenizer.peek() == TSemicolon ) null else parseExpr(false));
         case "new":

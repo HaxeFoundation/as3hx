@@ -5,6 +5,8 @@ import as3hx.ParserUtils;
 import as3hx.parsers.ObjectParser;
 import as3hx.parsers.ExprParser;
 import as3hx.parsers.FunctionParser;
+import as3hx.parsers.ClassParser;
+import as3hx.parsers.MetadataParser;
 import as3hx.parsers.CaseBlockParser;
 import as3hx.parsers.XMLReader;
 import as3hx.parsers.StructureParser;
@@ -415,7 +417,7 @@ class Parser {
     function parseFunDef(kwds, meta) : FunctionDef {
         Debug.dbgln("parseFunDef()", tokenizer.line);
         var fname = tokenizer.id();
-        var f = FunctionParser.parse(tokenizer, typesSeen, cfg);
+        var f = FunctionParser.parse(tokenizer, typesSeen, cfg, false);
         return {
             kwds : kwds,
             meta : meta,
