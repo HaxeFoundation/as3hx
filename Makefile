@@ -9,4 +9,4 @@ clean:
 
 run-test:
 	rm -rf test-out
-	neko run.n test/ test-out/
+	neko run.n test/e2e test-out/
