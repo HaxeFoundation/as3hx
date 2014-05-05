@@ -1,5 +1,6 @@
 import massive.munit.TestSuite;
 
+import ParserUtilsTest;
 import ExampleTest;
 
 /**
@@ -14,6 +15,7 @@ class TestSuite extends massive.munit.TestSuite
 	{
 		super();
 
+		add(ParserUtilsTest);
 		add(ExampleTest);
 	}
 }
