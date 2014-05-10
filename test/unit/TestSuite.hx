@@ -2,6 +2,7 @@ import massive.munit.TestSuite;
 
 import ParserUtilsTest;
 import ExampleTest;
+import TokenizerTest;
 
 /**
  * Auto generated Test Suite for MassiveUnit.
@@ -17,5 +18,6 @@ class TestSuite extends massive.munit.TestSuite
 
 		add(ParserUtilsTest);
 		add(ExampleTest);
+		add(TokenizerTest);
 	}
 }
