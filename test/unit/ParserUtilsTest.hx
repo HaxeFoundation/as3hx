@@ -71,6 +71,57 @@ class ParserUtilsTest
     @Test
     public function testMakeECommented():Void
     {
+        Assert.areEqual(ParserUtils.makeECommented(TCommented('', false, TEof), EContinue), 
+                ECommented('', false, false, EContinue));
+        Assert.areEqual(ParserUtils.makeECommented(
+                    TCommented('', false, TCommented('', false, TEof)), EContinue), 
+                ECommented('', false, false, ECommented('', false, false, EContinue)));
+    }
+
+    @Test
+    public function testRemoveNewLine():Void
+    {
+        Assert.areEqual(ParserUtils.removeNewLine(TEof), TEof);
+        Assert.areEqual(ParserUtils.removeNewLine(TNL(TEof)), TEof);
+        Assert.areEqual(ParserUtils.removeNewLine(TCommented('', false, TEof)), TEof);
+        Assert.areEqual(ParserUtils.removeNewLine(TCommented('', false, TEof), false), TCommented('', false, TEof));
+    }
+
+    @Test
+    public function testRemoveNewLineExpr():Void
+    {
+        Assert.areEqual(ParserUtils.removeNewLineExpr(EContinue), EContinue);
+        Assert.areEqual(ParserUtils.removeNewLineExpr(ENL(EContinue)), EContinue);
+        Assert.areEqual(ParserUtils.removeNewLineExpr(ECommented('', false, false, EContinue)), EContinue);
+        Assert.areEqual(ParserUtils.removeNewLineExpr(ECommented('', false, false, EContinue), false), ECommented('', false, false, EContinue));
+    }
+
+    @Test
+    @Ignore
+    public function testOpt():Void
+    {
+
+    }
+
+    @Test
+    @Ignore
+    public function testOpt2():Void
+    {
+
+    }
+
+    @Test
+    public function testMakeUnop():Void
+    {
+        Assert.areEqual(ParserUtils.makeUnop('+', EContinue), EUnop('+', true, EContinue));
+        Assert.areEqual(ParserUtils.makeUnop('+', EBinop('+', EContinue, EContinue, false)), 
+                EBinop('+', EUnop('+', true, EContinue), EContinue, false));
+    }
+
+    @Test
+    @Ignore
+    public function testMakeBinop():Void
+    {
 
     }
 }
