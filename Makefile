@@ -9,7 +9,7 @@ clean:
 
 e2e-test:
 	rm -rf test-out
-	neko run.n test/e2e test-out/
+	neko run.n -verifyGeneratedFiles test/e2e test-out/ 
 
 unit-test:
 	haxelib run munit test -neko

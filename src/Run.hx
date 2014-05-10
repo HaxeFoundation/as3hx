@@ -63,7 +63,9 @@ class Run {
                 warnings.set(name, writer.process(program, fw));
                 fw.close();
 
-                verifyGeneratedFile(f, src, name);
+                if(cfg.verifyGeneratedFiles) {
+                    verifyGeneratedFile(f, src, name);
+                }
 
             }
         }
