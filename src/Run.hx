@@ -62,11 +62,32 @@ class Run {
                 var fw = File.write(name, false);
                 warnings.set(name, writer.process(program, fw));
                 fw.close();
+
+                if(cfg.verifyGeneratedFiles) {
+                    verifyGeneratedFile(f, src, name);
+                }
+
             }
         }
 
         for (name in subDirList) {
             loop((src + "/" + name), (dst + "/" + name), excludes);
+        }
+    }
+
+    //if a .hx file with the same name as the .as file is found in the .as
+    //file directory, then it is considered the expected output of the conversion
+    //and is diffed against the actual output
+    static function verifyGeneratedFile(file, src, outFile) {
+        var test = src+ "/" + Writer.properCase(file.substr(0, -3),true) + ".hx";
+        if (sys.FileSystem.exists(test) && sys.FileSystem.exists(outFile)) {
+            Sys.println("expected HX file: " + test);
+            var expectedFile = sys.io.File.getContent(test);
+            var generatedFile = sys.io.File.getContent(outFile);
+            if (generatedFile != expectedFile) {
+                Sys.println('Don\'t match generated file:' + outFile);
+                Sys.command('diff', [test, outFile]);
+            }
         }
     }
 
