@@ -1,8 +1,8 @@
 import massive.munit.TestSuite;
 
-import ParserUtilsTest;
+import as3hx.ParserUtilsTest;
+import as3hx.TokenizerTest;
 import ExampleTest;
-import TokenizerTest;
 
 /**
  * Auto generated Test Suite for MassiveUnit.
@@ -16,8 +16,8 @@ class TestSuite extends massive.munit.TestSuite
 	{
 		super();
 
-		add(ParserUtilsTest);
+		add(as3hx.ParserUtilsTest);
+		add(as3hx.TokenizerTest);
 		add(ExampleTest);
-		add(TokenizerTest);
 	}
 }
