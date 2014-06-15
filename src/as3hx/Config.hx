@@ -58,6 +58,8 @@ class Config {
     public var useFastXML : Bool;
     /** use Haxe general compatibility class */
     public var useCompat : Bool;
+    /** diff the generated .hx files against expected .hx files if they exists **/
+    public var verifyGeneratedFiles : Bool;
 
     /** 
      * a list of absolute or relative directory paths.
@@ -246,6 +248,8 @@ class Config {
                 guessCasts = false;
             case "-vector2array", "--vector2array":
                 vectorToArray = true;
+            case "-verifyGeneratedFiles", "--verifyGeneratedFiles":
+                verifyGeneratedFiles = true;
             case "-debug-expr", "--debug-expr":
                 debugExpr = true;
             case "-no-func2dyn", "--no-func2dyn":
@@ -302,6 +306,7 @@ class Config {
             case "forcePrivateSetter":  setBoolField(el, true);
             case "errorContinue":       setBoolField(el, true);
             case "testCase":            setBoolField(el, false);
+            case "verifyGeneratedFiles": setBoolField(el, false);
             case "excludeList":         setExcludeField(el, new List());
             case "conditionalCompilationList": setConditionalVars(el, new List());
             case "dictionaryToHash":    setBoolField(el, false);
@@ -409,6 +414,7 @@ class Config {
     <excludeList />
     <conditionalCompilationList />
     <dictionaryToHash value="false" />
+    <verifyGeneratedFiles value="false" />
     <useFastXML value="true" />
     <useCompat value="true" />
     <importPaths></importPaths>
