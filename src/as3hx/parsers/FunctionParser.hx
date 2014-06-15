@@ -6,9 +6,9 @@ import as3hx.Parser;
 
 class FunctionParser {
 
-    public static function parse(tokenizer:Tokenizer, types:Types, cfg, isInterfaceFun : Bool) : Function {
-        var parseType = TypeParser.parse.bind(tokenizer, types, cfg);
-        var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg, parsers:Parsers, isInterfaceFun : Bool) : Function {
+        var parseType = parsers.parseType.bind(parsers);
+        var parseExpr = parsers.parseExpr.bind(parsers);
 
         Debug.openDebug("parseFun()", tokenizer.line, true);
         var f = {
@@ -137,8 +137,8 @@ class FunctionParser {
         return f;
     }
 
-    public static function parseDef(tokenizer:Tokenizer, types:Types, cfg, kwds, meta) : FunctionDef {
-        var parseFunction = FunctionParser.parse.bind(tokenizer, types, cfg);
+    public static function parseDef(tokenizer:Tokenizer, types:Types, cfg, parsers:Parsers, kwds, meta) : FunctionDef {
+        var parseFunction = parsers.parseFunction.bind(parsers);
 
         Debug.dbgln("parseFunDef()", tokenizer.line);
         var fname = tokenizer.id();

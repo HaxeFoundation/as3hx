@@ -6,12 +6,12 @@ import as3hx.Parser;
 
 class StructureParser {
 
-    public static function parse(tokenizer:Tokenizer, types:Types, cfg:Config, kwd) : Expr {
-        var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
-        var parseExprList = ExprParser.parseList.bind(tokenizer, types, cfg);
-        var parseType = TypeParser.parse.bind(tokenizer, types, cfg);
-        var parseFunction = FunctionParser.parse.bind(tokenizer, types, cfg);
-        var parseCaseBlock = CaseBlockParser.parse.bind(tokenizer, types, cfg);
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg:Config, parsers:Parsers, kwd) : Expr {
+        var parseExpr = parsers.parseExpr.bind(parsers);
+        var parseExprList = parsers.parseExprList.bind(parsers);
+        var parseType = parsers.parseType.bind(parsers);
+        var parseFunction = parsers.parseFunction.bind(parsers);
+        var parseCaseBlock = parsers.parseCaseBlock.bind(parsers);
 
         Debug.dbgln("parseStructure("+kwd+")", tokenizer.line);
         return switch( kwd ) {

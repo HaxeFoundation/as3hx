@@ -27,5 +27,4 @@ class IncludeParser {
         filename = oldFilename;
         Debug.closeDebug("Finished parsing file " + file, tokenizer.line);
     }
-
 }

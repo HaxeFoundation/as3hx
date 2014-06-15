@@ -6,8 +6,8 @@ import as3hx.Parser;
 
 class MetadataParser {
 
-    public static function parse(tokenizer, types:Types, cfg) : Expr {
-        var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg, parsers:Parsers) : Expr {
+        var parseExpr = parsers.parseExpr.bind(parsers);
         Debug.dbg("parseMetadata()", tokenizer.line);
         tokenizer.ensure(TBkOpen);
         var name = tokenizer.id();

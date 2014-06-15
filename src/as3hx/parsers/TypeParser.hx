@@ -6,9 +6,9 @@ import as3hx.Parser;
 
 class TypeParser {
 
-    public static function parse(tokenizer:Tokenizer, types:Types, cfg) {
-        var parseType = parse.bind(tokenizer, types, cfg);
-        var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg, parsers:Parsers) {
+        var parseType = parsers.parseType.bind(parsers);
+        var parseExpr = parsers.parseExpr.bind(parsers);
 
         Debug.dbgln("parseType()", tokenizer.line);
         // this is a ugly hack in order to fix lexer issue with "var x:*=0"

@@ -7,9 +7,9 @@ import as3hx.Parser;
 
 class ObjectParser {
 
-    public static function parse(tokenizer:Tokenizer, types:Types, cfg):Expr {
-        var parseExprNext = ExprParser.parseNext.bind(tokenizer, types, cfg);
-        var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg, parsers:Parsers):Expr {
+        var parseExprNext = parsers.parseExprNext.bind(parsers);
+        var parseExpr = parsers.parseExpr.bind(parsers);
         Debug.openDebug("parseObject()", tokenizer.line, true);
         var fl = new Array();
 

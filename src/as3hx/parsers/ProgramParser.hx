@@ -6,13 +6,13 @@ import as3hx.Tokenizer;
 
 class ProgramParser {
 
-    public static function parse(tokenizer:Tokenizer, types:Types, cfg, path, filename) : Program {
-        var parsePackageName = PackageNameParser.parse.bind(tokenizer);
-        var parseMetadata = MetadataParser.parse.bind(tokenizer, types, cfg);
-        var parseImport = ImportParser.parse.bind(tokenizer, cfg);
-        var parseInclude = IncludeParser.parse.bind(tokenizer);
-        var parseDefinition = DefinitionParser.parse.bind(tokenizer, types, cfg);
-        var parseUse = UseParser.parse.bind(tokenizer);
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg, parsers:Parsers) : Program {
+        var parsePackageName = parsers.parsePackageName;
+        var parseMetadata = parsers.parseMetadata.bind(parsers);
+        var parseImport = parsers.parseImport;
+        var parseInclude = parsers.parseInclude;
+        var parseDefinition = parsers.parseDefinition.bind(parsers);
+        var parseUse = parsers.parseUse;
 
         Debug.dbgln("parseProgram()", tokenizer.line);
         var pack = [];
@@ -165,7 +165,7 @@ class ProgramParser {
                 case "final", "public", "class", "internal", "interface", "dynamic", "function":
                     inNamespace = false;
                     tokenizer.add(tk);
-                    var d = parseDefinition(path, filename, meta);
+                    var d = parseDefinition(meta);
                     switch(d) {
                         case CDef(c):
                             for(i in c.imports)
@@ -187,7 +187,7 @@ class ProgramParser {
                                 case CString(p):
                                     var oldClosed = closed;
                                     closed = false;
-                                    parseInclude(path, filename, p,pf.bind(true));
+                                    parseInclude(p,pf.bind(true));
                                     tokenizer.end();
                                     closed = oldClosed;
                                 default:

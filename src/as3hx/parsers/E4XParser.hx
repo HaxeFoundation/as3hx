@@ -7,10 +7,10 @@ import as3hx.Parser;
 
 class E4XParser {
 
-    public static function parse(tokenizer:Tokenizer, types:Types, cfg:Config) : Expr {
-        var parseE4XNext = parseNext.bind(tokenizer, types, cfg);
-        var parseE4X = parse.bind(tokenizer, types, cfg);
-        var parseStructure = StructureParser.parse.bind(tokenizer, types, cfg);
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg:Config, parsers:Parsers) : Expr {
+        var parseE4XNext = parseNext.bind(tokenizer, types, cfg, parsers);
+        var parseE4X = parsers.parseE4X.bind(parsers);
+        var parseStructure = parsers.parseStructure.bind(parsers);
         
         var tk = tokenizer.token();
         Debug.dbgln("parseE4XFilter("+tk+")", tokenizer.line);
@@ -52,11 +52,11 @@ class E4XParser {
         }
     }
 
-    private static function parseNext(tokenizer:Tokenizer, types:Types, cfg, e1 : Expr ) : Expr {
-        var parseE4X = parse.bind(tokenizer, types, cfg);
-        var parseE4XNext = parseNext.bind(tokenizer, types, cfg);
-        var parseExprList = ExprParser.parseList.bind(tokenizer, types, cfg);
-        var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
+    private static function parseNext(tokenizer:Tokenizer, types:Types, cfg, parsers:Parsers, e1 : Expr ) : Expr {
+        var parseE4X = parsers.parseE4X.bind(parsers);
+        var parseE4XNext = parseNext.bind(tokenizer, types, cfg, parsers);
+        var parseExprList = parsers.parseExprList.bind(parsers);
+        var parseExpr = parsers.parseExpr.bind(parsers);
 
         var tk = tokenizer.token();
         Debug.dbgln("parseE4XFilterNext("+e1+") ("+tk+")", tokenizer.line);

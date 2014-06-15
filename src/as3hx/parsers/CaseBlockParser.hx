@@ -4,8 +4,8 @@ import as3hx.Parser;
 
 class CaseBlockParser {
 
-    public static function parse(tokenizer:Tokenizer, types:Types, cfg) {
-        var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
+    public static function parse(tokenizer:Tokenizer, types:Types, parsers:Parsers) {
+        var parseExpr = parsers.parseExpr.bind(parsers);
 
         Debug.dbgln("parseCaseBlock()", tokenizer.line);
         var el = [];

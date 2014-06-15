@@ -5,11 +5,11 @@ import as3hx.Parser;
 
 class DefinitionParser {
 
-    public static function parse(tokenizer:Tokenizer, types:Types, cfg, path, filename, meta:Array<Expr>) : Definition {
-        var parseClass = ClassParser.parse.bind(tokenizer, types, cfg);
-        var parseFunDef = FunctionParser.parseDef.bind(tokenizer, types, cfg);
-        var parseNsDef = NsParser.parse.bind(tokenizer);
-        var parseUse = UseParser.parse.bind(tokenizer);
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg, parsers:Parsers, meta:Array<Expr>) : Definition {
+        var parseClass = parsers.parseClass.bind(parsers);
+        var parseFunDef = parsers.parseFunctionDef.bind(parsers);
+        var parseNsDef = parsers.parseNamespace;
+        var parseUse = parsers.parseUse;
 
         Debug.dbgln("parseDefinition()" + meta, tokenizer.line);
         var kwds = [];
@@ -21,11 +21,11 @@ class DefinitionParser {
                 parseUse();
                 continue;
             case "class":
-                var c = parseClass(path, filename, kwds,meta,false);
+                var c = parseClass(kwds,meta,false);
                 types.defd.push(c);
                 return CDef(c);
             case "interface":
-                var c = parseClass(path, filename, kwds,meta,true);
+                var c = parseClass(kwds,meta,true);
                 types.defd.push(c);
                 return CDef(c);
             case "function":
