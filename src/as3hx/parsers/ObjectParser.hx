@@ -3,12 +3,13 @@ package as3hx.parsers;
 import as3hx.Tokenizer;
 import as3hx.parsers.ExprParser;
 import as3hx.As3;
+import as3hx.Parser;
 
 class ObjectParser {
 
-    public static function parse(tokenizer:Tokenizer, typesSeen, cfg):Expr {
-        var parseExprNext = ExprParser.parseNext.bind(tokenizer, typesSeen, cfg);
-        var parseExpr = ExprParser.parse.bind(tokenizer, typesSeen, cfg);
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg):Expr {
+        var parseExprNext = ExprParser.parseNext.bind(tokenizer, types, cfg);
+        var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
         Debug.openDebug("parseObject()", tokenizer.line, true);
         var fl = new Array();
 

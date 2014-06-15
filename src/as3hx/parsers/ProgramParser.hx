@@ -8,10 +8,10 @@ class ProgramParser {
 
     public static function parse(tokenizer:Tokenizer, types:Types, cfg, path, filename) : Program {
         var parsePackageName = PackageNameParser.parse.bind(tokenizer);
-        var parseMetadata = MetadataParser.parse.bind(tokenizer, types.typesSeen, cfg);
+        var parseMetadata = MetadataParser.parse.bind(tokenizer, types, cfg);
         var parseImport = ImportParser.parse.bind(tokenizer, cfg);
         var parseInclude = IncludeParser.parse.bind(tokenizer);
-        var parseDefinition = DefinitionParser.parse.bind(tokenizer, types.typesSeen, cfg);
+        var parseDefinition = DefinitionParser.parse.bind(tokenizer, types, cfg);
         var parseUse = UseParser.parse.bind(tokenizer);
 
         Debug.dbgln("parseProgram()", tokenizer.line);
@@ -165,7 +165,7 @@ class ProgramParser {
                 case "final", "public", "class", "internal", "interface", "dynamic", "function":
                     inNamespace = false;
                     tokenizer.add(tk);
-                    var d = parseDefinition(types.genTypes, types.typesDefd, path, filename, meta);
+                    var d = parseDefinition(path, filename, meta);
                     switch(d) {
                         case CDef(c):
                             for(i in c.imports)
