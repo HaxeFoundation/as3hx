@@ -22,11 +22,11 @@ class DefinitionParser {
                 continue;
             case "class":
                 var c = parseClass(path, filename, kwds,meta,false);
-                types.typesDefd.push(c);
+                types.defd.push(c);
                 return CDef(c);
             case "interface":
                 var c = parseClass(path, filename, kwds,meta,true);
-                types.typesDefd.push(c);
+                types.defd.push(c);
                 return CDef(c);
             case "function":
                 return FDef(parseFunDef(kwds, meta));

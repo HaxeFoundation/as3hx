@@ -278,7 +278,7 @@ class ClassParser {
         
         var genType = ParserUtils.generateTypeIfNeeded(rv);
         if (genType != null)
-            types.genTypes.push(genType);
+            types.gen.push(genType);
 
         Debug.closeDebug("parseClassVar -> " + rv, tokenizer.line);
         return rv;

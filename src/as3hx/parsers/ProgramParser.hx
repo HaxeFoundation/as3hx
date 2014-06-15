@@ -271,9 +271,9 @@ class ProgramParser {
             header : header,
             pack : pack,
             imports : imports,
-            typesSeen : types.typesSeen,
-            typesDefd : types.typesDefd,
-            genTypes : types.genTypes,
+            typesSeen : types.seen,
+            typesDefd : types.defd,
+            genTypes : types.gen,
             defs : defs,
             footer : meta
         };

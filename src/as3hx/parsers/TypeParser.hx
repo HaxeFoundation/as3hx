@@ -33,7 +33,7 @@ class TypeParser {
             var t = parseType();
             splitEndTemplateOps(tokenizer);
             tokenizer.ensure(TOp(">"));
-            types.typesSeen.push(TVector(t));
+            types.seen.push(TVector(t));
             return TVector(t);
         } else if (cfg.dictionaryToHash && t == "Dictionary") {
             tokenizer.ensure(TDot);
@@ -43,7 +43,7 @@ class TypeParser {
             var v = parseType();
             splitEndTemplateOps(tokenizer);
             tokenizer.ensure(TOp(">"));
-            types.typesSeen.push(TDictionary(k, v));
+            types.seen.push(TDictionary(k, v));
             return TDictionary(k, v);
         }
 
@@ -77,7 +77,7 @@ class TypeParser {
             }
             tk = tokenizer.token();
         }
-        types.typesSeen.push(TPath(a));
+        types.seen.push(TPath(a));
         return TPath(a);
     }
 
