@@ -2,15 +2,16 @@ package as3hx.parsers;
 
 import as3hx.As3;
 import as3hx.Tokenizer;
+import as3hx.Parser;
 
 class ClassParser {
 
-    public static function parse(tokenizer, typesSeen, cfg, genTypes, path, filename, kwds,meta:Array<Expr>,isInterface:Bool) : ClassDef {
-        var parseType = TypeParser.parse.bind(tokenizer, typesSeen, cfg);
-        var parseMetadata = MetadataParser.parse.bind(tokenizer, typesSeen, cfg);
-        var parseClassVar = parseVar.bind(tokenizer, typesSeen, cfg, genTypes);
-        var parseExpr = ExprParser.parse.bind(tokenizer, typesSeen, cfg);
-        var parseClassFun = parseFun.bind(tokenizer, typesSeen, cfg);
+    public static function parse(tokenizer, types:Types, cfg, path, filename, kwds,meta:Array<Expr>,isInterface:Bool) : ClassDef {
+        var parseType = TypeParser.parse.bind(tokenizer, types, cfg);
+        var parseMetadata = MetadataParser.parse.bind(tokenizer, types, cfg);
+        var parseClassVar = parseVar.bind(tokenizer, types, cfg);
+        var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
+        var parseClassFun = parseFun.bind(tokenizer, types, cfg);
         var parseUse = UseParser.parse.bind(tokenizer);
         var parseInclude = IncludeParser.parse.bind(tokenizer, path, filename);
         var parseImport = ImportParser.parse.bind(tokenizer, cfg);
@@ -253,10 +254,10 @@ class ClassParser {
         };
     }
 
-    public static function parseVar(tokenizer, typesSeen, cfg, 
-            genTypes, kwds,meta,condVars:Array<String>) : ClassField {
-        var parseType = TypeParser.parse.bind(tokenizer, typesSeen, cfg);
-        var parseExpr = ExprParser.parse.bind(tokenizer, typesSeen, cfg);
+    public static function parseVar(tokenizer, types:Types, cfg, 
+            kwds,meta,condVars:Array<String>) : ClassField {
+        var parseType = TypeParser.parse.bind(tokenizer, types, cfg);
+        var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
 
         Debug.openDebug("parseClassVar(", tokenizer.line);
         var name = tokenizer.id();
@@ -277,14 +278,14 @@ class ClassParser {
         
         var genType = ParserUtils.generateTypeIfNeeded(rv);
         if (genType != null)
-            genTypes.push(genType);
+            types.gen.push(genType);
 
         Debug.closeDebug("parseClassVar -> " + rv, tokenizer.line);
         return rv;
     }
 
-    public static function parseFun(tokenizer, typesSeen, cfg, kwds:Array<String>,meta,condVars:Array<String>, isInterface:Bool) : ClassField {
-        var parseFunction = FunctionParser.parse.bind(tokenizer, typesSeen, cfg);
+    public static function parseFun(tokenizer, types:Types, cfg, kwds:Array<String>,meta,condVars:Array<String>, isInterface:Bool) : ClassField {
+        var parseFunction = FunctionParser.parse.bind(tokenizer, types, cfg);
 
         Debug.openDebug("parseClassFun(", tokenizer.line);
         var name = tokenizer.id();

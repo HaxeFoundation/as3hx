@@ -2,12 +2,13 @@ package as3hx.parsers;
 
 import as3hx.As3;
 import as3hx.Tokenizer;
+import as3hx.Parser;
 
 class FunctionParser {
 
-    public static function parse(tokenizer:Tokenizer, typesSeen, cfg, isInterfaceFun : Bool) : Function {
-        var parseType = TypeParser.parse.bind(tokenizer, typesSeen, cfg);
-        var parseExpr = ExprParser.parse.bind(tokenizer, typesSeen, cfg);
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg, isInterfaceFun : Bool) : Function {
+        var parseType = TypeParser.parse.bind(tokenizer, types, cfg);
+        var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
 
         Debug.openDebug("parseFun()", tokenizer.line, true);
         var f = {
@@ -136,8 +137,8 @@ class FunctionParser {
         return f;
     }
 
-    public static function parseDef(tokenizer:Tokenizer, typesSeen, cfg, kwds, meta) : FunctionDef {
-        var parseFunction = FunctionParser.parse.bind(tokenizer, typesSeen, cfg);
+    public static function parseDef(tokenizer:Tokenizer, types:Types, cfg, kwds, meta) : FunctionDef {
+        var parseFunction = FunctionParser.parse.bind(tokenizer, types, cfg);
 
         Debug.dbgln("parseFunDef()", tokenizer.line);
         var fname = tokenizer.id();

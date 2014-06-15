@@ -2,16 +2,17 @@ package as3hx.parsers;
 
 import as3hx.As3;
 import as3hx.Tokenizer;
+import as3hx.Parser;
 
 class ExprParser {
 
-    public static function parse(tokenizer:Tokenizer, typesSeen:Array<Dynamic>, cfg, funcStart:Bool) : Expr {
-        var parseExpr = parse.bind(tokenizer, typesSeen, cfg);
-        var parseFullExpr = parseFull.bind(tokenizer, typesSeen, cfg);
-        var parseExprNext = parseNext.bind(tokenizer, typesSeen, cfg);
-        var parseExprList = parseList.bind(tokenizer, typesSeen, cfg);
-        var parseStructure = StructureParser.parse.bind(tokenizer, typesSeen, cfg);
-        var parseObject = ObjectParser.parse.bind(tokenizer, typesSeen, cfg);
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg, funcStart:Bool) : Expr {
+        var parseExpr = parse.bind(tokenizer, types, cfg);
+        var parseFullExpr = parseFull.bind(tokenizer, types, cfg);
+        var parseExprNext = parseNext.bind(tokenizer, types, cfg);
+        var parseExprList = parseList.bind(tokenizer, types, cfg);
+        var parseStructure = StructureParser.parse.bind(tokenizer, types, cfg);
+        var parseObject = ObjectParser.parse.bind(tokenizer, types, cfg);
         var readXML = XMLReader.read.bind(tokenizer);
 
         var tk = tokenizer.token();
@@ -115,12 +116,12 @@ class ExprParser {
         }
     }
 
-    public static function parseNext(tokenizer:Tokenizer, typesSeen, cfg:Config, e1 : Expr, pendingNewLines : Int ):Expr {
-        var parseExpr= parse.bind(tokenizer, typesSeen, cfg);
-        var parseExprNext = parseNext.bind(tokenizer, typesSeen, cfg);
-        var parseExprList = parseList.bind(tokenizer, typesSeen, cfg);
-        var parseType= TypeParser.parse.bind(tokenizer, typesSeen, cfg);
-        var parseE4X = E4XParser.parse.bind(tokenizer, typesSeen, cfg);
+    public static function parseNext(tokenizer:Tokenizer, types:Types, cfg:Config, e1 : Expr, pendingNewLines : Int ):Expr {
+        var parseExpr= parse.bind(tokenizer, types, cfg);
+        var parseExprNext = parseNext.bind(tokenizer, types, cfg);
+        var parseExprList = parseList.bind(tokenizer, types, cfg);
+        var parseType= TypeParser.parse.bind(tokenizer, types, cfg);
+        var parseE4X = E4XParser.parse.bind(tokenizer, types, cfg);
 
         var tk = tokenizer.token();
         Debug.dbgln("parseExprNext("+e1+") ("+tk+")", tokenizer.line);
@@ -299,8 +300,8 @@ class ExprParser {
         }
     }
 
-    public static function parseFull(tokenizer, typesSeen, cfg) {
-        var parseExpr = parse.bind(tokenizer, typesSeen, cfg);
+    public static function parseFull(tokenizer, types:Types, cfg) {
+        var parseExpr = parse.bind(tokenizer, types, cfg);
         Debug.dbgln("parseFullExpr()", tokenizer.line);
         var e = parseExpr(false);
         if( ParserUtils.opt(tokenizer, TColon) ) {
@@ -314,8 +315,8 @@ class ExprParser {
         return e;
     }
 
-    public static function parseList(tokenizer, typesSeen, cfg, etk ) : Array<Expr> {
-        var parseExpr = parse.bind(tokenizer, typesSeen, cfg);
+    public static function parseList(tokenizer, types:Types, cfg, etk ) : Array<Expr> {
+        var parseExpr = parse.bind(tokenizer, types, cfg);
         Debug.dbgln("parseExprList()", tokenizer.line);
 
         var args = new Array();

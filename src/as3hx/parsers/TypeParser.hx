@@ -2,12 +2,13 @@ package as3hx.parsers;
 
 import as3hx.Tokenizer;
 import as3hx.As3;
+import as3hx.Parser;
 
 class TypeParser {
 
-    public static function parse(tokenizer:Tokenizer, typesSeen, cfg) {
-        var parseType = parse.bind(tokenizer, typesSeen, cfg);
-        var parseExpr = ExprParser.parse.bind(tokenizer, typesSeen, cfg);
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg) {
+        var parseType = parse.bind(tokenizer, types, cfg);
+        var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
 
         Debug.dbgln("parseType()", tokenizer.line);
         // this is a ugly hack in order to fix lexer issue with "var x:*=0"
@@ -32,7 +33,7 @@ class TypeParser {
             var t = parseType();
             splitEndTemplateOps(tokenizer);
             tokenizer.ensure(TOp(">"));
-            typesSeen.push(TVector(t));
+            types.seen.push(TVector(t));
             return TVector(t);
         } else if (cfg.dictionaryToHash && t == "Dictionary") {
             tokenizer.ensure(TDot);
@@ -42,7 +43,7 @@ class TypeParser {
             var v = parseType();
             splitEndTemplateOps(tokenizer);
             tokenizer.ensure(TOp(">"));
-            typesSeen.push(TDictionary(k, v));
+            types.seen.push(TDictionary(k, v));
             return TDictionary(k, v);
         }
 
@@ -76,7 +77,7 @@ class TypeParser {
             }
             tk = tokenizer.token();
         }
-        typesSeen.push(TPath(a));
+        types.seen.push(TPath(a));
         return TPath(a);
     }
 

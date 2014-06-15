@@ -2,11 +2,12 @@ package as3hx.parsers;
 
 import as3hx.As3;
 import as3hx.Tokenizer;
+import as3hx.Parser;
 
 class MetadataParser {
 
-    public static function parse(tokenizer, typesSeen, cfg) : Expr {
-        var parseExpr = ExprParser.parse.bind(tokenizer, typesSeen, cfg);
+    public static function parse(tokenizer, types:Types, cfg) : Expr {
+        var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
         Debug.dbg("parseMetadata()", tokenizer.line);
         tokenizer.ensure(TBkOpen);
         var name = tokenizer.id();

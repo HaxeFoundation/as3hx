@@ -22,9 +22,9 @@ import as3hx.Error;
 using as3hx.Debug;
 
 typedef Types = {
-    var typesSeen : Array<Dynamic>;
-    var typesDefd : Array<Dynamic>;
-    var genTypes : Array<GenType>;
+    var seen : Array<Dynamic>;
+    var defd : Array<Dynamic>;
+    var gen : Array<GenType>;
 }
 
 /**
@@ -40,15 +40,9 @@ class Parser {
     var path : String;
     var filename : String;
     var cfg : Config;
-    var typesSeen : Array<Dynamic>;
-    var typesDefd : Array<Dynamic>;
-    var genTypes : Array<GenType>;
 
     public function new(config:Config) {
         cfg = config;
-        typesSeen = new Array<Dynamic>();
-        typesDefd = new Array<Dynamic>();
-        genTypes = new Array<GenType>();
     }
 
     public function parseString( s : String, path : String, filename : String ) {
@@ -63,10 +57,11 @@ class Parser {
         tokenizer = new Tokenizer(s);
 
         var types: Types = {
-            typesSeen : typesSeen,
-            typesDefd : typesDefd,
-            genTypes : genTypes
+            seen : [],
+            defd : [],
+            gen : []
         }
+
 
         return ProgramParser.parse(tokenizer, types, cfg, path, filename);
     }

@@ -1,12 +1,13 @@
 package as3hx.parsers;
 
 import as3hx.As3;
+import as3hx.Parser;
 
 class DefinitionParser {
 
-    public static function parse(tokenizer:Tokenizer, typesSeen, cfg, genTypes, typesDefd, path, filename, meta:Array<Expr>) : Definition {
-        var parseClass = ClassParser.parse.bind(tokenizer, typesSeen, cfg);
-        var parseFunDef = FunctionParser.parseDef.bind(tokenizer, typesSeen, cfg);
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg, path, filename, meta:Array<Expr>) : Definition {
+        var parseClass = ClassParser.parse.bind(tokenizer, types, cfg);
+        var parseFunDef = FunctionParser.parseDef.bind(tokenizer, types, cfg);
         var parseNsDef = NsParser.parse.bind(tokenizer);
         var parseUse = UseParser.parse.bind(tokenizer);
 
@@ -20,12 +21,12 @@ class DefinitionParser {
                 parseUse();
                 continue;
             case "class":
-                var c = parseClass(genTypes, path, filename, kwds,meta,false);
-                typesDefd.push(c);
+                var c = parseClass(path, filename, kwds,meta,false);
+                types.defd.push(c);
                 return CDef(c);
             case "interface":
-                var c = parseClass(genTypes, path, filename, kwds,meta,true);
-                typesDefd.push(c);
+                var c = parseClass(path, filename, kwds,meta,true);
+                types.defd.push(c);
                 return CDef(c);
             case "function":
                 return FDef(parseFunDef(kwds, meta));

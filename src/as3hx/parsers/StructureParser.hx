@@ -2,15 +2,16 @@ package as3hx.parsers;
 
 import as3hx.As3;
 import as3hx.Tokenizer;
+import as3hx.Parser;
 
 class StructureParser {
 
-    public static function parse(tokenizer:Tokenizer, typesSeen:Array<Dynamic>, cfg:Config, kwd) : Expr {
-        var parseExpr = ExprParser.parse.bind(tokenizer, typesSeen, cfg);
-        var parseExprList = ExprParser.parseList.bind(tokenizer, typesSeen, cfg);
-        var parseType = TypeParser.parse.bind(tokenizer, typesSeen, cfg);
-        var parseFunction = FunctionParser.parse.bind(tokenizer, typesSeen, cfg);
-        var parseCaseBlock = CaseBlockParser.parse.bind(tokenizer, typesSeen, cfg);
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg:Config, kwd) : Expr {
+        var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
+        var parseExprList = ExprParser.parseList.bind(tokenizer, types, cfg);
+        var parseType = TypeParser.parse.bind(tokenizer, types, cfg);
+        var parseFunction = FunctionParser.parse.bind(tokenizer, types, cfg);
+        var parseCaseBlock = CaseBlockParser.parse.bind(tokenizer, types, cfg);
 
         Debug.dbgln("parseStructure("+kwd+")", tokenizer.line);
         return switch( kwd ) {
