@@ -1,5 +1,7 @@
 import massive.munit.TestSuite;
 
+import as3hx.parsers.ImportParserTest;
+import as3hx.parsers.UseParserTest;
 import as3hx.ParserUtilsTest;
 import as3hx.TokenizerTest;
 import ExampleTest;
@@ -16,6 +18,8 @@ class TestSuite extends massive.munit.TestSuite
 	{
 		super();
 
+		add(as3hx.parsers.ImportParserTest);
+		add(as3hx.parsers.UseParserTest);
 		add(as3hx.ParserUtilsTest);
 		add(as3hx.TokenizerTest);
 		add(ExampleTest);
