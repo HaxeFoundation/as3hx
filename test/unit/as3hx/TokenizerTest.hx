@@ -1,4 +1,4 @@
-package;
+package as3hx;
 
 import massive.munit.Assert;
 import as3hx.Tokenizer;

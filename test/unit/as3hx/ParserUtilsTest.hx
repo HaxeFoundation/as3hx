@@ -1,4 +1,4 @@
-package;
+package as3hx;
 
 import massive.munit.util.Timer;
 import massive.munit.Assert;
