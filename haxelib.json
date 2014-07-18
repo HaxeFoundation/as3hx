@@ -1,0 +1,11 @@
+{
+  "name": "as3hx",
+  "url": "http://github.com/HaxeFoundation/as3hx",
+  "license": "MIT",
+  "tags": [ ],
+  "description": "as3hx is a utility to help automatically convert ActionScript source code into compatible Haxe code",
+  "version": "1.0.0",
+  "releasenote": "Initial haxelib release",
+  "contributors": [ "singmajesty" ],
+  "dependencies": {}
+}
