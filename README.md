@@ -36,20 +36,21 @@ you are running as3hx from, which will override the home file.
 
 ####Licence
 
-MIT, see LICENCE.md
+MIT, see [LICENCE.md](LICENCE.md)
 
 
 
 ###Current failures:
 
 ####'delete' keyword:
-In actionscript, the delete keyword will cause an intentional failure in the
+In ActionScript, the `delete` keyword will cause an intentional failure in the
 generated .hx file. Take a close look at the object being deleted.
-1) if it is a local variable, replace 'delete varname' with 'varname = null'
-2) if it is a class member variable, remove the delete entirely
-3) it it is an E4X (FastXML), well, hmmm... still working on that one.
 
-Senocular did a little writeup on 'delete' that might make it more clear
+1. if it is a local variable, replace `delete varname` with `varname = null`
+2. if it is a class member variable, remove the `delete` entirely
+3. it it is an E4X (FastXML), well, hmmm... still working on that one.
+
+Senocular did a little writeup on `delete` that might make it more clear
 http://www.kirupa.com/forum/showthread.php?223798-ActionScript-3-Tip-of-the-Day/page3
 
 
@@ -60,52 +61,51 @@ and output carefully.
 ####For Initializations:
 The output of
 
-if(true) {
-for(var i:uint = 0; i < 7; i++)
-val += "0";
-} else {
-for(i = 0; i < 8; i++)
-val += "0";
-}
+    if (true) {
+        for (var i:uint = 0; i < 7; i++)
+            val += "0";
+    } else {
+        for (i = 0; i < 8; i++)
+            val += "0";
+    }
 
 is
 
-if(true) {
-var i : UInt = 0;
-while(i < 7) {
-val += "0";
-i++;
-}
-} else {
-i = 0;
-while(i < 8) {
-val += "0";
-i++;
-}
-}
+    if (true) {
+        var i:UInt = 0;
+        while (i < 7) {
+            val += "0";
+            i++;
+        }
+    } else {
+        i = 0;
+        while (i < 8) {
+            val += "0";
+            i++;
+        }
+    }
 
-As you can see, the scope of "i" in flash is not the same as in haxe,
-so the "else" section will produce Unknown identifier : i. The solution
-is to move the "var i : UInt = 0;" outside of the blocks in the generated
+As you can see, the scope of `i` in Flash is not the same as in Haxe,
+so the `else` section will produce Unknown identifier : i. The solution
+is to move the `var i : UInt = 0;` outside of the blocks in the generated
 code.
 
-This can not be avoided by always creating the i variable, as the code
+This can not be avoided by always creating the `i` variable, as the code
 
-for(var i:uint = 0; i < 7; i++)
-val += "0";
-for(i = 0; i < 8; i++)
-val += "0";
+    for (var i:uint = 0; i < 7; i++)
+        val += "0";
+    for (i = 0; i < 8; i++)
+        val += "0";
 
-would then produce a double initialization of i, also causing a compiler error.
+would then produce a double initialization of `i`, also causing a compiler error.
  
-var i : UInt = 0;
-while(i < 7) {
-val += "0";
-i++;
-}
-var i = 0;
-while(i < 8)
-{
-val += "0";
-i++;
-}
+    var i:UInt = 0;
+    while (i < 7) {
+        val += "0";
+        i++;
+    }
+    var i = 0;
+    while (i < 8) {
+        val += "0";
+        i++;
+    }
