@@ -18,9 +18,7 @@ class ImportParser {
                     if (id == "getDefinitionByName") return [];
                     // TODO: this is flash.utils.Proxy need to create a compat class
                     // http://blog.int3ractive.com/2010/05/using-flash-proxy-class.html
-                    // Will put this into the nme namespace for now, and merge it
-                    // to nme if it works
-                    if (id == "flash_proxy") return ["nme","utils","Proxy"];
+                    if (id == "flash_proxy") return ["flash","utils","Proxy"];
                     // import __AS3__.vec.Vector;
                     if (id == "Vector" && a[0] == "__AS3__") return [];
                     // import flash.utils.Dictionary;
