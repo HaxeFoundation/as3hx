@@ -72,13 +72,14 @@ class Writer
             this.typeImportMap.set(c, null);
         }
 
-        var nmeErrorsClasses = [
-            "ArgumentError", "EOFError", "Error",
-            "IllegalOperationError", "RangeError",
-            "SecurityError", "TypeError"
+        var topLevelErrorClasses = [
+            "ArgumentError", "DefinitionError", "Error",
+            "EvalError", "RangeError", "ReferenceError",
+            "SecurityError", "SyntaxError", "TypeError",
+            "URIError", "VerifyError"
             ];
-        for (c in nmeErrorsClasses) {
-            this.typeImportMap.set(c, "nme.errors." + c);
+        for (c in topLevelErrorClasses) {
+            this.typeImportMap.set(c, "flash.errors." + c);
         }
 
         for (c in cfg.importTypes.keys()) {
