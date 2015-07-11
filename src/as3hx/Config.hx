@@ -124,7 +124,7 @@ class Config {
      * using the getterMethods template
      **/
     public function makeGetterName(id:String) :String {
-        var s = getterMethods.replace("%I", ucfirst(id));
+        var s = getterMethods.replace("%I", id);
         s = s.replace("%i", id);
         return s;
     }
@@ -134,7 +134,7 @@ class Config {
      * using the setterMethods template
      **/
     public function makeSetterName(id:String) :String {
-        var s = setterMethods.replace("%I", ucfirst(id));
+        var s = setterMethods.replace("%I", id);
         s = s.replace("%i", id);
         return s;
     }
