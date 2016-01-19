@@ -1,0 +1,19 @@
+language: haxe
+
+haxe:
+  - development
+  - 3.2.1
+
+os:
+  - linux
+  - osx
+
+sudo: false
+
+install:
+  - yes | haxelib install test.hxml
+  - haxelib install hxcpp
+
+script:
+  - haxelib run munit test -cpp
+  - haxelib run munit test -neko

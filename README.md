@@ -1,4 +1,4 @@
-#as3hx
+#as3hx [![Build Status](https://travis-ci.org/HaxeFoundation/as3hx.svg?branch=master)](https://travis-ci.org/HaxeFoundation/as3hx)
 Convert ActionScript 3 to Haxe 3 code.
 
 ###Build

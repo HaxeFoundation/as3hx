@@ -3147,7 +3147,12 @@ class Writer
                 wke.set(errname,a);
             }
         }
-        var println = neko.Lib.println;
+        var println =
+            #if neko
+                neko.Lib.println;
+            #elseif cpp
+                cpp.Lib.println;
+            #end
         for(warn in wke.keys()) {
             var a = wke.get(warn);
             if(a.length > 0) {

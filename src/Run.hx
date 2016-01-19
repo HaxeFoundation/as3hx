@@ -52,8 +52,14 @@ class Run {
                         errors.push("In " + file + "("+p.tokenizer.line+") : " + errorString(e));
                         continue;
                     }
-                    else
-                        neko.Lib.rethrow("In " + file + "("+p.tokenizer.line+") : " + errorString(e));
+                    else {
+                        #if neko
+                            neko.Lib.rethrow("In " + file + "("+p.tokenizer.line+") : " + errorString(e));
+                        #elseif cpp
+                            cpp.Lib.rethrow("In " + file + "("+p.tokenizer.line+") : " + errorString(e));
+                            null;
+                        #end
+                    }
                 }
                 var out = dst;
                 ensureDirectoryExists(out);
