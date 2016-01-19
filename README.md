@@ -10,7 +10,8 @@ Build the as3hx tool.
     make debug
 Build with debug output when converting files.
 
-###Use 
+###Use
+
     neko run.n test/ out/
     
 This will take all the ActionScript 3 files in the test/ directory 
@@ -61,29 +62,33 @@ and output carefully.
 ####For Initializations:
 The output of
 
-    if (true) {
-        for (var i:uint = 0; i < 7; i++)
-            val += "0";
-    } else {
-        for (i = 0; i < 8; i++)
-            val += "0";
-    }
+```as3
+if (true) {
+    for (var i:uint = 0; i < 7; i++)
+        val += "0";
+} else {
+    for (i = 0; i < 8; i++)
+        val += "0";
+}
+```
 
 is
 
-    if (true) {
-        var i:UInt = 0;
-        while (i < 7) {
-            val += "0";
-            i++;
-        }
-    } else {
-        i = 0;
-        while (i < 8) {
-            val += "0";
-            i++;
-        }
+```haxe
+if (true) {
+    var i:UInt = 0;
+    while (i < 7) {
+        val += "0";
+        i++;
     }
+} else {
+    i = 0;
+    while (i < 8) {
+        val += "0";
+        i++;
+    }
+}
+```
 
 As you can see, the scope of `i` in Flash is not the same as in Haxe,
 so the `else` section will produce Unknown identifier : i. The solution
@@ -92,20 +97,24 @@ code.
 
 This can not be avoided by always creating the `i` variable, as the code
 
-    for (var i:uint = 0; i < 7; i++)
-        val += "0";
-    for (i = 0; i < 8; i++)
-        val += "0";
+```as3
+for (var i:uint = 0; i < 7; i++)
+    val += "0";
+for (i = 0; i < 8; i++)
+    val += "0";
+```
 
 would then produce a double initialization of `i`, also causing a compiler error.
- 
-    var i:UInt = 0;
-    while (i < 7) {
-        val += "0";
-        i++;
-    }
-    var i = 0;
-    while (i < 8) {
-        val += "0";
-        i++;
-    }
+
+```haxe
+var i:UInt = 0;
+while (i < 7) {
+    val += "0";
+    i++;
+}
+var i = 0;
+while (i < 8) {
+    val += "0";
+    i++;
+}
+```
