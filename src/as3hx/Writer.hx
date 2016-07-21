@@ -1571,12 +1571,12 @@ class Writer
                 var canUseForLoop:Array<Expr>->Array<Expr>->Array<Expr>->Bool = function(incrs, conds, inits) {
                     if (inits.empty() || conds.empty())
                         return false;
-					
-					var manyConditions = switch(conds[0]) {
-						case EBinop(op, _, _, _): op == "&&" || op == "||";
-						default: false;
-					}
-					if (manyConditions) return false;
+                    
+                    var manyConditions = switch(conds[0]) {
+                        case EBinop(op, _, _, _): op == "&&" || op == "||";
+                        default: false;
+                    }
+                    if (manyConditions) return false;
 
                     //index must be incremented by 1
                     var isIncrement = if (incrs.length == 1) {
