@@ -31,13 +31,20 @@ class ExprParser {
             return parseExprNext(EParent(e), 0);
         case TBrOpen:
             tk = tokenizer.token();
-          
-            Debug.dbgln("parseExpr: "+tk, tokenizer.line);
+            
+            function extractTId(t) return switch(t) {
+                case TNL(next): extractTId(next);
+                default: return t;
+            }
+            tk = extractTId(tk);
+            
+            Debug.dbgln("parseExpr: " + tk, tokenizer.line);
+            
             switch( tk ) {
             case TBrClose:
                 if(funcStart) return EBlock([]);
                 return parseExprNext(EObject([]), 0);
-            case TNL(TId(_)), TId(_), TConst(_):
+            case TId(_), TConst(_):
                 var tk2 = tokenizer.token();
                 tokenizer.add(tk2);
                 tokenizer.add(tk);
