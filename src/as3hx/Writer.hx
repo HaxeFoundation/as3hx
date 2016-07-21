@@ -1651,12 +1651,16 @@ class Writer
                     }
                     writeIndent();
                     write("while (");
-                    for (i in 0...conds.length)
-                    {
-                        if (i > 0)
-                            write(" && ");
-                        writeExpr(conds[i]);
-                    }
+					if (conds.empty()) {
+						write("true");
+					} else {
+						for (i in 0...conds.length)
+						{
+							if (i > 0)
+								write(" && ");
+							writeExpr(conds[i]);
+						}
+					}
                     write(")");
                 }
                 
