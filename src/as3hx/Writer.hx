@@ -1568,10 +1568,11 @@ class Writer
                 openContext();
                 
                 //check wether it is safe to use a Haxe for loop instead of while loop
-                var canUseForLoop:Array<Expr>->Array<Expr>->Bool = function(incrs, inits) {
-                    
-                    if (inits.length == 0)
+                var canUseForLoop:Array<Expr>->Array<Expr>->Array<Expr>->Bool = function(incrs, conds, inits) {
+                    if (inits.empty() || conds.empty())
                         return false;
+                    
+                    if (conds[0].match(EBinop("&&" | "||", _, _, _))) return false;
 
                     //index must be incremented by 1
                     var isIncrement = if (incrs.length == 1) {
@@ -1588,7 +1589,7 @@ class Writer
                 }
 
                 //write "for" loop if possible
-                if (canUseForLoop(incrs, inits)) {
+                if (canUseForLoop(incrs, conds, inits)) {
 
                     write("for (");
 
@@ -1679,7 +1680,7 @@ class Writer
                 f(e);
 
                 //don't write increments for a "for" loop    
-                if (!canUseForLoop(incrs, inits)) {
+                if (!canUseForLoop(incrs, conds, inits)) {
                     for (incr in incrs) {
                         es.push(ENL(incr));
                     }
