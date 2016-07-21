@@ -37,7 +37,7 @@ class ExprParser {
             case TBrClose:
                 if(funcStart) return EBlock([]);
                 return parseExprNext(EObject([]), 0);
-            case TId(_),TConst(_):
+            case TNL(TId(_)), TId(_), TConst(_):
                 var tk2 = tokenizer.token();
                 tokenizer.add(tk2);
                 tokenizer.add(tk);
