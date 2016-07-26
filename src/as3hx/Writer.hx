@@ -2565,10 +2565,10 @@ class Writer
                     var rebuiltExpr = EField(EIdent("Std"), "string");
                     rebuiltCall = ECall(rebuiltExpr, [e]);
                 }
-				else if (f == "concat" && params.empty()) {
-					var rebuildExpr = EField(e, "copy");
-					rebuiltCall = ECall(rebuildExpr, params);
-				}
+                else if (f == "concat" && params.empty()) {
+                    var rebuildExpr = EField(e, "copy");
+                    rebuiltCall = ECall(rebuildExpr, params);
+                }
                 else if (getIdentString(e) != null) {
                     var ident = getIdentString(e);
                     //replace AS3 StringUtil by Haxe StringTools
