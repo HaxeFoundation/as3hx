@@ -36,11 +36,10 @@ class ExprParser {
                 case TNL(next): extractTId(next);
                 default: return t;
             }
-            tk = extractTId(tk);
             
             Debug.dbgln("parseExpr: " + tk, tokenizer.line);
             
-            switch( tk ) {
+            switch(extractTId(tk)) {
             case TBrClose:
                 if(funcStart) return EBlock([]);
                 return parseExprNext(EObject([]), 0);
