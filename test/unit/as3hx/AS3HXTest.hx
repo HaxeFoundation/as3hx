@@ -1,11 +1,11 @@
 package as3hx;
 import as3hx.Config;
-import as3hx.Error;
 import as3hx.Parser;
 import as3hx.Writer;
 import haxe.io.BytesOutput;
 import massive.munit.Assert;
-import massive.sys.io.File;
+import sys.FileSystem;
+import sys.io.File;
 
 class AS3HXTest {
 
@@ -30,14 +30,14 @@ class AS3HXTest {
     }
     
     function generate(as3FileName:String, generatedFileName:String, expectedFileName:String) {
-        var issuesDirectory = "test/issues";
-        var as3File = File.current.resolveFile('$issuesDirectory/$as3FileName');
-        var program = parser.parseString(as3File.readString(), as3File.path.dir, as3File.path.file);
-        var fw = sys.io.File.write('$issuesDirectory/$generatedFileName', false);
+        var issuesDirectory = FileSystem.absolutePath("test/issues");
+        var content = File.getContent('$issuesDirectory/$as3FileName');
+        var program = parser.parseString(content, issuesDirectory, '$issuesDirectory/$as3FileName');
+        var fw = File.write('$issuesDirectory/$generatedFileName', false);
         writer.process(program, fw);
         fw.close();
-        var expectedText = File.current.resolveFile('$issuesDirectory/$expectedFileName').readString();
-        var actualText = File.current.resolveFile('$issuesDirectory/$generatedFileName').readString();
+        var expectedText = File.getContent('$issuesDirectory/$expectedFileName');
+        var actualText = File.getContent('$issuesDirectory/$generatedFileName');
         Assert.areEqual(expectedText, actualText);
     }
 }
