@@ -7,9 +7,6 @@ import haxe.io.BytesOutput;
 import massive.munit.Assert;
 import massive.sys.io.File;
 
-/**
- * @author SlavaRa
- */
 class AS3HXTest {
 
     public function new() {}
@@ -29,15 +26,18 @@ class AS3HXTest {
     
     @Test
     public function issue32() {
-        var file = File.current.resolveFile("test/issues/Issue32.as");
-        var content = file.readString();
-        var program = parser.parseString(content, file.path.dir, file.path.file);
-        var resultFileName = "test/issues/Issue32_generated.hx";
-        var fw = sys.io.File.write(resultFileName, false);
+        generate("Issue32.as", "Issue32_generated.hx", "Issue32.hx");
+    }
+    
+    function generate(as3FileName:String, generatedFileName:String, expectedFileName:String) {
+        var issuesDirectory = "test/issues";
+        var as3File = File.current.resolveFile('$issuesDirectory/$as3FileName');
+        var program = parser.parseString(as3File.readString(), as3File.path.dir, as3File.path.file);
+        var fw = sys.io.File.write('$issuesDirectory/$generatedFileName', false);
         writer.process(program, fw);
         fw.close();
-        var expectedText = File.current.resolveFile("test/issues/Issue32.hx").readString();
-        var actualText = File.current.resolveFile(resultFileName).readString();
+        var expectedText = File.current.resolveFile('$issuesDirectory/$expectedFileName').readString();
+        var actualText = File.current.resolveFile('$issuesDirectory/$generatedFileName').readString();
         Assert.areEqual(expectedText, actualText);
     }
 }
