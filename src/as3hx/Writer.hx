@@ -2558,10 +2558,17 @@ class Writer
                     var rebuiltExpr = EField(EIdent("Std"), "string");
                     rebuiltCall = ECall(rebuiltExpr, [e]);
                 }
+                else if (f == "concat" && params.empty()) {
+                    var type = getExprType(e);
+                    if (type != null && type.indexOf("Array") != -1) {
+                        var rebuildExpr = EField(e, "copy");
+                        rebuiltCall = ECall(rebuildExpr, params);
+                    }
+                }
                 else if (getIdentString(e) != null) {
                     var ident = getIdentString(e);
                     //replace AS3 StringUtil by Haxe StringTools
-                    if (ident == "StringUtil" ) {
+                    if (ident == "StringUtil") {
                         var rebuiltExpr = EField(EIdent("StringTools"), f);
                         rebuiltCall = ECall(rebuiltExpr, params);
                     }
