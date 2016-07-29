@@ -765,7 +765,6 @@ class Writer
             {
                 switch (expr) {
                     case EIdent(s):
-						trace(s, arg.name);
                         if (s == arg.name) { //this is the start of a new argument
                             var isFirst = fst == null;
                             if (isFirst)
