@@ -1651,16 +1651,16 @@ class Writer
                     }
                     writeIndent();
                     write("while (");
-					if (conds.empty()) {
-						write("true");
-					} else {
-						for (i in 0...conds.length)
-						{
-							if (i > 0)
-								write(" && ");
-							writeExpr(conds[i]);
-						}
-					}
+                    if (conds.empty()) {
+                        write("true");
+                    } else {
+                        for (i in 0...conds.length)
+                        {
+                            if (i > 0)
+                                write(" && ");
+                            writeExpr(conds[i]);
+                        }
+                    }
                     write(")");
                 }
                 
@@ -2566,8 +2566,11 @@ class Writer
                     rebuiltCall = ECall(rebuiltExpr, [e]);
                 }
                 else if (f == "concat" && params.empty()) {
-                    var rebuildExpr = EField(e, "copy");
-                    rebuiltCall = ECall(rebuildExpr, params);
+                    var type = getExprType(e);
+                    if (type != null && type.indexOf("Array") != -1) {
+                        var rebuildExpr = EField(e, "copy");
+                        rebuiltCall = ECall(rebuildExpr, params);
+                    }
                 }
                 else if (getIdentString(e) != null) {
                     var ident = getIdentString(e);
