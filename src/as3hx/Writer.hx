@@ -1569,7 +1569,6 @@ class Writer
                 
                 //check wether it is safe to use a Haxe for loop instead of while loop
                 var canUseForLoop:Array<Expr>->Array<Expr>->Array<Expr>->Bool = function(incrs, conds, inits) {
-                    
                     if (inits.empty() || conds.empty())
                         return false;
  
@@ -1583,15 +1582,13 @@ class Writer
                     else {
                         false;
                     }
-                    
                     return isIncrement;
                 }
+                var isForLoop = canUseForLoop(incrs, conds, inits);
 
                 //write "for" loop if possible
-                if (canUseForLoop(incrs, conds, inits)) {
-
+                if (isForLoop)) {
                     write("for (");
-
                     switch (inits[0]) {
                         case EVars(v): 
                             write(v[0].name);
@@ -1616,7 +1613,6 @@ class Writer
 
                     switch(conds[0]) {
                         case EBinop(op, e1, e2, nl):
-
                             //corne case, for "<=" binop, limit value should be incremented
                             if (op == "<=") {
                                 switch (e2) {
@@ -1634,8 +1630,6 @@ class Writer
                             else {
                                 writeExpr(e2);
                             }
-                            
-                            
                             write(")");
                         default:
                     }
@@ -1651,16 +1645,16 @@ class Writer
                     }
                     writeIndent();
                     write("while (");
-					if (conds.empty()) {
-						write("true");
-					} else {
-						for (i in 0...conds.length)
-						{
-							if (i > 0)
-								write(" && ");
-							writeExpr(conds[i]);
-						}
-					}
+                    if (conds.empty()) {
+                        write("true");
+                    } else {
+                        for (i in 0...conds.length)
+                        {
+                            if (i > 0)
+                                write(" && ");
+                            writeExpr(conds[i]);
+                        }
+                    }
                     write(")");
                 }
                 
@@ -1678,8 +1672,8 @@ class Writer
                 }
                 f(e);
 
-                //don't write increments for a "for" loop    
-                if (!canUseForLoop(incrs, conds, inits)) {
+                //don't write increments for a "for" loop
+                if (!isForLoop) {
                     for (incr in incrs) {
                         es.push(ENL(incr));
                     }
