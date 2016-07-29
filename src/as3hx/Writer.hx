@@ -1587,7 +1587,7 @@ class Writer
                 var isForLoop = canUseForLoop(incrs, conds, inits);
 
                 //write "for" loop if possible
-                if (isForLoop)) {
+                if (isForLoop) {
                     write("for (");
                     switch (inits[0]) {
                         case EVars(v): 
