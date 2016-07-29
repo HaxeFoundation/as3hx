@@ -1568,7 +1568,7 @@ class Writer
                 openContext();
                 
                 //check wether it is safe to use a Haxe for loop instead of while loop
-                var canUseForLoop:Array<Expr>->Array<Expr>->Array<Expr>->Bool = function(incrs, conds, inits) {
+                var canUseForLoop:Void->Bool = function() {
                     if (inits.empty() || conds.empty())
                         return false;
  
@@ -1584,9 +1584,8 @@ class Writer
                     }
                     return isIncrement;
                 }
-                var isForLoop = canUseForLoop(incrs, conds, inits);
-
-                //write "for" loop if possible
+                var isForLoop = canUseForLoop();
+                
                 if (isForLoop) {
                     write("for (");
                     switch (inits[0]) {
