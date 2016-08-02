@@ -29,6 +29,11 @@ class AS3HXTest {
         generate("Issue32.as", "Issue32_generated.hx", "Issue32.hx");
     }
     
+    @Test("string.charAt() -> string.charAt(0)")
+    public function issue69() {
+        generate("Issue69.as", "Issue69_generated.hx", "Issue69.hx");
+    }
+    
     function generate(as3FileName:String, generatedFileName:String, expectedFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var content = File.getContent('$issuesDirectory/$as3FileName');
