@@ -2,7 +2,8 @@
 class Issue38
 {
     public function new()
-    {var a : String = "";
+    {
+        var a : String = "";
         switch (a)
         {
             case "a", "c":
