@@ -2652,7 +2652,7 @@ class Writer
                     if (f == "length") {
                         var type = getExprType(e);
                         if (type != null && type.indexOf("Array") != -1) {
-                            return ECall(EField(EIdent("as3hx.Compat"), "setArrayLength"), [rvalue]);
+                            return ECall(EField(EIdent("as3hx.Compat"), "setArrayLength"), [e, rvalue]);
                         }
                     }
                 default:
