@@ -2565,6 +2565,13 @@ class Writer
                         rebuiltCall = ECall(rebuildExpr, params);
                     }
                 }
+                else if (f == "charCodeAt") {
+                    var type = getExprType(e);
+                    if (type != null && type.indexOf("String") != -1 && params.empty()) {
+                        var rebuildExpr = EField(e, "charCodeAt");
+                        rebuiltCall = ECall(rebuildExpr, [EConst(CInt("0"))]);
+                    }
+                }
                 else if (getIdentString(e) != null) {
                     var ident = getIdentString(e);
                     //replace AS3 StringUtil by Haxe StringTools
