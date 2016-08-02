@@ -20,8 +20,8 @@ class ExprParser {
         switch( tk ) {
         case TId(id):
             var e = parseStructure(id);
-            if( e == null )
-                e = EIdent(id);
+            if(e == null)
+                e = EIdent(ParserUtils.escapeName(id));
             return parseExprNext(e, 0);
         case TConst(c):
             return parseExprNext(EConst(c), 0);
@@ -182,7 +182,7 @@ class ExprParser {
             var field = null;
             switch(ParserUtils.uncomment(ParserUtils.removeNewLine(tk))) {
             case TId(id):
-                field = StringTools.replace(id, "$", "__DOLLAR__");
+                field = ParserUtils.escapeName(id);
                 if( ParserUtils.opt(tokenizer, TNs) )
                     field = field + "::" + tokenizer.id();
             case TOp(op):

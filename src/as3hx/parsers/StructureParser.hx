@@ -38,6 +38,7 @@ class StructureParser {
             var vars = [];
             while( true ) {
                 var name = tokenizer.id(), t = null, val = null;
+                name = ParserUtils.escapeName(name);
                 if( ParserUtils.opt(tokenizer, TColon) )
                     t = parseType();
                 if( ParserUtils.opt(tokenizer, TOp("=")) )
