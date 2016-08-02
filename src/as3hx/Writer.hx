@@ -1388,7 +1388,7 @@ class Writer
                             writeExpr(params[0]);
                             write(")");
                             handled = true;
-                        case "int":
+                        case "int" | "uint":
                             if (cfg.useCompat) {
                                 write("as3hx.Compat.parseInt(");
                             }
