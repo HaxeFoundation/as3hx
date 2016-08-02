@@ -572,7 +572,7 @@ class Writer
                 write("var " + getModifiedIdent(field.name));
 
                 var type = tstring(t, false); //check wether a specific type was defined for this array
-                if (type.indexOf("Array") != -1) {
+                if (type != null && type.indexOf("Array") != -1) {
                     for (genType in this.genTypes) {
                         if (field.name == genType.fieldName) {
                             t = TVector(TPath([genType.name]));
@@ -934,7 +934,7 @@ class Writer
                     writeIndent();
 
                 case ECommented(s,b,t,e):
-                    writeComment(s);    
+                    writeComment(s);
 
                 default:
             }
@@ -955,9 +955,9 @@ class Writer
     
     function writeVarType(t : Null<T>, ?alt : String, isNativeGetSet:Bool=false)
     {
-        if (null == t)
+        if (t == null)
         {
-            if (null != alt)
+            if (alt != null)
                 write(" : " + alt);
             return;
         }
