@@ -1567,27 +1567,22 @@ class Writer
             case EFor( inits, conds, incrs, e ):
                 openContext();
                 
-                //check wether it is safe to use a Haxe for loop instead of while loop
-                var canUseForLoop:Void->Bool = function() {
-                    if (inits.empty() || conds.empty())
-                        return false;
- 
-                    if (conds[0].match(EBinop("&&" | "||", _, _, _))) return false;
+                var useWhileLoop:Void->Bool = function() {
+                    if (inits.empty() || conds.empty()) return true;
+                    if (conds[0].match(EBinop("&&" | "||", _, _, _))) return true;
+                    
                     //index must be incremented by 1
-                    var isIncrement = if (incrs.length == 1) {
+                    if (incrs.length == 1) {
                         return switch (incrs[0]) {
-                            case EUnop(op, _, _): op == "++";
+                            case EUnop(op, _, _): op != "++";
                             default: false;
                         }
                     }
-                    else {
-                        false;
-                    }
-                    return isIncrement;
+                    return true;
                 }
-                var isForLoop = canUseForLoop();
+                var isWhileLoop = useWhileLoop();
                 
-                if (isForLoop) {
+                if (!isWhileLoop) {
                     write("for (");
                     switch (inits[0]) {
                         case EVars(v): 
@@ -1633,10 +1628,7 @@ class Writer
                             write(")");
                         default:
                     }
-                   
-                    
                 }
-                //else use "while" loop
                 else {
                     for (init in inits)
                     {
@@ -1673,7 +1665,7 @@ class Writer
                 f(e);
 
                 //don't write increments for a "for" loop
-                if (!isForLoop) {
+                if (isWhileLoop) {
                     for (incr in incrs) {
                         es.push(ENL(incr));
                     }
