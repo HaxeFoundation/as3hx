@@ -1315,8 +1315,22 @@ class Writer
                     write(op);
                 }
             case ECall( e, params ):
+                switch(e) {
+                    case EField(e, f):
+                        if (f == "push" && params.length > 1) {
+                            var type = getExprType(e);
+                            if (type != null && type.indexOf("Array") != -1) {
+                                for(it in params) {
+                                    writeExpr(ECall(EField(e, f), [it]));
+                                    write(";");
+                                    writeExpr(ENL(null));
+                                }
+                                return None;
+                            }
+                        }
+                    default:
+                }
                 //write("/*ECall " + e + "(" + params + ")*/\n");
-
                 //rebuild call expr if necessary
                 var eCall = rebuildCallExpr(expr, e, params);
                 if (eCall != null) {
