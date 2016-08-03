@@ -3113,7 +3113,7 @@ class Writer
     {
         for (genType in genTypes) {
             writeNL();
-            write("typedef "+genType.name+"Typedef" + " = {");
+            write("typedef " + genType.name + " = {");
             for(field in genType.fields) {
                 writeNL();
                 writeIndent(cfg.indentChars);

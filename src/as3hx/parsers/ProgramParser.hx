@@ -266,7 +266,9 @@ class ProgramParser {
         pf(false);
         if( !closed )
             ParserUtils.unexpected(TEof);
-
+        for(it in types.gen) {
+            it.name = it.name + "Typedef";
+        }
         return {
             header : header,
             pack : pack,
