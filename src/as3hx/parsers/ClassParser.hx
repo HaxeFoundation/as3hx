@@ -255,8 +255,7 @@ class ClassParser {
         };
     }
 
-    public static function parseVar(tokenizer, types:Types, cfg, 
-            kwds,meta,condVars:Array<String>) : ClassField {
+    public static function parseVar(tokenizer, types:Types, cfg:Config, kwds, meta, condVars:Array<String>) : ClassField {
         var parseType = TypeParser.parse.bind(tokenizer, types, cfg);
         var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
 
