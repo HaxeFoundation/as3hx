@@ -236,6 +236,7 @@ class ClassParser {
                             throw "Assert error: " + i;
                     }
                 }
+            case ENL(_):
             default:
                 throw "Assert error: " + m;
             }
@@ -271,7 +272,7 @@ class ClassParser {
         var rv = {
             meta : meta,
             kwds : kwds,
-            name : StringTools.replace(name, "$", "__DOLLAR__"),
+            name : ParserUtils.escapeName(name),
             kind : FVar(t, val),
             condVars : condVars
         };
@@ -307,7 +308,7 @@ class ClassParser {
         return {
             meta : meta,
             kwds : kwds,
-            name : StringTools.replace(name, "$", "__DOLLAR__"),
+            name : ParserUtils.escapeName(name),
             kind : FFun(f),
             condVars : condVars
         };
