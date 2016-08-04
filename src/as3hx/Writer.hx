@@ -2528,9 +2528,17 @@ class Writer
                     rebuiltCall = ECall(rebuiltExpr, params);
                 }
                 else if (f == "slice") {
-                    //replace AS3 slice by Haxe substr
-                    var rebuiltExpr = EField(e, "substring");
-                    rebuiltCall = ECall(rebuiltExpr, params);
+                    var type = getExprType(e);
+                    if (type != null) {
+                        if (type.indexOf("String") != -1) {
+                            //replace AS3 slice by Haxe substr
+                            var rebuiltExpr = EField(e, "substring");
+                            rebuiltCall = ECall(rebuiltExpr, params);
+                        } else if(type.indexOf("Array") != -1 && params.empty()) {
+                            var rebuiltExpr = EField(e, "copy");
+                            rebuiltCall = ECall(rebuiltExpr, params);
+                        }
+                    }
                 }
                 else if (f == "indexOf") {
                     //in AS3, indexOf is a method in Array while it is not in Haxe
