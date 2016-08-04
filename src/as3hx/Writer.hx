@@ -1567,26 +1567,22 @@ class Writer
             case EFor( inits, conds, incrs, e ):
                 openContext();
                 
-                //check wether it is safe to use a Haxe for loop instead of while loop
-                var canUseForLoop:Void->Bool = function() {
-                    if (inits.empty() || conds.empty())
-                        return false;
- 
+                var useWhileLoop:Void->Bool = function() {
+                    if (inits.empty() || conds.empty()) return true;
+                    if (conds[0].match(EBinop("&&" | "||", _, _, _))) return true;
+                    
                     //index must be incremented by 1
-                    var isIncrement = if (incrs.length == 1) {
+                    if (incrs.length == 1) {
                         return switch (incrs[0]) {
-                            case EUnop(op, _, _): op == "++";
+                            case EUnop(op, _, _): op != "++";
                             default: false;
                         }
                     }
-                    else {
-                        false;
-                    }
-                    return isIncrement;
+                    return true;
                 }
-                var isForLoop = canUseForLoop();
+                var isWhileLoop = useWhileLoop();
                 
-                if (isForLoop) {
+                if (!isWhileLoop) {
                     write("for (");
                     switch (inits[0]) {
                         case EVars(v): 
@@ -1632,10 +1628,7 @@ class Writer
                             write(")");
                         default:
                     }
-                   
-                    
                 }
-                //else use "while" loop
                 else {
                     for (init in inits)
                     {
@@ -1672,7 +1665,7 @@ class Writer
                 f(e);
 
                 //don't write increments for a "for" loop
-                if (!isForLoop) {
+                if (isWhileLoop) {
                     for (incr in incrs) {
                         es.push(ENL(incr));
                     }
@@ -2535,9 +2528,17 @@ class Writer
                     rebuiltCall = ECall(rebuiltExpr, params);
                 }
                 else if (f == "slice") {
-                    //replace AS3 slice by Haxe substr
-                    var rebuiltExpr = EField(e, "substring");
-                    rebuiltCall = ECall(rebuiltExpr, params);
+                    var type = getExprType(e);
+                    if (type != null) {
+                        if (type.indexOf("String") != -1) {
+                            //replace AS3 slice by Haxe substr
+                            var rebuiltExpr = EField(e, "substring");
+                            rebuiltCall = ECall(rebuiltExpr, params);
+                        } else if(type.indexOf("Array") != -1 && params.empty()) {
+                            var rebuiltExpr = EField(e, "copy");
+                            rebuiltCall = ECall(rebuiltExpr, params);
+                        }
+                    }
                 }
                 else if (f == "indexOf") {
                     //in AS3, indexOf is a method in Array while it is not in Haxe
@@ -2563,6 +2564,13 @@ class Writer
                     if (type != null && type.indexOf("Array") != -1) {
                         var rebuildExpr = EField(e, "copy");
                         rebuiltCall = ECall(rebuildExpr, params);
+                    }
+                }
+                else if (f == "charAt") {
+                    var type = getExprType(e);
+                    if (type != null && type.indexOf("String") != -1 && params.empty()) {
+                        var rebuildExpr = EField(e, "charAt");
+                        rebuiltCall = ECall(rebuildExpr, [EConst(CInt("0"))]);
                     }
                 }
                 else if (getIdentString(e) != null) {
