@@ -1324,7 +1324,6 @@ class Writer
                 //rebuild call expr if necessary
                 var eCall = rebuildCallExpr(expr, e, params);
                 if (eCall != null) {
-
                     switch(eCall) {
                         case ECall(e2, params2):
                             e = e2;
@@ -2590,6 +2589,9 @@ class Writer
                     //replace AS3 StringUtil by Haxe StringTools
                     if (ident == "StringUtil") {
                         var rebuiltExpr = EField(EIdent("StringTools"), f);
+                        rebuiltCall = ECall(rebuiltExpr, params);
+                    } else if (ident == "JSON") {
+                        var rebuiltExpr = EField(EIdent("haxe.Json"), f);
                         rebuiltCall = ECall(rebuiltExpr, params);
                     }
                 }
