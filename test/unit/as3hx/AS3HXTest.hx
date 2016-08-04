@@ -29,6 +29,11 @@ class AS3HXTest {
         generate("Issue14.as", "Issue14_generated.hx", "Issue14.hx");
     }
     
+    @Test("ternarny operator")
+    public function issue28() {
+        generate("Issue28.as", "Issue28_generated.hx", "Issue28.hx");
+    }
+    
     @Test("array.concat() -> array.copy()")
     public function issue32() {
         generate("Issue32.as", "Issue32_generated.hx", "Issue32.hx");
