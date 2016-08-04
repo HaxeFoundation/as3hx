@@ -24,7 +24,7 @@ class AS3HXTest {
         output = new BytesOutput();
     }
     
-    @Test("/[\/]/g -> new EReg('[\\/]', 'g')")
+    @Test
     public function issue14() {
         generate("Issue14.as", "Issue14_generated.hx", "Issue14.hx");
     }
