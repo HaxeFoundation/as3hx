@@ -572,7 +572,7 @@ class Writer
                 write("var " + getModifiedIdent(field.name));
 
                 var type = tstring(t, false); //check wether a specific type was defined for this array
-                if (type.indexOf("Array") != -1) {
+                if (type != null && type.indexOf("Array") != -1) {
                     for (genType in this.genTypes) {
                         if (field.name == genType.fieldName) {
                             t = TVector(TPath([genType.name]));
@@ -934,7 +934,7 @@ class Writer
                     writeIndent();
 
                 case ECommented(s,b,t,e):
-                    writeComment(s);    
+                    writeComment(s);
 
                 default:
             }
@@ -955,9 +955,9 @@ class Writer
     
     function writeVarType(t : Null<T>, ?alt : String, isNativeGetSet:Bool=false)
     {
-        if (null == t)
+        if (t == null)
         {
-            if (null != alt)
+            if (alt != null)
                 write(" : " + alt);
             return;
         }
@@ -1099,7 +1099,7 @@ class Writer
         if(cfg.debugExpr)
             write(" /* " + Std.string(expr) + " */ ");
 
-        if(expr == null) return None;
+        if (expr == null) return None;
         var rv = Semi;
         switch(expr)
         {
@@ -1258,8 +1258,9 @@ class Writer
                     write(")");
                 }
                 else { // op e1 e2
-
-                   
+                    var eBinop = rebuildBinopExpr(op, e1, e2);
+                    if (eBinop != null) return writeExpr(eBinop);
+                    
                     var oldInLVA = inLvalAssign;
                     rvalue = e2;
                     if(op == "=")
@@ -1289,7 +1290,7 @@ class Writer
                         else {
                             write(" " + op);
                         }
-                           
+                        
                         //minor formatting fix, if right expression starts
                         //with a newline or comment, no need for extra 
                         switch (e2) {
@@ -1305,10 +1306,9 @@ class Writer
                             writeExpr(e2);
                         }
                     }
-                     
-                    if (op == "=")
-                        lvl -= 2; 
                     
+                    if (op == "=")
+                        lvl -= 2;
                 }
             case EUnop( op, prefix, e ):
                 if (prefix)
@@ -1325,7 +1325,6 @@ class Writer
                 //rebuild call expr if necessary
                 var eCall = rebuildCallExpr(expr, e, params);
                 if (eCall != null) {
-
                     switch(eCall) {
                         case ECall(e2, params2):
                             e = e2;
@@ -1370,6 +1369,11 @@ class Writer
                                 writeExpr(params[0]);
                                 write(", ");
                                 write("Bool)");
+                            case "XML":
+                                var type = tstring(TPath(["XML"]));
+                                write('$type.parse(');
+                                writeExpr(params[0]);
+                                write(")");
                             default:
                                 write("cast((");
                                 writeExpr(params[0]);
@@ -1389,7 +1393,7 @@ class Writer
                             writeExpr(params[0]);
                             write(")");
                             handled = true;
-                        case "int":
+                        case "int" | "uint":
                             if (cfg.useCompat) {
                                 write("as3hx.Compat.parseInt(");
                             }
@@ -1568,26 +1572,22 @@ class Writer
             case EFor( inits, conds, incrs, e ):
                 openContext();
                 
-                //check wether it is safe to use a Haxe for loop instead of while loop
-                var canUseForLoop:Void->Bool = function() {
-                    if (inits.empty() || conds.empty())
-                        return false;
- 
+                var useWhileLoop:Void->Bool = function() {
+                    if (inits.empty() || conds.empty()) return true;
+                    if (conds[0].match(EBinop("&&" | "||", _, _, _))) return true;
+                    
                     //index must be incremented by 1
-                    var isIncrement = if (incrs.length == 1) {
+                    if (incrs.length == 1) {
                         return switch (incrs[0]) {
-                            case EUnop(op, _, _): op == "++";
+                            case EUnop(op, _, _): op != "++";
                             default: false;
                         }
                     }
-                    else {
-                        false;
-                    }
-                    return isIncrement;
+                    return true;
                 }
-                var isForLoop = canUseForLoop();
+                var isWhileLoop = useWhileLoop();
                 
-                if (isForLoop) {
+                if (!isWhileLoop) {
                     write("for (");
                     switch (inits[0]) {
                         case EVars(v): 
@@ -1633,10 +1633,7 @@ class Writer
                             write(")");
                         default:
                     }
-                   
-                    
                 }
-                //else use "while" loop
                 else {
                     for (init in inits)
                     {
@@ -1673,7 +1670,7 @@ class Writer
                 f(e);
 
                 //don't write increments for a "for" loop
-                if (!isForLoop) {
+                if (isWhileLoop) {
                     for (incr in incrs) {
                         es.push(ENL(incr));
                     }
@@ -1954,22 +1951,26 @@ class Writer
                     testVar = EIdent("_sw"+(varCount++)+"_");
                 }
 
-                if(def != null) {
+                if (def != null) {
                     if (def.el.length > 0) {
-                        switch(def.el[def.el.length-1]) {
-                            case EBreak(lbl):
-                                if(lbl == null) 
-                                    def.el.pop(); // remove break
-                            case EBlock(exprs):
-                                switch (exprs[exprs.length -1]) {
-                                    case EBreak(lbl):
-                                        def.el.pop();
-                                    default:  
-                                }
-                            default:
+                        var f:Expr->Array<Expr>->Void = null;
+                        f = function(e, els) {
+                            switch(e) {
+                                case EBreak(lbl):
+                                    if(lbl == null) 
+                                        def.el.pop(); // remove break
+                                case EBlock(exprs):
+                                    switch (exprs[exprs.length -1]) {
+                                        case EBreak(lbl):
+                                            def.el.pop();
+                                        default:  
+                                    }
+                                case ENL(e): f(e, els);
+                                default:
+                            }
                         }
+                        f(def.el[def.el.length - 1], def.el);
                     }
-                    
                 }
                 newCases = loopCases(cases.slice(0), def == null ? null : def.el.slice(0), testVar, newCases);
   
@@ -2117,8 +2118,6 @@ class Writer
                     else {
                         throw "typeof can't be converted without the Compat class";
                     }
-                    
-                    
                 }
                 addWarning("ETypeof");
             case EDelete(e):
@@ -2493,7 +2492,7 @@ class Writer
         case ENL(e): 
             var expr = rebuildIfExpr(e);
             if (expr != null) {
-                return ENL(expr);    
+                return ENL(expr);
             }
             else {
                 return null;
@@ -2513,7 +2512,6 @@ class Writer
      * @return the new expression, or null if no change were needed
      */
     function rebuildCallExpr(fullExpr : Expr, expr : Expr, params : Array<Expr>) : Expr {
-        
         var rebuiltCall = null;
 
         //utils returning the ident string of an
@@ -2529,16 +2527,23 @@ class Writer
 
         switch (expr) {
             case EField(e, f):
-
                 //replace "myVar.hasOwnProperty(myProperty)" by "myVar.exists(myProperty)"
                 if (f == "hasOwnProperty") {
                     var rebuiltExpr = EField(e, "exists");
                     rebuiltCall = ECall(rebuiltExpr, params);
                 }
                 else if (f == "slice") {
-                    //replace AS3 slice by Haxe substr
-                    var rebuiltExpr = EField(e, "substring");
-                    rebuiltCall = ECall(rebuiltExpr, params);
+                    var type = getExprType(e);
+                    if (type != null) {
+                        if (type.indexOf("String") != -1) {
+                            //replace AS3 slice by Haxe substr
+                            var rebuiltExpr = EField(e, "substring");
+                            rebuiltCall = ECall(rebuiltExpr, params);
+                        } else if(type.indexOf("Array") != -1 && params.empty()) {
+                            var rebuiltExpr = EField(e, "copy");
+                            rebuiltCall = ECall(rebuiltExpr, params);
+                        }
+                    }
                 }
                 else if (f == "indexOf") {
                     //in AS3, indexOf is a method in Array while it is not in Haxe
@@ -2566,20 +2571,35 @@ class Writer
                         rebuiltCall = ECall(rebuildExpr, params);
                     }
                 }
+                else if (f == "charAt") {
+                    var type = getExprType(e);
+                    if (type != null && type.indexOf("String") != -1 && params.empty()) {
+                        var rebuildExpr = EField(e, "charAt");
+                        rebuiltCall = ECall(rebuildExpr, [EConst(CInt("0"))]);
+                    }
+                }
+                else if (f == "charCodeAt") {
+                    var type = getExprType(e);
+                    if (type != null && type.indexOf("String") != -1 && params.empty()) {
+                        var rebuildExpr = EField(e, "charCodeAt");
+                        rebuiltCall = ECall(rebuildExpr, [EConst(CInt("0"))]);
+                    }
+                }
                 else if (getIdentString(e) != null) {
                     var ident = getIdentString(e);
                     //replace AS3 StringUtil by Haxe StringTools
                     if (ident == "StringUtil") {
                         var rebuiltExpr = EField(EIdent("StringTools"), f);
                         rebuiltCall = ECall(rebuiltExpr, params);
+                    } else if (ident == "JSON") {
+                        var rebuiltExpr = EField(EIdent("haxe.Json"), f);
+                        rebuiltCall = ECall(rebuiltExpr, params);
                     }
                 }
 
             default:
-
                 var ident = getIdentString(expr);
                 if (ident != null) {
-
                     //utils returning a string representation
                     //of the provided param
                     var getCommentedParam = function(param) {
@@ -2587,8 +2607,7 @@ class Writer
                             case EConst(CString(s)):
                                 return s;
                             case EIdent(id):
-                                return id;    
-
+                                return id;
                             default: null;
                         }
                     }
@@ -2603,10 +2622,8 @@ class Writer
                             var comment = getCommentedParam(params.shift());
                             rebuiltCall = ECommented(comment, false, true, rebuiltCall);
                         }
-
                         return rebuiltCall;
                     }
-
                     
                     switch (ident) {
                         //replace "hasAnyProperty(myVar)" by "myVar.keys().hasNext()"
@@ -2652,15 +2669,30 @@ class Writer
                     }
                 }
         }
-
         return rebuiltCall;
     }
 
+    function rebuildBinopExpr(op:String, lvalue:Expr, rvalue:Expr):Expr {
+        if(cfg.useCompat && op == "=") {
+            switch(lvalue) {
+                case EField(e, f):
+                    if (f == "length") {
+                        var type = getExprType(e);
+                        if (type != null && type.indexOf("Array") != -1) {
+                            return ECall(EField(EIdent("as3hx.Compat"), "setArrayLength"), [e, rvalue]);
+                        }
+                    }
+                default:
+            }
+        }
+        return null;
+    }
+    
     /**
      * For an if statement, return the 
      * the appropriate block end, based on the
      * type of the first child expression
-     */    
+     */
     function getEIfBlockEnd(e:Expr) : BlockEnd {
         return switch(e) {
             case EObject(_): Ret;
@@ -2742,7 +2774,7 @@ class Writer
         return false;
     }
 
-    function addWarning(type,isError=false) {
+    function addWarning(type:String, isError = false) {
         warnings.set(type, isError);
     }
     
@@ -2853,6 +2885,7 @@ class Writer
                     case "Object"   : isNativeGetSet ? "{}" : "Dynamic";
                     case "XML"      : cfg.useFastXML ? "FastXML" : "Xml";
                     case "XMLList"  : cfg.useFastXML ? "FastXMLList" : "Iterator<Xml>";
+                    case "RegExp"   : "EReg";
                     default         : fixCase? properCase(c,true) : c;
                 }
             case TComplex(e):
@@ -3045,7 +3078,7 @@ class Writer
         write(cfg.newlineChars);
     }
 
-    function writeFinish(cond) {
+    function writeFinish(cond:BlockEnd) {
         switch(cond) {
         case None:
         case Semi: write(";");
@@ -3053,9 +3086,9 @@ class Writer
         }
     }
 
-   /**
-    * Write typedef that were generated during parsing
-    */
+    /**
+     * Write typedef that were generated during parsing
+     */
     function writeGeneratedTypes(genTypes : Array<GenType>) : Void 
     {
         for (genType in genTypes) {
@@ -3182,7 +3215,7 @@ class Writer
         return properCaseA(pkg.split("."), hasClassName).join(".");
     }
 
-    public static function properCaseA(path:Array<String>, hasClassName:Bool) {
+    public static function properCaseA(path:Array<String>, hasClassName:Bool):Array<String> {
         var p = [];
         for(i in 0...path.length) {
             if(hasClassName && i == path.length - 1)
