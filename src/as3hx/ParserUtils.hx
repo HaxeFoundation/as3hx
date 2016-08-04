@@ -7,6 +7,13 @@ import as3hx.As3;
 
 class ParserUtils {
 
+    public static inline function escapeName(name:String):String {
+        return switch(name) {
+            case "cast": "__DOLLAR__cast";
+            default: StringTools.replace(name, "$", "__DOLLAR__");
+        }
+    }
+    
     /**
      * Takes a token that may be a comment and returns
      * an array of tokens that will have the comments

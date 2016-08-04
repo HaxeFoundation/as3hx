@@ -16,12 +16,12 @@ class ExprParser {
         var readXML = XMLReader.read.bind(tokenizer);
 
         var tk = tokenizer.token();
-        Debug.dbgln("parseExpr("+tk+")", tokenizer.line);
+        Debug.dbgln("parseExpr(" + tk + ")", tokenizer.line);
         switch( tk ) {
         case TId(id):
             var e = parseStructure(id);
-            if( e == null )
-                e = EIdent(id);
+            if(e == null)
+                e = EIdent(ParserUtils.escapeName(id));
             return parseExprNext(e, 0);
         case TConst(c):
             return parseExprNext(EConst(c), 0);
@@ -31,13 +31,14 @@ class ExprParser {
             return parseExprNext(EParent(e), 0);
         case TBrOpen:
             tk = tokenizer.token();
-          
-            Debug.dbgln("parseExpr: "+tk, tokenizer.line);
-            switch( tk ) {
+            
+            Debug.dbgln("parseExpr: " + tk, tokenizer.line);
+            
+            switch(ParserUtils.removeNewLine(tk, false)) {
             case TBrClose:
                 if(funcStart) return EBlock([]);
                 return parseExprNext(EObject([]), 0);
-            case TId(_),TConst(_):
+            case TId(_), TConst(_):
                 var tk2 = tokenizer.token();
                 tokenizer.add(tk2);
                 tokenizer.add(tk);
@@ -73,8 +74,10 @@ class ExprParser {
         case TOp(op):
             if( op.charAt(0) == "/" ) {
                 var str = op.substr(1);
+                var prevChar = 0;
                 var c = tokenizer.nextChar();
-                while( c != "/".code ) {
+                while(c != "/".code || prevChar == "\\".code) {
+                    prevChar = c;
                     str += String.fromCharCode(c);
                     c = tokenizer.nextChar();
                 }
@@ -135,7 +138,12 @@ class ExprParser {
                     }
                     return parseExprNext(EUnop(op,false,e1), 0);
                 }
-            return ParserUtils.makeBinop(tokenizer, op,e1, parseExpr(false), pendingNewLines != 0);
+            var e2 = parseExpr(false);
+            return switch(e2) {
+                case ETernary(cond, te1, te2):
+                    ETernary(ParserUtils.makeBinop(tokenizer, op, e1, cond, pendingNewLines != 0), te1, te2);
+                default: ParserUtils.makeBinop(tokenizer, op, e1, e2, pendingNewLines != 0);
+            }
         case TNs:
             switch(e1) {
             case EIdent(i):
@@ -181,7 +189,7 @@ class ExprParser {
             var field = null;
             switch(ParserUtils.uncomment(ParserUtils.removeNewLine(tk))) {
             case TId(id):
-                field = StringTools.replace(id, "$", "__DOLLAR__");
+                field = ParserUtils.escapeName(id);
                 if( ParserUtils.opt(tokenizer, TNs) )
                     field = field + "::" + tokenizer.id();
             case TOp(op):
