@@ -236,6 +236,7 @@ class ClassParser {
                             throw "Assert error: " + i;
                     }
                 }
+            case ENL(_):
             default:
                 throw "Assert error: " + m;
             }

@@ -16,7 +16,7 @@ class ExprParser {
         var readXML = XMLReader.read.bind(tokenizer);
 
         var tk = tokenizer.token();
-        Debug.dbgln("parseExpr("+tk+")", tokenizer.line);
+        Debug.dbgln("parseExpr(" + tk + ")", tokenizer.line);
         switch( tk ) {
         case TId(id):
             var e = parseStructure(id);
@@ -74,8 +74,10 @@ class ExprParser {
         case TOp(op):
             if( op.charAt(0) == "/" ) {
                 var str = op.substr(1);
+                var prevChar = 0;
                 var c = tokenizer.nextChar();
-                while( c != "/".code ) {
+                while(c != "/".code || prevChar == "\\".code) {
+                    prevChar = c;
                     str += String.fromCharCode(c);
                     c = tokenizer.nextChar();
                 }

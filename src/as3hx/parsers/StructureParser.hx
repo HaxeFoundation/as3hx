@@ -193,10 +193,10 @@ class StructureParser {
                         meta.push(ENL(null));
                     case TCommented(s,b,t): //keep comment as meta for a case/default
                         tokenizer.add(t);
-                        meta.push(ECommented(s,b,false,null));        
+                        meta.push(ECommented(s,b,false,null));
 
                     default:
-                        ParserUtils.unexpected(tk);     
+                        ParserUtils.unexpected(tk);
                 }
             }
             
