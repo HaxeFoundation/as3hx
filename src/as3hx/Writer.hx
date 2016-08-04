@@ -1019,6 +1019,8 @@ class Writer
                 return tstring(vars[0].t, false);
             case EArray(n, i):
                 return getExprType(n);
+            case EArrayDecl(e):
+                return "Array<Dynamic>";
             case EUnop(op, prefix, e2):
                 return getExprType(e2);
             case EConst(c):
@@ -1315,8 +1317,22 @@ class Writer
                     write(op);
                 }
             case ECall( e, params ):
+                switch(e) {
+                    case EField(e, f):
+                        if (f == "push" && params.length > 1) {
+                            var type = getExprType(e);
+                            if (type != null && type.indexOf("Array") != -1) {
+                                for(it in params) {
+                                    writeExpr(ECall(EField(e, f), [it]));
+                                    write(";");
+                                    writeExpr(ENL(null));
+                                }
+                                return None;
+                            }
+                        }
+                    default:
+                }
                 //write("/*ECall " + e + "(" + params + ")*/\n");
-
                 //rebuild call expr if necessary
                 var eCall = rebuildCallExpr(expr, e, params);
                 if (eCall != null) {
@@ -2566,6 +2582,13 @@ class Writer
                     if (type != null && type.indexOf("Array") != -1) {
                         var rebuildExpr = EField(e, "copy");
                         rebuiltCall = ECall(rebuildExpr, params);
+                    }
+                }
+                else if (f == "join" && params.empty()) {
+                    var type = getExprType(e);
+                    if (type != null && type.indexOf("Array") != -1) {
+                        var rebuildExpr = EField(e, "join");
+                        rebuiltCall = ECall(rebuildExpr, [EConst(CString(","))]);
                     }
                 }
                 else if (f == "charAt") {
