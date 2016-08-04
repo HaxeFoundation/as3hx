@@ -128,7 +128,7 @@ class FunctionParser {
                 } else {
                     throw "unexpected " + Std.string(f.expr);
                 }
-            case EBlock(_):
+            case EBlock(fl):
                 null;
             default:
                 throw "unexpected " + Std.string(f.expr);
