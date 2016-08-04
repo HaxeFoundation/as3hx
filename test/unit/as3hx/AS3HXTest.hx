@@ -119,6 +119,11 @@ class AS3HXTest {
         generate("Issue91.as", "Issue91_generated.hx", "Issue91.hx");
     }
     
+    @Test("[].join() -> [].join(',')")
+    public function issue93() {
+        generate("Issue93.as", "Issue93_generated.hx", "Issue93.hx");
+    }
+    
     @Test
     public function issue103() {
         generate("Issue103.as", "Issue103_generated.hx", "Issue103.hx");
