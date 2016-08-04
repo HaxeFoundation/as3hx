@@ -34,6 +34,21 @@ class AS3HXTest {
         generate("Issue38.as", "Issue38_generated.hx", "Issue38.hx");
     }
     
+    @Test("private var name = 'value'")
+    public function issue52() {
+        generate("Issue52.as", "Issue52_generated.hx", "Issue52.hx");
+    }
+    
+    @Test("array.slice() -> array.copy()")
+    public function issue68() {
+        generate("Issue68.as", "Issue68_generated.hx", "Issue68.hx");
+    }
+    
+    @Test("string.charAt() -> string.charAt(0)")
+    public function issue69() {
+        generate("Issue69.as", "Issue69_generated.hx", "Issue69.hx");
+    }
+    
     function generate(as3FileName:String, generatedFileName:String, expectedFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var content = File.getContent('$issuesDirectory/$as3FileName');
