@@ -1028,6 +1028,8 @@ class Writer
                 return tstring(vars[0].t, false);
             case EArray(n, i):
                 return getExprType(n);
+            case EArrayDecl(e):
+                return "Array<Dynamic>";
             case EUnop(op, prefix, e2):
                 return getExprType(e2);
             case EConst(c):
@@ -2578,7 +2580,14 @@ class Writer
                         rebuiltCall = ECall(rebuildExpr, params);
                     }
                 }
-                else if (f == "charAt") {
+                else if (f == "join" && params.empty()) {
+                    var type = getExprType(e);
+                    if (type != null && type.indexOf("Array") != -1) {
+                        var rebuildExpr = EField(e, "join");
+                        rebuiltCall = ECall(rebuildExpr, [EConst(CString(","))]);
+                    }
+                }
+                else if (f == "charCodeAt") {
                     var type = getExprType(e);
                     if (type != null && type.indexOf("String") != -1 && params.empty()) {
                         var rebuildExpr = EField(e, "charAt");
