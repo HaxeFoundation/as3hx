@@ -761,15 +761,12 @@ class Writer
 
         for (arg in args) //for each method argument
         {
-
             for (expr in arg.exprs) //for each expression within that argument
             {
                 switch (expr) {
                     case EIdent(s):
-
                         if (s == arg.name) { //this is the start of a new argument
-
-                            var isFirst = null == fst;
+                            var isFirst = fst == null;
                             if (isFirst)
                             {
                                 fst = arg; // no comma for the first
@@ -786,7 +783,6 @@ class Writer
 
                             write(s);
                         }
-                       
                     case ETypedExpr(e, t):
                         writeVarType(t);
                         context.set(arg.name, tstring(arg.t, false));
@@ -801,8 +797,8 @@ class Writer
                             pendingComma = false;
                             write(",");
                         }
-                        writeNL();    
-                        writeIndent();   
+                        writeNL();
+                        writeIndent();
 
                     case ECommented(s,b,t,e): // comment among arguments
                         if (pendingComma){
@@ -810,15 +806,12 @@ class Writer
                             write(",");
                         }
                         writeComment(s);
-                    
                     default:
 
                 }
             }
         }
-
         lvl -= 2;
-
         return fst;
     }
     
@@ -866,21 +859,20 @@ class Writer
                 constructorHasSuper(expr);
 
             default:
-                false;    
+                false;
         }
     }
 
-    
     function writeFunction(f : Function, isGetter:Bool, isSetter:Bool, isNative:Bool, name : Null<String>, ?ret : FunctionRet)
     {
         write("function");
-        if(null != name)
+        if(name != null)
             write(" " + name);
         write("(");
         var fst = writeArgs(f.args);
         write(")");
         // return type
-        if (null == ret)
+        if (ret == null)
             ret = f.ret;
         writeFunctionReturn(ret, isGetter, isSetter, isNative);
 
@@ -915,7 +907,6 @@ class Writer
      * comments and newline until opening bracket
      */
     function writeFunctionReturn(ret:FunctionRet, isGetter : Bool, isSetter : Bool, isNative : Bool) {
-        
         //write return type
         if(isNative) {
             if(isGetter)
@@ -1028,6 +1019,8 @@ class Writer
                 return tstring(vars[0].t, false);
             case EArray(n, i):
                 return getExprType(n);
+            case EArrayDecl(e):
+                return "Array<Dynamic>";
             case EUnop(op, prefix, e2):
                 return getExprType(e2);
             case EConst(c):
@@ -1067,13 +1060,12 @@ class Writer
         return null;
     }
 
-    function getModifiedIdent(s : String) {
+    function getModifiedIdent(s : String) : String {
         return switch(s) {
-            case "string":              "String";
             case "int":                 "Int";
             case "uint":                cfg.uintToInt ? "Int" : "UInt";
-            case "number","Number":     "Float";
-            case "boolean","Boolean":   "Bool";
+            case "Number": "Float";
+            case "Boolean": "Bool";
             case "Function":            cfg.functionToDynamic ? "Dynamic" : s;
             case "Object":              "Dynamic";
             case "undefined":           "null";
@@ -1325,8 +1317,22 @@ class Writer
                     write(op);
                 }
             case ECall( e, params ):
+                switch(e) {
+                    case EField(e, f):
+                        if (f == "push" && params.length > 1) {
+                            var type = getExprType(e);
+                            if (type != null && type.indexOf("Array") != -1) {
+                                for(it in params) {
+                                    writeExpr(ECall(EField(e, f), [it]));
+                                    write(";");
+                                    writeExpr(ENL(null));
+                                }
+                                return None;
+                            }
+                        }
+                    default:
+                }
                 //write("/*ECall " + e + "(" + params + ")*/\n");
-
                 //rebuild call expr if necessary
                 var eCall = rebuildCallExpr(expr, e, params);
                 if (eCall != null) {
@@ -2576,6 +2582,13 @@ class Writer
                     if (type != null && type.indexOf("Array") != -1) {
                         var rebuildExpr = EField(e, "copy");
                         rebuiltCall = ECall(rebuildExpr, params);
+                    }
+                }
+                else if (f == "join" && params.empty()) {
+                    var type = getExprType(e);
+                    if (type != null && type.indexOf("Array") != -1) {
+                        var rebuildExpr = EField(e, "join");
+                        rebuiltCall = ECall(rebuildExpr, [EConst(CString(","))]);
                     }
                 }
                 else if (f == "charAt") {

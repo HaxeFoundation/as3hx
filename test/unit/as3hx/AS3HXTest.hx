@@ -85,6 +85,11 @@ class AS3HXTest {
     }
     
     @Test
+    public function issue71() {
+        generate("Issue71.as", "Issue71_generated.hx", "Issue71.hx");
+    }
+    
+    @Test
     public function issue81() {
         generate("Issue81.as", "Issue81_generated.hx", "Issue81.hx");
     }
@@ -112,6 +117,21 @@ class AS3HXTest {
     @Test("var b:Boolean = !int -> var b:Bool = int != 0")
     public function issue91() {
         generate("Issue91.as", "Issue91_generated.hx", "Issue91.hx");
+    }
+    
+    @Test("[].join() -> [].join(',')")
+    public function issue93() {
+        generate("Issue93.as", "Issue93_generated.hx", "Issue93.hx");
+    }
+    
+    @Test
+    public function issue103() {
+        generate("Issue103.as", "Issue103_generated.hx", "Issue103.hx");
+    }
+    
+    @Test("array.push(1,2,3,4,5,6,7,8,9,0)")
+    public function issue94() {
+        generate("Issue94.as", "Issue94_generated.hx", "Issue94.hx");
     }
     
     function generate(as3FileName:String, generatedFileName:String, expectedFileName:String) {
