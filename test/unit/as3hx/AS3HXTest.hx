@@ -139,6 +139,11 @@ class AS3HXTest {
         generate("Issue95.as", "Issue95_generated.hx", "Issue95.hx");
     }
     
+    @Test("s is String ? 1 : 0")
+    public function issue96() {
+        generate("Issue96.as", "Issue96_generated.hx", "Issue96.hx");
+    }
+    
     function generate(as3FileName:String, generatedFileName:String, expectedFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var content = File.getContent('$issuesDirectory/$as3FileName');

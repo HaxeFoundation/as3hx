@@ -44,6 +44,20 @@ class ExprParserTest
         Assert.areEqual(ETernary(EBinop("&&",EBinop("&&",EIdent("a"),EIdent("b"),false),EIdent("c"),false),EConst(CInt("1")),EConst(CInt("0"))), actual);
     }
     
+    @Test
+    public function testParseBinop_is()
+    {
+        var actual = parse("s is String");
+        Assert.areEqual(EBinop("is",EIdent("s"),EIdent("String"),false), actual);
+    }
+    
+    @Test
+    public function testParseTernary_4()
+    {
+        var actual = parse("s is String ? 1 : 0");
+        Assert.areEqual(ETernary(EBinop("is",EIdent("s"),EIdent("String"),false),EConst(CInt("1")),EConst(CInt("0"))), actual);
+    }
+    
     function parse(s:String):Expr
     {
         var cfg = new Config();
