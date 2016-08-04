@@ -29,6 +29,11 @@ class AS3HXTest {
         generate("Issue32.as", "Issue32_generated.hx", "Issue32.hx");
     }
     
+    @Test("private var name = 'value'")
+    public function issue52() {
+        generate("Issue52.as", "Issue52_generated.hx", "Issue52.hx");
+    }
+    
     @Test("array.slice() -> array.copy()")
     public function issue68() {
         generate("Issue68.as", "Issue68_generated.hx", "Issue68.hx");
