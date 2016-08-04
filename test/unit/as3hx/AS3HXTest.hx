@@ -64,6 +64,11 @@ class AS3HXTest {
         generate("Issue63.as", "Issue63_generated.hx", "Issue63.hx");
     }
     
+    @Test("for (var i:int = 0, n:int = array.length; i < n; i++)")
+    public function issue64() {
+        generate("Issue64.as", "Issue64_generated.hx", "Issue64.hx");
+    }
+    
     @Test
     public function issue65() {
         generate("Issue65.as", "Issue65_generated.hx", "Issue65.hx");

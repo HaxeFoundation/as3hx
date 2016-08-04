@@ -1574,13 +1574,16 @@ class Writer
                     write(")");
                     rv = writeExpr(e);
                 }
-            case EFor( inits, conds, incrs, e ):
+            case EFor(inits, conds, incrs, e):
                 openContext();
                 
                 var useWhileLoop:Void->Bool = function() {
                     if (inits.empty() || conds.empty()) return true;
+                    switch(inits[0]) {
+                        case EVars(vars): if (vars.length > 1) return true;
+                        default:
+                    }
                     if (conds[0].match(EBinop("&&" | "||", _, _, _))) return true;
-                    
                     //index must be incremented by 1
                     if (incrs.length == 1) {
                         return switch (incrs[0]) {
