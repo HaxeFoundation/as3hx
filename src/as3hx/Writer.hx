@@ -1369,6 +1369,11 @@ class Writer
                                 writeExpr(params[0]);
                                 write(", ");
                                 write("Bool)");
+                            case "XML":
+                                var type = tstring(TPath(["XML"]));
+                                write('$type.parse(');
+                                writeExpr(params[0]);
+                                write(")");
                             default:
                                 write("cast((");
                                 writeExpr(params[0]);
