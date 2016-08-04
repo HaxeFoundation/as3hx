@@ -24,7 +24,7 @@ class AS3HXTest {
         output = new BytesOutput();
     }
     
-    @Test
+    @Test("array.concat() -> array.copy()")
     public function issue32() {
         generate("Issue32.as", "Issue32_generated.hx", "Issue32.hx");
     }
@@ -47,6 +47,11 @@ class AS3HXTest {
     @Test("private var name = 'value'")
     public function issue52() {
         generate("Issue52.as", "Issue52_generated.hx", "Issue52.hx");
+    }
+    
+    @Test("array.length = 10 -> Compat.setArrayLegth(array, 10)")
+    public function issue63() {
+        generate("Issue63.as", "Issue63_generated.hx", "Issue63.hx");
     }
     
     @Test("array.slice() -> array.copy()")

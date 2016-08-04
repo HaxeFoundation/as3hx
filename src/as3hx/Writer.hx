@@ -1098,7 +1098,7 @@ class Writer
         if(cfg.debugExpr)
             write(" /* " + Std.string(expr) + " */ ");
 
-        if(expr == null) return None;
+        if (expr == null) return None;
         var rv = Semi;
         switch(expr)
         {
@@ -1257,8 +1257,9 @@ class Writer
                     write(")");
                 }
                 else { // op e1 e2
-
-                   
+                    var eBinop = rebuildBinopExpr(op, e1, e2);
+                    if (eBinop != null) return writeExpr(eBinop);
+                    
                     var oldInLVA = inLvalAssign;
                     rvalue = e2;
                     if(op == "=")
@@ -1288,7 +1289,7 @@ class Writer
                         else {
                             write(" " + op);
                         }
-                           
+                        
                         //minor formatting fix, if right expression starts
                         //with a newline or comment, no need for extra 
                         switch (e2) {
@@ -1304,10 +1305,9 @@ class Writer
                             writeExpr(e2);
                         }
                     }
-                     
-                    if (op == "=")
-                        lvl -= 2; 
                     
+                    if (op == "=")
+                        lvl -= 2;
                 }
             case EUnop( op, prefix, e ):
                 if (prefix)
@@ -2118,8 +2118,6 @@ class Writer
                     else {
                         throw "typeof can't be converted without the Compat class";
                     }
-                    
-                    
                 }
                 addWarning("ETypeof");
             case EDelete(e):
@@ -2494,7 +2492,7 @@ class Writer
         case ENL(e): 
             var expr = rebuildIfExpr(e);
             if (expr != null) {
-                return ENL(expr);    
+                return ENL(expr);
             }
             else {
                 return null;
@@ -2514,7 +2512,6 @@ class Writer
      * @return the new expression, or null if no change were needed
      */
     function rebuildCallExpr(fullExpr : Expr, expr : Expr, params : Array<Expr>) : Expr {
-        
         var rebuiltCall = null;
 
         //utils returning the ident string of an
@@ -2530,7 +2527,6 @@ class Writer
 
         switch (expr) {
             case EField(e, f):
-
                 //replace "myVar.hasOwnProperty(myProperty)" by "myVar.exists(myProperty)"
                 if (f == "hasOwnProperty") {
                     var rebuiltExpr = EField(e, "exists");
@@ -2599,10 +2595,8 @@ class Writer
                 }
 
             default:
-
                 var ident = getIdentString(expr);
                 if (ident != null) {
-
                     //utils returning a string representation
                     //of the provided param
                     var getCommentedParam = function(param) {
@@ -2610,8 +2604,7 @@ class Writer
                             case EConst(CString(s)):
                                 return s;
                             case EIdent(id):
-                                return id;    
-
+                                return id;
                             default: null;
                         }
                     }
@@ -2626,10 +2619,8 @@ class Writer
                             var comment = getCommentedParam(params.shift());
                             rebuiltCall = ECommented(comment, false, true, rebuiltCall);
                         }
-
                         return rebuiltCall;
                     }
-
                     
                     switch (ident) {
                         //replace "hasAnyProperty(myVar)" by "myVar.keys().hasNext()"
@@ -2675,15 +2666,30 @@ class Writer
                     }
                 }
         }
-
         return rebuiltCall;
     }
 
+    function rebuildBinopExpr(op:String, lvalue:Expr, rvalue:Expr):Expr {
+        if(cfg.useCompat && op == "=") {
+            switch(lvalue) {
+                case EField(e, f):
+                    if (f == "length") {
+                        var type = getExprType(e);
+                        if (type != null && type.indexOf("Array") != -1) {
+                            return ECall(EField(EIdent("as3hx.Compat"), "setArrayLength"), [e, rvalue]);
+                        }
+                    }
+                default:
+            }
+        }
+        return null;
+    }
+    
     /**
      * For an if statement, return the 
      * the appropriate block end, based on the
      * type of the first child expression
-     */    
+     */
     function getEIfBlockEnd(e:Expr) : BlockEnd {
         return switch(e) {
             case EObject(_): Ret;
@@ -2765,7 +2771,7 @@ class Writer
         return false;
     }
 
-    function addWarning(type,isError=false) {
+    function addWarning(type:String, isError = false) {
         warnings.set(type, isError);
     }
     
@@ -3068,7 +3074,7 @@ class Writer
         write(cfg.newlineChars);
     }
 
-    function writeFinish(cond) {
+    function writeFinish(cond:BlockEnd) {
         switch(cond) {
         case None:
         case Semi: write(";");
@@ -3076,9 +3082,9 @@ class Writer
         }
     }
 
-   /**
-    * Write typedef that were generated during parsing
-    */
+    /**
+     * Write typedef that were generated during parsing
+     */
     function writeGeneratedTypes(genTypes : Array<GenType>) : Void 
     {
         for (genType in genTypes) {
@@ -3205,7 +3211,7 @@ class Writer
         return properCaseA(pkg.split("."), hasClassName).join(".");
     }
 
-    public static function properCaseA(path:Array<String>, hasClassName:Bool) {
+    public static function properCaseA(path:Array<String>, hasClassName:Bool):Array<String> {
         var p = [];
         for(i in 0...path.length) {
             if(hasClassName && i == path.length - 1)
