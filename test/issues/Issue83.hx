@@ -1,5 +1,5 @@
 
-class Issue82
+class Issue83
 {
     public function new()
     {

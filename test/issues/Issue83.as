@@ -1,6 +1,6 @@
 package {
-    public class Issue82 {
-        public function Issue82() {
+    public class Issue83 {
+        public function Issue83() {
             var o:Object = JSON.parse("");
             var s:String = JSON.stringify({});
         }

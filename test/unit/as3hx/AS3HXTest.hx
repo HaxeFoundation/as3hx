@@ -79,7 +79,7 @@ class AS3HXTest {
         generate("Issue83.as", "Issue83_generated.hx", "Issue83.hx");
     }
     
-    @Test("uint(1) -> as3hx.Compat.parseInt(1))")
+    @Test("uint(1) -> as3hx.Compat.parseInt(1)")
     public function issue85() {
         generate("Issue85.as", "Issue85_generated.hx", "Issue85.hx");
     }
