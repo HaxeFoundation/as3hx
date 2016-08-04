@@ -257,10 +257,14 @@ class ExprParser {
             var e3 = parseExpr(false);
             return ETernary(e1, e2, e3);
         case TId(s):
-            switch( s ) {
-            case "is": return ParserUtils.makeBinop(tokenizer, "is", e1, parseExpr(false), pendingNewLines != 0);
-            case "as": return ParserUtils.makeBinop(tokenizer, "as",e1,parseExpr(false), pendingNewLines != 0);
-            case "in": return ParserUtils.makeBinop(tokenizer, "in",e1,parseExpr(false), pendingNewLines != 0);
+            switch(s) {
+            case "is" | "as" | "in":
+                var e2 = parseExpr(false);
+                return switch(e2) {
+                    case ETernary(cond, te1, te2):
+                        ETernary(ParserUtils.makeBinop(tokenizer, s, e1, cond, pendingNewLines != 0), te1, te2);
+                    default: ParserUtils.makeBinop(tokenizer, s, e1, e2, pendingNewLines != 0);
+                }
             default:
 
                 if (pendingNewLines != 0) {
