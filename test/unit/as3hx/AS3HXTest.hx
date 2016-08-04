@@ -89,6 +89,11 @@ class AS3HXTest {
         generate("Issue87.as", "Issue87_generated.hx", "Issue87.hx");
     }
     
+    @Test("NaN -> Math.NaN")
+    public function issue89() {
+        generate("Issue89.as", "Issue89_generated.hx", "Issue89.hx");
+    }
+    
     function generate(as3FileName:String, generatedFileName:String, expectedFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var content = File.getContent('$issuesDirectory/$as3FileName');
