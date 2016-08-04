@@ -16,12 +16,12 @@ class ExprParser {
         var readXML = XMLReader.read.bind(tokenizer);
 
         var tk = tokenizer.token();
-        Debug.dbgln("parseExpr("+tk+")", tokenizer.line);
+        Debug.dbgln("parseExpr(" + tk + ")", tokenizer.line);
         switch( tk ) {
         case TId(id):
             var e = parseStructure(id);
-            if( e == null )
-                e = EIdent(id);
+            if(e == null)
+                e = EIdent(ParserUtils.escapeName(id));
             return parseExprNext(e, 0);
         case TConst(c):
             return parseExprNext(EConst(c), 0);
@@ -74,8 +74,10 @@ class ExprParser {
         case TOp(op):
             if( op.charAt(0) == "/" ) {
                 var str = op.substr(1);
+                var prevChar = 0;
                 var c = tokenizer.nextChar();
-                while( c != "/".code ) {
+                while(c != "/".code || prevChar == "\\".code) {
+                    prevChar = c;
                     str += String.fromCharCode(c);
                     c = tokenizer.nextChar();
                 }
@@ -182,7 +184,7 @@ class ExprParser {
             var field = null;
             switch(ParserUtils.uncomment(ParserUtils.removeNewLine(tk))) {
             case TId(id):
-                field = StringTools.replace(id, "$", "__DOLLAR__");
+                field = ParserUtils.escapeName(id);
                 if( ParserUtils.opt(tokenizer, TNs) )
                     field = field + "::" + tokenizer.id();
             case TOp(op):
