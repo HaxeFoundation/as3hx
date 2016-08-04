@@ -4,10 +4,10 @@ Convert ActionScript 3 to Haxe 3 code.
 ###Build
 You'll need Haxe 3.* to build the project and Neko 2.* to run it.
     
-    make
+    haxe --no-traces as3hx.hxml
 Build the as3hx tool.
 
-    make debug
+    haxe -debug as3hx.hxml
 Build with debug output when converting files.
 
 ###Use

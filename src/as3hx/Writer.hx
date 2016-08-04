@@ -572,7 +572,7 @@ class Writer
                 write("var " + getModifiedIdent(field.name));
 
                 var type = tstring(t, false); //check wether a specific type was defined for this array
-                if (type.indexOf("Array") != -1) {
+                if (type != null && type.indexOf("Array") != -1) {
                     for (genType in this.genTypes) {
                         if (field.name == genType.fieldName) {
                             t = TVector(TPath([genType.name]));
@@ -934,7 +934,7 @@ class Writer
                     writeIndent();
 
                 case ECommented(s,b,t,e):
-                    writeComment(s);    
+                    writeComment(s);
 
                 default:
             }
@@ -955,9 +955,9 @@ class Writer
     
     function writeVarType(t : Null<T>, ?alt : String, isNativeGetSet:Bool=false)
     {
-        if (null == t)
+        if (t == null)
         {
-            if (null != alt)
+            if (alt != null)
                 write(" : " + alt);
             return;
         }
@@ -1369,6 +1369,11 @@ class Writer
                                 writeExpr(params[0]);
                                 write(", ");
                                 write("Bool)");
+                            case "XML":
+                                var type = tstring(TPath(["XML"]));
+                                write('$type.parse(');
+                                writeExpr(params[0]);
+                                write(")");
                             default:
                                 write("cast((");
                                 writeExpr(params[0]);
@@ -1567,26 +1572,22 @@ class Writer
             case EFor( inits, conds, incrs, e ):
                 openContext();
                 
-                //check wether it is safe to use a Haxe for loop instead of while loop
-                var canUseForLoop:Void->Bool = function() {
-                    if (inits.empty() || conds.empty())
-                        return false;
- 
+                var useWhileLoop:Void->Bool = function() {
+                    if (inits.empty() || conds.empty()) return true;
+                    if (conds[0].match(EBinop("&&" | "||", _, _, _))) return true;
+                    
                     //index must be incremented by 1
-                    var isIncrement = if (incrs.length == 1) {
+                    if (incrs.length == 1) {
                         return switch (incrs[0]) {
-                            case EUnop(op, _, _): op == "++";
+                            case EUnop(op, _, _): op != "++";
                             default: false;
                         }
                     }
-                    else {
-                        false;
-                    }
-                    return isIncrement;
+                    return true;
                 }
-                var isForLoop = canUseForLoop();
+                var isWhileLoop = useWhileLoop();
                 
-                if (isForLoop) {
+                if (!isWhileLoop) {
                     write("for (");
                     switch (inits[0]) {
                         case EVars(v): 
@@ -1632,10 +1633,7 @@ class Writer
                             write(")");
                         default:
                     }
-                   
-                    
                 }
-                //else use "while" loop
                 else {
                     for (init in inits)
                     {
@@ -1672,7 +1670,7 @@ class Writer
                 f(e);
 
                 //don't write increments for a "for" loop
-                if (!isForLoop) {
+                if (isWhileLoop) {
                     for (incr in incrs) {
                         es.push(ENL(incr));
                     }
@@ -1953,22 +1951,26 @@ class Writer
                     testVar = EIdent("_sw"+(varCount++)+"_");
                 }
 
-                if(def != null) {
+                if (def != null) {
                     if (def.el.length > 0) {
-                        switch(def.el[def.el.length-1]) {
-                            case EBreak(lbl):
-                                if(lbl == null) 
-                                    def.el.pop(); // remove break
-                            case EBlock(exprs):
-                                switch (exprs[exprs.length -1]) {
-                                    case EBreak(lbl):
-                                        def.el.pop();
-                                    default:  
-                                }
-                            default:
+                        var f:Expr->Array<Expr>->Void = null;
+                        f = function(e, els) {
+                            switch(e) {
+                                case EBreak(lbl):
+                                    if(lbl == null) 
+                                        def.el.pop(); // remove break
+                                case EBlock(exprs):
+                                    switch (exprs[exprs.length -1]) {
+                                        case EBreak(lbl):
+                                            def.el.pop();
+                                        default:  
+                                    }
+                                case ENL(e): f(e, els);
+                                default:
+                            }
                         }
+                        f(def.el[def.el.length - 1], def.el);
                     }
-                    
                 }
                 newCases = loopCases(cases.slice(0), def == null ? null : def.el.slice(0), testVar, newCases);
   
@@ -2531,9 +2533,17 @@ class Writer
                     rebuiltCall = ECall(rebuiltExpr, params);
                 }
                 else if (f == "slice") {
-                    //replace AS3 slice by Haxe substr
-                    var rebuiltExpr = EField(e, "substring");
-                    rebuiltCall = ECall(rebuiltExpr, params);
+                    var type = getExprType(e);
+                    if (type != null) {
+                        if (type.indexOf("String") != -1) {
+                            //replace AS3 slice by Haxe substr
+                            var rebuiltExpr = EField(e, "substring");
+                            rebuiltCall = ECall(rebuiltExpr, params);
+                        } else if(type.indexOf("Array") != -1 && params.empty()) {
+                            var rebuiltExpr = EField(e, "copy");
+                            rebuiltCall = ECall(rebuiltExpr, params);
+                        }
+                    }
                 }
                 else if (f == "indexOf") {
                     //in AS3, indexOf is a method in Array while it is not in Haxe
@@ -2559,6 +2569,20 @@ class Writer
                     if (type != null && type.indexOf("Array") != -1) {
                         var rebuildExpr = EField(e, "copy");
                         rebuiltCall = ECall(rebuildExpr, params);
+                    }
+                }
+                else if (f == "charAt") {
+                    var type = getExprType(e);
+                    if (type != null && type.indexOf("String") != -1 && params.empty()) {
+                        var rebuildExpr = EField(e, "charAt");
+                        rebuiltCall = ECall(rebuildExpr, [EConst(CInt("0"))]);
+                    }
+                }
+                else if (f == "charCodeAt") {
+                    var type = getExprType(e);
+                    if (type != null && type.indexOf("String") != -1 && params.empty()) {
+                        var rebuildExpr = EField(e, "charCodeAt");
+                        rebuiltCall = ECall(rebuildExpr, [EConst(CInt("0"))]);
                     }
                 }
                 else if (getIdentString(e) != null) {
