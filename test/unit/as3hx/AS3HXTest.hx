@@ -74,9 +74,14 @@ class AS3HXTest {
         generate("Issue81.as", "Issue81_generated.hx", "Issue81.hx");
     }
     
-    @Test
-    public function issue82() {
-        generate("Issue82.as", "Issue82_generated.hx", "Issue82.hx");
+    @Test("JSON.parse(string) -> haxe.Json.parse(string)")
+    public function issue83() {
+        generate("Issue83.as", "Issue83_generated.hx", "Issue83.hx");
+    }
+    
+    @Test("uint(1) -> as3hx.Compat.parseInt(1)")
+    public function issue85() {
+        generate("Issue85.as", "Issue85_generated.hx", "Issue85.hx");
     }
     
     function generate(as3FileName:String, generatedFileName:String, expectedFileName:String) {
