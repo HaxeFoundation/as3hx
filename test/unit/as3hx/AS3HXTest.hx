@@ -94,6 +94,11 @@ class AS3HXTest {
         generate("Issue89.as", "Issue89_generated.hx", "Issue89.hx");
     }
     
+    @Test("var b:Boolean = !int -> var b:Bool = int != 0")
+    public function issue91() {
+        generate("Issue91.as", "Issue91_generated.hx", "Issue91.hx");
+    }
+    
     function generate(as3FileName:String, generatedFileName:String, expectedFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var content = File.getContent('$issuesDirectory/$as3FileName');

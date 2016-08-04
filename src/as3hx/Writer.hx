@@ -1311,6 +1311,11 @@ class Writer
                         lvl -= 2;
                 }
             case EUnop( op, prefix, e ):
+                var type = getExprType(e);
+                if ((type == "Int" || type == "UInt") && op == "!") {
+                    writeExpr(EBinop("!=", e, EConst(CInt("0")), false));
+                    return None;
+                }
                 if (prefix)
                 {
                     write(op);
