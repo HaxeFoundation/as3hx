@@ -2587,7 +2587,7 @@ class Writer
                         rebuiltCall = ECall(rebuildExpr, [EConst(CString(","))]);
                     }
                 }
-                else if (f == "charCodeAt") {
+                else if (f == "charAt") {
                     var type = getExprType(e);
                     if (type != null && type.indexOf("String") != -1 && params.empty()) {
                         var rebuildExpr = EField(e, "charAt");
