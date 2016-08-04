@@ -84,7 +84,7 @@ class AS3HXTest {
         generate("Issue85.as", "Issue85_generated.hx", "Issue85.hx");
     }
     
-    @Test
+    @Test("NaN -> Math.NaN")
     public function issue89() {
         generate("Issue89.as", "Issue89_generated.hx", "Issue89.hx");
     }
