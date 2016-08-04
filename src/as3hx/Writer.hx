@@ -1946,22 +1946,26 @@ class Writer
                     testVar = EIdent("_sw"+(varCount++)+"_");
                 }
 
-                if(def != null) {
+                if (def != null) {
                     if (def.el.length > 0) {
-                        switch(def.el[def.el.length-1]) {
-                            case EBreak(lbl):
-                                if(lbl == null) 
-                                    def.el.pop(); // remove break
-                            case EBlock(exprs):
-                                switch (exprs[exprs.length -1]) {
-                                    case EBreak(lbl):
-                                        def.el.pop();
-                                    default:  
-                                }
-                            default:
+                        var f:Expr->Array<Expr>->Void = null;
+                        f = function(e, els) {
+                            switch(e) {
+                                case EBreak(lbl):
+                                    if(lbl == null) 
+                                        def.el.pop(); // remove break
+                                case EBlock(exprs):
+                                    switch (exprs[exprs.length -1]) {
+                                        case EBreak(lbl):
+                                            def.el.pop();
+                                        default:  
+                                    }
+                                case ENL(e): f(e, els);
+                                default:
+                            }
                         }
+                        f(def.el[def.el.length - 1], def.el);
                     }
-                    
                 }
                 newCases = loopCases(cases.slice(0), def == null ? null : def.el.slice(0), testVar, newCases);
   
