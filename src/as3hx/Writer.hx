@@ -2882,6 +2882,7 @@ class Writer
                     case "Object"   : isNativeGetSet ? "{}" : "Dynamic";
                     case "XML"      : cfg.useFastXML ? "FastXML" : "Xml";
                     case "XMLList"  : cfg.useFastXML ? "FastXMLList" : "Iterator<Xml>";
+                    case "RegExp"   : "EReg";
                     default         : fixCase? properCase(c,true) : c;
                 }
             case TComplex(e):
