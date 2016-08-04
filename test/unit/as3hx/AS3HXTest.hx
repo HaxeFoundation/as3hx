@@ -29,6 +29,11 @@ class AS3HXTest {
         generate("Issue14.as", "Issue14_generated.hx", "Issue14.hx");
     }
     
+    @Test("ternarny operator")
+    public function issue28() {
+        generate("Issue28.as", "Issue28_generated.hx", "Issue28.hx");
+    }
+    
     @Test("array.concat() -> array.copy()")
     public function issue32() {
         generate("Issue32.as", "Issue32_generated.hx", "Issue32.hx");
@@ -57,6 +62,11 @@ class AS3HXTest {
     @Test("array.length = 10 -> Compat.setArrayLegth(array, 10)")
     public function issue63() {
         generate("Issue63.as", "Issue63_generated.hx", "Issue63.hx");
+    }
+    
+    @Test("for (var i:int = 0, n:int = array.length; i < n; i++)")
+    public function issue64() {
+        generate("Issue64.as", "Issue64_generated.hx", "Issue64.hx");
     }
     
     @Test
