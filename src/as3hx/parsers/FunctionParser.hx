@@ -40,8 +40,9 @@ class FunctionParser {
                         break;
 
                     case TId(s): //argument's name
-                        var name = s, t = null, val = null;
-                        expressions.push(EIdent(s));
+                        var name = ParserUtils.escapeName(s);
+                        var t = null, val = null;
+                        expressions.push(EIdent(name));
 
                         if( ParserUtils.opt(tokenizer, TColon) ) { // ":" 
                             t = parseType(); //arguments type
