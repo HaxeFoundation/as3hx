@@ -1069,11 +1069,10 @@ class Writer
 
     function getModifiedIdent(s : String) {
         return switch(s) {
-            case "string":              "String";
             case "int":                 "Int";
             case "uint":                cfg.uintToInt ? "Int" : "UInt";
-            case "number","Number":     "Float";
-            case "boolean","Boolean":   "Bool";
+            case "Number": "Float";
+            case "Boolean": "Bool";
             case "Function":            cfg.functionToDynamic ? "Dynamic" : s;
             case "Object":              "Dynamic";
             case "undefined":           "null";
