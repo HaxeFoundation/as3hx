@@ -16,8 +16,8 @@ class ObjectParser {
         while( true ) {
             var tk = tokenizer.token();
             var id = null;
-            switch( ParserUtils.uncomment(tk) ) {
-            case TId(i): id = i;
+            switch(ParserUtils.uncomment(tk)) {
+            case TId(i): id = ParserUtils.escapeName(i);
             case TConst(c):
                 switch( c ) {
                 case CInt(v): if( v.charCodeAt(1) == "x".code ) id = Std.string(Std.parseInt(v)) else id = v;
