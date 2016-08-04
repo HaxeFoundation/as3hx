@@ -59,6 +59,11 @@ class AS3HXTest {
         generate("Issue63.as", "Issue63_generated.hx", "Issue63.hx");
     }
     
+    @Test
+    public function issue65() {
+        generate("Issue65.as", "Issue65_generated.hx", "Issue65.hx");
+    }
+    
     @Test("array.slice() -> array.copy()")
     public function issue68() {
         generate("Issue68.as", "Issue68_generated.hx", "Issue68.hx");

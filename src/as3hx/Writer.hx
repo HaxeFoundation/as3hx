@@ -1595,7 +1595,7 @@ class Writer
                 if (!isWhileLoop) {
                     write("for (");
                     switch (inits[0]) {
-                        case EVars(v): 
+                        case EVars(v):
                             write(v[0].name);
                             write(" in ");
                             writeExpr(v[0].val);
@@ -1681,11 +1681,10 @@ class Writer
                     }
                 }
 
-                writeLoop(incrs, function() { writeExpr(EBlock(es)); });
+                writeLoop(isWhileLoop ? incrs : [], function() { writeExpr(EBlock(es)); });
                 closeContext();
                 rv = None;
             case EForEach( ev, e, block ):
-
                 openContext();
                 var varName = null;
                 write("for (");
@@ -1775,7 +1774,7 @@ class Writer
                 write(")");
                 rv = writeExpr(block);
                 closeContext();
-            case EBreak( label ):
+            case EBreak(label):
                 write("break");
             case EContinue:
                 if(loopIncrements != null && loopIncrements.length > 0) {
@@ -1785,16 +1784,16 @@ class Writer
                 } else {
                     write("continue");
                 }
-            case EFunction( f, name ):
+            case EFunction(f, name):
                 writeFunction(f, false, false, false, name);
-            case EReturn( e ):
+            case EReturn(e):
                 write("return");
-                if (null != e)
+                if (e != null)
                 {
                     write(" ");
                     writeExpr(e);
                 }
-            case EArray( e, index ):
+            case EArray(e, index):
                 //write("/* EArray ("+Std.string(e)+","+Std.string(index)+") " + Std.string(getExprType(e, true)) + "  */ ");
                 var old = inArrayAccess;
                 inArrayAccess = true;
