@@ -76,7 +76,7 @@ class E4XParser {
                 var field = null;
                 switch(ParserUtils.uncomment(tk)) {
                     case TId(id):
-                        field = StringTools.replace(id, "$", "__DOLLAR__");
+                        field = ParserUtils.escapeName(id);
                         if( ParserUtils.opt(tokenizer, TNs) )
                             field = field + "::" + tokenizer.id();
                     case TAt:
