@@ -29,6 +29,11 @@ class AS3HXTest {
         generate("Issue32.as", "Issue32_generated.hx", "Issue32.hx");
     }
     
+    @Test("string.charCodeAt() -> string.charCodeAt(0)")
+    public function issue36() {
+        generate("Issue36.as", "Issue36_generated.hx", "Issue36.hx");
+    }
+    
     @Test("Xml(string) -> FastXML.parse(string)")
     public function issue37() {
         generate("Issue37.as", "Issue37_generated.hx", "Issue37.hx");
