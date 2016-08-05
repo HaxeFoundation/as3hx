@@ -34,6 +34,11 @@ class AS3HXTest {
         generate("Issue28.as", "Issue28_generated.hx", "Issue28.hx");
     }
     
+    @Test
+    public function issue29() {
+        generate("Issue29.as", "Issue29_generated.hx", "Issue29.hx");
+    }
+    
     @Test("array.concat() -> array.copy()")
     public function issue32() {
         generate("Issue32.as", "Issue32_generated.hx", "Issue32.hx");
@@ -124,11 +129,6 @@ class AS3HXTest {
         generate("Issue93.as", "Issue93_generated.hx", "Issue93.hx");
     }
     
-    @Test
-    public function issue103() {
-        generate("Issue103.as", "Issue103_generated.hx", "Issue103.hx");
-    }
-    
     @Test("array.push(1,2,3,4,5,6,7,8,9,0)")
     public function issue94() {
         generate("Issue94.as", "Issue94_generated.hx", "Issue94.hx");
@@ -142,6 +142,11 @@ class AS3HXTest {
     @Test("s is String ? 1 : 0")
     public function issue96() {
         generate("Issue96.as", "Issue96_generated.hx", "Issue96.hx");
+    }
+    
+    @Test
+    public function issue103() {
+        generate("Issue103.as", "Issue103_generated.hx", "Issue103.hx");
     }
     
     function generate(as3FileName:String, generatedFileName:String, expectedFileName:String) {
