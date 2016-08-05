@@ -1503,21 +1503,22 @@ class Writer
                 //check if if expr is one line
                 //with no block bracket
                 if (isOneLiner(e1)) {
-                    write(")");
                     switch (e1) {
                         //if it is, start a new line
                         //if present in formatting
                         case ENL(e):
+                            write(")");
                             writeNL();
                             e1 = e;
+                            //add extra level of indent for
+                            //teh one liner
+                            lvl += 1;
+                            writeIndent();
+                            lvl -= 1;
                         default:
+                            write(") ");
                     }
                     
-                    //add extra level of indent for
-                    //teh one liner
-                    lvl += 1;
-                    writeIndent();
-                    lvl -= 1;
                 } else writeCloseStatement();
                 
                 writeExpr(e1);
@@ -1544,10 +1545,21 @@ class Writer
                     e2 = f(e2);
 
                     writeNL();
-                    if (cfg.bracesOnNewline) {
-                        writeIndent("else");
-                        writeNL();
-                    } else writeIndent("else ");
+                    switch(e2) {
+                        case EBlock(_):
+                            if (cfg.bracesOnNewline) {
+                                writeIndent("else");
+                                writeNL();
+                                writeIndent();
+                            } else writeIndent("else ");
+                        case ENL(_):
+                            writeIndent("else");
+                            lvl++;
+                            writeExpr(e2);
+                            lvl--;
+                            return None;
+                        default: writeIndent("else ");
+                    }
 
                     rv = writeExpr(e2);
                 } else {
