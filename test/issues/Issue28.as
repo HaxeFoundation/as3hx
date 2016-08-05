@@ -1,5 +1,9 @@
 package {
     public class Issue28 {
+        
+        private static var b:Boolean = true;
+        private static var o:Object = b ? {} : null;
+        
         public function Issue28() {
             var a:int = 1;
             var b:int = 1;
@@ -16,6 +20,10 @@ package {
                 return 1;
             }
             return 0;
+        }
+        
+        private function test3(b:Boolean, o:Object):void {
+            o = b ? {} : null;
         }
     }
 }
