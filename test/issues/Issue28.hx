@@ -1,6 +1,10 @@
 
 class Issue28
 {
+    
+    private static var b : Bool = true;
+    private static var o : Dynamic = (b) ? { } : null;
+    
     public function new()
     {
         var a : Int = 1;
@@ -18,5 +22,9 @@ class Issue28
             return 1;
         }
         return 0;
+    }
+    
+    private function test3(b : Bool, o : Dynamic) : Void{
+        o = (b) ? { } : null;
     }
 }

@@ -139,11 +139,12 @@ class ExprParser {
                     return parseExprNext(EUnop(op,false,e1), 0);
                 }
             var e2 = parseExpr(false);
-            return switch(e2) {
+            switch(e2) {
                 case ETernary(cond, te1, te2):
-                    ETernary(ParserUtils.makeBinop(tokenizer, op, e1, cond, pendingNewLines != 0), te1, te2);
-                default: ParserUtils.makeBinop(tokenizer, op, e1, e2, pendingNewLines != 0);
+                    if (op != "=") return ETernary(ParserUtils.makeBinop(tokenizer, op, e1, cond, pendingNewLines != 0), te1, te2);
+                default:
             }
+            return ParserUtils.makeBinop(tokenizer, op, e1, e2, pendingNewLines != 0);
         case TNs:
             switch(e1) {
             case EIdent(i):
