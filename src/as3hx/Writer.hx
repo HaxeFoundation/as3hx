@@ -1544,7 +1544,6 @@ class Writer
                     e2 = f(e2);
 
                     writeNL();
-                    trace(e2);
                     switch(e2) {
                         case EBlock(_):
                             if (cfg.bracesOnNewline) {
