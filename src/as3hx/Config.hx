@@ -19,6 +19,8 @@ class Config {
     public var newlineChars : String;
     /** put open braces on new line **/
     public var bracesOnNewline : Bool;
+    /** add spaces before and after colon when typing **/
+    public var spacesOnTypeColon : Bool;
 
     /** Transform uint to Int? */
     public var uintToInt : Bool;
@@ -227,7 +229,7 @@ class Config {
 
     function processCommandLine() {
         var args = Sys.args().slice(0);
-		if (args.length == 0) return;
+        if (args.length == 0) return;
         var last = new Path (args[args.length - 1]).toString ();
         if (((StringTools.endsWith (last, "/") && last != "/") || StringTools.endsWith (last, "\\")) && !StringTools.endsWith (last, ":\\")) {
             last = last.substr (0, last.length - 1);
@@ -296,6 +298,7 @@ class Config {
             case "indentChars":         setCharField(el, "    ");
             case "newlineChars":        setCharField(el, "\n");
             case "bracesOnNewline":     setBoolField(el, true);
+            case "spacesOnTypeColon":        setBoolField(el, true);
             case "uintToInt":           setBoolField(el, true);
             case "vectorToArray":       setBoolField(el, true);
             case "guessCasts":          setBoolField(el, true);
@@ -401,14 +404,15 @@ class Config {
     <indentChars value="    " />
     <newlineChars value="\\n" />
     <bracesOnNewline value="true" />
+    <spacesOnTypeColon value="true" />
     <uintToInt value="true" />
     <vectorToArray value="true" />
     <guessCasts value="true" />
     <functionToDynamic value="false" />
     <getterMethods value="get_%I" />
     <setterMethods value="set_%I" />
-	<forcePrivateSetter value="true" />
-	<forcePrivateGetter value="true" />
+    <forcePrivateSetter value="true" />
+    <forcePrivateGetter value="true" />
     <!-- Style of getter and setter output. haxe, flash or combined -->
     <getterSetterStyle value="haxe" />
     <testCase value="false" />

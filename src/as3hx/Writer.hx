@@ -946,10 +946,10 @@ class Writer
         if (t == null)
         {
             if (alt != null)
-                write(" : " + alt);
+                write((cfg.spacesOnTypeColon ? " : " : ":") + alt);
             return;
         }
-        write(" : " + tstring(t,isNativeGetSet));
+        write((cfg.spacesOnTypeColon ? " : " : ":") + tstring(t,isNativeGetSet));
     }
 
     function writeInits(c : ClassDef) {
@@ -1563,7 +1563,7 @@ class Writer
 
                 write(") ? ");
                 writeExpr(e1);
-                write(" : ");
+                write(cfg.spacesOnTypeColon ? " : " : ":");
                 writeExpr(e2);
             case EWhile( cond, e, doWhile ):
                 if (doWhile)
@@ -1936,7 +1936,7 @@ class Writer
                     for (i in 0...fl.length)
                     {
                         var field = fl[i];
-                        writeIndent(field.name + " : ");
+                        writeIndent(field.name + (cfg.spacesOnTypeColon ? " : " : ": "));
                         writeExpr(field.e);
                         writeNL(i > 0 || fl.length > 1 ? "," : "");
                     }
