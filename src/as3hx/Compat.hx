@@ -7,7 +7,7 @@ import haxe.macro.Type;
 
 /**
  * Collection of functions that just have no real way to be compatible in Haxe 
- **/
+ */
 class Compat {
 
     /* According to Adobe:
@@ -79,5 +79,50 @@ class Compat {
             default:
         }
         return _(ECall( _(EField( _(EConst(CType("Std"))), "parseInt")), [_(ECall( _(EField( _(EConst(CType("Std"))), "string")), [e]))]));
+    }
+    
+    public static function setInterval(callback:Dynamic, milliseconds:Int, rest:Array<Dynamic>):Int {
+        return FlashTimerAdapter.setInterval(callback, milliseconds, rest);
+    }
+    
+    public static function clearInterval(id:Int) FlashTimerAdapter.clearInterval(id);
+    
+    public static function setTimeout(callback:Dynamic, milliseconds:Int, rest:Array<Dynamic>):Int {
+        return FlashTimerAdapter.setTimeout(callback, milliseconds, rest);
+    }
+    
+    public static function clearTimeout(id:Int) FlashTimerAdapter.clearTimeout(id);
+}
+
+private class FlashTimerAdapter {
+    
+    public static var timers:Array<haxe.Timer> = [];
+    
+    public static function setInterval(callback:Dynamic, milliseconds:Int, rest:Array<Dynamic>):Int {
+        var timer = new haxe.Timer(milliseconds);
+        timers.push(timer);
+        var id = timers.length - 1;
+        timer.run = function() Reflect.callMethod(null, callback, rest);
+        return id;
+    }
+    
+    public static function clearInterval(id:Int) stopTimer(id);
+    
+    public static function setTimeout(callback:Dynamic, milliseconds:Int, rest:Array<Dynamic>):Int {
+        var timer = new haxe.Timer(milliseconds);
+        timers.push(timer);
+        var id = timers.length - 1;
+        timer.run = function() {
+            Reflect.callMethod(null, callback, rest);
+            clearTimeout(id);
+        }
+        return id;
+    }
+    
+    public static function clearTimeout(id:Int) stopTimer(id);
+    
+    static function stopTimer(id:Int) {
+        timers[id].stop();
+        timers[id] = null;
     }
 }

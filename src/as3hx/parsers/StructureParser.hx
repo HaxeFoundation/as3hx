@@ -6,7 +6,7 @@ import as3hx.Parser;
 
 class StructureParser {
 
-    public static function parse(tokenizer:Tokenizer, types:Types, cfg:Config, kwd) : Expr {
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg:Config, kwd:String) : Expr {
         var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
         var parseExprList = ExprParser.parseList.bind(tokenizer, types, cfg);
         var parseType = TypeParser.parse.bind(tokenizer, types, cfg);
@@ -239,13 +239,42 @@ class StructureParser {
             tokenizer.ensure(TPClose);
             ECall(EField(EIdent("Type"), "resolveClass"), [e]);
         case "getTimer":
-            
             //consume the parenthesis from the getTimer AS3 call
             while(!ParserUtils.opt(tokenizer, TPClose)) {
                 tokenizer.token();
             }
-            
             ECall(EField(EIdent("Math"), "round"), [EBinop("*", ECall(EField(EIdent("haxe.Timer"), "stamp"), []), EConst(CInt("1000")), false)]);
+        case "setTimeout" | "setInterval":
+            var t = tokenizer.token();
+            if (Type.enumEq(t, TPOpen)) {
+                var params = [];
+                var parCount = 1;
+                while (parCount > 0) {
+                    t = tokenizer.token();
+                    switch(t) {
+                        case TPOpen: parCount++;
+                        case TPClose: parCount--;
+                        case TComma:
+                        default:
+                            tokenizer.add(t);
+                            if (params.length < 2) params.push(parseExpr(false));
+                            else {
+                                if (params.length == 2) params.push(EArrayDecl([]));
+                                switch(params[2]) {
+                                    case EArrayDecl(e): e.push(parseExpr(false));
+                                    default:
+                            }
+                        }
+                    }
+                }
+                return ECall(EField(EIdent("as3hx.Compat"), kwd), params);
+            }
+            null;
+        case "clearTimeout" | "clearInterval":
+            tokenizer.ensure(TPOpen);
+            var e = parseExpr(false);
+            tokenizer.ensure(TPClose);
+            ECall(EField(EIdent("as3hx.Compat"), kwd), [e]);
         default:
             null;
         }

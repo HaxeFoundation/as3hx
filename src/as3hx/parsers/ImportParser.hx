@@ -2,6 +2,17 @@ package as3hx.parsers;
 
 class ImportParser {
 
+    static var doNotImport = [
+        "getQualifiedClassName",
+        "getQualifiedSuperclassName",
+        "getTimer",
+        "getDefinitionByName",
+        "setTimeout",
+        "setInterval",
+        "clearTimeout",
+        "clearInterval",
+    ];
+    
     public static function parse(tokenizer:Tokenizer, cfg) {
         Debug.dbg("parseImport()", tokenizer.line);
         var a = [tokenizer.id()];
@@ -11,11 +22,8 @@ class ImportParser {
             case TDot:
                 tk = tokenizer.token();
                 switch(tk) {
-                case TId(id): 
-                    if (id == "getQualifiedClassName") return [];
-                    if (id == "getQualifiedSuperclassName") return [];
-                    if (id == "getTimer") return [];
-                    if (id == "getDefinitionByName") return [];
+                case TId(id):
+                    if (Lambda.has(doNotImport, id)) return [];
                     // TODO: this is flash.utils.Proxy need to create a compat class
                     // http://blog.int3ractive.com/2010/05/using-flash-proxy-class.html
                     if (id == "flash_proxy") return ["flash","utils","Proxy"];
@@ -25,7 +33,7 @@ class ImportParser {
                     if (cfg.dictionaryToHash && id == "Dictionary" && a.length == 2 && a[0] == "flash" && a[1] == "utils") return [];
                     a.push(id);
                 case TOp(op):
-                    if( op == "*" ) {
+                    if(op == "*") {
                         a.push(op);
                         break;
                     }
