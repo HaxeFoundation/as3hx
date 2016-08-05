@@ -5,7 +5,7 @@ class Issue115
     {
         if (true) var i : Int = 1;
         
-        if (true) 
+        if (true)
             var i : Int = 1;
         
         if (true) var i : Int = 1

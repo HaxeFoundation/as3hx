@@ -1503,11 +1503,11 @@ class Writer
                 //check if if expr is one line
                 //with no block bracket
                 if (isOneLiner(e1)) {
-                    write(") ");
                     switch (e1) {
                         //if it is, start a new line
                         //if present in formatting
                         case ENL(e):
+                            write(")");
                             writeNL();
                             e1 = e;
                             //add extra level of indent for
@@ -1516,6 +1516,7 @@ class Writer
                             writeIndent();
                             lvl -= 1;
                         default:
+                            write(") ");
                     }
                     
                 } else writeCloseStatement();
