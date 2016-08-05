@@ -28,7 +28,6 @@ typedef Types = {
 }
 
 /**
- * ...
  * @author Nicolas Cannasse
  * @author Russell Weir
  */

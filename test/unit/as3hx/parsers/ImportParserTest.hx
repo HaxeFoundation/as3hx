@@ -60,6 +60,34 @@ class ImportParserTest
 	}
 	
 	@Test
+	public function testSetTimeout():Void
+	{
+		var importParts = getImportParts('import flash.utils.setTimeout;');
+		Assert.areEqual(importParts.length, 0);
+	}
+	
+	@Test
+	public function testClearTimeout():Void
+	{
+		var importParts = getImportParts('import flash.utils.clearTimeout;');
+		Assert.areEqual(importParts.length, 0);
+	}
+	
+	@Test
+	public function testSetInterval():Void
+	{
+		var importParts = getImportParts('import flash.utils.setInterval;');
+		Assert.areEqual(importParts.length, 0);
+	}
+	
+	@Test
+	public function testClearInterval():Void
+	{
+		var importParts = getImportParts('import flash.utils.clearInterval;');
+		Assert.areEqual(importParts.length, 0);
+	}
+	
+	@Test
 	public function testWildcard():Void
 	{
 		var importParts = getImportParts('import com.test.myapp.*;');
