@@ -14,7 +14,8 @@ class Issue64
         var events : Array<Event>;
         var i : Int = 0;
         var n : Int = timelines.length;
-        while (i < n){
+        while (i < n)
+        {
             timelienes[i].apply(skeleton, lastTime, time, events, 1);
             i++;
         }

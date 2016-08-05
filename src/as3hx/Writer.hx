@@ -18,7 +18,6 @@ typedef CaseDef = {
 }
 
 /**
- * ...
  * @author Franco Ponticelli
  * @author Russell Weir
  */
@@ -829,9 +828,7 @@ class Writer
 
         write("function new(");
         writeArgs(f.args);
-        write(")");
-        writeNL();
-        writeIndent();
+        writeCloseStatement();
         writeExpr(f.expr);
     }
 
@@ -1502,18 +1499,18 @@ class Writer
                 else
                     writeExpr(cond);
                 lvl--;
-                write(") ");
 
                 //check if if expr is one line
                 //with no block bracket
                 if (isOneLiner(e1)) {
+                    write(")");
                     switch (e1) {
                         //if it is, start a new line
                         //if present in formatting
-                        case ENL(e): 
+                        case ENL(e):
                             writeNL();
                             e1 = e;
-                        default:    
+                        default:
                     }
                     
                     //add extra level of indent for
@@ -1521,8 +1518,7 @@ class Writer
                     lvl += 1;
                     writeIndent();
                     lvl -= 1;
-                }
-
+                } else writeCloseStatement();
                 
                 writeExpr(e1);
                 if (e2 != null)
@@ -1548,7 +1544,10 @@ class Writer
                     e2 = f(e2);
 
                     writeNL();
-                    writeIndent("else ");
+                    if (cfg.bracesOnNewline) {
+                        writeIndent("else");
+                        writeNL();
+                    } else writeIndent("else ");
 
                     rv = writeExpr(e2);
                 } else {
@@ -1577,7 +1576,7 @@ class Writer
                 } else {
                     write("while (");
                     writeExpr(cond);
-                    write(")");
+                    writeCloseStatement();
                     rv = writeExpr(e);
                 }
             case EFor(inits, conds, incrs, e):
@@ -1644,7 +1643,7 @@ class Writer
                             else {
                                 writeExpr(e2);
                             }
-                            write(")");
+                            writeCloseStatement();
                         default:
                     }
                 }
@@ -1666,7 +1665,7 @@ class Writer
                             writeExpr(conds[i]);
                         }
                     }
-                    write(")");
+                    writeCloseStatement();
                 }
                 
                 var es = [];
@@ -1678,7 +1677,7 @@ class Writer
                         case ENL(e):
                             f(e);
                         default:
-                            es.push(e);
+                            es.push(ENL(e));
                     }
                 }
                 f(e);
@@ -1737,7 +1736,7 @@ class Writer
                 inArrayAccess = true;
                 writeExpr(e);
                 inArrayAccess = old;
-                write(")");
+                writeCloseStatement();
                 switch(block) {
                     case EBlock(_):
                         null;
@@ -1780,7 +1779,7 @@ class Writer
                     writeExpr(e);
                     write(")");
                 }
-                write(")");
+                writeCloseStatement();
                 rv = writeExpr(block);
                 closeContext();
             case EBreak(label):
@@ -1924,7 +1923,7 @@ class Writer
                 {
                     writeIndent("catch (" + c.name);
                     writeVarType(c.t, "Dynamic");
-                    write(")");
+                    writeCloseStatement();
                     rv = writeExpr(c.e);
                 }
             case EObject( fl ):
@@ -3096,6 +3095,17 @@ class Writer
 
         write(s);
         write(cfg.newlineChars);
+    }
+    
+    function writeCloseStatement()
+    {
+        if (cfg.bracesOnNewline)
+        {
+            write(")");
+            writeNL();
+            writeIndent();
+        }
+        else write(") ");
     }
 
     function writeFinish(cond:BlockEnd) {
