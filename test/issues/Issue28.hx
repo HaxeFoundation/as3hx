@@ -18,7 +18,8 @@ class Issue28
     }
     
     private function test2(a : Array<Dynamic>, b : Bool) : Int{
-        if ((a != null || b) ? true : false) {
+        if ((a != null || b) ? true : false)
+        {
             return 1;
         }
         return 0;
