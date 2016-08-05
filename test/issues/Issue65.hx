@@ -7,7 +7,7 @@ class Issue65
         for (i in 0...array.length)
         {
             var current : Dynamic = array[i];
-            if (current == null)
+            if (current == null) 
                 continue;
         }
     }
