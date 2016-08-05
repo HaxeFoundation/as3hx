@@ -18,7 +18,6 @@ typedef CaseDef = {
 }
 
 /**
- * ...
  * @author Franco Ponticelli
  * @author Russell Weir
  */
@@ -1545,10 +1544,10 @@ class Writer
                     e2 = f(e2);
 
                     writeNL();
-					if (cfg.bracesOnNewline) {
-						writeIndent("else");
-						writeNL();
-					} else writeIndent("else ");
+                    if (cfg.bracesOnNewline) {
+                        writeIndent("else");
+                        writeNL();
+                    } else writeIndent("else ");
 
                     rv = writeExpr(e2);
                 } else {
@@ -1666,7 +1665,7 @@ class Writer
                             writeExpr(conds[i]);
                         }
                     }
-					writeCloseStatement();
+                    writeCloseStatement();
                 }
                 
                 var es = [];
