@@ -1,3 +1,34 @@
+##2016-06-08
+ - Fixed conversion of regular expressions with '[' character (closes issue #14)
+ - Fixed ternary operator conversion (closes issue #28)
+ - Fixed conversion of compound loop conditions (closes issue #29)
+ - Replace array.concat() with array.copy() (closes issue #32)
+ - Fixed conversion of [String.]charCodeAt() with zero args (closes issue #36)
+ - Call FastXML.parse() for casting string to xml in AS3 code. (closes issue #37)
+ - Remove breaks from switch statement (closes issue #38)
+ - Fixed crash on class member level variable with no type (closes issue #52)
+ - Fixed crash on new object literal with new line in declaration just after "{" (closes issue #56)
+ - Added conversion of "for" loop without break condition (to "while(true)") (closes issue #58)
+ - Implemented setting length to arrays (closes issue #68)
+ - Fixed loop conversion with more than one counters defined (closes issue #64)
+ - Fixed extra increment call in "for" loop conversion (closes issue #65)
+ - Replace array.slice() with array.copy() (closes issue #68)
+ - Fixed conversion of [String.]charAt() with zero args (closes issue #69)
+ - Escape DOLLAR sign in the function arg name (closes issue #71)
+ - Fixed exception on code "Security.allowDomain("*");" (closes issue #81)
+ - Fixed call for haxe.Json.parse instead of JSON.parse (closes issue #83)
+ - Fixed casting of "uint(1)" (closes issue #85)
+ - Escape "cast" keyword (closes issue #87)
+ - Replace NaN with Math.NaN (closes issue #89)
+ - Fixed conversion of var a:Bool = !i where type of i is numeric (closes issue #91)
+ - Replace "array.join();" with "array.join(",");" (closes issue #93)
+ - Fixed conversion of array.push() with several args (closes issue #94)
+ - Added generation of typedefs for anonymous object declaration (closes issue #95)
+ - Fixed conversion of the ternary statement where condition is "some is T" (closes issue #96)
+ - Fixed conversion of "var string : String = "";" (closes issue #103)
+ - Call  as3hx.Compat.setTimeout instead of setTimeout (closes issue #112)
+ - added many improvements to generated code style
+
 ##2013-10-28 - Scott Lee
  - Move to Haxe 3 and neko 2
 
