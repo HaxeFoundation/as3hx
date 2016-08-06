@@ -1,6 +1,7 @@
 package as3hx;
 import as3hx.As3;
 import as3hx.Error;
+import as3hx.Tokenizer.Token;
 
 enum Token {
     TEof;
@@ -39,7 +40,7 @@ class Tokenizer {
     var idents : Array<Bool>;
     var tokens : haxe.ds.GenericStack<Token>;
 
-    public function new(s) {
+    public function new(s:haxe.io.Input) {
         line = 1;
         pc = 1;
         var p = [
@@ -81,15 +82,15 @@ class Tokenizer {
                     ops[op.charCodeAt(i)] = true;
     }
 
-    private static function constString( c ) {
+    private static function constString(c:Const):String {
         return switch(c) {
-        case CInt(v): v;
-        case CFloat(f): f;
-        case CString(s): s; // TODO : escape + quote
+            case CInt(v): v;
+            case CFloat(f): f;
+            case CString(s): s; // TODO : escape + quote
         }
     }
 
-    public static function tokenString( t ) {
+    public static function tokenString(t:Token):String {
         return switch( t ) {
         case TEof: "<eof>";
         case TConst(c): constString(c);
@@ -312,11 +313,11 @@ class Tokenizer {
         return null;
     }
 
-    public function id() {
+    public function id():String {
         var t = token();
-        return switch( ParserUtils.uncomment(ParserUtils.removeNewLine(t)) ) {
-        case TId(i): i;
-        default: ParserUtils.unexpected(t);
+        return switch(ParserUtils.uncomment(ParserUtils.removeNewLine(t))) {
+            case TId(i): i;
+            default: ParserUtils.unexpected(t);
         }
     }
 
@@ -326,7 +327,7 @@ class Tokenizer {
         return ParserUtils.uncomment(ParserUtils.removeNewLine(tokens.first()));
     }
 
-    public function nextChar() {
+    public function nextChar():Int {
         var c = 0;
         if( this.char == 0 ) {
             pc++;
@@ -351,7 +352,7 @@ class Tokenizer {
      * Ensures the next token (ignoring comments and newlines) is 'tk'.
      * @return array of comments before 'tk'
      **/
-    public function ensure(tk) : Array<Token> {
+    public function ensure(tk:Token) : Array<Token> {
         var t = token();
 
         //remove comment token
@@ -367,7 +368,7 @@ class Tokenizer {
         return ta;
     }
 
-    function readString( until ) {
+    function readString(until:Int):String {
         Debug.dbgln("readString()", line);
         var c;
         var b = new haxe.io.BytesOutput();

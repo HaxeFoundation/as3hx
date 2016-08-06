@@ -22,7 +22,10 @@ class ExprParser {
             var e = parseStructure(id);
             if(e == null)
                 e = EIdent(ParserUtils.escapeName(id));
-            return parseExprNext(e, 0);
+            return switch(e) {
+                case EIf(_,_,_) | EFor(_,_,_,_) | EForIn(_,_,_) | EForEach(_,_,_) | EWhile(_,_,_) | ESwitch(_,_,_): e;
+                default: parseExprNext(e, 0);
+            }
         case TConst(c):
             return parseExprNext(EConst(c), 0);
         case TPOpen:
@@ -66,13 +69,13 @@ class ExprParser {
                 }
             }
                 
-            while( !ParserUtils.opt(tokenizer, TBrClose) ) {
+            while(!ParserUtils.opt(tokenizer, TBrClose)) {
                 var e = parseFullExpr();
                 a.push(e);
             }
             return EBlock(a);
         case TOp(op):
-            if( op.charAt(0) == "/" ) {
+            if(op.charAt(0) == "/") {
                 var str = op.substr(1);
                 var prevChar = 0;
                 var c = tokenizer.nextChar();
@@ -90,11 +93,10 @@ class ExprParser {
                 tokenizer.pushBackChar(c);
                 return parseExprNext(ERegexp(str, opts), 0);
             }
-            var found;
-            for( x in tokenizer.unopsPrefix )
-                if( x == op )
+            for(x in tokenizer.unopsPrefix)
+                if(x == op)
                     return ParserUtils.makeUnop(op, parseExpr(false));
-            if( op == "<" )
+            if(op == "<")
                 return EXML(readXML());
             return ParserUtils.unexpected(tk);
         case TBkOpen:
@@ -111,7 +113,7 @@ class ExprParser {
         case TCommented(s,b,t):
             tokenizer.add(t);
             return ECommented(s,b,false,parseExpr(false));
-        case TNL(t):    
+        case TNL(t):
             tokenizer.add(t);
             return ENL(parseExpr(false));
         default:
@@ -120,7 +122,7 @@ class ExprParser {
     }
 
     public static function parseNext(tokenizer:Tokenizer, types:Types, cfg:Config, e1 : Expr, pendingNewLines : Int ):Expr {
-        var parseExpr= parse.bind(tokenizer, types, cfg);
+        var parseExpr = parse.bind(tokenizer, types, cfg);
         var parseExprNext = parseNext.bind(tokenizer, types, cfg);
         var parseExprList = parseList.bind(tokenizer, types, cfg);
         var parseType= TypeParser.parse.bind(tokenizer, types, cfg);
@@ -130,13 +132,14 @@ class ExprParser {
         Debug.dbgln("parseExprNext("+e1+") ("+tk+")", tokenizer.line);
         switch( tk ) {
         case TOp(op):
-            for( x in tokenizer.unopsSuffix )
-                if( x == op ) {
-                    if( switch(e1) { case EParent(_): true; default: false; } ) {
-                        tokenizer.add(tk);
-                        return e1;
+            for(x in tokenizer.unopsSuffix)
+                if(x == op) {
+                    switch(e1) {
+                        case EParent(_):
+                            tokenizer.add(tk);
+                            return e1;
+                        default: return parseExprNext(EUnop(op, false, e1), 0);
                     }
-                    return parseExprNext(EUnop(op,false,e1), 0);
                 }
             var e2 = parseExpr(false);
             switch(e2) {
@@ -171,7 +174,6 @@ class ExprParser {
                                     Debug.closeDebug("end conditional compilation: " + i + "::" + id, tokenizer.line);
                                     return ECondComp(i + "_" + id, e, null);
                             }
-
                         } else switch(tokenizer.peek()) {
                             case TBrOpen: // functions inside a namespace
                                 return parseExprNext(ECommented("/* AS3HX WARNING namespace modifier " + i + "::"+id+" */", true, false, null), 0);
@@ -313,7 +315,7 @@ class ExprParser {
         }
     }
 
-    public static function parseFull(tokenizer, types:Types, cfg) {
+    public static function parseFull(tokenizer:Tokenizer, types:Types, cfg:Config):Expr {
         var parseExpr = parse.bind(tokenizer, types, cfg);
         Debug.dbgln("parseFullExpr()", tokenizer.line);
         var e = parseExpr(false);

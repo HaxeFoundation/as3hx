@@ -339,10 +339,10 @@ class ParserUtils {
         return true;
     }
 
-    public static function makeUnop( op, e ) {
-        return switch( e ) {
-        case EBinop(bop,e1,e2, n): EBinop(bop,makeUnop(op,e1),e2, n);
-        default: EUnop(op,true,e);
+    public static function makeUnop(op:String, e:Expr):Expr {
+        return switch(e) {
+            case EBinop(bop, e1, e2, n): EBinop(bop, makeUnop(op, e1), e2, n);
+            default: EUnop(op, true, e);
         }
     }
 
