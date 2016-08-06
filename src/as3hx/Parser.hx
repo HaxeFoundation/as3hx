@@ -44,7 +44,7 @@ class Parser {
         cfg = config;
     }
 
-    public function parseString( s : String, path : String, filename : String ) {
+    public function parseString( s : String, path : String, filename : String ):Program {
         //convert Windows newline to Unix ones
         s = StringTools.replace(s, '\r\n', '\n');
         this.path = path;
@@ -52,16 +52,13 @@ class Parser {
         return parse( new haxe.io.StringInput(s) );
     }
 
-    public function parse( s : haxe.io.Input ) {
+    public function parse( s : haxe.io.Input ):Program {
         tokenizer = new Tokenizer(s);
-
         var types: Types = {
             seen : [],
             defd : [],
             gen : []
         }
-
-
         return ProgramParser.parse(tokenizer, types, cfg, path, filename);
     }
 }

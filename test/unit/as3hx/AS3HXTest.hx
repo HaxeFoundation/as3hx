@@ -29,6 +29,11 @@ class AS3HXTest {
         generate("Issue14.as", "Issue14.hx");
     }
     
+    @Test
+    public function issue15() {
+        generate("Issue15.as", "Issue15.hx");
+    }
+    
     @Test("ternarny operator")
     public function issue28() {
         generate("Issue28.as", "Issue28.hx");
