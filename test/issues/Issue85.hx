@@ -1,8 +1,8 @@
 
-class Issue83
+class Issue85
 {
     public function new()
     {
-        var i : Int = as3hx.Compat.parseInt(1);
+        var i : Int = 1;
     }
 }

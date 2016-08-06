@@ -1,5 +1,4 @@
 package {
-    import flash.automation.KeyboardAutomationAction;
     public class Issue23 {
         
         public function Issue23(i:int, n:Number, ss:String) {
@@ -7,7 +6,6 @@ package {
             var a2:int = int(i);
             var a3:int = int(n);
             var a4:int = int(s);
-            var a5:int = u;
             
             var b:Number = n as Number;
             var b2:Number = Number(n);

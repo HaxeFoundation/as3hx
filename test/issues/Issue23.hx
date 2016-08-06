@@ -1,5 +1,4 @@
 
-import flash.automation.KeyboardAutomationAction;
 class Issue23
 {
     
@@ -9,7 +8,6 @@ class Issue23
         var a2 : Int = i;
         var a3 : Int = as3hx.Compat.parseInt(n);
         var a4 : Int = as3hx.Compat.parseInt(s);
-        var a5 : Int = u;
         
         var b : Float = n;
         var b2 : Float = n;
