@@ -159,9 +159,14 @@ class AS3HXTest {
         generate("Issue115.as", "Issue115.hx");
     }
     
-    @Test("delete obj['key']")
+    @Test("delete object['key']")
     public function issue121() {
         generate("Issue121.as", "Issue121.hx");
+    }
+    
+    @Test("delete dictionary['key']")
+    public function issue124() {
+        generate("Issue124.as", "Issue124.hx");
     }
     
     function generate(as3FileName:String, expectedHaxeFileName:String) {
