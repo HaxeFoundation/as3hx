@@ -13,7 +13,7 @@ class Issue115
         
         if (true) var i : Int = 1
         else
-            var i : Int = 1
+            var i : Int = 1;
         
         if (true) var i : Int = 1
         else
