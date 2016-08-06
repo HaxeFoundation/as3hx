@@ -2148,11 +2148,28 @@ class Writer
                 switch(e) {
                     case EArray(a, i):
                         var atype = getExprType(a);
-                        if (atype != null && StringTools.startsWith(atype, "Map")) {
-                            writeExpr(a);
-                            write(".remove(");
-                            writeExpr(i);
-                            write(")");
+                        if (atype != null) {
+                            if (StringTools.startsWith(atype, "Map")) {
+                                writeExpr(a);
+                                write(".remove(");
+                                writeExpr(i);
+                                write(")");
+                            } else if (atype == "Dynamic") {
+                                switch(i) {
+                                    case EConst(c):
+                                        switch(c) {
+                                            case CInt(v) | CFloat(v): i = EConst(CString(v));
+                                            default:
+                                        }
+                                    case EIdent(_):
+                                        var type = getExprType(i);
+                                        if (type == null || type != "String") {
+                                            i = ECall(EField(EIdent("Std"), "string"), [i]);
+                                        }
+                                    default:
+                                }
+                                writeExpr(ECall(EField(EIdent("Reflect"), "deleteField"), [a, i]));
+                            }
                         }
                     default:
                         addWarning("EDelete");
