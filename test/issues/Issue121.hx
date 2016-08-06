@@ -13,7 +13,8 @@ class Issue121
     }
     
     private var _eventListeners : Dynamic = { };
-    public function removeEventListeners(type : String = null) : Void{
+    public function removeEventListeners(type : String = null) : Void
+    {
         if (type != null && _eventListeners != null)
             Reflect.deleteField(_eventListeners, type)
         else

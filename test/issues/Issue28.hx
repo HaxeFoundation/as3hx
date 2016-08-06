@@ -13,11 +13,13 @@ class Issue28
         var c : Int = (((a != 0 || b != 0) ? 1 : 0) && c != 0) ? 1 : 0;
     }
     
-    private function test(a : Array<Dynamic>, b : Bool) : Int{
+    private function test(a : Array<Dynamic>, b : Bool) : Int
+    {
         return (a != null || b) ? 1 : 0;
     }
     
-    private function test2(a : Array<Dynamic>, b : Bool) : Int{
+    private function test2(a : Array<Dynamic>, b : Bool) : Int
+    {
         if ((a != null || b) ? true : false)
         {
             return 1;
@@ -25,7 +27,8 @@ class Issue28
         return 0;
     }
     
-    private function test3(b : Bool, o : Dynamic) : Void{
+    private function test3(b : Bool, o : Dynamic) : Void
+    {
         o = (b) ? { } : null;
     }
 }

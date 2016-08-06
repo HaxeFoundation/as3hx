@@ -887,7 +887,6 @@ class Writer
                         default:
                             es.push(f.expr);
                     }
-                    
                 default:
                     es.push(f.expr);
             }
@@ -895,6 +894,12 @@ class Writer
         // haxe setters must return the provided type
         if(isSetter && !isNative && f.args.length == 1) {
             es.push(ENL(EReturn(EIdent(f.args[0].name))));
+        }
+        if (!es.empty()) {
+            if (cfg.bracesOnNewline) {
+                writeNL();
+                writeIndent();
+            } else write(" ");
         }
         writeExpr(EBlock(es));
     }

@@ -10,7 +10,8 @@ class Issue87
     
     private var __DOLLAR__cast : Int = as3hx.Compat.parseInt(10.0);
     
-    private function __DOLLAR__cast(o : Dynamic) : String{
+    private function __DOLLAR__cast(o : Dynamic) : String
+    {
         return Std.string(o);
     }
 }
@@ -23,7 +24,8 @@ class PrivateClass
         super();
     }
     
-    public function __DOLLAR__cast(o : Dynamic) : String{
+    public function __DOLLAR__cast(o : Dynamic) : String
+    {
         return Std.string(o);
     }
 }
