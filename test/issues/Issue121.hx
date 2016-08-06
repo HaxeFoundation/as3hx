@@ -7,7 +7,7 @@ class Issue121
         if (Lambda.has(o, "some"))
             Reflect.deleteField(o, "some")
         else
-            o = null
+            o = null;
         
         if (Lambda.has(o, 1)) Reflect.deleteField(o, "1");
     }
@@ -17,6 +17,6 @@ class Issue121
         if (type != null && _eventListeners != null)
             Reflect.deleteField(_eventListeners, type)
         else
-            _eventListeners = null
+            _eventListeners = null;
     }
 }

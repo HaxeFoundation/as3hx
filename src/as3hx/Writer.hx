@@ -1489,8 +1489,7 @@ class Writer
                 }
 
                 lvl -= 2;
-            case EIf( cond, e1, e2 ):
-
+            case EIf(cond, e1, e2):
                 write("if (");
                 lvl++; //extra indenting if condition on multiple lines
                 var rb = rebuildIfExpr(cond);
@@ -1555,9 +1554,9 @@ class Writer
                         case ENL(_):
                             writeIndent("else");
                             lvl++;
-                            writeExpr(e2);
+                            rv = writeExpr(e2);
                             lvl--;
-                            return None;
+                            return rv;
                         default: writeIndent("else ");
                     }
 
