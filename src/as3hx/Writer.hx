@@ -128,7 +128,7 @@ class Writer
             case EImport(i):
                 writeImport(i);
             case ENL(e):
-                writeNL();  
+                writeNL();
             default:
                 throw "Unexpected " + c + " in header";
             }
@@ -169,22 +169,21 @@ class Writer
         }
     }
         
-    function writeAdditionalImports(defPackage : Array<String>, allTypes : Array<Dynamic>,
-                    definedTypes : Array<String>)
+    function writeAdditionalImports(defPackage : Array<String>, allTypes : Array<Dynamic>, definedTypes : Array<String>)
     {
         // We don't want to import any type that is defined within
         // this file, so add each of those to the type import map
         // first.
         for(d in definedTypes) {
-        typeImportMap.set(d, null);
+            typeImportMap.set(d, null);
         }
 
         // Now convert each seen type enum into the corresponding
         // type import string.
         var uniqueTypes : Map<String,Bool> = new Map<String,Bool>();
         for(t in allTypes) {
-        var importType : String = istring(t);
-        if (importType != null) uniqueTypes.set(importType, true);
+            var importType : String = istring(t);
+            if (importType != null) uniqueTypes.set(importType, true);
         }
 
         // Now look up each type import string in the type import
@@ -872,24 +871,19 @@ class Writer
         if (ret == null)
             ret = f.ret;
         writeFunctionReturn(ret, isGetter, isSetter, isNative);
-
         // ensure the function body is in a block
         var es = [];
         if(f.expr != null) {
-            switch(f.expr)
-            {
-                case EBlock(e):
-                    es = es.concat(e);
-                case ENL(e): //newline may wrap a block
-                    switch (e) {
-                        case EBlock(e):
-                            es = es.concat(e);
-                        default:
-                            es.push(f.expr);
-                    }
-                default:
-                    es.push(f.expr);
+            var format:Expr->Void = null;
+            format = function(e) {
+                switch(e)
+                {
+                    case EBlock(ex): es = es.concat(ex);
+                    case ENL(ex): format(ex);
+                    default: es.push(ENL(e));
+                }
             }
+            format(f.expr);
         }
         // haxe setters must return the provided type
         if(isSetter && !isNative && f.args.length == 1) {
@@ -911,27 +905,20 @@ class Writer
     function writeFunctionReturn(ret:FunctionRet, isGetter : Bool, isSetter : Bool, isNative : Bool) {
         //write return type
         if(isNative) {
-            if(isGetter)
-                writeVarType(ret.t, "{}", true);
-            if(isSetter)
-                writeVarType(null, "Void", true);
+            if(isGetter) writeVarType(ret.t, "{}", true);
+            if(isSetter) writeVarType(null, "Void", true);
         }
         else
             writeVarType(ret.t,null,false);
 
-        //write comments and newline after return type
+        //write comments after return type
         for (expr in ret.exprs) {
             switch (expr) {
-                case ENL(e):
-                    writeNL();
-                    writeIndent();
-
                 case ECommented(s,b,t,e):
                     writeComment(s);
-
                 default:
             }
-        }   
+        }
     }
 
     function writeLoop(incrs:Array<Expr>, f:Void->Void) {
@@ -1522,9 +1509,15 @@ class Writer
                         default:
                             write(") ");
                     }
-                    
                 } else writeCloseStatement();
-                
+                var removeENL:Expr->Expr = null;
+                removeENL = function(ex) {
+                    return switch(ex) {
+                        case ENL(e): removeENL(e);
+                        default: ex;
+                    }
+                }
+                e1 = removeENL(e1);
                 writeExpr(e1);
                 if (e2 != null)
                 {
@@ -1536,7 +1529,6 @@ class Writer
                     //before the "else"
                     var f:Expr->Expr = null;
                     f = function(e2) {
-                        
                         return switch (e2) {
                             case ECommented(s,b,t,e):
                                 writeNL();
@@ -2173,16 +2165,19 @@ class Writer
                                     default:
                                 }
                                 writeExpr(ECall(EField(EIdent("Reflect"), "deleteField"), [a, i]));
+                            } else if(atype == "Dictionary") {
+                                addWarning("EDelete");
+                                writeNL("This is an intentional compilation error. See the README for handling the delete keyword");
+                                writeIndent('delete ${getIdentString(a)}[${getIdentString(i)}]');
                             }
                         }
-                    default:
+                    default: 
                         addWarning("EDelete");
                         writeNL("This is an intentional compilation error. See the README for handling the delete keyword");
                         writeIndent("delete ");
                         writeExpr(e);
                 }
             case ECondComp( kwd, e , e2):
-
                 var writeECondComp:Expr->Void = null;
                 writeECondComp = function(e) {
                     switch(e) {
@@ -2549,6 +2544,17 @@ class Writer
     }
 
     /**
+     * utils returning the ident string of an
+     * expr or null if the expr is not an ident
+     */
+    function getIdentString(e:Expr):String {
+        return switch (e) {
+            case EIdent(v): v;
+            default: null;
+        }
+    }
+    
+    /**
      * Reconstruct a call expression before writing it if necessary. Used
      * for example to replace some ActionScript built-in method be Haxe ones.
      * 
@@ -2558,18 +2564,6 @@ class Writer
      */
     function rebuildCallExpr(fullExpr : Expr, expr : Expr, params : Array<Expr>) : Expr {
         var rebuiltCall = null;
-
-        //utils returning the ident string of an
-        //expr or null if the expr is not an ident
-        var getIdentString = function(expr) {
-            return switch (expr) {
-                case EIdent(v):
-                    v;
-                default:
-                    null;
-            }
-        }
-
         switch (expr) {
             case EField(e, f):
                 //replace "myVar.hasOwnProperty(myProperty)" by "myVar.exists(myProperty)"
@@ -2637,18 +2631,19 @@ class Writer
                         rebuiltCall = ECall(rebuildExpr, [EConst(CInt("0"))]);
                     }
                 }
-                else if (getIdentString(e) != null) {
+                else {
                     var ident = getIdentString(e);
-                    //replace AS3 StringUtil by Haxe StringTools
-                    if (ident == "StringUtil") {
-                        var rebuiltExpr = EField(EIdent("StringTools"), f);
-                        rebuiltCall = ECall(rebuiltExpr, params);
-                    } else if (ident == "JSON") {
-                        var rebuiltExpr = EField(EIdent("haxe.Json"), f);
-                        rebuiltCall = ECall(rebuiltExpr, params);
+                    if (ident != null) {
+                        //replace AS3 StringUtil by Haxe StringTools
+                        if (ident == "StringUtil") {
+                            var rebuiltExpr = EField(EIdent("StringTools"), f);
+                            rebuiltCall = ECall(rebuiltExpr, params);
+                        } else if (ident == "JSON") {
+                            var rebuiltExpr = EField(EIdent("haxe.Json"), f);
+                            rebuiltCall = ECall(rebuiltExpr, params);
+                        }
                     }
                 }
-
             default:
                 var ident = getIdentString(expr);
                 if (ident != null) {
@@ -2830,67 +2825,67 @@ class Writer
         warnings.set(type, isError);
     }
     
-    static function quote(s : String)
+    static function quote(s : String) : String
     {
         return '"' + StringTools.replace(s, '"', '\\"') + '"';
     }
 
-    static function eregQuote(s : String)
+    static function eregQuote(s : String) : String
     {
         return "'" + StringTools.replace(s, "\\", "\\\\") + "'";
     }
     
-    function isOverride(kwds : Array<String>)
+    function isOverride(kwds : Array<String>) : Bool
     {
         return Lambda.has(kwds, "override");
     }
     
-    function isStatic(kwds : Array<String>)
+    function isStatic(kwds : Array<String>) : Bool
     {
         return Lambda.has(kwds, "static");
     }
     
-    function isPublic(kwds : Array<String>)
+    function isPublic(kwds : Array<String>) : Bool
     {
         return Lambda.has(kwds, "public");
     }
 
-    function isPrivate(kwds : Array<String>)
+    function isPrivate(kwds : Array<String>) : Bool
     {
         return Lambda.has(kwds, "private");
     }
 
-    function isInternal(kwds : Array<String>)
+    function isInternal(kwds : Array<String>) : Bool
     {
         return Lambda.has(kwds, "internal");
     }
     
-    function isFinal(kwds : Array<String>)
+    function isFinal(kwds : Array<String>) : Bool
     {
         return Lambda.has(kwds, "final");
     }
     
-    function isProtected(kwds : Array<String>)
+    function isProtected(kwds : Array<String>) : Bool
     {
         return Lambda.has(kwds, "protected");
     }
 
-    function isGetter(kwds : Array<String>)
+    function isGetter(kwds : Array<String>) : Bool
     {
         return Lambda.has(kwds, "get");
     }
     
-    function isSetter(kwds : Array<String>)
+    function isSetter(kwds : Array<String>) : Bool
     {
         return Lambda.has(kwds, "set");
     }
 
-    function isConst(kwds : Array<String>)
+    function isConst(kwds : Array<String>) : Bool
     {
         return Lambda.has(kwds, "const");
     }
     
-    function istring(t : T, fixCase:Bool=true)
+    function istring(t : T, fixCase:Bool=true) : String
     {
         if(t == null) return null;
         switch(t)
@@ -2912,10 +2907,9 @@ class Writer
         }
     }
     
-    function tstring(t : T, isNativeGetSet:Bool=false, fixCase:Bool=true)
+    function tstring(t : T, isNativeGetSet:Bool=false, fixCase:Bool=true) : String
     {
-        if(t == null)
-            return null;
+        if(t == null) return null;
         switch(t)
         {
             case TStar:
@@ -2938,7 +2932,7 @@ class Writer
                     case "XML"      : cfg.useFastXML ? "FastXML" : "Xml";
                     case "XMLList"  : cfg.useFastXML ? "FastXMLList" : "Iterator<Xml>";
                     case "RegExp"   : "EReg";
-                    default         : fixCase? properCase(c,true) : c;
+                    default         : fixCase ? properCase(c,true) : c;
                 }
             case TComplex(e):
                 return buffer(function() { writeExpr(e); });
@@ -2947,43 +2941,43 @@ class Writer
         }
     }
     
-   /**
-    * Write an As3 package level function. As Haxe
-    * does not have this, wrap it in a class definition
-    */
+    /**
+     * Write an As3 package level function. As Haxe
+     * does not have this, wrap it in a class definition
+     */
     function writeFunctionDef(fDef : FunctionDef)
     {
         writeClassDef(wrapFuncDefInClassDef(fDef));
     }
 
-   /**
-    * Wrap a function definition inside a class definition,
-    * using the function name as a basis for the class name
-    */
+    /**
+     * Wrap a function definition inside a class definition,
+     * using the function name as a basis for the class name
+     */
     function wrapFuncDefInClassDef(fDef : FunctionDef) : ClassDef
     {
-       //first func need to be converted to the field
-       //type for classes
-       var funcAsClassField : ClassField = {
-           name : fDef.name,
-           meta : fDef.meta,
-           condVars : [],
-           kwds : fDef.kwds,
-           kind : FFun(fDef.f)
-       };
+        //first func need to be converted to the field
+        //type for classes
+        var funcAsClassField : ClassField = {
+            name : fDef.name,
+            meta : fDef.meta,
+            condVars : [],
+            kwds : fDef.kwds,
+            kind : FFun(fDef.f)
+        };
 
-       //uppercase func name first letter
-       var name = fDef.name.charAt(0).toUpperCase() + fDef.name.substr(1);
+        //uppercase func name first letter
+        var name = fDef.name.charAt(0).toUpperCase() + fDef.name.substr(1);
 
-       //generate class doc
-       var meta = [];
-       meta.push(ENL(null));
-       meta.push(ECommented("/**\n * Class for " + fDef.name + "\n */",false,false,null));
-       meta.push(ENL(null));
+        //generate class doc
+        var meta = [];
+        meta.push(ENL(null));
+        meta.push(ECommented("/**\n * Class for " + fDef.name + "\n */",false,false,null));
+        meta.push(ENL(null));
 
 
-       //builds the class definition
-       return {
+        //builds the class definition
+        return {
             name : "ClassFor" + name,
             meta:meta,
             kwds:["final"], //always final as generated class
@@ -2993,7 +2987,7 @@ class Writer
             implement : [],
             fields:[funcAsClassField],
             inits : []
-       };
+        };
     }
     
     function writeNamespaceDef(n : NamespaceDef)
@@ -3097,17 +3091,17 @@ class Writer
         writeIndent();
     }
 
-   /**
-    * Writing for block and line comment. If 
-    * comment written on dirty line (not first text on line),
-    * add extra whitespace before and after comment
-    */
+    /**
+     * Writing for block and line comment. If 
+     * comment written on dirty line (not first text on line),
+     * add extra whitespace before and after comment
+     */
     function writeComment(s : String)
     {
         if (lineIsDirty)
             s = "  " + s + "  ";
 
-        write(s);    
+        write(s);
     }
 
     function writeIndent(s = "")
@@ -3176,7 +3170,7 @@ class Writer
     /**
      * Switches output to a string accumulator
      * @return contents of buffer after calling f()
-     **/
+     */
     function buffer(f:Void->Void) : String {
         var old = o;
         o = new haxe.io.BytesOutput();
@@ -3186,7 +3180,7 @@ class Writer
         return rv;
     }
     
-    function indent()
+    function indent() : String
     {
         var b = [];
         for (i in 0...lvl)
@@ -3237,7 +3231,7 @@ class Writer
      * By doing it this way, it becomes easy to see all the places a specific
      * warning is affecting, so that the porter can more easily determine
      * the fix.
-     **/
+     */
     public static function showWarnings(allWarnings : Map<String,Map<String,Bool>>) {
         var wke : Map<String,Array<String>> = new Map(); // warning->files
         for(filename in allWarnings.keys()) {
