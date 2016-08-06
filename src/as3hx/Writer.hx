@@ -1163,19 +1163,9 @@ class Writer
                     switch(e2) {
                     case EIdent(s):
                         switch(s) {
-                        case "string":
-                            write("Std.string(");
-                            writeExpr(e1);
-                            write(")");
-                        case "int":
-                            write("Std.parseInt(");
-                            writeExpr(e1);
-                            write(")");
-                            addWarning("as int",false);
-                        case "number":
-                            write("Std.parseFloat(");
-                            writeExpr(e1);
-                            write(")");
+                        case "String": writeCastToString(e1);
+                        case "int": writeCastToInt(e1);
+                        case "Number": writeCastToFloat(e1);
                         case "Array":
                             write("try cast(");
                             writeExpr(e1);
@@ -1356,14 +1346,8 @@ class Writer
                         if(n.indexOf(".") == -1 && (c>=65 && c<=90)) {
                             handled = true;
                             switch(n) {
-                            case "Number":
-                                write("Std.parseFloat(");
-                                writeExpr(params[0]);
-                                write(")");
-                            case "String":
-                                write("Std.string(");
-                                writeExpr(params[0]);
-                                write(")");
+                            case "Number": writeCastToFloat(params[0]);
+                            case "String": writeCastToString(params[0]);
                             case "Boolean":
                                 write("cast(");
                                 writeExpr(params[0]);
@@ -1394,26 +1378,7 @@ class Writer
                             write(")");
                             handled = true;
                         case "int" | "uint":
-                            if (cfg.useCompat) {
-                                write("as3hx.Compat.parseInt(");
-                            }
-                            else {
-                                //if compat class not used, fallback to Haxe
-                                //standard lib. 
-                                //Add overhead as values need all to be
-                                //converted to string beforehand, as there is
-                                //no way to know what the type of the expression
-                                //at this point and "Std.parseInt" only accepts
-                                //strings
-                                write("Std.parseInt(Std.string(");
-                            }
-                            
-                            writeExpr(params[0]);
-
-                            write(")");
-                            if (!cfg.useCompat) {
-                                write(")");
-                            }
+                            writeCastToInt(params[0]);
                             handled = true;
                         }
                     case EVector(t):
@@ -2213,9 +2178,63 @@ class Writer
                 writeNL( );
                 writeIndent( );
                 rv = writeExpr(e);
-            case EImport(s):   
+            case EImport(s):
         }
         return rv;
+    }
+    
+    function writeCastToString(e:Expr) {
+        var type = getExprType(e);
+        if (type != null && type == "String") {
+            writeExpr(e);
+        } else {
+            write("Std.string(");
+            writeExpr(e);
+            write(")");
+        }
+    }
+    
+    function writeCastToInt(e:Expr) {
+        var type = getExprType(e);
+        if (type != null && type == "Int") {
+            writeExpr(e);
+        } else {
+            if (cfg.useCompat) {
+                write("as3hx.Compat.parseInt(");
+            } else {
+                //if compat class not used, fallback to Haxe
+                //standard lib. 
+                //Add overhead as values need all to be
+                //converted to string beforehand, as there is
+                //no way to know what the type of the expression
+                //at this point and "Std.parseInt" only accepts
+                //strings
+                write("Std.parseInt(Std.string(");
+            }
+            writeExpr(e);
+            write(")");
+            if (!cfg.useCompat) {
+                write(")");
+            }
+        }
+    }
+    
+    function writeCastToFloat(e:Expr) {
+        var type = getExprType(e);
+        if (type != null && (type == "Float" || type == "Int")) {
+            writeExpr(e);
+        } else {
+            if (cfg.useCompat) {
+                write("as3hx.Compat.parseFloat(");
+            } else {
+                write("Std.parseInt(Std.string(");
+            }
+            writeExpr(e);
+            write(")");
+            if (!cfg.useCompat) {
+                write(")");
+            }
+        }
     }
 
     // translate FlexUnit to munit meta data, if present.
