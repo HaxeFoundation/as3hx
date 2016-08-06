@@ -9,7 +9,8 @@ class Issue89
     
     private var n : Float = Math.NaN;
     
-    private function getNaN() : Float{
+    private function getNaN() : Float
+    {
         return Math.NaN;
     }
 }
