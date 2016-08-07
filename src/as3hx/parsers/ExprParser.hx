@@ -6,7 +6,7 @@ import as3hx.Parser;
 
 class ExprParser {
 
-    public static function parse(tokenizer:Tokenizer, types:Types, cfg, funcStart:Bool) : Expr {
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg:Config, funcStart:Bool) : Expr {
         var parseExpr = parse.bind(tokenizer, types, cfg);
         var parseFullExpr = parseFull.bind(tokenizer, types, cfg);
         var parseExprNext = parseNext.bind(tokenizer, types, cfg);
@@ -68,7 +68,7 @@ class ExprParser {
                     }
                 }
             }
-                
+            
             while(!ParserUtils.opt(tokenizer, TBrClose)) {
                 var e = parseFullExpr();
                 a.push(e);
@@ -269,7 +269,6 @@ class ExprParser {
                     default: ParserUtils.makeBinop(tokenizer, s, e1, e2, pendingNewLines != 0);
                 }
             default:
-
                 if (pendingNewLines != 0) {
                     //add all newlines which were declared before
                     //the identifier

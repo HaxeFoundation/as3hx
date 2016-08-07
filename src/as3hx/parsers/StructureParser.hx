@@ -14,14 +14,14 @@ class StructureParser {
         var parseCaseBlock = CaseBlockParser.parse.bind(tokenizer, types, cfg);
 
         Debug.dbgln("parseStructure("+kwd+")", tokenizer.line);
-        return switch( kwd ) {
+        return switch(kwd) {
         case "if":
             tokenizer.ensure(TPOpen);
             var cond = parseExpr(false);
             tokenizer.ensure(TPClose);
             var e1 = parseExpr(false);
             tokenizer.end();
-            var elseExpr = if( ParserUtils.opt(tokenizer, TId("else"), true) ) parseExpr(false) else null;
+            var elseExpr = if(ParserUtils.opt(tokenizer, TId("else"), true)) parseExpr(false) else null;
             switch (cond) {
                 case ECondComp(v, e, e2):
                     //corner case, the condition is an AS3 preprocessor 
@@ -30,10 +30,8 @@ class StructureParser {
                     ECondComp(v, e1, elseExpr);
                 default:
                     //regular if statement,,check for an "else" block
-                    
-                    EIf(cond,e1,elseExpr);
+                    EIf(cond, e1, elseExpr);
             }
-
         case "var", "const":
             var vars = [];
             while( true ) {
