@@ -453,7 +453,7 @@ class Writer
             writeNL();
             writeIndent();
             if (isInternal(c.kwds)) {
-                writeAllow();    
+                writeAllow();
                 write("private ");
             }
             else {
@@ -501,40 +501,32 @@ class Writer
                     write("@:protected ");
                 }
             }
-            if (isFinal(field.kwds))
-                write("@:final ");  
-            if (isOverride(field.kwds))
+            if(isFinal(field.kwds))
+                write("@:final ");
+            if((isConstructor && isInternal(c.kwds)) || (!isInterface && isInternal(field.kwds)))
+                writeAllow();
+            if(isOverride(field.kwds))
                 write((isFlashNative && (isGet || isSet)) ? "" : "override ");
             
             //coner-case, constructor of internal AS3 class is set to private in 
             //Haxe with a meta allowing access from same package
-            if (isConstructor && isInternal(c.kwds)) {
-                writeAllow();
+            if(isConstructor && isInternal(c.kwds)) {
                 write("private ");
             }
-            else if (isPublic(field.kwds)) {
-                if (!(isGet && cfg.forcePrivateGetter) //check if forced private getter
+            else if(isPublic(field.kwds)) {
+                if(!(isGet && cfg.forcePrivateGetter) //check if forced private getter
                     && !(isSet && cfg.forcePrivateSetter)) //check if forced private setter
                     write("public ");
-                else {
-                    if (! isInterface) {
-                        write("private ");
-                    }
-                }    
+                else if(!isInterface) {
+                    write("private ");
+                }
             }
             else if(!isInterface) {
-                //if func uses AS3 'internal', convert to Haxe
-                //equivalent, which is to allow access to the current
-                //package
-                if (isInternal(field.kwds)) {
-                    writeAllow();
-                }
                 write("private ");
             }
-            if (isStatic(field.kwds))
+            if(isStatic(field.kwds))
                 write("static ");
             
-                
             //check wheter the field is an AS3 constants, which can be inlined in Haxe
             //the field must be either a static constant or a private constant. 
             //If it is a non-static public constant it can't be inlined as Haxe can only inline
@@ -547,21 +539,15 @@ class Writer
                         //be safely inlined for Haxe as we don't havve full typing
                         //available. For instance trying to inline a field referencing another
                         //static non-inlined field would prevent Haxe compilation
-
                         if (val != null) {
                             switch (val) {
-
-                                case EConst(c):
-                                    write("inline ");
-
+                                case EConst(c): write("inline ");
                                 default:
                             }
                         }
-
                     default:
                 }
             }
-               
         }
         switch(field.kind)
         {
@@ -2819,7 +2805,7 @@ class Writer
     /**
      * Checks if 'e' represents a numerical constant value
      * @return true if so
-     **/
+     */
     function isNumericConst(e:Expr) : Bool {
         switch(e) {
         case EConst(c):
