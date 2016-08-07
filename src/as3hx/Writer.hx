@@ -88,7 +88,7 @@ class Writer
 
     /**
      * Opens a new context for variable typing
-     **/
+     */
     function openContext() {
         var c = new Map();
         for(k in context.keys())
@@ -99,7 +99,7 @@ class Writer
 
     /**
      * Closes the current variable typing copntext
-     **/
+     */
     function closeContext() {
         context = contextStack.pop();
     }
@@ -190,29 +190,29 @@ class Writer
         // map.
         var addnImports : Array<String> = new Array<String>();
         for(u in uniqueTypes.keys()) {
-        var importType : String;
-        if (typeImportMap.exists(u)) {
-            u = typeImportMap.get(u);
-        } else {
-            u = properCaseA(defPackage,false).concat([u]).join(".");
-        }
-        if (u != null)
-            addnImports.push(u);
+            var importType : String;
+            if (typeImportMap.exists(u)) {
+                u = typeImportMap.get(u);
+            } else {
+                u = properCaseA(defPackage,false).concat([u]).join(".");
+            }
+            if (u != null)
+                addnImports.push(u);
         }
 
         // Finally, if any additional implicit imports were found
         // to be needed, output them.
         if (addnImports.length > 0) {
-        addnImports.sort(
-            function(a : String, b : String) : Int {
-            if (a<b) return -1;
-            if (b<a) return 1;
-            return 0;
-            } );
-        for(a in addnImports) {
-            writeLine("import " + a + ";");
-        }
-        
+            addnImports.sort(
+                function(a : String, b : String) : Int {
+                    if (a<b) return -1;
+                    if (b<a) return 1;
+                    return 0;
+                }
+            );
+            for(a in addnImports) {
+                writeLine("import " + a + ";");
+            }
         }
     }
 
@@ -664,42 +664,37 @@ class Writer
         writeECondCompEnd(condVars);
     }
     
-   /**
-    * Return a new array containing all the conditional
-    * compilation constants from the provided array
-    */
+    /**
+     * Return a new array containing all the conditional
+     * compilation constants from the provided array
+     */
     function getCondComp(exprs : Array<Expr>) : Array<String>
     {
        var condComps = [];
-
        for (expr in exprs) 
        {
             switch (expr) {
                 case ECondComp(v,e,e2):
                     condComps.push(v);
-
-                default:    
+                default:
             }
        }
        return condComps;
     }
 
-
-   /**
-    * Return a new array containing all the conditional
-    * compilation expressions from the provided array
-    */
+    /**
+     * Return a new array containing all the conditional
+     * compilation expressions from the provided array
+     */
     function getECondComp(exprs : Array<Expr>) : Array<Expr>
     {
        var condComps = [];
-
        for (expr in exprs) 
        {
             switch (expr) {
                 case ECondComp(v,e,e2):
                     condComps.push(expr);
-
-                default:    
+                default:
             }
        }
        return condComps;
@@ -713,17 +708,15 @@ class Writer
     function hasCondComp(condComp : String, exprs : Array<Expr>) : Bool 
     {
         for (expr in exprs) 
-       {
+        {
             switch (expr) {
                 case ECondComp(v,e,e2):
-                    if (condComp == v) {
-                        return true;
-                    }
-
-                default:    
+                   if (condComp == v) {
+                      return true;
+                   }
+                default:
             }
-       }
-
+        }
        return false;
     }
 
@@ -744,8 +737,17 @@ class Writer
         }
     }
     
-    function writeArgs(args : Array<{ name : String, t : Null<T>, val : Null<Expr>, exprs : Array<Expr> }>)
+    function writeArgs(args : Array<{ name : String, t : Null<T>, val : Null<Expr>, exprs : Array<Expr> }>, ?varArgs:String)
     {
+        if(varArgs != null) {
+            var varArg = {
+                name:varArgs,
+                t:TPath(["Array"]),
+                val:EIdent("null"),
+                exprs:[EIdent("args"), ETypedExpr(null, TPath(["Array"]))]
+            }
+            args = args.concat([varArg]);
+        }
         //add 2 extra indentation level if arguments
         //spread on multiple lines
         lvl += 2;
@@ -816,17 +818,15 @@ class Writer
     function writeConstructor(f : Function, isSubClass:Bool)
     {
         //add super if missing, as it is mandatory in Haxe for subclasses
-        if (isSubClass == true && constructorHasSuper(f.expr) == false) {
+        if (isSubClass && !constructorHasSuper(f.expr)) {
             switch(f.expr) {
                 case EBlock(exprs):
                     exprs.unshift(ENL(ECall(EIdent("super"), [])));
-                
                 default:
             }
         }
-
         write("function new(");
-        writeArgs(f.args);
+        writeArgs(f.args, f.varArgs);
         writeCloseStatement();
         writeExpr(f.expr);
     }
@@ -834,38 +834,30 @@ class Writer
     /**
      * Wether constructor method has a super() call
      */
-    function constructorHasSuper(expr : Expr) : Bool
+    function constructorHasSuper(?expr : Expr) : Bool
     {
-        if (expr == null)
-            return false;
-
+        if (expr == null) return false;
         return switch(expr) {
-            case ECall(EIdent("super"), _):
-                true;
-
+            case ECall(EIdent("super"), _): true;
             case EBlock(exprs): 
-                for (expr in exprs){
+                for (expr in exprs) {
                     if (constructorHasSuper(expr)) {
                         return true;
                     }
                 }
                 false;
-
-            case ENL(expr):
-                constructorHasSuper(expr);
-
-            default:
-                false;
+            case ENL(expr): constructorHasSuper(expr);
+            default: false;
         }
     }
 
-    function writeFunction(f : Function, isGetter:Bool, isSetter:Bool, isNative:Bool, name : Null<String>, ?ret : FunctionRet)
+    function writeFunction(f : Function, isGetter:Bool, isSetter:Bool, isNative:Bool, ?name : Null<String>, ?ret : FunctionRet)
     {
         write("function");
         if(name != null)
             write(" " + name);
         write("(");
-        var fst = writeArgs(f.args);
+        writeArgs(f.args, f.varArgs);
         write(")");
         // return type
         if (ret == null)
@@ -928,7 +920,7 @@ class Writer
         loopIncrements = old;
     }
     
-    static function ucfirst(s : String)
+    static function ucfirst(s : String) : String
     {
         return s.substr(0, 1).toUpperCase() + s.substr(1);
     }
@@ -961,14 +953,12 @@ class Writer
         writeNL("}");
     }
     
-    function getConst(c : Const)
+    function getConst(c : Const) : String
     {
-        switch(c)
+        return switch(c)
         {
-            case CInt( v ), CFloat( v ):
-                return v;
-            case CString( s ):
-                return quote(s);
+            case CInt(v), CFloat(v): v;
+            case CString(s): quote(s);
         }
     }
 
@@ -1026,7 +1016,7 @@ class Writer
     /**
      * Returns the base variable from expressions like xml.user
      * EField(EIdent(xml),user) or EE4XDescend(EIdent(xml), EIdent(user))
-     **/
+     */
     function getBaseVar(e:Expr) : String {
         switch(e) {
             case EField(e2, f):
@@ -1041,12 +1031,10 @@ class Writer
     }
 
     function typeExpr(e:Expr) : String {
-        switch(e) {
-            case EIdent(s):
-                return context.get(s);
-            default:
+        return switch(e) {
+            case EIdent(s): context.get(s);
+            default: null;
         }
-        return null;
     }
 
     function getModifiedIdent(s : String) : String {
@@ -1074,7 +1062,7 @@ class Writer
     /**
      * Write an expression
      * @return if the block requires a terminating ;
-     **/
+     */
     function writeExpr(expr : Expr) : BlockEnd
     {
         if(cfg.debugExpr)
@@ -2365,7 +2353,7 @@ class Writer
     //      return false;
     //  });
     // e1.(@user_id == 3) attribute search
-    function writeE4XFilterExpr(e1, e2) {
+    function writeE4XFilterExpr(e1:Expr, e2:Expr) {
         if(inE4XFilter)
             throw "Unexpected E4XFilter inside E4XFilter";
 
@@ -3019,7 +3007,7 @@ class Writer
         
     }
 
-    function loopCases(cases : Array<SwitchCase>, def: Null<Array<Expr>>, testVar:Expr, out:Array<CaseDef>) {
+    function loopCases(cases : Array<SwitchCase>, def: Null<Array<Expr>>, testVar:Expr, out:Array<CaseDef>):Array<CaseDef> {
         var c : { val : Expr, el : Array<Expr>, meta : Array<Expr> } = cases.pop();
         if(c == null)
             return out;
@@ -3034,7 +3022,6 @@ class Writer
         if(c.el == null || c.el.length == 0) {
             falls = true;
         } else {
-
             var f:Expr->Array<Expr>->Void = null;
             f = function(e, els) {
                 switch(e) {
@@ -3054,7 +3041,6 @@ class Writer
                 }
             }
             f(c.el[c.el.length-1], c.el);
-            
         }
 
         // if it's a fallthough, we have to add the cases val to the
@@ -3085,7 +3071,7 @@ class Writer
         return out;
     }
 
-    function openb()
+    function openb() : String
     {
         if (cfg.bracesOnNewline)
             return cfg.newlineChars + indent() + "{";
@@ -3093,7 +3079,7 @@ class Writer
             return " {";
     }
     
-    function closeb()
+    function closeb() : String
     {
         return cfg.newlineChars + indent() + "}";
     }
@@ -3292,7 +3278,7 @@ class Writer
         }
     }
 
-    public static function properCase(pkg:String, hasClassName:Bool) {
+    public static function properCase(pkg:String, hasClassName:Bool):String {
         return properCaseA(pkg.split("."), hasClassName).join(".");
     }
 
@@ -3319,7 +3305,7 @@ class Writer
         return p;
     }
 
-    public static function removeUnderscores(id : String) {
+    public static function removeUnderscores(id : String):String {
         return id.split("_").map( 
             function (v:String) return v.length > 0 ? v.charAt(0).toUpperCase() + v.substr(1) : ""
         ).array().join("");

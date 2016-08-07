@@ -19,15 +19,12 @@ class FunctionParser {
         };
         tokenizer.ensure(TPOpen);
 
-                   
         //for each method argument (except var args)
         //store the whole expression, including
         //comments and newline
         var expressions:Array<Expr> = [];
         if( !ParserUtils.opt(tokenizer, TPClose) ) {
- 
             while( true ) {
-               
                 var tk = tokenizer.token();
                 switch (tk) {
                     case TDot: //as3 var args start with "..."
