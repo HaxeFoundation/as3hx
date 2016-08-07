@@ -2500,9 +2500,14 @@ class Writer
             var t = getExprType(e);
             if(t == null || t == "Bool")
                 return null;
-            if(isNumericType(t))
-                return EBinop("!=", e, EConst(CInt("0")), false);
-            return EBinop("!=", e, EIdent("null"), false);
+            return switch(t) {
+                case "Int" | "UInt": EBinop("!=", e, EConst(CInt("0")), false);
+                case "Float":
+                    var lvalue = EBinop("!=", e, EConst(CInt("0")), false);
+                    var rvalue = EUnop("!", true, ECall(EField(EIdent("Math"), "isNaN"), [e]));
+                    EParent(EBinop("&&", lvalue, rvalue, false));
+                default: EBinop("!=", e, EIdent("null"), false);
+            }
         case EBinop(op, e2, e3, n):
             if(isNumericConst(e2) || isNumericConst(e3))
                 return null;

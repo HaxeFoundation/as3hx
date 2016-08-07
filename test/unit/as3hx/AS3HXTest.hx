@@ -179,6 +179,11 @@ class AS3HXTest {
         generate("Issue124.as", "Issue124.hx");
     }
     
+    @Test("if(number) -> if((number != 0 && !Math.isNaN(number)))")
+    public function issue128() {
+        generate("Issue128.as", "Issue128.hx");
+    }
+    
     function generate(as3FileName:String, expectedHaxeFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var generatedDirectoryPath = '$issuesDirectory/generated';
