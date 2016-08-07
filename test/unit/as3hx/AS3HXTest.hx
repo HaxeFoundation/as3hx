@@ -99,6 +99,11 @@ class AS3HXTest {
         generate("Issue69.as", "Issue69.hx");
     }
     
+    @Test("function(...args) -> function(args:Array<Dynamic>")
+    public function issue70() {
+        generate("Issue70.as", "Issue70.hx");
+    }
+    
     @Test
     public function issue71() {
         generate("Issue71.as", "Issue71.hx");
