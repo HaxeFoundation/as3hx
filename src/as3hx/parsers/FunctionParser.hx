@@ -6,7 +6,7 @@ import as3hx.Parser;
 
 class FunctionParser {
 
-    public static function parse(tokenizer:Tokenizer, types:Types, cfg, isInterfaceFun : Bool) : Function {
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg:Config, isInterfaceFun : Bool) : Function {
         var parseType = TypeParser.parse.bind(tokenizer, types, cfg);
         var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
 
@@ -83,7 +83,7 @@ class FunctionParser {
             retExpressions.push(ETypedExpr(null, t));
             f.ret.t = t;
         }
-            
+        
         //parse until '{' or ';' (for interface method)   
         while (true) {
             var tk = tokenizer.token();
@@ -96,8 +96,8 @@ class FunctionParser {
                     //newline after the return definition, we assume
                     //this is the end of the method definition
                     if (isInterfaceFun) {
-                         f.ret.exprs = retExpressions;
-                         break;
+                        f.ret.exprs = retExpressions;
+                        break;
                     }
                     else {
                         retExpressions.push(ENL(null));
@@ -114,7 +114,7 @@ class FunctionParser {
 
                 default:
             }
-        }       
+        }
 
         if( tokenizer.peek() == TBrOpen ) {
             f.expr = parseExpr(true);
@@ -135,7 +135,7 @@ class FunctionParser {
         return f;
     }
 
-    public static function parseDef(tokenizer:Tokenizer, types:Types, cfg, kwds, meta) : FunctionDef {
+    public static function parseDef(tokenizer:Tokenizer, types:Types, cfg:Config, kwds:Array<String>, meta:Array<Expr>) : FunctionDef {
         var parseFunction = FunctionParser.parse.bind(tokenizer, types, cfg);
 
         Debug.dbgln("parseFunDef()", tokenizer.line);
