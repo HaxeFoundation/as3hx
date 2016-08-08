@@ -14,7 +14,8 @@ package {
                 var i:int = 1;
             
             if(true) var i:int = 1;
-            else {
+            else
+            {
                 var i:int = 1;
             }
         }

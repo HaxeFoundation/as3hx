@@ -112,6 +112,24 @@ class Writer
         return StringTools.ltrim(r.replace(s,indent()));
     }
 
+    function formatBlockBody(expr:Expr):Array<Expr> {
+        var result = [];
+        var f:Expr->Void = null;
+        f = function(e) {
+            switch(e) {
+                case EBlock(ex):
+                    for(i in 0...ex.length) {
+                        if (i == 0) f(ex[0]);
+                        else result.push(ex[i]);
+                    }
+                case ENL(ex): f(ex);
+                default: result.push(ENL(e));
+            }
+        }
+        f(expr);
+        return result;
+    }
+    
     function writeComments(comments : Array<Expr>) {
         for(c in comments) {
             switch(c) {
@@ -151,9 +169,9 @@ class Writer
             var imported = []; //holds already written types to prevent duplicates
             for(i in imports) {
                 writeImport(i);
-                writeNL(); 
+                writeNL();
             }
-            writeNL(); 
+            writeNL();
         }
     }
 
@@ -168,7 +186,7 @@ class Writer
             typeImportMap.set(i[i.length-1], null);
         }
     }
-        
+    
     function writeAdditionalImports(defPackage : Array<String>, allTypes : Array<Dynamic>, definedTypes : Array<String>)
     {
         // We don't want to import any type that is defined within
@@ -260,7 +278,7 @@ class Writer
                 } 
                 write(v);
             case EImport(i):
-                writeImport(i);    
+                writeImport(i);
             default:
                 throw "Unexpected " + d;
             }
@@ -426,7 +444,6 @@ class Writer
         if (c.isInterface) {
             writeNL();
         }
-        
     }
     
     function writeFields(c : ClassDef)
@@ -686,30 +703,30 @@ class Writer
        return condComps;
     }
 
-    /***
+    /**
      * Return wether the provided array of expressions
      * contains a conditional compilation expr for the
      * condComp compilation constant
      */
-    function hasCondComp(condComp : String, exprs : Array<Expr>) : Bool 
+    function hasCondComp(condComp : String, exprs : Array<Expr>) : Bool
     {
         for (expr in exprs) 
         {
             switch (expr) {
                 case ECondComp(v,e,e2):
-                   if (condComp == v) {
-                      return true;
-                   }
+                    if (condComp == v) {
+                        return true;
+                    }
                 default:
             }
         }
-       return false;
+        return false;
     }
 
     /**
-    * Write closing statement ("#end") for conditional 
-    * conpilation if any
-    */
+     * Write closing statement ("#end") for conditional 
+     * conpilation if any
+     */
     function writeECondCompEnd(condComps : Array<String>) : Void
     {
         for (i in 0...condComps.length) {
@@ -814,9 +831,10 @@ class Writer
         write("function new(");
         writeArgs(f.args, f.varArgs);
         writeCloseStatement();
-        writeExpr(f.expr);
+        var es = formatBlockBody(f.expr);
+        writeExpr(EBlock(es));
     }
-
+    
     /**
      * Wether constructor method has a super() call
      */
@@ -850,24 +868,12 @@ class Writer
             ret = f.ret;
         writeFunctionReturn(ret, isGetter, isSetter, isNative);
         // ensure the function body is in a block
-        var es = [];
-        if(f.expr != null) {
-            var format:Expr->Void = null;
-            format = function(e) {
-                switch(e)
-                {
-                    case EBlock(ex): es = es.concat(ex);
-                    case ENL(ex): format(ex);
-                    default: es.push(ENL(e));
-                }
-            }
-            format(f.expr);
-        }
+        var es = f.expr != null ? formatBlockBody(f.expr) : [];
         // haxe setters must return the provided type
         if(isSetter && !isNative && f.args.length == 1) {
             es.push(ENL(EReturn(EIdent(f.args[0].name))));
         }
-        if (!es.empty()) {
+        if(!es.empty()) {
             if (cfg.bracesOnNewline) {
                 writeNL();
                 writeIndent();
@@ -1473,25 +1479,28 @@ class Writer
                                 writeNL();
                                 writeIndent(s);
                                 f(e); //skip the comment
-                            default:
-                                e2;
+                            default: e2;
                         }
                     }
                     e2 = f(e2);
 
                     writeNL();
                     switch(e2) {
-                        case EBlock(_):
+                        case EBlock(e):
                             if (cfg.bracesOnNewline) {
                                 writeIndent("else");
                                 writeNL();
                                 writeIndent();
                             } else writeIndent("else ");
-                        case ENL(_):
+                        case ENL(e):
                             writeIndent("else");
-                            lvl++;
-                            rv = writeExpr(e2);
-                            lvl--;
+                            if(e.match(EBlock(_))) {
+                                rv = writeExpr(e2);
+                            } else {
+                                lvl++;
+                                rv = writeExpr(e2);
+                                lvl--;
+                            }
                             return rv;
                         default: writeIndent("else ");
                     }
@@ -1615,19 +1624,7 @@ class Writer
                     writeCloseStatement();
                 }
                 
-                var es = [];
-                var f:Expr->Void = null;
-                f = function(e) {
-                    switch(e) {
-                        case EBlock(ex):
-                            es = ex.copy();
-                        case ENL(e):
-                            f(e);
-                        default:
-                            es.push(ENL(e));
-                    }
-                }
-                f(e);
+                var es = formatBlockBody(e);
 
                 //don't write increments for a "for" loop
                 if (isWhileLoop) {
@@ -1898,10 +1895,11 @@ class Writer
                 var writeTestVar = false;
                 var testVar = switch(e) {
                 case EParent(ex):
-                    switch(ex) { 
+                    switch(ex) {
                         case EIdent(i): ex;
                         case ECall(_): ex;
-                        default: null; }
+                        default: null;
+                    }
                 default:
                     null;
                 }
@@ -1922,7 +1920,7 @@ class Writer
                                     switch (exprs[exprs.length -1]) {
                                         case EBreak(lbl):
                                             def.el.pop();
-                                        default:  
+                                        default:
                                     }
                                 case ENL(e): f(e, els);
                                 default:
@@ -1970,7 +1968,6 @@ class Writer
                     } else {
                         false;
                     }
-                        
 
                     for (i in 0...c.el.length)
                     {
