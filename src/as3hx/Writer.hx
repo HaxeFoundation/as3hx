@@ -1494,9 +1494,13 @@ class Writer
                             } else writeIndent("else ");
                         case ENL(e):
                             writeIndent("else");
-                            if(!e.match(EBlock(_))) lvl++;
-                            rv = writeExpr(e2);
-                            if(!e.match(EBlock(_))) lvl--;
+                            if(e.match(EBlock(_))) {
+                                rv = writeExpr(e2);
+                            } else {
+                                lvl++;
+                                rv = writeExpr(e2);
+                                lvl--;
+                            }
                             return rv;
                         default: writeIndent("else ");
                     }
