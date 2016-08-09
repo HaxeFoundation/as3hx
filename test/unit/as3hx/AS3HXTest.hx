@@ -194,6 +194,11 @@ class AS3HXTest {
         generate("Issue128.as", "Issue128.hx");
     }
     
+    @Test("int.MIN_VALUE -> as3hx.Compat.INT_MIN, int.MAX_VALUE -> as3hx.Compat.INT_MAX")
+    public function issue133() {
+        generate("Issue133.as", "Issue133.hx");
+    }
+    
     @Test
     public function issue134() {
         generate("Issue134.as", "Issue134.hx");
