@@ -244,12 +244,9 @@ class Writer
     {
         switch(def)
         {
-            case CDef( c ):
-                writeClassDef(c);
-            case FDef( f ):
-                writeFunctionDef(f);
-            case NDef( n ):
-                writeNamespaceDef(n);
+            case CDef(c): writeClassDef(c);
+            case FDef(f): writeFunctionDef(f);
+            case NDef(n): writeNamespaceDef(n);
         }
     }
 
@@ -258,7 +255,7 @@ class Writer
             return;
 
         var isFirstCondComp = true;
-            
+        
         for(d in data) {
             switch(d) {
             case EMeta(_):
@@ -691,16 +688,16 @@ class Writer
      */
     function getECondComp(exprs : Array<Expr>) : Array<Expr>
     {
-       var condComps = [];
-       for (expr in exprs) 
-       {
+        var condComps = [];
+        for (expr in exprs) 
+        {
             switch (expr) {
                 case ECondComp(v,e,e2):
                     condComps.push(expr);
                 default:
             }
-       }
-       return condComps;
+        }
+        return condComps;
     }
 
     /**
@@ -1055,7 +1052,7 @@ class Writer
      * Write an expression
      * @return if the block requires a terminating ;
      */
-    function writeExpr(expr : Expr) : BlockEnd
+    function writeExpr(?expr : Expr) : BlockEnd
     {
         if(cfg.debugExpr)
             write(" /* " + Std.string(expr) + " */ ");
@@ -1104,7 +1101,10 @@ class Writer
                     write(closeb());
                     closeContext();
                     rv = None;
-                } else { write(";"); rv = None; }
+                } else {
+                    write(";");
+                    rv = None;
+                }
             case EField( e, f ):
                 var n = checkE4XDescendants(expr);
                 if(n != null)
@@ -1132,6 +1132,17 @@ class Writer
                             //write("/* -- " +e2+ " " +getExprType(e2)+" */");
                             if(getExprType(e2) == "FastXML")
                                 inArrayAccess = true;
+                        case EIdent(v):
+                            if(getModifiedIdent(v) == "Int") {
+                                if(f == "MAX_VALUE") {
+                                    writeExpr(EField(EIdent("as3hx.Compat"), "INT_MAX"));
+                                    return None;
+                                }
+                                if(f == "MIN_VALUE") {
+                                    writeExpr(EField(EIdent("as3hx.Compat"), "INT_MIN"));
+                                    return None;
+                                }
+                            }
                         default:
                     }
                     writeExpr(e);
@@ -2372,7 +2383,7 @@ class Writer
      * is compared to a numerical constant, and change all EIdent instances to
      * the FastXML version.
      * @return expr ready for writing
-     **/
+     */
     function rebuildE4XExpr(e:Expr) : Expr {
         switch(e) {
         case EBinop(op, e2, e3, n):
@@ -2430,7 +2441,7 @@ class Writer
     /**
      * Check for a call to XML.descendants, returning null if the
      * expression is not modified, or a new expr
-     **/
+     */
     function checkE4XDescendants(e:Expr) : Expr {
         switch(e) {
             case EField(e2, f):
@@ -2459,7 +2470,7 @@ class Writer
      * the original expression to be used, which will cause a haxe compilation
      * error at worst.
      * @return expr ready for writing, or null if the expr could not be handled
-     **/
+     */
     function rebuildIfExpr(e:Expr) : Expr {
         var isNumericType = function(s) {
             return (s == "Float" || s == "Int" || s == "UInt");
@@ -2779,7 +2790,6 @@ class Writer
      * case needs to be indented
      */
     function shouldIndentCase(expressions:Array<Expr>) : Bool {
-        
         //copy as might need to change
         var expressions = expressions.copy();
 
@@ -2880,7 +2890,7 @@ class Writer
         return Lambda.has(kwds, "const");
     }
     
-    function istring(t : T, fixCase:Bool=true) : String
+    function istring(?t : T, fixCase:Bool=true) : String
     {
         if(t == null) return null;
         switch(t)
@@ -2902,7 +2912,7 @@ class Writer
         }
     }
     
-    function tstring(t : T, isNativeGetSet:Bool=false, fixCase:Bool=true) : String
+    function tstring(?t : T, isNativeGetSet:Bool=false, fixCase:Bool=true) : String
     {
         if(t == null) return null;
         switch(t)

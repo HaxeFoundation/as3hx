@@ -81,17 +81,67 @@ class Compat {
         return _(ECall( _(EField( _(EConst(CType("Std"))), "parseInt")), [_(ECall( _(EField( _(EConst(CType("Std"))), "string")), [e]))]));
     }
     
-    public static function setInterval(callback:Dynamic, milliseconds:Int, rest:Array<Dynamic>):Int {
+    public static inline function setInterval(callback:Dynamic, milliseconds:Int, ?rest:Array<Dynamic>):Int {
+        if (rest == null) rest = [];
         return FlashTimerAdapter.setInterval(callback, milliseconds, rest);
     }
     
-    public static function clearInterval(id:Int) FlashTimerAdapter.clearInterval(id);
+    public static inline function clearInterval(id:Int) FlashTimerAdapter.clearInterval(id);
     
-    public static function setTimeout(callback:Dynamic, milliseconds:Int, rest:Array<Dynamic>):Int {
+    public static inline function setTimeout(callback:Dynamic, milliseconds:Int, ?rest:Array<Dynamic>):Int {
+        if (rest == null) rest = [];
         return FlashTimerAdapter.setTimeout(callback, milliseconds, rest);
     }
     
-    public static function clearTimeout(id:Int) FlashTimerAdapter.clearTimeout(id);
+    public static inline function clearTimeout(id:Int) FlashTimerAdapter.clearTimeout(id);
+    
+    /**
+     * Runtime value of INT_MAX depends on target platform
+     */
+    public static var INT_MAX(get, never):Int;
+    static inline function get_INT_MAX():Int {
+        #if flash
+        return untyped __global__['int'].MAX_VALUE;
+        #elseif js
+        return untyped __js__('Number.MIN_SAFE_INTEGER');
+        #elseif cs
+        return untyped __cs__('int.MaxValue');
+        #elseif java
+        return untyped __java__('Integer.MAX_VALUE');
+        #elseif cpp
+        return untyped __cpp__('std::numeric_limits<int>::max()');
+        #elseif python
+        return PythonSysAdapter.maxint;
+        #elseif php
+        return untyped __php__('PHP_INT_MAX');
+        #else
+        return 2^31-1;
+        #end
+    }
+    
+    /**
+     * Runtime value of INT_MIN depends on target platform
+     */
+    public static var INT_MIN(get, never):Int;
+    static inline function get_INT_MIN():Int {
+        #if flash
+        return untyped __global__['int'].MIN_VALUE;
+        #elseif js
+        return untyped __js__('Number.MIN_SAFE_INTEGER');
+        #elseif cs
+        return untyped __cs__('int.MinValue');
+        #elseif java
+        return untyped __java__('Integer.MIN_VALUE');
+        #elseif cpp
+        return untyped __cpp__('std::numeric_limits<int>::min()');
+        #elseif python
+        return -PythonSysAdapter.maxint - 1;
+        #elseif php
+        return untyped __php__('PHP_INT_MIN');
+        #else
+        return -2^31;
+        #end
+    }
 }
 
 private class FlashTimerAdapter {
@@ -126,3 +176,10 @@ private class FlashTimerAdapter {
         timers[id] = null;
     }
 }
+
+#if python
+@:pythonImport("sys")
+private extern class PythonSysAdapter {
+    public static var maxint:Int;
+}
+#end
