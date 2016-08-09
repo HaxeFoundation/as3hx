@@ -174,6 +174,11 @@ class AS3HXTest {
         generate("Issue112.as", "Issue112.hx");
     }
     
+    @Test("/pattern/flags.exec(string) -> as3hx.Compat.FlashRegExp(pattern, flags).exec(string)")
+    public function issue113() {
+        generate("Issue113.as", "Issue113.hx");
+    }
+    
     @Test
     public function issue115() {
         generate("Issue115.as", "Issue115.hx");
