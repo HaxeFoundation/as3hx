@@ -2890,7 +2890,7 @@ class Writer
         return Lambda.has(kwds, "const");
     }
     
-    function istring(?t : T, fixCase:Bool=true) : String
+    function istring(t : T, fixCase:Bool=true) : String
     {
         if(t == null) return null;
         switch(t)
@@ -2912,7 +2912,7 @@ class Writer
         }
     }
     
-    function tstring(?t : T, isNativeGetSet:Bool=false, fixCase:Bool=true) : String
+    function tstring(t : T, isNativeGetSet:Bool=false, fixCase:Bool=true) : String
     {
         if(t == null) return null;
         switch(t)
