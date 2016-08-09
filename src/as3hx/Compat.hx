@@ -103,7 +103,7 @@ class Compat {
         #if flash
         return untyped __global__['int'].MAX_VALUE;
         #elseif js
-        return untyped __js__('Number.MIN_SAFE_INTEGER');
+        return untyped __js__('Number.MAN_SAFE_INTEGER');
         #elseif cs
         return untyped __cs__('int.MaxValue');
         #elseif java
