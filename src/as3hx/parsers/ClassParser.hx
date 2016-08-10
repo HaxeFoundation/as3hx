@@ -1,12 +1,13 @@
 package as3hx.parsers;
 
 import as3hx.As3;
+import as3hx.Config;
 import as3hx.Tokenizer;
 import as3hx.Parser;
 
 class ClassParser {
 
-    public static function parse(tokenizer, types:Types, cfg, path, filename, kwds,meta:Array<Expr>,isInterface:Bool) : ClassDef {
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg:Config, path:String, filename:String, kwds:Array<String>, meta:Array<Expr>,isInterface:Bool) : ClassDef {
         var parseType = TypeParser.parse.bind(tokenizer, types, cfg);
         var parseMetadata = MetadataParser.parse.bind(tokenizer, types, cfg);
         var parseClassVar = parseVar.bind(tokenizer, types, cfg);

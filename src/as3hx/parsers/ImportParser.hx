@@ -13,7 +13,7 @@ class ImportParser {
         "clearInterval",
     ];
     
-    public static function parse(tokenizer:Tokenizer, cfg) {
+    public static function parse(tokenizer:Tokenizer, cfg:Config) {
         Debug.dbg("parseImport()", tokenizer.line);
         var a = [tokenizer.id()];
         while( true ) {

@@ -6,7 +6,7 @@ import as3hx.Parser;
 
 class MetadataParser {
 
-    public static function parse(tokenizer, types:Types, cfg) : Expr {
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg:Config) : Expr {
         var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
         Debug.dbg("parseMetadata()", tokenizer.line);
         tokenizer.ensure(TBkOpen);
