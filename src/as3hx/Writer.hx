@@ -116,6 +116,7 @@ class Writer
         var result = [];
         var f:Expr->Void = null;
         f = function(e) {
+            if(e == null) return;
             switch(e) {
                 case EBlock(ex):
                     for(i in 0...ex.length) {
