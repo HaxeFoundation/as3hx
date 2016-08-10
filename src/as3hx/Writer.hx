@@ -997,7 +997,7 @@ class Writer
                     case CFloat(_): "Float";
                     case CString(_): "String";
                 }
-            case ERegexp(str, opt): return cfg.useCompat ? "as3hx.Compat.Regexp" : "RegExp";
+            case ERegexp(str, opt): return cfg.useCompat ? "as3hx.Compat.Regex" : "flash.utils.RegExp";
             default:
         }
         return null;
@@ -2921,7 +2921,7 @@ class Writer
                     case "Object"   : isNativeGetSet ? "{}" : "Dynamic";
                     case "XML"      : cfg.useFastXML ? "FastXML" : "Xml";
                     case "XMLList"  : cfg.useFastXML ? "FastXMLList" : "Iterator<Xml>";
-                    case "RegExp"   : cfg.useCompat ? "as3hx.Compat.Regexp" : c;
+                    case "RegExp"   : cfg.useCompat ? "as3hx.Compat.Regex" : "flash.utils.RegExp";
                     default         : fixCase ? properCase(c, true) : c;
                 }
             case TComplex(e):
