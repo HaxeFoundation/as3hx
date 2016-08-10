@@ -216,6 +216,11 @@ class AS3HXTest {
         generate("Issue134.as", "Issue134.hx");
     }
     
+    @Test("Number.MIN_VALUE -> as3hx.Compat.FLOAT_MIN, Number.MAX_VALUE -> as3hx.Compat.FLOAT_MAX")
+    public function issue139() {
+        generate("Issue139.as", "Issue139.hx");
+    }
+    
     function generate(as3FileName:String, expectedHaxeFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var generatedDirectoryPath = '$issuesDirectory/generated';

@@ -95,6 +95,50 @@ class Compat {
     public static inline function clearTimeout(id:Int) FlashTimerAdapter.clearTimeout(id);
     
     /**
+     * Runtime value of FLOAT_MAX depends on target platform
+     */
+    public static var FLOAT_MAX(get, never):Float;
+    static inline function get_FLOAT_MAX():Float {
+        #if flash
+        return untyped __global__['Number'].MAX_VALUE;
+        #elseif js
+        return untyped __js__('Number.MAX_VALUE');
+        #elseif cs
+        return untyped __cs__('double.MaxValue');
+        #elseif java
+        return untyped __java__('Double.MAX_VALUE');
+        #elseif cpp
+        return untyped __cpp__('std::numeric_limits<double>::max()');
+        #elseif python
+        return PythonSysAdapter.float_info.max;
+        #else
+        return 1.79e+308;
+        #end
+    }
+    
+    /**
+     * Runtime value of FLOAT_MIN depends on target platform
+     */
+    public static var FLOAT_MIN(get, never):Float;
+    static inline function get_FLOAT_MIN():Float {
+        #if flash
+        return untyped __global__['Number'].MIN_VALUE;
+        #elseif js
+        return untyped __js__('Number.MIN_VALUE');
+        #elseif cs
+        return untyped __cs__('double.MinValue');
+        #elseif java
+        return untyped __java__('Double.MIN_VALUE');
+        #elseif cpp
+        return untyped __cpp__('std::numeric_limits<double>::min()');
+        #elseif python
+        return PythonSysAdapter.float_info.min;
+        #else
+        return -1.79E+308;
+        #end
+    }
+    
+    /**
      * Runtime value of INT_MAX depends on target platform
      */
     public static var INT_MAX(get, never):Int;
@@ -180,6 +224,7 @@ private class FlashTimerAdapter {
 @:pythonImport("sys")
 private extern class PythonSysAdapter {
     public static var maxint:Int;
+    public static var float_info:{max:Float, min:Float};
 }
 #end
 
