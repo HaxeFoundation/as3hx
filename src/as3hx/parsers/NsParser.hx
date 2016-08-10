@@ -1,10 +1,11 @@
 package as3hx.parsers;
 
 import as3hx.As3;
+import as3hx.Tokenizer;
 
 class NsParser {
 
-    public static function parse(tokenizer, kwds, meta) : NamespaceDef {
+    public static function parse(tokenizer:Tokenizer, kwds:Array<String>, meta:Array<Expr>) : NamespaceDef {
         Debug.dbgln("parseNsDef()", tokenizer.line);
         var name = tokenizer.id();
         var value = null;

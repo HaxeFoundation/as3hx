@@ -1,12 +1,13 @@
 package as3hx.parsers;
 
+import as3hx.Config;
 import as3hx.Parser;
 import as3hx.As3;
 import as3hx.Tokenizer;
 
 class ProgramParser {
 
-    public static function parse(tokenizer:Tokenizer, types:Types, cfg, path, filename) : Program {
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg:Config, path:String, filename:String) : Program {
         var parsePackageName = PackageNameParser.parse.bind(tokenizer);
         var parseMetadata = MetadataParser.parse.bind(tokenizer, types, cfg);
         var parseImport = ImportParser.parse.bind(tokenizer, cfg);

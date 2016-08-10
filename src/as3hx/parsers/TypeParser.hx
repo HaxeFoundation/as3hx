@@ -6,7 +6,7 @@ import as3hx.Parser;
 
 class TypeParser {
 
-    public static function parse(tokenizer:Tokenizer, types:Types, cfg) {
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg:Config):T {
         var parseType = parse.bind(tokenizer, types, cfg);
         var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
 

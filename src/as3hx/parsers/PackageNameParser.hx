@@ -4,7 +4,7 @@ import as3hx.Tokenizer;
 
 class PackageNameParser {
 
-    public static function parse(tokenizer) {
+    public static function parse(tokenizer:Tokenizer):Array<String> {
         Debug.dbg("parsePackageName()", tokenizer.line);
         var a = [tokenizer.id()];
         while( true ) {

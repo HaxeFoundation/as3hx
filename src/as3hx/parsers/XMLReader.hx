@@ -29,7 +29,7 @@ class XMLReader {
             if( prev == "/".code )
                 return buf.toString();
             if (isCDATA)
-                return buf.toString();    
+                return buf.toString();
             while(true) {
                 var c = input.readByte();
                 if(c == "\n".code) tokenizer.line++;

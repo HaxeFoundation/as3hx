@@ -993,10 +993,11 @@ class Writer
                 return getExprType(e2);
             case EConst(c):
                 return switch(c) {
-                case CInt(_): "Int";
-                case CFloat(_): "Float";
-                case CString(_): "String";
+                    case CInt(_): "Int";
+                    case CFloat(_): "Float";
+                    case CString(_): "String";
                 }
+            case ERegexp(str, opt): return cfg.useCompat ? "as3hx.Compat.Regex" : "flash.utils.RegExp";
             default:
         }
         return null;
@@ -1007,16 +1008,12 @@ class Writer
      * EField(EIdent(xml),user) or EE4XDescend(EIdent(xml), EIdent(user))
      */
     function getBaseVar(e:Expr) : String {
-        switch(e) {
-            case EField(e2, f):
-                return getExprType(e2);
-            case EIdent(s):
-                return s;
-            case EE4XDescend(e2, e3):
-                return getBaseVar(e2);
-            default:
+        return switch(e) {
+            case EField(e2, f): getExprType(e2);
+            case EIdent(s): s;
+            case EE4XDescend(e2, e3): getBaseVar(e2);
+            default: throw "Unexpected " + e;
         }
-        throw "Unexpected " + e;
     }
 
     function typeExpr(e:Expr) : String {
@@ -1320,8 +1317,7 @@ class Writer
                             write(";");
                             write("  // "+ s);
                             return None;
-
-                        default:    
+                        default:
                     }
                 }
 
@@ -1866,8 +1862,8 @@ class Writer
                             writeExpr(params[i]);
                         }
                     }
-                    write(")");
                 }
+                    write(")");
             case EThrow( e ):
                 write("throw ");
                 writeExpr(e);
@@ -1900,7 +1896,7 @@ class Writer
                     writeIndent("}");
                 }
             case ERegexp( str, opts ):
-                write('new EReg('+eregQuote(str)+', "'+opts+'")');
+                write('new ${getExprType(expr)}(' + eregQuote(str) + ', "' + opts + '")');
             case ESwitch( e, cases, def):
                 var newCases : Array<CaseDef> = new Array();
                 var writeTestVar = false;
@@ -2619,22 +2615,13 @@ class Writer
                 else if (f == "join" && params.empty()) {
                     var type = getExprType(e);
                     if (type != null && type.indexOf("Array") != -1) {
-                        var rebuildExpr = EField(e, "join");
-                        rebuiltCall = ECall(rebuildExpr, [EConst(CString(","))]);
+                        rebuiltCall = ECall(EField(e, f), [EConst(CString(","))]);
                     }
                 }
-                else if (f == "charAt") {
+                else if (f == "charAt" || f == "charCodeAt") {
                     var type = getExprType(e);
                     if (type != null && type.indexOf("String") != -1 && params.empty()) {
-                        var rebuildExpr = EField(e, "charAt");
-                        rebuiltCall = ECall(rebuildExpr, [EConst(CInt("0"))]);
-                    }
-                }
-                else if (f == "charCodeAt") {
-                    var type = getExprType(e);
-                    if (type != null && type.indexOf("String") != -1 && params.empty()) {
-                        var rebuildExpr = EField(e, "charCodeAt");
-                        rebuiltCall = ECall(rebuildExpr, [EConst(CInt("0"))]);
+                        rebuiltCall = ECall(EField(e, f), [EConst(CInt("0"))]);
                     }
                 }
                 else {
@@ -2657,10 +2644,8 @@ class Writer
                     //of the provided param
                     var getCommentedParam = function(param) {
                         return switch(param) {
-                            case EConst(CString(s)):
-                                return s;
-                            case EIdent(id):
-                                return id;
+                            case EConst(CString(s)): s;
+                            case EIdent(id): id;
                             default: null;
                         }
                     }
@@ -2936,8 +2921,8 @@ class Writer
                     case "Object"   : isNativeGetSet ? "{}" : "Dynamic";
                     case "XML"      : cfg.useFastXML ? "FastXML" : "Xml";
                     case "XMLList"  : cfg.useFastXML ? "FastXMLList" : "Iterator<Xml>";
-                    case "RegExp"   : "EReg";
-                    default         : fixCase ? properCase(c,true) : c;
+                    case "RegExp"   : cfg.useCompat ? "as3hx.Compat.Regex" : "flash.utils.RegExp";
+                    default         : fixCase ? properCase(c, true) : c;
                 }
             case TComplex(e):
                 return buffer(function() { writeExpr(e); });

@@ -5,7 +5,7 @@ import as3hx.Parser;
 
 class DefinitionParser {
 
-    public static function parse(tokenizer:Tokenizer, types:Types, cfg, path, filename, meta:Array<Expr>) : Definition {
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg:Config, path:String, filename:String, meta:Array<Expr>) : Definition {
         var parseClass = ClassParser.parse.bind(tokenizer, types, cfg);
         var parseFunDef = FunctionParser.parseDef.bind(tokenizer, types, cfg);
         var parseNsDef = NsParser.parse.bind(tokenizer);

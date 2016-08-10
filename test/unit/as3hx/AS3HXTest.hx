@@ -179,6 +179,18 @@ class AS3HXTest {
         generate("Issue115.as", "Issue115.hx");
     }
     
+    @Test("/pattern/flags.exec(string) -> as3hx.Compat.FlashRegExp(pattern, flags).exec(string)")
+    public function issue119_useCompat() {
+        generate("Issue119.as", "Issue119_useCompat.hx");
+    }
+    
+    @Test("/pattern/flags.exec(string) -> flash.utils.RegExp(pattern, flags).exec(string)")
+    public function issue119_notUseCompat() {
+        cfg.useCompat = false;
+        generate("Issue119.as", "Issue119_notUseCompat.hx");
+        cfg.useCompat = true;
+    }
+    
     @Test("delete object['key']")
     public function issue121() {
         generate("Issue121.as", "Issue121.hx");
