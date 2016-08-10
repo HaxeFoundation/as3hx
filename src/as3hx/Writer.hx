@@ -1130,15 +1130,26 @@ class Writer
                             if(getExprType(e2) == "FastXML")
                                 inArrayAccess = true;
                         case EIdent(v):
-                            if(getModifiedIdent(v) == "Int") {
-                                if(f == "MAX_VALUE") {
-                                    writeExpr(EField(EIdent("as3hx.Compat"), "INT_MAX"));
-                                    return None;
-                                }
-                                if(f == "MIN_VALUE") {
-                                    writeExpr(EField(EIdent("as3hx.Compat"), "INT_MIN"));
-                                    return None;
-                                }
+                            switch(getModifiedIdent(v)) {
+                                case "Int":
+                                    if(f == "MAX_VALUE") {
+                                        writeExpr(EField(EIdent("as3hx.Compat"), "INT_MAX"));
+                                        return None;
+                                    }
+                                    if(f == "MIN_VALUE") {
+                                        writeExpr(EField(EIdent("as3hx.Compat"), "INT_MIN"));
+                                        return None;
+                                    }
+                                case "Float":
+                                    if(f == "MAX_VALUE") {
+                                        writeExpr(EField(EIdent("as3hx.Compat"), "FLOAT_MAX"));
+                                        return None;
+                                    }
+                                    if(f == "MIN_VALUE") {
+                                        writeExpr(EField(EIdent("as3hx.Compat"), "FLOAT_MIN"));
+                                        return None;
+                                    }
+                                default:
                             }
                         default:
                     }
