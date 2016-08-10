@@ -1,7 +1,6 @@
 package as3hx;
 
 import Type;
-import haxe.Timer;
 import haxe.macro.Expr;
 import haxe.macro.Context;
 
@@ -149,7 +148,7 @@ private class FlashTimerAdapter {
     public static var timers:Array<haxe.Timer> = [];
     
     public static function setInterval(callback:Dynamic, milliseconds:Int, rest:Array<Dynamic>):Int {
-        var timer = new Timer(milliseconds);
+        var timer = new haxe.Timer(milliseconds);
         timers.push(timer);
         var id = timers.length - 1;
         timer.run = function() Reflect.callMethod(null, callback, rest);
@@ -159,7 +158,7 @@ private class FlashTimerAdapter {
     public static function clearInterval(id:Int) stopTimer(id);
     
     public static function setTimeout(callback:Dynamic, milliseconds:Int, rest:Array<Dynamic>):Int {
-        var timer = new Timer(milliseconds);
+        var timer = new haxe.Timer(milliseconds);
         timers.push(timer);
         var id = timers.length - 1;
         timer.run = function() {
