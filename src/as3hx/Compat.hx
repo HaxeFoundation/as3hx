@@ -3,7 +3,6 @@ package as3hx;
 import Type;
 import haxe.macro.Expr;
 import haxe.macro.Context;
-import haxe.macro.Type;
 
 /**
  * Collection of functions that just have no real way to be compatible in Haxe 
@@ -11,7 +10,7 @@ import haxe.macro.Type;
 class Compat {
 
     /* According to Adobe:
-     * The result is limited to six possible string values: 
+     * The result is limited to six possible string values:
      *      boolean, function, number, object, string, and xml.
      * If you apply this operator to an instance of a user-defined class,
      * the result is the string object.
@@ -19,23 +18,22 @@ class Compat {
      * TODO: TUnknown returns "undefined" on top of this. Not positive on this
      */
     public static function typeof(v:Dynamic) : String {
-        return
-        switch(Type.typeof(v)) {
-        case TUnknown: "undefined";
-        case TObject: "object";
-        case TNull: "object";
-        case TInt: "number";
-        case TFunction: "function";
-        case TFloat: "number";
-        case TEnum(e): "object";
-        case TClass(c):
-            switch(Type.getClassName(c)) {
-            case "String": "string";
-            case "Xml": "xml";
-            case "haxe.xml.Fast": "xml";
-            default: "object";
-            }
-        case TBool: "boolean";
+        return switch(Type.typeof(v)) {
+            case TUnknown: "undefined";
+            case TObject: "object";
+            case TNull: "object";
+            case TInt: "number";
+            case TFunction: "function";
+            case TFloat: "number";
+            case TEnum(e): "object";
+            case TClass(c):
+                switch(Type.getClassName(c)) {
+                    case "String": "string";
+                    case "Xml": "xml";
+                    case "haxe.xml.Fast": "xml";
+                    default: "object";
+                }
+            case TBool: "boolean";
         };
     }
 
@@ -47,7 +45,7 @@ class Compat {
     /**
      * Converts a typed expression into a Float.
      */
-    @:macro public static function parseFloat(e:Expr) : Expr {
+    macro public static function parseFloat(e:Expr) : Expr {
         var _ = function (e:ExprDef) return { expr: e, pos: Context.currentPos() };
         switch (Context.typeof(e)) {
             case TInst(t,params): 
@@ -66,7 +64,7 @@ class Compat {
     /**
      * Converts a typed expression into an Int.
      */
-    @:macro public static function parseInt(e:Expr) : Expr {
+    macro public static function parseInt(e:Expr) : Expr {
         var _ = function (e:ExprDef) return { expr: e, pos: Context.currentPos() };
         switch (Context.typeof(e)) {
             case TInst(t,params): 
