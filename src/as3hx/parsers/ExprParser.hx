@@ -247,7 +247,7 @@ class ExprParser {
             }
             return parseExprNext(EField(e1,field), 0);
         case TPOpen:
-            return parseExprNext(ECall(e1,parseExprList(TPClose)), 0);
+            return parseExprNext(ECall(e1, parseExprList(TPClose)), 0);
         case TBkOpen:
             var e2 = parseExpr(false);
             tk = tokenizer.token();
@@ -329,7 +329,7 @@ class ExprParser {
         return e;
     }
 
-    public static function parseList(tokenizer, types:Types, cfg, etk ) : Array<Expr> {
+    public static function parseList(tokenizer:Tokenizer, types:Types, cfg:Config, etk:Token) : Array<Expr> {
         var parseExpr = parse.bind(tokenizer, types, cfg);
         Debug.dbgln("parseExprList()", tokenizer.line);
 
@@ -338,44 +338,57 @@ class ExprParser {
             if(args.length == 0) return;
             args[args.length-1] = ParserUtils.tailComment(args[args.length-1], t);
         }
-        if( ParserUtils.opt(tokenizer, etk) )
-            return args;
-        while( true ) {
-            args.push(parseExpr(false));
+        if (ParserUtils.opt(tokenizer, etk)) return args;
+        var exprToToken = new Map<Expr, Token>();
+        while(true) {
             var tk = tokenizer.token();
-            switch( tk ) {
-            case TComma:
-            case TCommented(_,_,_):
-                var t = ParserUtils.uncomment(tk);
-                if(t == etk) {
-                    f(tk);
-                    break;
-                }
-                switch(t) {
+            tokenizer.add(tk);
+            var expr = parseExpr(false);
+            exprToToken.set(expr, tk);
+            args.push(expr);
+            tk = tokenizer.token();
+            switch(tk) {
                 case TComma:
-                    f(tk);
+                    var ntk = tokenizer.token();
+                    switch(ntk) {
+                        case TCommented(s, b, t):
+                            var index = args.length - 1;
+                            var lastExpr = args[index];
+                            args[index] = ECommented(s, b, true, lastExpr);
+                            tokenizer.add(t);
+                        default:
+                            tokenizer.add(ntk);
+                    }
+                case TCommented(_,_,_):
+                    var t = ParserUtils.uncomment(tk);
+                    if(t == etk) {
+                        f(tk);
+                        break;
+                    }
+                    switch(t) {
+                        case TComma:
+                            f(tk);
+                        case TNL(t):
+                            f(tk);
+                            args.push(ENL(null));
+                            if(t == etk) break;
+                        default:
+                            if(tk == etk) break;
+                            ParserUtils.unexpected(tk);
+                    }
                 case TNL(t):
-                    f(tk);
                     args.push(ENL(null));
-                    if (t == etk) break;
+                    switch (t) {
+                        case TCommented(s,b,t2): f(t);
+                        default:
+                    }
+                    var t = ParserUtils.uncomment(t);
+                    if(t == etk) break;
                 default:
-                    if( tk == etk ) break;
+                    if(tk == etk) break;
                     ParserUtils.unexpected(tk);
-                }
-            case TNL(t):
-                args.push(ENL(null));
-                switch (t) {
-                    case TCommented(s,b,t2):
-                        f(t);
-                    default:    
-                }
-                 var t = ParserUtils.uncomment(t);
-                if (t == etk) break;
-            default:
-                if( tk == etk ) break;
-                ParserUtils.unexpected(tk);
             }
         }
-        return args;
+        return args.filter(function(e) return !e.match(ENL(null)));
     }
 }

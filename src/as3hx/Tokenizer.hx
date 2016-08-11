@@ -344,7 +344,7 @@ class Tokenizer {
         this.char = c;
     }
 
-    public function add(tk) {
+    public function add(tk:Token) {
         tokens.add(tk);
     }
 
