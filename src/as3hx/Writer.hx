@@ -1181,10 +1181,8 @@ class Writer
                             writeExpr(e1);
                             write(", ");
                             switch(e2) {
-                            case EIdent(s):
-                                writeModifiedIdent(s);
-                            default:
-                                writeExpr(e2);
+                                case EIdent(s): writeModifiedIdent(s);
+                                default: writeExpr(e2);
                             }
                             write(") catch(e:Dynamic) null");
                         }
@@ -1840,15 +1838,14 @@ class Writer
                     writeExpr(e[i]);
                 }
                 write("]");
-            case ENew( t, params ):
+            case ENew(t, params):
                 //write("/* " +context.get(tstring(t,false,false))+ " */");
-                var origType = context.get(tstring(t,false,false));
+                var origType = context.get(tstring(t, false, false));
                 if(origType == "Class<Dynamic>") {
                     write("Type.createInstance(");
-                    write(tstring(t,false,false));
+                    write(tstring(t, false, false));
                     write(", [");
-                    for (i in 0...params.length)
-                    {
+                    for (i in 0...params.length) {
                         if (i > 0)
                             write(", ");
                         writeExpr(params[i]);
@@ -1856,26 +1853,25 @@ class Writer
                     write("])");
                 } 
                 //in AS3, if Date constructed without argument, uses current time
-                else if (tstring(t) == "Date" && params.length == 0) {
-                      write("Date.now()"); //use Haxe constructor for current time
+                else if (tstring(t) == "Date" && params.empty()) {
+                    write("Date.now()"); //use Haxe constructor for current time
                 } else {
                     write("new " + tstring(t) + "(");
                     var out = true;
                     // prevent params when converting vector to array
                     switch(t) {
-                    case TVector(_): out = !cfg.vectorToArray;
-                    default:
+                        case TVector(_): out = !cfg.vectorToArray;
+                        default:
                     }
                     if(out) {
-                        for (i in 0...params.length)
-                        {
+                        for (i in 0...params.length) {
                             if (i > 0)
                                 write(", ");
                             writeExpr(params[i]);
                         }
                     }
-                }
                     write(")");
+                }
             case EThrow( e ):
                 write("throw ");
                 writeExpr(e);
