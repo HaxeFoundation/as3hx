@@ -11,7 +11,10 @@ class Issue15
         }
         ++i;
         
-        if (true) trace("")
+        if (true)
+        {
+            trace("");
+        }
         else
         {
             trace("");

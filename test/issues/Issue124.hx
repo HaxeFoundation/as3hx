@@ -11,7 +11,9 @@ class Issue124
             delete _eventListeners[type];
         }
         else
+        {
             _eventListeners = null;
+        }
     }
 
     public function new()

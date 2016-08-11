@@ -1472,14 +1472,7 @@ class Writer
                             write(") ");
                     }
                 } else writeCloseStatement();
-                var removeENL:Expr->Expr = null;
-                removeENL = function(ex) {
-                    return switch(ex) {
-                        case ENL(e): removeENL(e);
-                        default: ex;
-                    }
-                }
-                e1 = removeENL(e1);
+                e1 = EBlock(formatBlockBody(e1));
                 writeExpr(e1);
                 if (e2 != null)
                 {
@@ -1500,28 +1493,13 @@ class Writer
                         }
                     }
                     e2 = f(e2);
-
+                    e2 = EBlock(formatBlockBody(e2));
                     writeNL();
-                    switch(e2) {
-                        case EBlock(e):
-                            if (cfg.bracesOnNewline) {
-                                writeIndent("else");
-                                writeNL();
-                                writeIndent();
-                            } else writeIndent("else ");
-                        case ENL(e):
-                            writeIndent("else");
-                            if(e.match(EBlock(_))) {
-                                rv = writeExpr(e2);
-                            } else {
-                                lvl++;
-                                rv = writeExpr(e2);
-                                lvl--;
-                            }
-                            return rv;
-                        default: writeIndent("else ");
-                    }
-
+                    if (cfg.bracesOnNewline) {
+                        writeIndent("else");
+                        writeNL();
+                        writeIndent();
+                    } else writeIndent("else ");
                     rv = writeExpr(e2);
                 } else {
                     rv = getEIfBlockEnd(e1);

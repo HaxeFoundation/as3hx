@@ -8,7 +8,9 @@ class Issue65
         {
             var current : Dynamic = array[i];
             if (current == null)
+            {
                 continue;
+            }
         }
     }
 }
