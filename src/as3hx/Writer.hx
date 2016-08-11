@@ -1807,13 +1807,22 @@ class Writer
                         write("]");
                     }
                 }
-            case EArrayDecl( e ):
+            case EArrayDecl(e):
+                var enl = false;
                 write("[");
-                for (i in 0...e.length)
-                {
+                for (i in 0...e.length) {
                     if (i > 0)
                         write(", ");
-                    writeExpr(e[i]);
+                    var ex = e[i];
+                    writeExpr(ex);
+                    if(!enl && (ex.match(ECommented(_,false,_,_)) || ex.match(ENL(_)))) enl = true;
+                }
+                if (enl) {
+                    writeNL();
+                    var step = Std.int(lvl / 2);
+                    lvl -= step;
+                    writeIndent();
+                    lvl += step;
                 }
                 write("]");
             case ENew(t, params):
@@ -1863,19 +1872,18 @@ class Writer
                     writeCloseStatement();
                     rv = writeExpr(c.e);
                 }
-            case EObject( fl ):
-                if (fl.length == 0)
-                {
+            case EObject(fl):
+                if (fl.empty()) {
                     write("{ }");
                 } else {
                     writeNL("{");
                     lvl++;
-                    for (i in 0...fl.length)
-                    {
+                    var length = fl.length;
+                    for (i in 0...length) {
                         var field = fl[i];
                         writeIndent(field.name + (cfg.spacesOnTypeColon ? " : " : ": "));
                         writeExpr(field.e);
-                        writeNL(i > 0 || fl.length > 1 ? "," : "");
+                        if(i < length - 1) writeNL(i > 0 || fl.length > 1 ? "," : "");
                     }
                     lvl--;
                     writeNL();
