@@ -18,8 +18,8 @@ class ParserUtils {
      * Takes a token that may be a comment and returns
      * an array of tokens that will have the comments
      * at the beginning
-     **/
-    public static function explodeComment(tk) : Array<Token> {
+     */
+    public static function explodeComment(tk:Token) : Array<Token> {
         var a = [];
         var f : Token->Void = null;
         f = function(t) {
@@ -40,25 +40,19 @@ class ParserUtils {
         return a;
     }
 
-    public static function uncomment(tk) {
-        if(tk == null)
-            return null;
+    public static function uncomment(?tk:Token):Token {
+        if(tk == null) return null;
         return switch(tk) {
-        case TCommented(s,b,e):
-            uncomment(e);
-        default:
-            tk;
+            case TCommented(s,b,e): uncomment(e);
+            default: tk;
         }
     }
 
-    public static function uncommentExpr(e) {
-        if(e == null)
-            return null;
+    public static function uncommentExpr(?e:Expr):Expr {
+        if(e == null) return null;
         return switch(e) {
-        case ECommented(s,b,t,e2):
-            uncommentExpr(e2);
-        default:
-            e;
+            case ECommented(s,b,t,e2): uncommentExpr(e2);
+            default: e;
         }
     }
 
@@ -84,7 +78,7 @@ class ParserUtils {
      * Takes an expression e and adds the comment 'tk' to it
      * as a trailing comment, iif tk is a TCommented, discarding
      * whatever the comment target token is.
-     **/
+     */
     public static function tailComment(e:Expr, tk:Token) : Expr {
         //TCommented( s : String, isBlock:Bool, t : Token );
         // to
@@ -105,7 +99,7 @@ class ParserUtils {
     /**
      * Takes ctk, a TCommented, and replaces the target token
      * with 'e', creating an ECommented
-     **/
+     */
     public static function makeECommented(ctk:Token, e:Expr) : Expr {
         return switch(ctk) {
         case TCommented(s,b,t):
@@ -147,28 +141,26 @@ class ParserUtils {
      */
     public static function removeNewLineExpr(e : Expr, removeComments : Bool = true) : Expr {
         return switch(e) {
-            case ENL(e2):
-                return removeNewLineExpr(e2, removeComments);
+            case ENL(e2): removeNewLineExpr(e2, removeComments);
             case ECommented(s,b,t,e2):
                 if (removeComments) {
                     return removeNewLineExpr(e2, removeComments);
                 } else {
                     return e;
                 }
-            default:
-                return e;    
+            default: e;
         }
     }
 
-    public static function unexpected( tk ) : Dynamic {
+    public static function unexpected(tk:Token) : Dynamic {
         throw EUnexpected(Tokenizer.tokenString(tk));
         return null;
     }
 
-   /**
-    * In certain cases, a typedef will be generated 
-    * for a class attribute, for better type safety
-    */
+    /**
+     * In certain cases, a typedef will be generated 
+     * for a class attribute, for better type safety
+     */
     public static function generateTypeIfNeeded(classVar : ClassField)
     {
         //this only applies to static field attributes, as

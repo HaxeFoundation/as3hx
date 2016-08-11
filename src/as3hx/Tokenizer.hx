@@ -351,7 +351,7 @@ class Tokenizer {
     /**
      * Ensures the next token (ignoring comments and newlines) is 'tk'.
      * @return array of comments before 'tk'
-     **/
+     */
     public function ensure(tk:Token) : Array<Token> {
         var t = token();
 
