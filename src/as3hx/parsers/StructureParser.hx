@@ -128,24 +128,21 @@ class StructureParser {
             } else {
                 var t = parseType();
                 // o = new (iconOrLabel as Class)() as DisplayObject
-                var cc = switch (t) {
-                                    case TComplex(e1) : 
-                                    switch (e1) {
-                                        case EBinop(op, e2, e3, n): 
-                                        if (op == "as") {
-                                            switch (e2) {
-                                                case ECall(e4, a): 
-                                                EBinop(op, ECall(EField(EIdent("Type"), "createInstance"), [e4, EArrayDecl(a)]), e3, n);
-                                                default: 
-                                                null;
-                                            }
-                                        }
-                                        return null;
-                                        default: 
-                                        null;
+                var cc = switch(t) {
+                    case TComplex(e1) :
+                        switch (e1) {
+                            case EBinop(op, e2, e3, n): 
+                                if (op == "as") {
+                                    switch (e2) {
+                                        case ECall(e4, a): 
+                                            EBinop(op, ECall(EField(EIdent("Type"), "createInstance"), [e4, EArrayDecl(a)]), e3, n);
+                                        default:  null;
                                     }
-                                    default: 
-                                    null;
+                                }
+                                return null;
+                            default: null;
+                        }
+                    default: null;
                 }
                 if (cc != null) cc; else ENew(t,if( ParserUtils.opt(tokenizer, TPOpen) ) parseExprList(TPClose) else []);
             }

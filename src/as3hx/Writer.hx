@@ -915,7 +915,7 @@ class Writer
         return s.substr(0, 1).toUpperCase() + s.substr(1);
     }
     
-    function writeVarType(t : Null<T>, ?alt : String, isNativeGetSet:Bool=false)
+    function writeVarType(?t : Null<T>, ?alt : String, isNativeGetSet:Bool=false)
     {
         if (t == null)
         {
@@ -923,7 +923,7 @@ class Writer
                 write((cfg.spacesOnTypeColon ? " : " : ":") + alt);
             return;
         }
-        write((cfg.spacesOnTypeColon ? " : " : ":") + tstring(t,isNativeGetSet));
+        write((cfg.spacesOnTypeColon ? " : " : ":") + tstring(t, isNativeGetSet));
     }
 
     function writeInits(c : ClassDef) {
@@ -1065,23 +1065,7 @@ class Writer
                 write(getConst(c));
             case EIdent( v ):
                 writeModifiedIdent(v);
-            case EVars( vars ):
-                for (i in 0...vars.length)
-                {
-                    if (i > 0) {
-                        writeNL(";");
-                        writeIndent("");
-                    }
-                    var v = vars[i];
-                    context.set(v.name, tstring(v.t, false));
-                    write("var " + getModifiedIdent(v.name));
-                    writeVarType(v.t);
-                    if (null != v.val)
-                    {
-                        write(" = ");
-                        writeExpr(v.val);
-                    }
-                }
+            case EVars(vars): writeEVars(vars);
             case EParent( e ):
                 write("(");
                 writeExpr(e);
@@ -1293,156 +1277,7 @@ class Writer
                     writeExpr(e);
                     write(op);
                 }
-            case ECall( e, params ):
-                switch(e) {
-                    case EField(e, f):
-                        if (f == "push" && params.length > 1) {
-                            var type = getExprType(e);
-                            if (type != null && type.indexOf("Array") != -1) {
-                                for(it in params) {
-                                    writeExpr(ECall(EField(e, f), [it]));
-                                    write(";");
-                                    writeExpr(ENL(null));
-                                }
-                                return None;
-                            }
-                        }
-                    default:
-                }
-                //write("/*ECall " + e + "(" + params + ")*/\n");
-                //rebuild call expr if necessary
-                var eCall = rebuildCallExpr(expr, e, params);
-                if (eCall != null) {
-                    switch(eCall) {
-                        case ECall(e2, params2):
-                            e = e2;
-                            params = params2;
-
-                        case ECommented(s, b, t, e2):
-                            //This is a hack for the AS3 unit test to 
-                            //Haxe unit test conversion. In some cases,
-                            //the first param of the test if converted
-                            //to an end-of-line comment
-                            writeExpr(e2);
-                            write(";");
-                            write("  // "+ s);
-                            return None;
-                        default:
-                    }
-                }
-
-                //func call use 2 levels of indentation if
-                //spread on multiple lines
-                lvl += 2;
-
-                var handled = false;
-                if(cfg.guessCasts && params.length == 1) {
-                    switch(e) {
-                    case EIdent(n):
-                        var c = n.charCodeAt(0);
-                        if(n.indexOf(".") == -1 && (c>=65 && c<=90)) {
-                            handled = true;
-                            switch(n) {
-                            case "Number": writeCastToFloat(params[0]);
-                            case "String": writeCastToString(params[0]);
-                            case "Boolean":
-                                write("cast(");
-                                writeExpr(params[0]);
-                                write(", ");
-                                write("Bool)");
-                            case "XML":
-                                var type = tstring(TPath(["XML"]));
-                                write('$type.parse(');
-                                writeExpr(params[0]);
-                                write(")");
-                            default:
-                                write("cast((");
-                                writeExpr(params[0]);
-                                write("), ");
-                                write(n + ")");
-                            }
-                        }
-                        // other cases that come up as ECall
-                        switch(n) {
-                        case "isNaN":
-                            write("Math.isNaN(");
-                            writeExpr(params[0]);
-                            write(")");
-                            handled = true;
-                        case "isFinite":
-                            write("Math.isFinite(");
-                            writeExpr(params[0]);
-                            write(")");
-                            handled = true;
-                        case "int" | "uint":
-                            writeCastToInt(params[0]);
-                            handled = true;
-                        }
-                    case EVector(t):
-                        handled = true;
-                        if(cfg.vectorToArray) {
-                            writeExpr(params[0]);
-                        } else {
-                            write("Vector.ofArray(cast ");
-                            writeExpr(params[0]);
-                            write(")");
-                        }
-                    default:
-                    }
-                }
-                if(!handled) {
-                    //return wether the param at the index is the last
-                    //method call argument
-                    var isLastArgument:Array<Expr>->Int->Bool = function(params, index) {
-                        
-                        //return wether the expression is a method call
-                        //argument, which excludes comments and newlines
-                        var isArgument : Expr->Bool = null;
-                        isArgument = function(expr) {
-                            if (expr == null)
-                                 return false;
-
-                            return switch (expr) {
-                                case ECommented(s,b,t,e): isArgument(e);
-                                case ENL(e): isArgument(e);
-                                default:return true;
-                            }
-                        }
-                        
-                        //check all remaining parameters
-                        var i = index;
-                        while(i <= params.length) {
-                            if(isArgument(params[i]))
-                                return false;
-                            i++;
-                        }
-                        return true;
-                    }
-
-                    writeExpr(e);
-                    write("(");
-                    for (i in 0...params.length)
-                    {
-                        if (i > 0) {
-                            //check if arguments remain before adding comma
-                            if(!isLastArgument(params, i))
-                                write(",");
-
-                            //minor formatting fix, if arg is newline or 
-                            //comment, no need for extra space
-                            switch (params[i]) {
-                                case ECommented(s,b,t,e):
-                                case ENL(e):
-                                default:write(" ");
-                            }
-                        }
-                       
-                        writeExpr(params[i]);
-                    }
-                    write(")");
-                }
-
-                lvl -= 2;
+            case ECall(e, params): rv = writeECall(expr, e, params);
             case EIf(cond, e1, e2):
                 write("if (");
                 lvl++; //extra indenting if condition on multiple lines
@@ -1952,6 +1787,180 @@ class Writer
             case EImport(s):
         }
         return rv;
+    }
+    
+    inline function writeEVars(vars:Array<{name:String, t:Null<T>, val:Null<Expr>}>) {
+        for (i in 0...vars.length) {
+            if (i > 0) {
+                writeNL(";");
+                writeIndent("");
+            }
+            var v = vars[i];
+            context.set(v.name, tstring(v.t, false));
+            write("var " + getModifiedIdent(v.name));
+            writeVarType(v.t);
+            if (v.val != null) {
+                write(" = ");
+                writeExpr(v.val);
+            }
+        }
+    }
+    
+    function writeECall(fullExpr:Expr, expr:Expr, params:Array<Expr>):BlockEnd {
+        switch(expr) {
+            case EField(expr, f):
+                if (f == "push" && params.length > 1) {
+                    var type = getExprType(expr);
+                    if (type != null && type.indexOf("Array") != -1) {
+                        for (it in params) {
+                            writeExpr(ECall(EField(expr, f), [it]));
+                            write(";");
+                            writeExpr(ENL(null));
+                        }
+                        return None;
+                    }
+                }
+            default:
+        }
+        //write("/*ECall " + e + "(" + params + ")*/\n");
+        //rebuild call expr if necessary
+        var eCall = rebuildCallExpr(fullExpr, expr, params);
+        if (eCall != null) {
+            switch(eCall) {
+                case ECall(e2, params2):
+                    expr = e2;
+                    params = params2;
+                case ECommented(s, b, t, e2):
+                    //This is a hack for the AS3 unit test to 
+                    //Haxe unit test conversion. In some cases,
+                    //the first param of the test if converted
+                    //to an end-of-line comment
+                    writeExpr(e2);
+                    write(";");
+                    write("  // "+ s);
+                    return None;
+                default:
+            }
+        }
+    
+        //func call use 2 levels of indentation if
+        //spread on multiple lines
+        lvl += 2;
+    
+        var handled = false;
+        if(cfg.guessCasts && params.length == 1) {
+            switch(expr) {
+                case EIdent(n):
+                    var c = n.charCodeAt(0);
+                    if(n.indexOf(".") == -1 && (c>=65 && c<=90)) {
+                        handled = true;
+                        switch(n) {
+                            case "Number": writeCastToFloat(params[0]);
+                            case "String": writeCastToString(params[0]);
+                            case "Boolean":
+                                write("cast(");
+                                writeExpr(params[0]);
+                                write(", ");
+                                write("Bool)");
+                            case "XML":
+                                var type = tstring(TPath(["XML"]));
+                                write('$type.parse(');
+                                writeExpr(params[0]);
+                                write(")");
+                            default:
+                                write("cast((");
+                                writeExpr(params[0]);
+                                write("), ");
+                                write(n + ")");
+                        }
+                    }
+                    // other cases that come up as ECall
+                    switch(n) {
+                        case "isNaN":
+                            write("Math.isNaN(");
+                            writeExpr(params[0]);
+                            write(")");
+                            handled = true;
+                        case "isFinite":
+                            write("Math.isFinite(");
+                            writeExpr(params[0]);
+                            write(")");
+                            handled = true;
+                        case "int" | "uint":
+                            writeCastToInt(params[0]);
+                            handled = true;
+                    }
+                case EVector(t):
+                    handled = true;
+                    if(cfg.vectorToArray) {
+                        writeExpr(params[0]);
+                    } else {
+                        write("Vector.ofArray(cast ");
+                        writeExpr(params[0]);
+                        write(")");
+                    }
+                default:
+            }
+        }
+        if(!handled) {
+            //return wether the param at the index is the last
+            //method call argument
+            var isLastArgument:Array<Expr>->Int->Bool = function(params, index) {
+                
+                //return wether the expression is a method call
+                //argument, which excludes comments and newlines
+                var isArgument : Expr->Bool = null;
+                isArgument = function(fullExpr) {
+                    if (fullExpr == null) return false;
+                    return switch (fullExpr) {
+                        case ECommented(s,b,t,expr): isArgument(expr);
+                        case ENL(expr): isArgument(expr);
+                        default: true;
+                    }
+                }
+                
+                //check all remaining parameters
+                var i = index;
+                while(i <= params.length) {
+                    if(isArgument(params[i]))
+                        return false;
+                    i++;
+                }
+                return true;
+            }
+    
+            writeExpr(expr);
+            write("(");
+            var enl = false;
+            for (i in 0...params.length) {
+                if (i > 0) {
+                    //check if arguments remain before adding comma
+                    if(!isLastArgument(params, i))
+                        write(",");
+    
+                    //minor formatting fix, if arg is newline or 
+                    //comment, no need for extra space
+                    switch (params[i]) {
+                        case ECommented(s,b,t,expr):
+                        case ENL(expr):
+                        default:write(" ");
+                    }
+                }
+                var p = params[i];
+                writeExpr(p);
+                if(!enl && (p.match(ECommented(_,false,true,_)) || p.match(ENL(_)))) enl = true;
+            }
+            if (enl) {
+                writeNL();
+                var step = Std.int(lvl / 2);
+                lvl -= step;
+                writeIndent();
+                lvl += step;
+            }
+            write(")");
+        }
+        lvl -= 2;
+        return Semi;
     }
     
     inline function writeEWhile(cond:Expr, e:Expr, doWhile:Bool):BlockEnd {

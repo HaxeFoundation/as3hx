@@ -344,14 +344,14 @@ class Tokenizer {
         this.char = c;
     }
 
-    public function add(tk) {
+    public function add(tk:Token) {
         tokens.add(tk);
     }
 
     /**
      * Ensures the next token (ignoring comments and newlines) is 'tk'.
      * @return array of comments before 'tk'
-     **/
+     */
     public function ensure(tk:Token) : Array<Token> {
         var t = token();
 
