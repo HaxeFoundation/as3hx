@@ -16,13 +16,23 @@ class StructureParser {
         Debug.dbgln("parseStructure("+kwd+")", tokenizer.line);
         return switch(kwd) {
         case "if":
+            var f:Expr->Expr = null;
+            f = function(ex) {
+                return switch(ex) {
+                    case ENL(e): f(e);
+                    case EBlock(_): ex;
+                    default: EBlock([ex]);
+                }
+            }
             tokenizer.ensure(TPOpen);
             var cond = parseExpr(false);
             tokenizer.ensure(TPClose);
             var e1 = parseExpr(false);
+            e1 = f(e1);
             tokenizer.end();
             var elseExpr = if(ParserUtils.opt(tokenizer, TId("else"), true)) parseExpr(false) else null;
-            switch (cond) {
+            if(elseExpr != null) elseExpr = f(elseExpr);
+            switch(cond) {
                 case ECondComp(v, e, e2):
                     //corner case, the condition is an AS3 preprocessor 
                     //directive, it must contain the block to wrap it 
