@@ -745,7 +745,7 @@ class Writer
                 name:varArgs,
                 t:TPath(["Array"]),
                 val:EIdent("null"),
-                exprs:[EIdent("args"), ETypedExpr(null, TPath(["Array"]))]
+                exprs:[EIdent(varArgs), ETypedExpr(null, TPath(["Array"]))]
             }
             args = args.concat([varArg]);
         }

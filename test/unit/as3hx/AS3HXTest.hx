@@ -236,6 +236,11 @@ class AS3HXTest {
         generate("Issue144.as", "Issue144.hx");
     }
     
+    @Test("function enqueue(...rawAssets) -> function enqueue(rawAssets : Array<Dynamic> = null)")
+    public function issue148() {
+        generate("Issue148.as", "Issue148.hx");
+    }
+    
     @Test
     public function issue150() {
         generate("Issue150.as", "Issue150.hx");
