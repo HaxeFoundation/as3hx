@@ -221,7 +221,7 @@ class AS3HXTest {
         generate("Issue139.as", "Issue139.hx");
     }
     
-    @Test("import flash.display3D.Context3D;")
+    @Test
     public function issue142() {
         generate("Issue142.as", "Issue142.hx");
     }
