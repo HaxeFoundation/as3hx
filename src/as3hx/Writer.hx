@@ -1516,211 +1516,10 @@ class Writer
                 writeExpr(e1);
                 write(cfg.spacesOnTypeColon ? " : " : ":");
                 writeExpr(e2);
-            case EWhile( cond, e, doWhile ):
-                if (doWhile)
-                {
-                    write("do");
-                    writeExpr(e);
-                    writeIndent("while (");
-                    writeExpr(cond);
-                    write(")");
-                } else {
-                    write("while (");
-                    writeExpr(cond);
-                    writeCloseStatement();
-                    rv = writeExpr(e);
-                }
-            case EFor(inits, conds, incrs, e):
-                openContext();
-                
-                var useWhileLoop:Void->Bool = function() {
-                    if (inits.empty() || conds.empty()) return true;
-                    switch(inits[0]) {
-                        case EVars(vars): if (vars.length > 1) return true;
-                        default:
-                    }
-                    if (conds[0].match(EBinop("&&" | "||", _, _, _))) return true;
-                    //index must be incremented by 1
-                    if (incrs.length == 1) {
-                        return switch (incrs[0]) {
-                            case EUnop(op, _, _): op != "++";
-                            default: false;
-                        }
-                    }
-                    return true;
-                }
-                var isWhileLoop = useWhileLoop();
-                
-                if (!isWhileLoop) {
-                    write("for (");
-                    switch (inits[0]) {
-                        case EVars(v):
-                            write(v[0].name);
-                            write(" in ");
-                            writeExpr(v[0].val);
-                            write("...");
-                        // var i:int = 0;
-                        // for (i = 0; i < size; i++)
-                        case EBinop(op, e1, e2, newLineAfterOp):
-                            if (op == "=") {
-                                switch (e1) {
-                                case EIdent(v):
-                                    write(v);
-                                default:
-                                }
-                                write(" in ");
-                                writeExpr(e2);
-                                write("...");
-                            }
-                        default:
-                    }
-
-                    switch(conds[0]) {
-                        case EBinop(op, e1, e2, nl):
-                            //corne case, for "<=" binop, limit value should be incremented
-                            if (op == "<=") {
-                                switch (e2) {
-                                    case EConst(CInt(v)):
-                                        //increment int constants
-                                        var e = EConst(CInt(Std.string(Std.parseInt(v) + 1)));
-                                        writeExpr(e2);
-                                    default:
-                                        //when var used (like <= array.length), no choice but
-                                        //to append "+1"
-                                        writeExpr(e2);
-                                        write(" + 1");
-                                }
-                            }
-                            else {
-                                writeExpr(e2);
-                            }
-                            writeCloseStatement();
-                        default:
-                    }
-                }
-                else {
-                    for (init in inits)
-                    {
-                        writeExpr(init);
-                        writeNL(";");
-                    }
-                    writeIndent();
-                    write("while (");
-                    if (conds.empty()) {
-                        write("true");
-                    } else {
-                        for (i in 0...conds.length)
-                        {
-                            if (i > 0)
-                                write(" && ");
-                            writeExpr(conds[i]);
-                        }
-                    }
-                    writeCloseStatement();
-                }
-                
-                var es = formatBlockBody(e);
-
-                //don't write increments for a "for" loop
-                if (isWhileLoop) {
-                    for (incr in incrs) {
-                        es.push(ENL(incr));
-                    }
-                }
-
-                writeLoop(isWhileLoop ? incrs : [], function() { writeExpr(EBlock(es)); });
-                closeContext();
-                rv = None;
-            case EForEach( ev, e, block ):
-                openContext();
-                var varName = null;
-                write("for (");
-                switch(ev) {
-                    case EVars(vars):
-                        if(vars.length == 1 && vars[0].val == null) {
-                            write(vars[0].name);
-                            varName = vars[0].name;
-                        } else {
-                            writeExpr(ev);
-                        }
-                    case EIdent(i):
-                        varName = i;
-                        writeExpr(ev);
-                    default:
-                        write("/* AS3HX ERROR unhandled " + ev + " */");
-                        writeExpr(ev);
-                }
-                var t = getExprType(e);
-                var regexpMap:EReg = ~/^Map<([^,]*, *)?(.*)>$/;
-                var regexpArray:EReg = ~/^Array<(.*)>$/;
-                if(varName == null) {
-                    write("/* AS3HX ERROR varName is null in expression " + e);
-                } else if(t == "FastXML" || t == "FastXMLList") {
-                    context.set(varName, t);
-                } else if (t != null && regexpMap.match(t)) {
-                    if (cfg.debugInferredType) {
-                        write("/* inferred type: " + regexpMap.matched(1) + " */" );
-                    }
-                    context.set(varName, regexpMap.matched(1));
-                } else if (t != null && regexpArray.match(t)) {
-                    if (cfg.debugInferredType) {
-                        write("/* inferred type: " + regexpArray.matched(1) + " */" );
-                    }
-                    context.set(varName, regexpArray.matched(1));
-                } else {
-                    write("/* AS3HX WARNING could not determine type for var: " + varName + " exp: " + e + " type: " + t + " */");
-                }
-                write(" in ");
-                var old = inArrayAccess;
-                inArrayAccess = true;
-                writeExpr(e);
-                inArrayAccess = old;
-                writeCloseStatement();
-                switch(block) {
-                    case EBlock(_):
-                        null;
-                    default:
-                }
-                rv = writeExpr(block);
-                closeContext();
-            case EForIn( ev, e, block ):
-                openContext();
-                var etype = getExprType(e);
-                var regexp:EReg = ~/^Map<([^,]*)?,?.*>$/;
-                var isMap:Bool = etype != null && regexp.match(etype);
-                write("for (");
-                switch(ev) {
-                    case EVars(vars):
-                        if(vars.length == 1 && vars[0].val == null) {
-                            write(vars[0].name);
-                            if (!isMap || regexp.matched(1) == null) {
-                                context.set(vars[0].name, "String");
-                            } else if (regexp.matched(1) == "Int") {
-                                context.set(vars[0].name, "Int");
-                            } else {
-                                context.set(vars[0].name, regexp.matched(1));
-                            }
-                            if (cfg.debugInferredType) {
-                                write("/* inferred type: " + context.get(vars[0].name) + " */" );
-                            }
-                        } else {
-                            writeExpr(ev);
-                        }
-                    default:
-                        writeExpr(ev);
-                }
-                write(" in ");
-                if (isMap) {
-                    writeExpr(e);
-                    write(".keys()");
-                } else {
-                    write("Reflect.fields(");
-                    writeExpr(e);
-                    write(")");
-                }
-                writeCloseStatement();
-                rv = writeExpr(block);
-                closeContext();
+            case EWhile(cond, e, doWhile): rv = writeEWhile(cond, e, doWhile);
+            case EFor(inits, conds, incrs, e): rv = writeEFor(inits, conds, incrs, e);
+            case EForEach(ev, e, block): rv = writeEForEach(ev, e, block);
+            case EForIn(ev, e, block): rv = writeEForIn(ev, e, block);
             case EBreak(label):
                 write("break");
             case EContinue:
@@ -2153,6 +1952,215 @@ class Writer
             case EImport(s):
         }
         return rv;
+    }
+    
+    inline function writeEWhile(cond:Expr, e:Expr, doWhile:Bool):BlockEnd {
+        var result:BlockEnd;
+        if (doWhile) {
+            write("do");
+            if (!cfg.bracesOnNewline) write(" ");
+            else {
+                writeNL();
+                writeIndent();
+            }
+            writeExpr(EBlock(formatBlockBody(e)));
+            if (cfg.bracesOnNewline) {
+                writeNL();
+                writeIndent("while (");
+            } 
+            else write(" while (");
+            result = writeExpr(cond);
+            write(")");
+        } else {
+            write("while (");
+            writeExpr(cond);
+            writeCloseStatement();
+            result = writeExpr(EBlock(formatBlockBody(e)));
+        }
+        return result;
+    }
+    
+    inline function writeEFor(inits:Array<Expr>, conds:Array<Expr>, incrs:Array<Expr>, e:Expr):BlockEnd {
+        openContext();
+        var useWhileLoop:Void->Bool = function() {
+            if (inits.empty() || conds.empty()) return true;
+            switch(inits[0]) {
+                case EVars(vars): if (vars.length > 1) return true;
+                default:
+            }
+            if (conds[0].match(EBinop("&&" | "||", _, _, _))) return true;
+            //index must be incremented by 1
+            if (incrs.length == 1) {
+                return switch (incrs[0]) {
+                    case EUnop(op, _, _): op != "++";
+                    default: false;
+                }
+            }
+            return true;
+        }
+        var isWhileLoop = useWhileLoop();
+        if (!isWhileLoop) {
+            write("for (");
+            switch(inits[0]) {
+                case EVars(v):
+                    write(v[0].name);
+                    write(" in ");
+                    writeExpr(v[0].val);
+                    write("...");
+                // var i:int = 0;
+                // for (i = 0; i < size; i++)
+                case EBinop(op, e1, e2, newLineAfterOp):
+                    if (op == "=") {
+                        switch (e1) {
+                            case EIdent(v): write(v);
+                            default:
+                        }
+                        write(" in ");
+                        writeExpr(e2);
+                        write("...");
+                    }
+                default:
+            }
+            switch(conds[0]) {
+                case EBinop(op, e1, e2, nl):
+                    //corne case, for "<=" binop, limit value should be incremented
+                    if (op == "<=") {
+                        switch (e2) {
+                            case EConst(CInt(v)):
+                                //increment int constants
+                                var e = EConst(CInt(Std.string(Std.parseInt(v) + 1)));
+                                writeExpr(e2);
+                            default:
+                                //when var used (like <= array.length), no choice but
+                                //to append "+1"
+                                writeExpr(e2);
+                                write(" + 1");
+                        }
+                    } else {
+                        writeExpr(e2);
+                    }
+                    writeCloseStatement();
+                default:
+            }
+        } else {
+            for (init in inits) {
+                writeExpr(init);
+                writeNL(";");
+            }
+            writeIndent();
+            write("while (");
+            if (conds.empty()) {
+                write("true");
+            } else {
+                for (i in 0...conds.length) {
+                    if (i > 0)
+                        write(" && ");
+                    writeExpr(conds[i]);
+                }
+            }
+            writeCloseStatement();
+        }
+        var es = formatBlockBody(e);
+        //don't write increments for a "for" loop
+        if (isWhileLoop) {
+            for (incr in incrs) {
+                es.push(ENL(incr));
+            }
+        }
+        writeLoop(isWhileLoop ? incrs : [], function() { writeExpr(EBlock(es)); });
+        closeContext();
+        return None;
+    }
+    
+    inline function writeEForEach(ev:Expr, e:Expr, block:Expr):BlockEnd {
+        openContext();
+        var varName = null;
+        write("for (");
+        switch(ev) {
+            case EVars(vars):
+                if(vars.length == 1 && vars[0].val == null) {
+                    write(vars[0].name);
+                    varName = vars[0].name;
+                } else {
+                    writeExpr(ev);
+                }
+            case EIdent(i):
+                varName = i;
+                writeExpr(ev);
+            default:
+                write("/* AS3HX ERROR unhandled " + ev + " */");
+                writeExpr(ev);
+        }
+        var t = getExprType(e);
+        var regexpMap:EReg = ~/^Map<([^,]*, *)?(.*)>$/;
+        var regexpArray:EReg = ~/^Array<(.*)>$/;
+        if(varName == null) {
+            write("/* AS3HX ERROR varName is null in expression " + e);
+        } else if(t == "FastXML" || t == "FastXMLList") {
+            context.set(varName, t);
+        } else if (t != null && regexpMap.match(t)) {
+            if (cfg.debugInferredType) {
+                write("/* inferred type: " + regexpMap.matched(1) + " */" );
+            }
+            context.set(varName, regexpMap.matched(1));
+        } else if (t != null && regexpArray.match(t)) {
+            if (cfg.debugInferredType) {
+                write("/* inferred type: " + regexpArray.matched(1) + " */" );
+            }
+            context.set(varName, regexpArray.matched(1));
+        } else {
+            write("/* AS3HX WARNING could not determine type for var: " + varName + " exp: " + e + " type: " + t + " */");
+        }
+        write(" in ");
+        var old = inArrayAccess;
+        inArrayAccess = true;
+        writeExpr(e);
+        inArrayAccess = old;
+        writeCloseStatement();
+        var result = writeExpr(EBlock(formatBlockBody(block)));
+        closeContext();
+        return result;
+    }
+    
+    inline function writeEForIn(ev:Expr, e:Expr, block:Expr):BlockEnd {
+        openContext();
+        var etype = getExprType(e);
+        var regexp:EReg = ~/^Map<([^,]*)?,?.*>$/;
+        var isMap:Bool = etype != null && regexp.match(etype);
+        write("for (");
+        switch(ev) {
+            case EVars(vars):
+                if(vars.length == 1 && vars[0].val == null) {
+                    write(vars[0].name);
+                    if (!isMap || regexp.matched(1) == null) {
+                        context.set(vars[0].name, "String");
+                    } else if (regexp.matched(1) == "Int") {
+                        context.set(vars[0].name, "Int");
+                    } else {
+                        context.set(vars[0].name, regexp.matched(1));
+                    }
+                    if (cfg.debugInferredType) {
+                        write("/* inferred type: " + context.get(vars[0].name) + " */" );
+                    }
+                } else {
+                    writeExpr(ev);
+                }
+            default:
+                writeExpr(ev);
+        }
+        write(" in ");
+        if (isMap) {
+            writeExpr(e);
+            write(".keys()");
+        } else {
+            write("Reflect.fields(");
+            writeExpr(e);
+            write(")");
+        }
+        writeCloseStatement();
+        var result = writeExpr(EBlock(formatBlockBody(block)));
+        closeContext();
+        return result;
     }
     
     function writeCastToString(e:Expr) {
