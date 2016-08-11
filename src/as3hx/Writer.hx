@@ -178,13 +178,13 @@ class Writer
 
     function writeImport(i : Array<String>)
     {
-        var type = properCaseA(i,true).join(".");
+        var type = properCaseA(i, true).join(".");
         if (!Lambda.has(this.imported, type)) { //prevent duplicate import
             write("import " + type + ";");
             imported.push(type);
             // do not add an implicit import for
             // this type since it has an explicit one.
-            typeImportMap.set(i[i.length-1], null);
+            typeImportMap.set(i[i.length - 1], null);
         }
     }
     
@@ -3137,16 +3137,16 @@ class Writer
 
     function writeFinish(cond:BlockEnd) {
         switch(cond) {
-        case None:
-        case Semi: write(";");
-        case Ret:
+            case None:
+            case Semi: write(";");
+            case Ret:
         }
     }
 
     /**
      * Write typedef that were generated during parsing
      */
-    function writeGeneratedTypes(genTypes : Array<GenType>) : Void 
+    function writeGeneratedTypes(genTypes : Array<GenType>) : Void
     {
         for (genType in genTypes) {
             writeNL();
@@ -3188,7 +3188,7 @@ class Writer
         return b.join("");
     }
     
-    public function process(program : Program, writer : Output)
+    public function process(program : Program, writer : Output):Map<String, Bool>
     {
         this.warnings = new Map();
 
@@ -3273,15 +3273,17 @@ class Writer
     }
 
     public static function properCaseA(path:Array<String>, hasClassName:Bool):Array<String> {
-        var p = [];
+        var result = [];
         for(i in 0...path.length) {
             if(hasClassName && i == path.length - 1)
-                p[i] = removeUnderscores(path[i]);
-            else
-                p[i] = path[i].toLowerCase();
+                result[i] = removeUnderscores(path[i]);
+            else {
+                var p = path[i];
+                result[i] = p.charAt(0).toLowerCase() + p.substr(1);
+            }
         } 
         if(hasClassName) {
-            var f = p[p.length-1];
+            var f = result[result.length - 1];
             var o = "";
             for(i in 0...f.length) {
                 var c = f.charCodeAt(i);
@@ -3290,9 +3292,9 @@ class Writer
                 else
                     o += String.fromCharCode(c);
             }
-            p[p.length-1] = o;
+            result[result.length - 1] = o;
         }
-        return p;
+        return result;
     }
 
     public static function removeUnderscores(id : String):String {
