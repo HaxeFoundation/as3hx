@@ -1,6 +1,4 @@
-
 import flash.events.Event;
-
 
 
 class Issue64

@@ -1,5 +1,5 @@
-
 import flash.system.Security;
+
 class Issue81
 {
 

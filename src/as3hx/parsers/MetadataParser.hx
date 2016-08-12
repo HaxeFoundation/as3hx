@@ -12,24 +12,22 @@ class MetadataParser {
         tokenizer.ensure(TBkOpen);
         var name = tokenizer.id();
         var args = [];
-        if( ParserUtils.opt(tokenizer, TPOpen) )
-            while( !ParserUtils.opt(tokenizer, TPClose) ) {
+        if(ParserUtils.opt(tokenizer, TPOpen))
+            while(!ParserUtils.opt(tokenizer, TPClose)) {
                 var n = null;
                 switch(tokenizer.peek()) {
-                case TId(i):
-                    n = tokenizer.id();
-                    if(!ParserUtils.opt(tokenizer, TOp("="))) {
-                        args.push( { name : null, val : EIdent(n) } );
-                        ParserUtils.opt(tokenizer, TComma);
-                        continue;
-                    }
-                case TConst(_):
-                    null;
-                default:
-                    ParserUtils.unexpected(tokenizer.peek());
+                    case TId(i):
+                        n = tokenizer.id();
+                        if(!ParserUtils.opt(tokenizer, TOp("="))) {
+                            args.push({name : null, val : EIdent(n)});
+                            ParserUtils.opt(tokenizer, TComma);
+                            continue;
+                        }
+                    case TConst(_):
+                    default: ParserUtils.unexpected(tokenizer.peek());
                 }
                 var e = parseExpr(false);
-                args.push( { name : n, val :e } );
+                args.push({name : n, val : e});
                 ParserUtils.opt(tokenizer, TComma);
             }
         tokenizer.ensure(TBkClose);

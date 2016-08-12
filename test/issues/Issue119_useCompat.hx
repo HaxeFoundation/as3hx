@@ -1,5 +1,5 @@
-
 import flash.system.Capabilities;
+
 class Issue119
 {
     public function new()
