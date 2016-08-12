@@ -1087,61 +1087,7 @@ class Writer
                     write(";");
                     rv = None;
                 }
-            case EField( e, f ):
-                var n = checkE4XDescendants(expr);
-                if(n != null)
-                    return writeExpr(n);
-                var t1 = getExprType(expr);
-                var t2 = getExprType(e);
-                //write("/* EField ("+Std.string(e)+","+Std.string(f)+") " +t1 + ":"+t2+ "  */\n");
-                var old = inArrayAccess;
-                if(t1 == "FastXMLList" || (t1 == null && t2 == "FastXML")) {
-                    //write("/* t1 : " + t1 + " */");
-                    writeExpr(e);
-                    if(inArrayAccess)
-                        write(".nodes." + f);
-                    else
-                        write(".node." + f + ".innerData");
-                }
-                else if(t1 == "FastXML" || (t1 == null && t2 == "FastXMLList")) {
-                    writeExpr(e);
-                    write(".node");
-                    write("." + f + ".innerData");
-                }
-                else {
-                    switch(e) {
-                        case EField(e2, f2):
-                            //write("/* -- " +e2+ " " +getExprType(e2)+" */");
-                            if(getExprType(e2) == "FastXML")
-                                inArrayAccess = true;
-                        case EIdent(v):
-                            switch(getModifiedIdent(v)) {
-                                case "Int":
-                                    if(f == "MAX_VALUE") {
-                                        writeExpr(EField(EIdent("as3hx.Compat"), "INT_MAX"));
-                                        return None;
-                                    }
-                                    if(f == "MIN_VALUE") {
-                                        writeExpr(EField(EIdent("as3hx.Compat"), "INT_MIN"));
-                                        return None;
-                                    }
-                                case "Float":
-                                    if(f == "MAX_VALUE") {
-                                        writeExpr(EField(EIdent("as3hx.Compat"), "FLOAT_MAX"));
-                                        return None;
-                                    }
-                                    if(f == "MIN_VALUE") {
-                                        writeExpr(EField(EIdent("as3hx.Compat"), "FLOAT_MIN"));
-                                        return None;
-                                    }
-                                default:
-                            }
-                        default:
-                    }
-                    writeExpr(e);
-                    write("." + f);
-                }
-                inArrayAccess = old;
+            case EField(e, f): rv = writeEField(expr, e, f);
             case EBinop( op, e1, e2, newlineBeforeOp):
                 if(op == "as") {
                     switch(e2) {
@@ -1787,6 +1733,69 @@ class Writer
             case EImport(s):
         }
         return rv;
+    }
+    
+    function writeEField(fullExpr:Expr, e:Expr, f:String):BlockEnd {
+        var n = checkE4XDescendants(fullExpr);
+        if(n != null) return writeExpr(n);
+        var t1 = getExprType(fullExpr);
+        var t2 = getExprType(e);
+        //write("/* EField ("+Std.string(e)+","+Std.string(f)+") " +t1 + ":"+t2+ "  */\n");
+        var old = inArrayAccess;
+        if(t1 == "FastXMLList" || (t1 == null && t2 == "FastXML")) {
+            //write("/* t1 : " + t1 + " */");
+            writeExpr(e);
+            if(inArrayAccess)
+                write(".nodes." + f);
+            else
+                write(".node." + f + ".innerData");
+        } else if(t1 == "FastXML" || (t1 == null && t2 == "FastXMLList")) {
+            writeExpr(e);
+            write(".node");
+            write("." + f + ".innerData");
+        } else {
+            switch(e) {
+                case EField(e2, f2):
+                    //write("/* -- " +e2+ " " +getExprType(e2)+" */");
+                    if(getExprType(e2) == "FastXML")
+                        inArrayAccess = true;
+                case EIdent(v):
+                    switch(getModifiedIdent(v)) {
+                        case "Int":
+                            if(f == "MAX_VALUE") {
+                                writeExpr(EField(EIdent("as3hx.Compat"), "INT_MAX"));
+                                return None;
+                            }
+                            if(f == "MIN_VALUE") {
+                                writeExpr(EField(EIdent("as3hx.Compat"), "INT_MIN"));
+                                return None;
+                            }
+                        case "Float":
+                            if(f == "MAX_VALUE") {
+                                writeExpr(EField(EIdent("as3hx.Compat"), "FLOAT_MAX"));
+                                return None;
+                            }
+                            if(f == "MIN_VALUE") {
+                                writeExpr(EField(EIdent("as3hx.Compat"), "FLOAT_MIN"));
+                                return None;
+                            }
+                        default:
+                    }
+                case ECall(e, p):
+                    switch(e) {
+                        case EIdent(v):
+                            if (v == "Object" && f == "constructor") {
+                                return writeExpr(p[0]);
+                            }
+                        default:
+                    }
+                default:
+            }
+            writeExpr(e);
+            write("." + f);
+        }
+        inArrayAccess = old;
+        return Semi;
     }
     
     inline function writeEVars(vars:Array<{name:String, t:Null<T>, val:Null<Expr>}>) {
@@ -3189,11 +3198,11 @@ class Writer
     
     public function process(program : Program, writer : Output):Map<String, Bool>
     {
-        this.warnings = new Map();
+        warnings = new Map();
 
         //list of imported types must be reseted for each file,
         //as only one instance of Writer write all the files
-        this.imported = [];
+        imported = [];
 
         var defined:Array<String> = [];
 
@@ -3204,17 +3213,16 @@ class Writer
             case CDef(c):
                 for (meta in c.meta) {
                     switch (meta) {
-                    case EImport(v):
-                        defined.push(v[v.length-1]);
-                    default:
+                        case EImport(v): defined.push(v[v.length - 1]);
+                        default:
                     }
                 }
             default:
         }
-
-        this.o = writer;
-        this.genTypes = program.genTypes;
-        this.pack = program.pack;
+        
+        o = writer;
+        genTypes = program.genTypes;
+        pack = program.pack;
         writeComments(program.header);
         writePackage(program.pack);
         writeImports(program.imports);
@@ -3222,7 +3230,7 @@ class Writer
         writeGeneratedTypes(program.genTypes);
         writeDefinitions(program.defs);
         writeComments(program.footer);
-        return this.warnings;
+        return warnings;
     }
 
     /**
