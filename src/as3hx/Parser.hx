@@ -52,7 +52,7 @@ class Parser {
         return parse( new haxe.io.StringInput(s) );
     }
 
-    public function parse( s : haxe.io.Input ):Program {
+    public function parse(s : haxe.io.Input):Program {
         tokenizer = new Tokenizer(s);
         var types: Types = {
             seen : [],

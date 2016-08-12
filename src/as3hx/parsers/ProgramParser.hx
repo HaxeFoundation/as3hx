@@ -25,23 +25,20 @@ class ProgramParser {
 
         for(t in a) {
             switch(t) {
-            case TId(s):
-                if( s != "package" )
-                    ParserUtils.unexpected(t);
-                if( ParserUtils.opt(tokenizer, TBrOpen) )
-                    pack = []
-                else {
-                    pack = parsePackageName();
-                    tokenizer.ensure(TBrOpen);
-                }
-                
-            case TCommented(s,b,t):
-                if(t != null) throw "Assert error " + Tokenizer.tokenString(t);
-                header.push(ECommented(s,b,false,null));
-            case TNL(t):    
-                header.push(ENL(null));
-            default:
-                ParserUtils.unexpected(t);
+                case TId(s):
+                    if(s != "package")
+                        ParserUtils.unexpected(t);
+                    if(ParserUtils.opt(tokenizer, TBrOpen))
+                        pack = []
+                    else {
+                        pack = parsePackageName();
+                        tokenizer.ensure(TBrOpen);
+                    }
+                case TCommented(s,b,t):
+                    if(t != null) throw "Assert error " + Tokenizer.tokenString(t);
+                    header.push(ECommented(s,b,false,null));
+                case TNL(t): header.push(ENL(null));
+                default: ParserUtils.unexpected(t);
             }
         }
 
@@ -94,10 +91,9 @@ class ProgramParser {
                 meta.push(parseMetadata());
                 continue;
             case TId(id):
-                switch( id ) {
+                switch(id) {
                 case "import":
                     var impt = parseImport();
-
                     //outsidePackage = false;
                     //note : when parsing package, user defined imports
                     //are stored as meta, this way, comments can be kept
@@ -117,15 +113,13 @@ class ProgramParser {
                             if (defs.length == 0) {
                                 imports.push(impt);
                             }
-
                             //else check if can add to first class meta
                             switch (defs[0]) {
                                 case CDef(c):
-
                                     //also put the newline preceding the import
                                     //in the first class meta
                                     if (meta.length > 0) {
-                                        switch(meta[meta.length-1]) {
+                                        switch(meta[meta.length - 1]) {
                                             case ENL(e):
                                                 if (e == null) {
                                                     c.meta.push(meta.pop());
@@ -151,13 +145,10 @@ class ProgramParser {
                                     hasOustidePackageMetaImport = true;
 
                                 //put in regular import list
-                                default:    
-                                    imports.push(impt);
+                                default: imports.push(impt);
                             }
                         }
-
                     }
-                       
                     tokenizer.end();
                     continue;
                 case "use":
@@ -188,7 +179,7 @@ class ProgramParser {
                                 case CString(p):
                                     var oldClosed = closed;
                                     closed = false;
-                                    parseInclude(path, filename, p,pf.bind(true));
+                                    parseInclude(path, filename, p, pf.bind(true));
                                     tokenizer.end();
                                     closed = oldClosed;
                                 default:
@@ -199,16 +190,12 @@ class ProgramParser {
                     }
                     continue;
                 default:
-
                     if(ParserUtils.opt(tokenizer, TNs)) {
                         var ns : String = id;
                         var t = ParserUtils.uncomment(tokenizer.token());
-
                         switch(t) {
-                            case TId(id2):
-                                id = id2;
-                            default:
-                                ParserUtils.unexpected(t);
+                            case TId(id2): id = id2;
+                            default: ParserUtils.unexpected(t);
                         }
 
                         if (Lambda.has(cfg.conditionalVars, ns + "::" + id)) {
@@ -246,17 +233,17 @@ class ProgramParser {
             case TNL(t):
                 meta.push(ENL(null));
                 tokenizer.add(t);
-                continue;   
+                continue;
             case TCommented(s,b,t):
                 var t = ParserUtils.uncomment(tk);
                 switch(t) {
-                case TBkOpen:
-                    tokenizer.add(t);
-                    meta.push(ParserUtils.makeECommented(tk, parseMetadata()));
-                    continue;
-                default:
-                    tokenizer.add(t);
-                    meta.push(ParserUtils.makeECommented(tk, null));
+                    case TBkOpen:
+                        tokenizer.add(t);
+                        meta.push(ParserUtils.makeECommented(tk, parseMetadata()));
+                        continue;
+                    default:
+                        tokenizer.add(t);
+                        meta.push(ParserUtils.makeECommented(tk, null));
                 }
                 continue;
             default:
@@ -265,10 +252,30 @@ class ProgramParser {
         }
         };
         pf(false);
-        if( !closed )
-            ParserUtils.unexpected(TEof);
+        if(!closed) ParserUtils.unexpected(TEof);
         for(it in types.gen) {
             it.name = it.name + "Typedef";
+        }
+        if(defs.length > 0) {
+            switch(defs[0]) {
+                case CDef(c):
+                    var enl = ENL(null);
+                    var isEImport:Expr->Bool = function(e) return e.match(EImport(_));
+                    var meta = [];
+                    for(it in c.meta.filter(isEImport)) {
+                        meta.push(it);
+                        meta.push(enl);
+                    }
+                    if(meta.length > 0) meta.push(enl);
+                    var isENL:Expr->Bool = enl.equals;
+                    for(it in c.meta) {
+                        var length = meta.length;
+                        if(isEImport(it) || (length > 0 && isENL(it) && isENL(meta[length - 1]))) continue;
+                        meta.push(it);
+                    }
+                    c.meta = meta;
+                default:
+            }
         }
         return {
             header : header,
@@ -282,4 +289,3 @@ class ProgramParser {
         };
     }
 }
-    

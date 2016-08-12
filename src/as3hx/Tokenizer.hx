@@ -322,26 +322,26 @@ class Tokenizer {
     }
 
     public function peek() : Token {
-        if( tokens.isEmpty() )
+        if(tokens.isEmpty())
             add(token());
         return ParserUtils.uncomment(ParserUtils.removeNewLine(tokens.first()));
     }
 
     public function nextChar():Int {
         var c = 0;
-        if( this.char == 0 ) {
+        if(char == 0) {
             pc++;
-            return try input.readByte() catch( e : Dynamic ) 0;
+            return try input.readByte() catch(e : Dynamic) 0;
         }
-        c = this.char;
-        this.char = 0;
+        c = char;
+        char = 0;
         return c;
     }
 
     public function pushBackChar(c:Int) {
-        if(this.char != 0)
+        if(char != 0)
             throw "Unexpected character pushed back";
-        this.char = c;
+        char = c;
     }
 
     public function add(tk:Token) {

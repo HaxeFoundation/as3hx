@@ -1,5 +1,5 @@
-
 import flash.utils.Dictionary;
+
 class Issue124
 {
     private var _eventListeners : Dictionary = new Dictionary();

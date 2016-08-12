@@ -1,5 +1,5 @@
-
 import flash.events.TouchEvent;
+
 class Issue144
 {
     private var multitouchEnabled : Bool;

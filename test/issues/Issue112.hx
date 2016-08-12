@@ -1,8 +1,4 @@
 
-
-
-
-
 class Issue112
 {
     public function new()
