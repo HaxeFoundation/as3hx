@@ -261,13 +261,16 @@ class ProgramParser {
                 case CDef(c):
                     var enl = ENL(null);
                     var isEImport:Expr->Bool = function(e) return e.match(EImport(_));
-                    var isENL:Expr->Bool = function(e) return e.equals(enl);
-                    var meta = c.meta.filter(isEImport);
-                    var i = 0;
-                    while(i++ < meta.length) meta.insert(i++, enl);
+                    var meta = [];
+                    for(it in c.meta.filter(isEImport)) {
+                        meta.push(it);
+                        meta.push(enl);
+                    }
                     if(meta.length > 0) meta.push(enl);
+                    var isENL:Expr->Bool = enl.equals;
                     for(it in c.meta) {
-                        if(isEImport(it) || (isENL(it) && isENL(meta[meta.length - 1]))) continue;
+                        var length = meta.length;
+                        if(isEImport(it) || (length > 0 && isENL(it) && isENL(meta[length - 1]))) continue;
                         meta.push(it);
                     }
                     c.meta = meta;
