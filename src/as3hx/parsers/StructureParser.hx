@@ -280,8 +280,17 @@ class StructureParser {
             var e = parseExpr(false);
             tokenizer.ensure(TPClose);
             ECall(EField(EIdent("as3hx.Compat"), kwd), [e]);
-        default:
-            null;
+        case "parseInt" | "parseFloat":
+            tokenizer.ensure(TPOpen);
+            var e = parseExpr(false);
+            tokenizer.ensure(TPClose);
+            var efield = if(cfg.useCompat) {
+                EField(EIdent("as3hx.Compat"), kwd);
+            } else {
+                EField(EIdent("Std"), kwd);
+            }
+            ECall(efield, [e]);
+        default: null;
         }
     }
 }
