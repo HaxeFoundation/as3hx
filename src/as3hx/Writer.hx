@@ -2704,26 +2704,26 @@ class Writer
 
                         case "assertFalse":
                             var rebuiltExpr = EField(EIdent("Assert"), "isFalse");
-                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 2); 
+                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 2);
 
                          case "assertEquals":
                             var rebuiltExpr = EField(EIdent("Assert"), "areEqual");
-                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 3);     
+                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 3);
 
                         case "assertNull":
                             var rebuiltExpr = EField(EIdent("Assert"), "isNull");
-                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 2); 
+                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 2);
 
                         case "assertNotNull":
                             var rebuiltExpr = EField(EIdent("Assert"), "isNotNull");
-                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 2);     
+                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 2);
 
                         case "assertThat":
-                            rebuiltCall = getUnitTestExpr(EIdent(ident), params, params.length == 3);     
+                            rebuiltCall = getUnitTestExpr(EIdent(ident), params, params.length == 3);
 
                         case "fail":
                             var rebuiltExpr = EField(EIdent("Assert"), "fail");
-                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, false);            
+                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, false);
                     }
                 }
         }
@@ -2736,7 +2736,7 @@ class Writer
                 case EField(e, f):
                     if (f == "length") {
                         var type = getExprType(e);
-                        if (type != null && type.indexOf("Array") != -1) {
+                        if (type != null && type.indexOf("Array<") != -1) {
                             return ECall(EField(EIdent("as3hx.Compat"), "setArrayLength"), [e, rvalue]);
                         }
                     }
@@ -2820,13 +2820,12 @@ class Writer
      */
     function isNumericConst(e:Expr) : Bool {
         switch(e) {
-        case EConst(c):
-            switch(c) {
-            case CInt(_), CFloat(_):
-                return true;
+            case EConst(c):
+                switch(c) {
+                    case CInt(_), CFloat(_): return true;
+                    default:
+                }
             default:
-            }
-        default:
         }
         return false;
     }
@@ -2900,20 +2899,20 @@ class Writer
         if(t == null) return null;
         switch(t)
         {
-        case TStar:     return null;
-        case TVector( t ):  return null;
-        case TComplex(e):   return null;
-        case TPath( p ):
-            if (p.length > 1)   return null;
-            var c = p[0];
-            switch(c)
-            {
-            case "int": return null;
-            case "uint":    return null;
-            case "void":    return null;
-            default:    return fixCase ? properCase(c,true) : c;
-            }
-        case TDictionary(k, v): return null;
+            case TStar: return null;
+            case TVector(t): return null;
+            case TComplex(e): return null;
+            case TPath(p):
+                if (p.length > 1) return null;
+                var c = p[0];
+                switch(c)
+                {
+                    case "int": return null;
+                    case "uint": return null;
+                    case "void": return null;
+                    default: return fixCase ? properCase(c,true) : c;
+                }
+            case TDictionary(k, v): return null;
         }
     }
     
