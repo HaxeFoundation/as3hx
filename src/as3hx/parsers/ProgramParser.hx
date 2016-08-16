@@ -225,7 +225,12 @@ class ProgramParser {
                         inits.push(EIdent(id));
                         continue;
                     } else {
-                        ParserUtils.unexpected(tk);
+                        switch(tk) {
+                            case TId(s):
+                                inits.push(EIdent(id));
+                                continue;
+                            default: ParserUtils.unexpected(tk);
+                        }
                     }
                 }
             case TSemicolon:
