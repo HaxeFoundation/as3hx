@@ -79,6 +79,11 @@ class AS3HXTest {
         generate("Issue52.as", "Issue52.hx");
     }
     
+    @Test
+    public function issue53() {
+        generate("Issue53.as", "Issue53.hx");
+    }
+    
     @Test("array.length = 10 -> Compat.setArrayLegth(array, 10)")
     public function issue63() {
         generate("Issue63.as", "Issue63.hx");

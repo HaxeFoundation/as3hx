@@ -279,12 +279,12 @@ class ParserUtils {
      * true if so, and the token is consumed. If keepComments
      * is set, all the comments will be pushed onto the token
      * stack along with the next token after 'tk'.
-     **/
-    public static function opt(tokenizer, tk,keepComments:Bool=false) : Bool {
+     */
+    public static function opt(tokenizer:Tokenizer, tk:Token, keepComments:Bool=false) : Bool {
         var t = tokenizer.token();
         var tu = ParserUtils.uncomment(ParserUtils.removeNewLine(t));
         Debug.dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk));
-        if( Type.enumEq(tu, tk) ) {
+        if(Type.enumEq(tu, tk)) {
             if(keepComments) {
                 var ta = ParserUtils.explodeComment(t);
                 // if only 'tk' exists in ta, we're done
@@ -294,11 +294,11 @@ class ParserUtils {
                 var l = ta.length - 1;
                 while(l >= 0) {
                     switch(ta[l]) {
-                    case TCommented(s,b,t2):
-                        if(t2 != null) throw "Assert error";
-                        t = TCommented(s,b,t);
-                    case TNL(t):    
-                    default: throw "Assert error";
+                        case TCommented(s,b,t2):
+                            if(t2 != null) throw "Assert error";
+                            t = TCommented(s,b,t);
+                        case TNL(t):
+                        default: throw "Assert error";
                     }
                     l--;
                 }
@@ -313,8 +313,8 @@ class ParserUtils {
     /**
      * Version of opt that will search for tk, and if it is the next token,
      * all the comments before it will be pushed to array 'cmntOut'
-     **/
-    public static function opt2(tokenizer, tk, cmntOut : Array<Expr>) : Bool {
+     */
+    public static function opt2(tokenizer:Tokenizer, tk:Token, cmntOut:Array<Expr>) : Bool {
         var t = tokenizer.token();
         var tu = ParserUtils.uncomment(t);
         var trnl = ParserUtils.removeNewLine(tu);
@@ -338,7 +338,7 @@ class ParserUtils {
         }
     }
 
-    public static function makeBinop(tokenizer:Tokenizer, op, e1, e, newLineBeforeOp : Bool = false ) {
+    public static function makeBinop(tokenizer:Tokenizer, op:String, e1:Expr, e:Expr, newLineBeforeOp : Bool = false ) {
         return switch( e ) {
         case EBinop(op2, e2, e3, n):
             var p1 = tokenizer.opPriority.get(op);
