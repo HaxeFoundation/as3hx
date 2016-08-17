@@ -360,8 +360,7 @@ class Tokenizer {
 
         //remove newline token
         var trnl = ParserUtils.removeNewLine(tu);
-
-        if( !Type.enumEq(trnl, tk) )
+        if(!Type.enumEq(trnl, tk))
             ParserUtils.unexpected(trnl);
         var ta = ParserUtils.explodeComment(t);
         ta.pop();

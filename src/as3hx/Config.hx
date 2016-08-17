@@ -217,7 +217,7 @@ class Config {
         println("    -no-func2dyn\t : will not change Function types to Dynamic, defaults to false");
         println("    -uint2int\t\t : transforms all uint to Int, defaults to true");
         println("    -vector2array\t : will convert Vectors to haxe Arrays, defaults to true");
-        println("    -dict2hash\t\t : will convert Dictionary to haxe Map, defaults to false");
+        println("    -dict2hash\t\t : will convert Dictionary to haxe ObjectMap, defaults to false");
         println("    -debug-expr\t\t : will output debug information");
         println("    -debug-inferred-type : will output inferred type debug information");
         println("    -convert-flexunit\t : will convert FlexUnit metadata and calls to munit form");
