@@ -213,11 +213,11 @@ class Config {
         var println = Sys.println;
         println("Usage: as3hx [options] sourceDir [outdir]");
         println("  Options:");
-        println("    -no-cast-guess\t : as3hx will not try to handle MyClass(obj) casts, defaults to true");
-        println("    -no-func2dyn\t : will not change Function types to Dynamic, defaults to false");
-        println("    -uint2int\t\t : transforms all uint to Int, defaults to true");
-        println("    -vector2array\t : will convert Vectors to haxe Arrays, defaults to true");
-        println("    -dict2hash\t\t : will convert Dictionary to haxe Map, defaults to false");
+        println("    -no-cast-guess\t : will not try to handle MyClass(obj) casts");
+        println("    -func2dyn\t\t : will change Function types to Dynamic");
+        println("    -no-uint2int\t : will not convert uint to Int");
+        println("    -no-vector2array\t : will not convert Vectors to haxe Arrays");
+        println("    -dict2hash\t\t : will convert Dictionary to haxe ObjectMap");
         println("    -debug-expr\t\t : will output debug information");
         println("    -debug-inferred-type : will output inferred type debug information");
         println("    -convert-flexunit\t : will convert FlexUnit metadata and calls to munit form");
@@ -246,18 +246,18 @@ class Config {
                 case "-help", "--help":
                     usage();
                     Sys.exit(0);
-                case "-uint2int", "--uint2int":
-                    uintToInt = true;
+                case "-no-uint2int", "--no-uint2int":
+                    uintToInt = false;
                 case "-no-cast-guess", "--no-cast-guess":
                     guessCasts = false;
-                case "-vector2array", "--vector2array":
-                    vectorToArray = true;
+                case "-no-vector2array", "--no-vector2array":
+                    vectorToArray = false;
                 case "-verifyGeneratedFiles", "--verifyGeneratedFiles":
                     verifyGeneratedFiles = true;
                 case "-debug-expr", "--debug-expr":
                     debugExpr = true;
                 case "-no-func2dyn", "--no-func2dyn":
-                    functionToDynamic = false;
+                    functionToDynamic = true;
                 case "-error-continue","--error-continue":
                     errorContinue = true;
                 case "-test-case":
