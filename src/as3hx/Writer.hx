@@ -1050,8 +1050,7 @@ class Writer
      * Write an expression
      * @return if the block requires a terminating ;
      */
-    function writeExpr(?expr : Expr) : BlockEnd
-    {
+    function writeExpr(?expr : Expr) : BlockEnd {
         if(cfg.debugExpr)
             write(" /* " + Std.string(expr) + " */ ");
 
@@ -1088,135 +1087,14 @@ class Writer
                     rv = None;
                 }
             case EField(e, f): rv = writeEField(expr, e, f);
-            case EBinop( op, e1, e2, newlineBeforeOp):
-                if(op == "as") {
-                    switch(e2) {
-                    case EIdent(s):
-                        switch(s) {
-                        case "String": writeCastToString(e1);
-                        case "int": writeCastToInt(e1);
-                        case "Number": writeCastToFloat(e1);
-                        case "Array":
-                            write("try cast(");
-                            writeExpr(e1);
-                            write(", Array</*AS3HX WARNING no type*/>) catch(e:Dynamic) null");
-                            addWarning("as array", true);
-                        case "Class":
-                            addWarning("as Class",true);
-                            write("Type.getClass(");
-                            writeExpr(e1);
-                            write(")");
-                        default:
-                            write("try cast(");
-                            writeExpr(e1);
-                            write(", ");
-                            switch(e2) {
-                                case EIdent(s): writeModifiedIdent(s);
-                                default: writeExpr(e2);
-                            }
-                            write(") catch(e:Dynamic) null");
-                        }
-                    case EField(_):
-                        write("try cast(");
-                        writeExpr(e1);
-                        write(", ");
-                        switch(e2) {
-                        case EIdent(s):
-                            writeModifiedIdent(s);
-                        default:
-                            writeExpr(e2);
-                        }
-                        write(") catch(e:Dynamic) null");
-                    case EVector(_):
-                        write("try cast(");
-                        writeExpr(e1);
-                        write(", ");
-                        writeExpr(e2);
-                        write(") catch(e:Dynamic) null");
-                    default:
-                        throw "Unexpected " + Std.string(e2);
-                    }
-                }
-                else if(op == "is") {
-                    write("Std.is(");
-                    writeExpr(e1);
-                    write(", ");
-                    switch(e2) {
-                    case EIdent(s):
-                        writeModifiedIdent(s);
-                    default:
-                        writeExpr(e2);
-                    }
-                    write(")");
-                }
-                else if(op == "in") {
-                    write("Lambda.has(");
-                    writeExpr(e2);
-                    write(", ");
-                    writeExpr(e1);
-                    write(")");
-                }
-                else { // op e1 e2
-                    var eBinop = rebuildBinopExpr(op, e1, e2);
-                    if (eBinop != null) return writeExpr(eBinop);
-                    
-                    var oldInLVA = inLvalAssign;
-                    rvalue = e2;
-                    if(op == "=")
-                        inLvalAssign = true;
-                        
-                    switch(e1) {
-                    case EIdent(s):
-                        writeModifiedIdent(s);
-                    default:
-                        writeExpr(e1);
-                    }
-                     
-                    //for right part of indenting, add 2 extra
-                    //indenting level if spead on multiple lines
-                    if (op == "=")
-                        lvl += 2;
-
-                    inLvalAssign = oldInLVA;
-                    if(rvalue != null) {
-
-                        //check wether newline was found just before
-                        //op while parsing
-                        if (newlineBeforeOp) {
-                            writeNL();
-                            writeIndent(op);
-                        }
-                        else {
-                            write(" " + op);
-                        }
-                        
-                        //minor formatting fix, if right expression starts
-                        //with a newline or comment, no need for extra 
-                        switch (e2) {
-                            case ECommented(s,b,t,e):
-                            case ENL(e):
-                            default:write(" ");
-                        }
-
-                        switch(e2) {
-                        case EIdent(s):
-                            writeModifiedIdent(s);
-                        default:
-                            writeExpr(e2);
-                        }
-                    }
-                    
-                    if (op == "=")
-                        lvl -= 2;
-                }
+            case EBinop(op, e1, e2, newLineAfterOp): rv = writeEBinop(op, e1, e2, newLineAfterOp);
             case EUnop( op, prefix, e ):
                 var type = getExprType(e);
                 if ((type == "Int" || type == "UInt") && op == "!") {
                     writeExpr(EBinop("!=", e, EConst(CInt("0")), false));
                     return None;
                 }
-                if (prefix)
-                {
+                if (prefix) {
                     write(op);
                     writeExpr(e);
                 } else {
@@ -1255,8 +1133,7 @@ class Writer
                 } else writeCloseStatement();
                 e1 = EBlock(formatBlockBody(e1));
                 writeExpr(e1);
-                if (e2 != null)
-                {
+                if (e2 != null) {
                     //corner case : comment located
                     //before the "else" keyword in the
                     //source file.
@@ -2181,6 +2058,116 @@ class Writer
         return result;
     }
     
+    function writeEBinop(op:String, e1:Expr, e2:Expr, newLineAfterOp:Bool):BlockEnd {
+        if(op == "as") {
+            switch(e2) {
+                case EIdent(s):
+                    switch(s) {
+                        case "String": writeCastToString(e1);
+                        case "int": writeCastToInt(e1);
+                        case "Number": writeCastToFloat(e1);
+                        case "Array":
+                            write("try cast(");
+                            writeExpr(e1);
+                            write(", Array</*AS3HX WARNING no type*/>) catch(e:Dynamic) null");
+                            addWarning("as array", true);
+                        case "Class":
+                            addWarning("as Class",true);
+                            write("Type.getClass(");
+                            writeExpr(e1);
+                            write(")");
+                        default:
+                            write("try cast(");
+                            writeExpr(e1);
+                            write(", ");
+                            switch(e2) {
+                                case EIdent(s): writeModifiedIdent(s);
+                                default: writeExpr(e2);
+                            }
+                            write(") catch(e:Dynamic) null");
+                    }
+                case EField(_):
+                    write("try cast(");
+                    writeExpr(e1);
+                    write(", ");
+                    switch(e2) {
+                        case EIdent(s): writeModifiedIdent(s);
+                        default: writeExpr(e2);
+                    }
+                    write(") catch(e:Dynamic) null");
+                case EVector(_):
+                    write("try cast(");
+                    writeExpr(e1);
+                    write(", ");
+                    writeExpr(e2);
+                    write(") catch(e:Dynamic) null");
+                default: throw "Unexpected " + Std.string(e2);
+            }
+        } else if(op == "is") {
+            write("Std.is(");
+            writeExpr(e1);
+            write(", ");
+            switch(e2) {
+                case EIdent(s): writeModifiedIdent(s);
+                default: writeExpr(e2);
+            }
+            write(")");
+        } else if(op == "in") {
+            write("Lambda.has(");
+            writeExpr(e2);
+            write(", ");
+            writeExpr(e1);
+            write(")");
+        } else { // op e1 e2
+            var eBinop = rebuildBinopExpr(op, e1, e2);
+            if (eBinop != null) return writeExpr(eBinop);
+            
+            var oldInLVA = inLvalAssign;
+            rvalue = e2;
+            if(op == "=")
+                inLvalAssign = true;
+                
+            switch(e1) {
+                case EIdent(s): writeModifiedIdent(s);
+                default: writeExpr(e1);
+            }
+            
+            //for right part of indenting, add 2 extra
+            //indenting level if spead on multiple lines
+            if (op == "=")
+                lvl += 2;
+    
+            inLvalAssign = oldInLVA;
+            if(rvalue != null) {
+                //check wether newline was found just before
+                //op while parsing
+                if (newLineAfterOp) {
+                    writeNL();
+                    writeIndent(op);
+                } else {
+                    write(" " + op);
+                }
+                
+                //minor formatting fix, if right expression starts
+                //with a newline or comment, no need for extra 
+                switch (e2) {
+                    case ECommented(s,b,t,e):
+                    case ENL(e):
+                    default:write(" ");
+                }
+    
+                switch(e2) {
+                    case EIdent(s): writeModifiedIdent(s);
+                    default: writeExpr(e2);
+                }
+            }
+            
+            if (op == "=")
+                lvl -= 2;
+        }
+        return Semi;
+    }
+    
     function writeCastToString(e:Expr) {
         var type = getExprType(e);
         if (type != null && type == "String") {
@@ -2741,6 +2728,16 @@ class Writer
                         }
                     }
                 default:
+            }
+        }
+        if(op == "||=") {
+            var type = getExprType(lvalue);
+            if (type != null) {
+                var cond = switch(type) {
+                    case "Bool": lvalue;
+                    case "Int" | "UInt" | "Float" | _: rebuildIfExpr(lvalue);
+                }
+                return EBinop("=", lvalue, ETernary(cond, lvalue, rvalue), false);
             }
         }
         return null;
