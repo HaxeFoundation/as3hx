@@ -199,9 +199,9 @@ class ExprParser {
                 if( op != "<" || switch(e1) { case EIdent(v): v != "Vector" && v != "Dictionary"; default: true; } ) ParserUtils.unexpected(tk);
                 var t = parseType();
 
-                var v = switch (e1) {
+                var v = switch(e1) {
                     case EIdent(v): v;
-                    default: null; 
+                    default: null;
                 }
                 
                 //for Dictionary, expected syntax is "Dictionary.<Key, Value>"

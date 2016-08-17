@@ -2943,7 +2943,7 @@ class Writer
             case TComplex(e):
                 return buffer(function() { writeExpr(e); });
             case TDictionary(k, v):
-                return "Map<" + tstring(k) + ", " + tstring(v) + ">";
+                return "haxe.ds.ObjectMap<" + tstring(k) + ", " + tstring(v) + ">";
         }
     }
     

@@ -84,6 +84,13 @@ class AS3HXTest {
         generate("Issue53.as", "Issue53.hx");
     }
     
+    @Test("flash.display.Dictionary -> haxe.ds.ObjectMap<Dynamic, Dynamic>")
+    public function issue54() {
+        cfg.dictionaryToHash = true;
+        generate("Issue54.as", "Issue54.hx");
+        cfg.dictionaryToHash = false;
+    }
+    
     @Test("array.length = 10 -> Compat.setArrayLegth(array, 10)")
     public function issue63() {
         generate("Issue63.as", "Issue63.hx");
