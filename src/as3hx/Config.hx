@@ -11,7 +11,7 @@ using StringTools;
 /**
  * Configuration object for as3hx
  * @author Russell Weir
- **/
+ */
 class Config {
     /** Indent character(s) **/
     public var indentChars : String;
@@ -87,15 +87,12 @@ class Config {
     var cfgFile : String;
 
     public function new() {
-
         init();
-
         processDefaultConfig();
         processEnvConfig();
         processLocalConfig();
         processCommandLine();
         processImportPaths();
-
     }
 
     public function init() {
@@ -105,11 +102,11 @@ class Config {
             return;
         }
 
-                if (env.exists("TOOLROOT")) {
-                        var toolroot = env.get("TOOLROOT");
-                        cfgFile = toPath(toolroot + "/lib/as3tohx/as3hx_config.xml");
-                        return;
-                }
+        if (env.exists("TOOLROOT")) {
+            var toolroot = env.get("TOOLROOT");
+            cfgFile = toPath(toolroot + "/lib/as3hx/as3hx_config.xml");
+            return;
+        }
 
         var home = "";
         if (env.exists("HOME"))
@@ -124,8 +121,8 @@ class Config {
     /**
      * Creates a getter function name based on a property
      * using the getterMethods template
-     **/
-    public function makeGetterName(id:String) :String {
+     */
+    public function makeGetterName(id:String):String {
         var s = getterMethods.replace("%I", id);
         s = s.replace("%i", id);
         return s;
@@ -134,15 +131,14 @@ class Config {
     /**
      * Creates a setter function name based on a property
      * using the setterMethods template
-     **/
+     */
     public function makeSetterName(id:String) :String {
         var s = setterMethods.replace("%I", id);
         s = s.replace("%i", id);
         return s;
     }
 
-    static function ucfirst(s : String)
-    {
+    static function ucfirst(s : String):String {
         return s.substr(0, 1).toUpperCase() + s.substr(1);
     }
 
@@ -173,7 +169,8 @@ class Config {
 
     /**
      * Store fuly qualified names of Haxe files found
-     * at provided directories */
+     * at provided directories
+     */
     function processImportPaths() {
         importTypes = new StringMap<String>();
         for(path in importPaths) {
@@ -187,7 +184,6 @@ class Config {
      * name, using its path starting from the import path
      */
     function processImportPath(base : String, path : String, importTypes : StringMap<String>) : Void {
-
         /** check if valid base path was provided */
         if (FileSystem.exists(base)) {
 
@@ -215,58 +211,65 @@ class Config {
 
     public static function usage() {
         var println = Sys.println;
-        println("Usage: as3tohx [options] sourceDir [outdir]");
-        println("\tOptions:");
-        println("\t-no-cast-guess\tas3tohx will not try to handle MyClass(obj) casts");
-        println("\t-no-func2dyn\twill not change Function types to Dynamic");
-        println("\t-uint2int\ttransforms all uint to Int");
-        println("\t-vector2array\twill convert Vectors to haxe Arrays");
-        println("\t-debug-expr\twill output debug information");
-        println("\t-debug-inferred-type\twill output inferred type debug information");
-        println("\t-convert-flexunit\twill convert FlexUnit metadata and calls to munit form");
-        println("\toutdir\t\tdefaults to './out'");
+        println("Usage: as3hx [options] sourceDir [outdir]");
+        println("  Options:");
+        println("    -no-cast-guess\t : as3hx will not try to handle MyClass(obj) casts, defaults to true");
+        println("    -no-func2dyn\t : will not change Function types to Dynamic, defaults to false");
+        println("    -uint2int\t\t : transforms all uint to Int, defaults to true");
+        println("    -vector2array\t : will convert Vectors to haxe Arrays, defaults to true");
+        println("    -dict2hash\t\t : will convert Dictionary to haxe Map, defaults to false");
+        println("    -debug-expr\t\t : will output debug information");
+        println("    -debug-inferred-type : will output inferred type debug information");
+        println("    -convert-flexunit\t : will convert FlexUnit metadata and calls to munit form");
+        println("");
+        println("  outdir\t\t : defaults to './out'");
     }
 
     function processCommandLine() {
-        var args = Sys.args().slice(0);
-        if (args.length == 0) return;
-        var last = new Path (args[args.length - 1]).toString ();
-        if (((StringTools.endsWith (last, "/") && last != "/") || StringTools.endsWith (last, "\\")) && !StringTools.endsWith (last, ":\\")) {
-            last = last.substr (0, last.length - 1);
+        var args = Sys.args().copy();
+        if (args.length == 0) {
+            usage();
+            Sys.exit(0);
         }
-        if (FileSystem.exists (last) && FileSystem.isDirectory (last)) {
-            Sys.setCwd (last);
-            args.pop ();
+        var last = new Path(args[args.length - 1]).toString();
+        if (((StringTools.endsWith(last, "/") && last != "/") || StringTools.endsWith(last, "\\")) && !StringTools.endsWith(last, ":\\")) {
+            last = last.substr(0, last.length - 1);
+        }
+        if (FileSystem.exists(last) && FileSystem.isDirectory(last)) {
+            Sys.setCwd(last);
+            args.pop();
         }
         var arg = "";
         while(true) {
             arg = args.shift();
             switch(arg) {
-            case "-help", "--help":
-                usage();
-                Sys.exit(0);
-            case "-uint2int", "--uint2int":
-                uintToInt = true;
-            case "-no-cast-guess", "--no-cast-guess":
-                guessCasts = false;
-            case "-vector2array", "--vector2array":
-                vectorToArray = true;
-            case "-verifyGeneratedFiles", "--verifyGeneratedFiles":
-                verifyGeneratedFiles = true;
-            case "-debug-expr", "--debug-expr":
-                debugExpr = true;
-            case "-no-func2dyn", "--no-func2dyn":
-                functionToDynamic = false;
-            case "-error-continue","--error-continue":
-                errorContinue = true;
-            case "-test-case":
-                testCase = true;
-            case "-debug-inferred-type", "--debug-inferred-type":
-                debugInferredType = true;
-            case "-convert-flexunit", "--convert-flexunit":
-                convertFlexunit = true;
-            default:
-                break;
+                case "-help", "--help":
+                    usage();
+                    Sys.exit(0);
+                case "-uint2int", "--uint2int":
+                    uintToInt = true;
+                case "-no-cast-guess", "--no-cast-guess":
+                    guessCasts = false;
+                case "-vector2array", "--vector2array":
+                    vectorToArray = true;
+                case "-verifyGeneratedFiles", "--verifyGeneratedFiles":
+                    verifyGeneratedFiles = true;
+                case "-debug-expr", "--debug-expr":
+                    debugExpr = true;
+                case "-no-func2dyn", "--no-func2dyn":
+                    functionToDynamic = false;
+                case "-error-continue","--error-continue":
+                    errorContinue = true;
+                case "-test-case":
+                    testCase = true;
+                case "-debug-inferred-type", "--debug-inferred-type":
+                    debugInferredType = true;
+                case "-convert-flexunit", "--convert-flexunit":
+                    convertFlexunit = true;
+                case "-dictionary2hash":
+                    dictionaryToHash = true;
+                default:
+                    break;
             }
         }
         if(arg == null) {
@@ -371,7 +374,7 @@ class Config {
         }
     }
 
-    public static function toPath(inPath:String) {
+    public static function toPath(inPath:String):String {
         if (!isWindows())
             return inPath;
         var bits = inPath.split("/");
@@ -383,21 +386,21 @@ class Config {
         return (new EReg("window","i")).match(os);
     }
 
-    static function escape(s:String) {
+    static function escape(s:String):String {
         s = s.replace("\n", "\\n");
         s = s.replace("\r", "\\r");
         s = s.replace("\t", "\\t");
         return s;
     }
 
-    static function unescape(s:String) {
+    static function unescape(s:String):String {
         s = s.replace("\\n", "\n");
         s = s.replace("\\r", "\r");
         s = s.replace("\\t", "\t");
         return s;
     }
 
-    public static function defaultConfig() {
+    public static function defaultConfig():String {
         return
 '<as3hx>
     <errorContinue value="true" />
