@@ -256,7 +256,7 @@ class Config {
                     verifyGeneratedFiles = true;
                 case "-debug-expr", "--debug-expr":
                     debugExpr = true;
-                case "-no-func2dyn", "--no-func2dyn":
+                case "-func2dyn", "--func2dyn":
                     functionToDynamic = true;
                 case "-error-continue","--error-continue":
                     errorContinue = true;
