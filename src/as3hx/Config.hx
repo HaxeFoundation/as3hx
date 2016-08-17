@@ -266,7 +266,7 @@ class Config {
                     debugInferredType = true;
                 case "-convert-flexunit", "--convert-flexunit":
                     convertFlexunit = true;
-                case "-dictionary2hash":
+                case "-dict2hash":
                     dictionaryToHash = true;
                 default:
                     break;
