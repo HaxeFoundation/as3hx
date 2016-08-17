@@ -14,7 +14,7 @@ class TypeParser {
         // this is a ugly hack in order to fix lexer issue with "var x:*=0"
         var tmp = tokenizer.opPriority.get("*=");
         tokenizer.opPriority.remove("*=");
-        if( ParserUtils.opt(tokenizer, TOp("*")) ) {
+        if(ParserUtils.opt(tokenizer, TOp("*"))) {
             tokenizer.opPriority.set("*=",tmp);
             return TStar;
         }
@@ -22,12 +22,12 @@ class TypeParser {
 
         // for _i = new (obj as Class)() as DisplayObject;
         switch(tokenizer.peek()) {
-        case TPOpen: return TComplex(parseExpr(false));
-        default:
+            case TPOpen: return TComplex(parseExpr(false));
+            default:
         }
 
         var t = tokenizer.id();
-        if( t == "Vector" ) {
+        if(t == "Vector") {
             tokenizer.ensure(TDot);
             tokenizer.ensure(TOp("<"));
             var t = parseType();
@@ -35,14 +35,10 @@ class TypeParser {
             tokenizer.ensure(TOp(">"));
             types.seen.push(TVector(t));
             return TVector(t);
-        } else if (cfg.dictionaryToHash && t == "Dictionary") {
-            tokenizer.ensure(TDot);
-            tokenizer.ensure(TOp("<"));
-            var k = parseType();
-            tokenizer.ensure(TComma);
-            var v = parseType();
-            splitEndTemplateOps(tokenizer);
-            tokenizer.ensure(TOp(">"));
+        } 
+        if(cfg.dictionaryToHash && t == "Dictionary") {
+            var k = TPath(["Object"]);
+            var v = TPath(["Object"]);
             types.seen.push(TDictionary(k, v));
             return TDictionary(k, v);
         }
