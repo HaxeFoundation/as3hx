@@ -232,6 +232,8 @@ class Config {
             usage();
             Sys.exit(0);
         }
+        #else
+        if (args.length == 0) return;
         #end
         var last = new Path(args[args.length - 1]).toString();
         if (((StringTools.endsWith(last, "/") && last != "/") || StringTools.endsWith(last, "\\")) && !StringTools.endsWith(last, ":\\")) {
