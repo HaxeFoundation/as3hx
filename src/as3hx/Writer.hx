@@ -2593,6 +2593,23 @@ class Writer
                         }
                     }
                 }
+                else if (f == "splice") {
+                    var type = getExprType(e);
+                    if (type != null && type.indexOf("Array") != -1) {
+                        switch(params.length) {
+                            case 0 | 2:
+                            case 1:
+                                params.push(EField(e, "length"));
+                                rebuiltCall = ECall(EField(e, f), params);
+                            default: 
+                                if(cfg.useCompat) {
+                                    var p = [e].concat(params.slice(0, 2));
+                                    p.push(EArrayDecl(params.slice(2, params.length)));
+                                    rebuiltCall = ECall(EField(EIdent("as3hx.Compat"), "arraySplice"), p);
+                                }
+                        }
+                    }
+                }
                 else if (f == "indexOf") {
                     //in AS3, indexOf is a method in Array while it is not in Haxe
                     //Replace it by the Labda.indexOf method
@@ -2907,7 +2924,7 @@ class Writer
                     case "int": return null;
                     case "uint": return null;
                     case "void": return null;
-                    default: return fixCase ? properCase(c,true) : c;
+                    default: return fixCase ? properCase(c, true) : c;
                 }
             case TDictionary(k, v): return null;
         }

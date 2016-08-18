@@ -43,6 +43,16 @@ class Compat {
         else a[length - 1] = null;
     }
     
+    public static inline function arraySplice<T>(a:Array<T>, pos:Int, length:Int, ?rest:Array<T>) {
+        var result = a.splice(pos, len);
+        if(rest != null) {
+            for(i in 0...rest.length) {
+                a.insert(pos + i, rest[i]);
+            }
+        }
+        return result;
+    }
+    
     /**
      * Converts a typed expression into a Float.
      */

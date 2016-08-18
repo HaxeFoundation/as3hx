@@ -63,7 +63,7 @@ class Config {
     /** diff the generated .hx files against expected .hx files if they exists **/
     public var verifyGeneratedFiles : Bool;
 
-    /** 
+    /**
      * a list of absolute or relative directory paths.
      * Haxe files are found in this path and added to a map
      * of imported types used for implicit imports used
@@ -227,10 +227,12 @@ class Config {
 
     function processCommandLine() {
         var args = Sys.args().copy();
+        #if !munit
         if (args.length == 0) {
             usage();
             Sys.exit(0);
         }
+        #end
         var last = new Path(args[args.length - 1]).toString();
         if (((StringTools.endsWith(last, "/") && last != "/") || StringTools.endsWith(last, "\\")) && !StringTools.endsWith(last, ":\\")) {
             last = last.substr(0, last.length - 1);
