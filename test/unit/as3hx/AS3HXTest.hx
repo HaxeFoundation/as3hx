@@ -203,6 +203,11 @@ class AS3HXTest {
         cfg.useCompat = true;
     }
     
+    @Test("function.apply(null, args) -> Reflect.callMethod(null, function, args)")
+    public function issue120() {
+        generate("Issue120.as", "Issue120.hx");
+    }
+    
     @Test("delete object['key']")
     public function issue121() {
         generate("Issue121.as", "Issue121.hx");
