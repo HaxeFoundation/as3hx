@@ -2546,7 +2546,6 @@ class Writer
             else {
                 return null;
             }
-            
         default:
         }
         return null;
@@ -2646,6 +2645,13 @@ class Writer
                     var type = getExprType(e);
                     if (type != null && type.indexOf("String") != -1 && params.empty()) {
                         rebuiltCall = ECall(EField(e, f), [EConst(CInt("0"))]);
+                    }
+                }
+                else if (f == "apply") {
+                    var type = getExprType(e);
+                    if(type == "Function") {
+                        params = [EIdent("null"), e].concat(params.slice(1));
+                        rebuiltCall = ECall(EField(EIdent("Reflect"), "callMethod"), params);
                     }
                 }
                 else {
@@ -2811,11 +2817,9 @@ class Writer
     function shouldIndentCase(expressions:Array<Expr>) : Bool {
         //copy as might need to change
         var expressions = expressions.copy();
-
         //search for the first significant expression
         //to determine indenting
-        for (expr in expressions)
-        {
+        for (expr in expressions) {
             switch (expr) {
                 case EBlock(_): return false;  //block will add its own indenting
                 case ECommented(_):  //comments are skipped for this purpose
@@ -2823,7 +2827,6 @@ class Writer
                 default: return true;
             }
         }
-
         //empty switch case
         return false;
     }
