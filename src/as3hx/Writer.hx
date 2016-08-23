@@ -2654,6 +2654,13 @@ class Writer
                         rebuiltCall = ECall(EField(EIdent("Reflect"), "callMethod"), params);
                     }
                 }
+                else if(f == "call") {
+                    var type = getExprType(e);
+                    if(type == "Function") {
+                        params = [EIdent("null"), e].concat([EArrayDecl(params.slice(1))]);
+                        rebuiltCall = ECall(EField(EIdent("Reflect"), "callMethod"), params);
+                    }
+                }
                 else {
                     var ident = getIdentString(e);
                     if (ident != null) {
