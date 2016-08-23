@@ -1886,8 +1886,9 @@ class Writer
             if (conds[0].match(EBinop("&&" | "||", _, _, _))) return true;
             //index must be incremented by 1
             if (incrs.length == 1) {
-                return switch (incrs[0]) {
+                return switch(incrs[0]) {
                     case EUnop(op, _, _): op != "++";
+                    case EBinop(openb,_,_,_): true;
                     default: false;
                 }
             }

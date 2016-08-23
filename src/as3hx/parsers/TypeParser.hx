@@ -51,8 +51,8 @@ class TypeParser {
             case TDot:
                 tk = tokenizer.token();
                 switch(ParserUtils.uncomment(tk)) {
-                case TId(id): a.push(id);
-                default: ParserUtils.unexpected(ParserUtils.uncomment(tk));
+                    case TId(id): a.push(id);
+                    default: ParserUtils.unexpected(ParserUtils.uncomment(tk));
                 }
             case TCommented(s,b,t):
 
