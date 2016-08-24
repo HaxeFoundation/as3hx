@@ -1,25 +1,25 @@
 ##2016-08-24(1.0.4)
- - Fixed conversion of unary operator after declaration of block(issue #15)
- - Fixed convesion ```of if(number)```(issue #128)
- - Fixed conversion of ```array.join("\n")```(issue #150)
- - Fixed conversion of ```var cls : Class = Object(this).constructor as Class```(issue #158)
- - Fixed conversion of ```var some : Some = new someType() as Class```(issue #142)
- - Fixed parsing when semicolumn is missing(issue #53)
- - Fixed conversion of ```some || = new Some()```(issue #167)
- - Fixed crash when using setting -dictionary2hash(issue #54)
- - Only first character of package will be transformed to lower case(issue #143)
- - Loops will be converted to ```while``` instead of ```for``` for proper iteration variable modification(issue #178)
- - Call ```Reflect.deleteField(dynamic, fieldName)``` instead of ```delete object[fieldname]```(issue #121)
- - Call ```as3hx.Compat.Regex::exec``` instead of ```RegExp::exec```(issue #119)
- - Call ```as3hx.Compat.FLOAT_MAX``` instead of ```Number.MAX_VALUE```(issue #139)
- - Call ```as3hx.Compat.FLOAT_MIN``` instead of ```Number.MIN_VALUE```(issue #139)
- - Call ```as3hx.Compat.INT_MAX``` instead of ```int.MAX_VALUE```(issue #133)
- - Call ```as3hx.Compat.INT_MIN``` instead of ```int.MIN_VALUE```(issue #133)
- - Call ```as3hx.Compat.parseFloat``` instead ```parseFloat```(issue #162)
- - Call ```as3hx.Compat.parseInt``` instead ```parseInt```(issue #162)
- - Call ```as3hx.Compat.arraySplice(array, position, length, args)``` instead of ```array.splice(position, length, args)```(issue #165)
- - Call ```Reflect.callMethod(null, function, args)``` instead of ```function.apply(null, args)```(issue #120)
- - Call ```Reflect.callMethod(null, function, [arg0, arg1])``` instead of ```function.call(null, arg0, args1)```(issue #176)
+ - Fixed conversion of unary operator after declaration of block
+ - Fixed convesion ```of if(number)```
+ - Fixed conversion of ```array.join("\n")```
+ - Fixed conversion of ```var cls : Class = Object(this).constructor as Class```
+ - Fixed conversion of ```var some : Some = new someType() as Class```
+ - Fixed parsing when semicolumn is missing
+ - Fixed conversion of ```some || = new Some()```
+ - Fixed crash when using setting -dictionary2hash
+ - Only first character of package will be transformed to lower case
+ - Loops will be converted to ```while``` instead of ```for``` for proper iteration variable modification
+ - Call ```Reflect.deleteField(dynamic, fieldName)``` instead of ```delete object[fieldname]```
+ - Call ```as3hx.Compat.Regex::exec``` instead of ```RegExp::exec```
+ - Call ```as3hx.Compat.FLOAT_MAX``` instead of ```Number.MAX_VALUE```
+ - Call ```as3hx.Compat.FLOAT_MIN``` instead of ```Number.MIN_VALUE```
+ - Call ```as3hx.Compat.INT_MAX``` instead of ```int.MAX_VALUE```
+ - Call ```as3hx.Compat.INT_MIN``` instead of ```int.MIN_VALUE```
+ - Call ```as3hx.Compat.parseFloat``` instead ```parseFloat```
+ - Call ```as3hx.Compat.parseInt``` instead ```parseInt```
+ - Call ```as3hx.Compat.arraySplice(array, position, length, args)``` instead of ```array.splice(position, length, args)```
+ - Call ```Reflect.callMethod(null, function, args)``` instead of ```function.apply(null, args)```
+ - Call ```Reflect.callMethod(null, function, [arg0, arg1])``` instead of ```function.call(null, arg0, args1)```
  
 ##2016-08-05(1.0.3)
  - Fixed conversion of regular expressions with '[' character (closes issue #14)
