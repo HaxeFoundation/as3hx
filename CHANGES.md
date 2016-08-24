@@ -1,4 +1,27 @@
-##2016-06-08
+##2016-08-24(1.0.4)
+ - Fixed conversion of unary operator after declaration of block
+ - Fixed convesion ```of if(number)```
+ - Fixed conversion of ```array.join("\n")```
+ - Fixed conversion of ```var cls : Class = Object(this).constructor as Class```
+ - Fixed conversion of ```var some : Some = new someType() as Class```
+ - Fixed parsing when semicolumn is missing
+ - Fixed conversion of ```some || = new Some()```
+ - Fixed crash when using setting -dictionary2hash
+ - Only first character of package will be transformed to lower case
+ - Loops will be converted to ```while``` instead of ```for``` for proper iteration variable modification
+ - Call ```Reflect.deleteField(dynamic, fieldName)``` instead of ```delete object[fieldname]```
+ - Call ```as3hx.Compat.Regex::exec``` instead of ```RegExp::exec```
+ - Call ```as3hx.Compat.FLOAT_MAX``` instead of ```Number.MAX_VALUE```
+ - Call ```as3hx.Compat.FLOAT_MIN``` instead of ```Number.MIN_VALUE```
+ - Call ```as3hx.Compat.INT_MAX``` instead of ```int.MAX_VALUE```
+ - Call ```as3hx.Compat.INT_MIN``` instead of ```int.MIN_VALUE```
+ - Call ```as3hx.Compat.parseFloat``` instead ```parseFloat```
+ - Call ```as3hx.Compat.parseInt``` instead ```parseInt```
+ - Call ```as3hx.Compat.arraySplice(array, position, length, args)``` instead of ```array.splice(position, length, args)```
+ - Call ```Reflect.callMethod(null, function, args)``` instead of ```function.apply(null, args)```
+ - Call ```Reflect.callMethod(null, function, [arg0, arg1])``` instead of ```function.call(null, arg0, args1)```
+ 
+##2016-08-05(1.0.3)
  - Fixed conversion of regular expressions with '[' character (closes issue #14)
  - Fixed ternary operator conversion (closes issue #28)
  - Fixed conversion of compound loop conditions (closes issue #29)
