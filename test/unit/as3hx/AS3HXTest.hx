@@ -40,6 +40,11 @@ class AS3HXTest {
     }
     
     @Test
+    public function issue24() {
+        generate("Issue24.as", "Issue24.hx");
+    }
+    
+    @Test
     public function issue26() {
         generate("Issue26.as", "Issue26.hx");
     }
