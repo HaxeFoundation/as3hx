@@ -1682,12 +1682,27 @@ class Writer
                 writeIndent("");
             }
             var v = vars[i];
-            context.set(v.name, tstring(v.t, false));
+            var type = tstring(v.t, false);
+            context.set(v.name, type);
             write("var " + getModifiedIdent(v.name));
             writeVarType(v.t);
             if (v.val != null) {
                 write(" = ");
-                writeExpr(v.val);
+                var expr = v.val;
+                switch(type) {
+                    case "Int":
+                        switch(expr) {
+                            case ETypedExpr(e, t):
+                                if (e.match(EBinop("/", _, _, _))) expr = getCastToIntExpr(e);
+                                else switch(e) {
+                                    case EIdent(v) if(getExprType(e) == "Float"): expr = getCastToIntExpr(e);
+                                    default:
+                                }
+                            default:
+                        }
+                    default:
+                }
+                writeExpr(expr);
             }
         }
     }
@@ -2171,58 +2186,46 @@ class Writer
     
     function writeCastToString(e:Expr) {
         var type = getExprType(e);
-        if (type != null && type == "String") {
-            writeExpr(e);
-        } else {
-            write("Std.string(");
-            writeExpr(e);
-            write(")");
+        if (type != "String") {
+            e = getCastToStringExpr(e);
         }
+        writeExpr(e);
+    }
+    
+    function getCastToStringExpr(e:Expr):Expr { 
+        return ECall(EField(EIdent("Std"), "string"), [e]);
     }
     
     function writeCastToInt(e:Expr) {
         var type = getExprType(e);
-        if (type != null && type == "Int") {
-            writeExpr(e);
-        } else {
-            if (cfg.useCompat) {
-                write("as3hx.Compat.parseInt(");
-            } else {
-                //if compat class not used, fallback to Haxe
-                //standard lib. 
-                //Add overhead as values need all to be
-                //converted to string beforehand, as there is
-                //no way to know what the type of the expression
-                //at this point and "Std.parseInt" only accepts
-                //strings
-                write("Std.parseInt(Std.string(");
-            }
-            writeExpr(e);
-            write(")");
-            if (!cfg.useCompat) {
-                write(")");
-            }
+        if(type != "Int") {
+            e = getCastToIntExpr(e);
         }
+        writeExpr(e);
+    }
+    
+    function getCastToIntExpr(e:Expr):Expr {
+        if(cfg.useCompat) {
+            return ECall(EField(EIdent("as3hx.Compat"), "parseInt"), [e]);
+        }
+        return ECall(EField(EIdent("Std"), "parseInt"), [getCastToStringExpr(e)]);
     }
     
     function writeCastToFloat(e:Expr) {
         var type = getExprType(e);
-        if (type != null && (type == "Float" || type == "Int")) {
-            writeExpr(e);
-        } else {
-            if (cfg.useCompat) {
-                write("as3hx.Compat.parseFloat(");
-            } else {
-                write("Std.parseInt(Std.string(");
-            }
-            writeExpr(e);
-            write(")");
-            if (!cfg.useCompat) {
-                write(")");
-            }
+        if (type != "Float" && type != "Int") {
+            e = getCastToFloatExpr(e);
         }
+        writeExpr(e);
     }
-
+    
+    function getCastToFloatExpr(e:Expr):Expr {
+        if (cfg.useCompat) {
+            return ECall(EField(EIdent("as3hx.Compat"), "parseFloat"), [e]);
+        }
+        return ECall(EField(EIdent("Std"), "parseFloat"), [getCastToStringExpr(e)]);
+    }
+    
     // translate FlexUnit to munit meta data, if present.
     function writeMunitMetadata(m:Metadata) : Bool {
         var rv : Bool = false;
@@ -2749,27 +2752,38 @@ class Writer
     }
 
     function rebuildBinopExpr(op:String, lvalue:Expr, rvalue:Expr):Expr {
-        if(cfg.useCompat && op == "=") {
-            switch(lvalue) {
-                case EField(e, f):
-                    if (f == "length") {
-                        var type = getExprType(e);
-                        if (type != null && type.indexOf("Array<") != -1) {
-                            return ECall(EField(EIdent("as3hx.Compat"), "setArrayLength"), [e, rvalue]);
-                        }
+        switch (op) {
+            case "||=":
+                var type = getExprType(lvalue);
+                if(type != null) {
+                    var cond = switch(type) {
+                        case "Bool": lvalue;
+                        case "Int" | "UInt" | "Float" | _: rebuildIfExpr(lvalue);
                     }
-                default:
-            }
-        }
-        if(op == "||=") {
-            var type = getExprType(lvalue);
-            if (type != null) {
-                var cond = switch(type) {
-                    case "Bool": lvalue;
-                    case "Int" | "UInt" | "Float" | _: rebuildIfExpr(lvalue);
+                    return EBinop("=", lvalue, ETernary(cond, lvalue, rvalue), false);
                 }
-                return EBinop("=", lvalue, ETernary(cond, lvalue, rvalue), false);
-            }
+            case "=":
+                if(cfg.useCompat) {
+                    switch(lvalue) {
+                        case EField(e, f):
+                            if(f == "length") {
+                                var type = getExprType(e);
+                                if(type != null && type.indexOf("Array<") != -1) {
+                                    return ECall(EField(EIdent("as3hx.Compat"), "setArrayLength"), [e, rvalue]);
+                                }
+                            }
+                        default:
+                    }
+                }
+                if(getExprType(lvalue) == "Int") {
+                    switch(rvalue) {
+                        case EBinop(op, e1, e2, _) if(op == "/"):
+                            return EBinop("=", lvalue, getCastToIntExpr(rvalue), false);
+                        case EIdent(v) if(getExprType(rvalue) == "Float"):
+                            return EBinop("=", lvalue, getCastToIntExpr(rvalue), false);
+                        default:
+                    }
+                }
         }
         return null;
     }
