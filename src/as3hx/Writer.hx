@@ -1731,8 +1731,9 @@ class Writer
                 case ECall(e2, params2):
                     expr = e2;
                     params = params2;
+                case EArray(_,_): return writeExpr(eCall);
                 case ECommented(s, b, t, e2):
-                    //This is a hack for the AS3 unit test to 
+                    //This is a hack for the AS3 unit test to
                     //Haxe unit test conversion. In some cases,
                     //the first param of the test if converted
                     //to an end-of-line comment
@@ -2579,11 +2580,11 @@ class Writer
         switch (expr) {
             case EField(e, f):
                 //replace "myVar.hasOwnProperty(myProperty)" by "myVar.exists(myProperty)"
-                if (f == "hasOwnProperty") {
+                if(f == "hasOwnProperty") {
                     var rebuiltExpr = EField(e, "exists");
                     rebuiltCall = ECall(rebuiltExpr, params);
                 }
-                else if (f == "slice") {
+                else if(f == "slice") {
                     var type = getExprType(e);
                     if (type != null) {
                         if (type.indexOf("String") != -1) {
@@ -2596,7 +2597,7 @@ class Writer
                         }
                     }
                 }
-                else if (f == "splice") {
+                else if(f == "splice") {
                     var type = getExprType(e);
                     if (type != null && type.indexOf("Array") != -1) {
                         switch(params.length) {
@@ -2613,7 +2614,7 @@ class Writer
                         }
                     }
                 }
-                else if (f == "indexOf") {
+                else if(f == "indexOf") {
                     //in AS3, indexOf is a method in Array while it is not in Haxe
                     //Replace it by the Labda.indexOf method
                     var type = getExprType(e);
@@ -2627,31 +2628,31 @@ class Writer
                         }
                     }
                 }
-                else if (f == "toString") {
+                else if(f == "toString") {
                     //replace AS3 toString by Haxe Std.string
                     var rebuiltExpr = EField(EIdent("Std"), "string");
                     rebuiltCall = ECall(rebuiltExpr, [e]);
                 }
-                else if (f == "concat" && params.empty()) {
+                else if(f == "concat" && params.empty()) {
                     var type = getExprType(e);
                     if (type != null && type.indexOf("Array") != -1) {
                         var rebuildExpr = EField(e, "copy");
                         rebuiltCall = ECall(rebuildExpr, params);
                     }
                 }
-                else if (f == "join" && params.empty()) {
+                else if(f == "join" && params.empty()) {
                     var type = getExprType(e);
                     if (type != null && type.indexOf("Array") != -1) {
                         rebuiltCall = ECall(EField(e, f), [EConst(CString(","))]);
                     }
                 }
-                else if (f == "charAt" || f == "charCodeAt") {
+                else if(f == "charAt" || f == "charCodeAt") {
                     var type = getExprType(e);
                     if (type != null && type.indexOf("String") != -1 && params.empty()) {
                         rebuiltCall = ECall(EField(e, f), [EConst(CInt("0"))]);
                     }
                 }
-                else if (f == "apply") {
+                else if(f == "apply") {
                     var type = getExprType(e);
                     if(type == "Function") {
                         params = [EIdent("null"), e].concat(params.slice(1));
@@ -2663,6 +2664,13 @@ class Writer
                     if(type == "Function") {
                         params = [EIdent("null"), e].concat([EArrayDecl(params.slice(1))]);
                         rebuiltCall = ECall(EField(EIdent("Reflect"), "callMethod"), params);
+                    }
+                }
+                else if(f == "removeAt") {
+                    var type = getExprType(e);
+                    if (type != null && type.indexOf("Array<") != -1) {
+                        params = params.concat([EConst(CInt("1"))]);
+                        rebuiltCall = EArray(ECall(EField(e, "splice"), params), EConst(CInt("0")));
                     }
                 }
                 else {
