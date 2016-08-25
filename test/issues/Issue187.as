@@ -1,9 +1,9 @@
 package {
     import flash.geom.Matrix3D;
     import flash.geom.Vector3D;
-    public class Issue186 {
+    public class Issue187 {
         static private var sPoint3D:Vector3D;
-        public function Issue186() {
+        public function Issue187() {
         }
         
         public static function createPerspectiveProjectionMatrix(
@@ -16,7 +16,7 @@ package {
                 cameraPos = sPoint3D;
                 cameraPos.setTo(
                         stageWidth / 2, stageHeight / 2,   // -> center of stage
-                        stageWidth / Math.tan(0.5) * 0.5); // -> fieldOfView = 1.0 rad
+                        stageWidth / Math.tan(0.5) * 0.5);
             }
         }
     }

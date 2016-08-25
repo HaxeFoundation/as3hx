@@ -1,7 +1,7 @@
 import flash.geom.Matrix3D;
 import flash.geom.Vector3D;
 
-class Issue186
+class Issue187
 {
     private static var sPoint3D : Vector3D;
     public function new()

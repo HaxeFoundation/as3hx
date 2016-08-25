@@ -309,8 +309,8 @@ class AS3HXTest {
     }
     
     @Test
-    public function issue186() {
-        generate("Issue186.as", "Issue186.hx");
+    public function issue187() {
+        generate("Issue187.as", "Issue187.hx");
     }
     
     function generate(as3FileName:String, expectedHaxeFileName:String) {
