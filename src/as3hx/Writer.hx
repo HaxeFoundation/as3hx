@@ -1556,7 +1556,7 @@ class Writer
                                     case EIdent(_):
                                         var type = getExprType(i);
                                         if (type == null || type != "String") {
-                                            i = ECall(EField(EIdent("Std"), "string"), [i]);
+                                            i = getToStringExpr(i);
                                         }
                                     default:
                                 }
@@ -1759,7 +1759,7 @@ class Writer
                         handled = true;
                         switch(n) {
                             case "Number": writeCastToFloat(params[0]);
-                            case "String": writeCastToString(params[0]);
+                            case "String": writeToString(params[0]);
                             case "Boolean":
                                 write("cast(");
                                 writeExpr(params[0]);
@@ -2081,7 +2081,7 @@ class Writer
             switch(e2) {
                 case EIdent(s):
                     switch(s) {
-                        case "String": writeCastToString(e1);
+                        case "String": writeToString(e1);
                         case "int": writeCastToInt(e1);
                         case "Number": writeCastToFloat(e1);
                         case "Array":
@@ -2186,17 +2186,15 @@ class Writer
         return Semi;
     }
     
-    function writeCastToString(e:Expr) {
+    function writeToString(e:Expr) {
         var type = getExprType(e);
         if (type != "String") {
-            e = getCastToStringExpr(e);
+            e = getToStringExpr(e);
         }
         writeExpr(e);
     }
     
-    function getCastToStringExpr(e:Expr):Expr { 
-        return ECall(EField(EIdent("Std"), "string"), [e]);
-    }
+    inline function getToStringExpr(e:Expr):Expr return ECall(EField(EIdent("Std"), "string"), [e]);
     
     function writeCastToInt(e:Expr) {
         var type = getExprType(e);
@@ -2210,7 +2208,7 @@ class Writer
         if(cfg.useCompat) {
             return ECall(EField(EIdent("as3hx.Compat"), "parseInt"), [e]);
         }
-        return ECall(EField(EIdent("Std"), "parseInt"), [getCastToStringExpr(e)]);
+        return ECall(EField(EIdent("Std"), "parseInt"), [getToStringExpr(e)]);
     }
     
     function writeCastToFloat(e:Expr) {
@@ -2225,7 +2223,7 @@ class Writer
         if (cfg.useCompat) {
             return ECall(EField(EIdent("as3hx.Compat"), "parseFloat"), [e]);
         }
-        return ECall(EField(EIdent("Std"), "parseFloat"), [getCastToStringExpr(e)]);
+        return ECall(EField(EIdent("Std"), "parseFloat"), [getToStringExpr(e)]);
     }
     
     // translate FlexUnit to munit meta data, if present.
@@ -2581,11 +2579,11 @@ class Writer
         switch (expr) {
             case EField(e, f):
                 //replace "myVar.hasOwnProperty(myProperty)" by "myVar.exists(myProperty)"
-                if (f == "hasOwnProperty") {
+                if(f == "hasOwnProperty") {
                     var rebuiltExpr = EField(e, "exists");
                     result = ECall(rebuiltExpr, params);
                 }
-                else if (f == "slice") {
+                else if(f == "slice") {
                     var type = getExprType(e);
                     if (type != null) {
                         if (type.indexOf("String") != -1) {
@@ -2598,7 +2596,7 @@ class Writer
                         }
                     }
                 }
-                else if (f == "splice") {
+                else if(f == "splice") {
                     var type = getExprType(e);
                     if (type != null && type.indexOf("Array") != -1) {
                         switch(params.length) {
@@ -2615,7 +2613,7 @@ class Writer
                         }
                     }
                 }
-                else if (f == "indexOf") {
+                else if(f == "indexOf") {
                     //in AS3, indexOf is a method in Array while it is not in Haxe
                     //Replace it by the Labda.indexOf method
                     var type = getExprType(e);
@@ -2629,31 +2627,35 @@ class Writer
                         }
                     }
                 }
-                else if (f == "toString") {
-                    //replace AS3 toString by Haxe Std.string
-                    var rebuiltExpr = EField(EIdent("Std"), "string");
-                    result = ECall(rebuiltExpr, [e]);
+                else if(f == "insertAt") {
+                    var type = getExprType(e);
+                    if(type != null && type.indexOf("Array<") != -1) {
+                        result = ECall(EField(e, "insert"), params);
+                    }
                 }
-                else if (f == "concat" && params.empty()) {
+                else if(f == "toString") {
+                    result = getToStringExpr(e);
+                }
+                else if(f == "concat" && params.empty()) {
                     var type = getExprType(e);
                     if (type != null && type.indexOf("Array") != -1) {
                         var rebuildExpr = EField(e, "copy");
                         result = ECall(rebuildExpr, params);
                     }
                 }
-                else if (f == "join" && params.empty()) {
+                else if(f == "join" && params.empty()) {
                     var type = getExprType(e);
                     if (type != null && type.indexOf("Array") != -1) {
                         result = ECall(EField(e, f), [EConst(CString(","))]);
                     }
                 }
-                else if (f == "charAt" || f == "charCodeAt") {
+                else if(f == "charAt" || f == "charCodeAt") {
                     var type = getExprType(e);
                     if (type != null && type.indexOf("String") != -1 && params.empty()) {
                         result = ECall(EField(e, f), [EConst(CInt("0"))]);
                     }
                 }
-                else if (f == "apply") {
+                else if(f == "apply") {
                     var type = getExprType(e);
                     if(type == "Function") {
                         params = [EIdent("null"), e].concat(params.slice(1));
