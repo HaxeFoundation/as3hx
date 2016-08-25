@@ -7,8 +7,11 @@
  - Fixed parsing when semicolumn is missing
  - Fixed conversion of ```some || = new Some()```
  - Fixed crash when using setting -dictionary2hash
+ - Fixed ```@:allow``` position in the order of access modifiers
+ - Fixed int() and Number() casts when applied to Numbers
  - Only first character of package will be transformed to lower case
  - Loops will be converted to ```while``` instead of ```for``` for proper iteration variable modification
+ - Inline alert message in generated code when trying to `delete` Dictionary keys
  - Call ```Reflect.deleteField(dynamic, fieldName)``` instead of ```delete object[fieldname]```
  - Call ```as3hx.Compat.Regex::exec``` instead of ```RegExp::exec```
  - Call ```as3hx.Compat.FLOAT_MAX``` instead of ```Number.MAX_VALUE```
