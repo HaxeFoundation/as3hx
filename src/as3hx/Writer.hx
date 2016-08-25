@@ -1554,7 +1554,7 @@ class Writer
                                     case EIdent(_):
                                         var type = getExprType(i);
                                         if (type == null || type != "String") {
-                                            i = ECall(EField(EIdent("Std"), "string"), [i]);
+                                            i = getToStringExpr(i);
                                         }
                                     default:
                                 }
@@ -1757,7 +1757,7 @@ class Writer
                         handled = true;
                         switch(n) {
                             case "Number": writeCastToFloat(params[0]);
-                            case "String": writeCastToString(params[0]);
+                            case "String": writeToString(params[0]);
                             case "Boolean":
                                 write("cast(");
                                 writeExpr(params[0]);
@@ -2079,7 +2079,7 @@ class Writer
             switch(e2) {
                 case EIdent(s):
                     switch(s) {
-                        case "String": writeCastToString(e1);
+                        case "String": writeToString(e1);
                         case "int": writeCastToInt(e1);
                         case "Number": writeCastToFloat(e1);
                         case "Array":
@@ -2184,17 +2184,15 @@ class Writer
         return Semi;
     }
     
-    function writeCastToString(e:Expr) {
+    function writeToString(e:Expr) {
         var type = getExprType(e);
         if (type != "String") {
-            e = getCastToStringExpr(e);
+            e = getToStringExpr(e);
         }
         writeExpr(e);
     }
     
-    function getCastToStringExpr(e:Expr):Expr { 
-        return ECall(EField(EIdent("Std"), "string"), [e]);
-    }
+    inline function getToStringExpr(e:Expr):Expr return ECall(EField(EIdent("Std"), "string"), [e]);
     
     function writeCastToInt(e:Expr) {
         var type = getExprType(e);
@@ -2208,7 +2206,7 @@ class Writer
         if(cfg.useCompat) {
             return ECall(EField(EIdent("as3hx.Compat"), "parseInt"), [e]);
         }
-        return ECall(EField(EIdent("Std"), "parseInt"), [getCastToStringExpr(e)]);
+        return ECall(EField(EIdent("Std"), "parseInt"), [getToStringExpr(e)]);
     }
     
     function writeCastToFloat(e:Expr) {
@@ -2223,7 +2221,7 @@ class Writer
         if (cfg.useCompat) {
             return ECall(EField(EIdent("as3hx.Compat"), "parseFloat"), [e]);
         }
-        return ECall(EField(EIdent("Std"), "parseFloat"), [getCastToStringExpr(e)]);
+        return ECall(EField(EIdent("Std"), "parseFloat"), [getToStringExpr(e)]);
     }
     
     // translate FlexUnit to munit meta data, if present.
@@ -2575,45 +2573,45 @@ class Writer
      * @return the new expression, or null if no change were needed
      */
     function rebuildCallExpr(fullExpr : Expr, expr : Expr, params : Array<Expr>) : Expr {
-        var rebuiltCall = null;
+        var result = null;
         switch (expr) {
             case EField(e, f):
                 //replace "myVar.hasOwnProperty(myProperty)" by "myVar.exists(myProperty)"
-                if (f == "hasOwnProperty") {
+                if(f == "hasOwnProperty") {
                     var rebuiltExpr = EField(e, "exists");
-                    rebuiltCall = ECall(rebuiltExpr, params);
+                    result = ECall(rebuiltExpr, params);
                 }
-                else if (f == "slice") {
+                else if(f == "slice") {
                     var type = getExprType(e);
                     if (type != null) {
                         if (type.indexOf("String") != -1) {
                             //replace AS3 slice by Haxe substr
                             var rebuiltExpr = EField(e, "substring");
-                            rebuiltCall = ECall(rebuiltExpr, params);
+                            result = ECall(rebuiltExpr, params);
                         } else if(type.indexOf("Array") != -1 && params.empty()) {
                             var rebuiltExpr = EField(e, "copy");
-                            rebuiltCall = ECall(rebuiltExpr, params);
+                            result = ECall(rebuiltExpr, params);
                         }
                     }
                 }
-                else if (f == "splice") {
+                else if(f == "splice") {
                     var type = getExprType(e);
                     if (type != null && type.indexOf("Array") != -1) {
                         switch(params.length) {
                             case 0 | 2:
                             case 1:
                                 params.push(EField(e, "length"));
-                                rebuiltCall = ECall(EField(e, f), params);
+                                result = ECall(EField(e, f), params);
                             default: 
                                 if(cfg.useCompat) {
                                     var p = [e].concat(params.slice(0, 2));
                                     p.push(EArrayDecl(params.slice(2, params.length)));
-                                    rebuiltCall = ECall(EField(EIdent("as3hx.Compat"), "arraySplice"), p);
+                                    result = ECall(EField(EIdent("as3hx.Compat"), "arraySplice"), p);
                                 }
                         }
                     }
                 }
-                else if (f == "indexOf") {
+                else if(f == "indexOf") {
                     //in AS3, indexOf is a method in Array while it is not in Haxe
                     //Replace it by the Labda.indexOf method
                     var type = getExprType(e);
@@ -2623,46 +2621,50 @@ class Writer
                         if (type.indexOf("Array") != -1 || type.indexOf("Map") != -1) {
                             var rebuiltExpr = EField(EIdent("Lambda"), "indexOf");
                             params.unshift(e);
-                            rebuiltCall = ECall(rebuiltExpr, params);
+                            result = ECall(rebuiltExpr, params);
                         }
                     }
                 }
-                else if (f == "toString") {
-                    //replace AS3 toString by Haxe Std.string
-                    var rebuiltExpr = EField(EIdent("Std"), "string");
-                    rebuiltCall = ECall(rebuiltExpr, [e]);
+                else if(f == "insertAt") {
+                    var type = getExprType(e);
+                    if(type != null && type.indexOf("Array<") != -1) {
+                        result = ECall(EField(e, "insert"), params);
+                    }
                 }
-                else if (f == "concat" && params.empty()) {
+                else if(f == "toString") {
+                    result = getToStringExpr(e);
+                }
+                else if(f == "concat" && params.empty()) {
                     var type = getExprType(e);
                     if (type != null && type.indexOf("Array") != -1) {
                         var rebuildExpr = EField(e, "copy");
-                        rebuiltCall = ECall(rebuildExpr, params);
+                        result = ECall(rebuildExpr, params);
                     }
                 }
-                else if (f == "join" && params.empty()) {
+                else if(f == "join" && params.empty()) {
                     var type = getExprType(e);
                     if (type != null && type.indexOf("Array") != -1) {
-                        rebuiltCall = ECall(EField(e, f), [EConst(CString(","))]);
+                        result = ECall(EField(e, f), [EConst(CString(","))]);
                     }
                 }
-                else if (f == "charAt" || f == "charCodeAt") {
+                else if(f == "charAt" || f == "charCodeAt") {
                     var type = getExprType(e);
                     if (type != null && type.indexOf("String") != -1 && params.empty()) {
-                        rebuiltCall = ECall(EField(e, f), [EConst(CInt("0"))]);
+                        result = ECall(EField(e, f), [EConst(CInt("0"))]);
                     }
                 }
-                else if (f == "apply") {
+                else if(f == "apply") {
                     var type = getExprType(e);
                     if(type == "Function") {
                         params = [EIdent("null"), e].concat(params.slice(1));
-                        rebuiltCall = ECall(EField(EIdent("Reflect"), "callMethod"), params);
+                        result = ECall(EField(EIdent("Reflect"), "callMethod"), params);
                     }
                 }
                 else if(f == "call") {
                     var type = getExprType(e);
                     if(type == "Function") {
                         params = [EIdent("null"), e].concat([EArrayDecl(params.slice(1))]);
-                        rebuiltCall = ECall(EField(EIdent("Reflect"), "callMethod"), params);
+                        result = ECall(EField(EIdent("Reflect"), "callMethod"), params);
                     }
                 }
                 else {
@@ -2671,10 +2673,10 @@ class Writer
                         //replace AS3 StringUtil by Haxe StringTools
                         if (ident == "StringUtil") {
                             var rebuiltExpr = EField(EIdent("StringTools"), f);
-                            rebuiltCall = ECall(rebuiltExpr, params);
+                            result = ECall(rebuiltExpr, params);
                         } else if (ident == "JSON") {
                             var rebuiltExpr = EField(EIdent("haxe.Json"), f);
-                            rebuiltCall = ECall(rebuiltExpr, params);
+                            result = ECall(rebuiltExpr, params);
                         }
                     }
                 }
@@ -2693,15 +2695,15 @@ class Writer
 
                     //helper to convert an AS3 test case to an Haxe one
                     var getUnitTestExpr = function(rebuiltExpr, params, commentFirstParam) {
-                        var rebuiltCall = ECall(rebuiltExpr, params);
+                        var result = ECall(rebuiltExpr, params);
                         
                         //in some cases, the first param is a description of the test, 
                         //which should be converted to a comment
                         if (commentFirstParam) {
                             var comment = getCommentedParam(params.shift());
-                            rebuiltCall = ECommented(comment, false, true, rebuiltCall);
+                            result = ECommented(comment, false, true, result);
                         }
-                        return rebuiltCall;
+                        return result;
                     }
                     
                     switch (ident) {
@@ -2714,41 +2716,41 @@ class Writer
                                 if (paramIdent != null ) {
                                     var keysExpr =  ECall(EField(EIdent(paramIdent), "keys"), []);
                                     var rebuiltExpr = EField(keysExpr, "hasNext");
-                                    rebuiltCall = ECall(rebuiltExpr, []);
+                                    result = ECall(rebuiltExpr, []);
                                 }
                             }
 
                         //convert AS3 unit tests to Haxe tests
                         case "assertTrue":
                             var rebuiltExpr = EField(EIdent("Assert"), "isTrue");
-                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 2);
+                            result = getUnitTestExpr(rebuiltExpr, params, params.length == 2);
 
                         case "assertFalse":
                             var rebuiltExpr = EField(EIdent("Assert"), "isFalse");
-                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 2);
+                            result = getUnitTestExpr(rebuiltExpr, params, params.length == 2);
 
                          case "assertEquals":
                             var rebuiltExpr = EField(EIdent("Assert"), "areEqual");
-                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 3);
+                            result = getUnitTestExpr(rebuiltExpr, params, params.length == 3);
 
                         case "assertNull":
                             var rebuiltExpr = EField(EIdent("Assert"), "isNull");
-                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 2);
+                            result = getUnitTestExpr(rebuiltExpr, params, params.length == 2);
 
                         case "assertNotNull":
                             var rebuiltExpr = EField(EIdent("Assert"), "isNotNull");
-                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, params.length == 2);
+                            result = getUnitTestExpr(rebuiltExpr, params, params.length == 2);
 
                         case "assertThat":
-                            rebuiltCall = getUnitTestExpr(EIdent(ident), params, params.length == 3);
+                            result = getUnitTestExpr(EIdent(ident), params, params.length == 3);
 
                         case "fail":
                             var rebuiltExpr = EField(EIdent("Assert"), "fail");
-                            rebuiltCall = getUnitTestExpr(rebuiltExpr, params, false);
+                            result = getUnitTestExpr(rebuiltExpr, params, false);
                     }
                 }
         }
-        return rebuiltCall;
+        return result;
     }
 
     function rebuildBinopExpr(op:String, lvalue:Expr, rvalue:Expr):Expr {
