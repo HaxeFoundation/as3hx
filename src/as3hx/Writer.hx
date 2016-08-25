@@ -131,6 +131,8 @@ class Writer
         return result;
     }
     
+    inline function getColon():String return cfg.spacesOnTypeColon ? " : " : ":";
+    
     function writeComments(comments : Array<Expr>) {
         for(c in comments) {
             switch(c) {
@@ -920,10 +922,10 @@ class Writer
         if (t == null)
         {
             if (alt != null)
-                write((cfg.spacesOnTypeColon ? " : " : ":") + alt);
+                write(getColon() + alt);
             return;
         }
-        write((cfg.spacesOnTypeColon ? " : " : ":") + tstring(t, isNativeGetSet));
+        write(getColon() + tstring(t, isNativeGetSet));
     }
 
     function writeInits(c : ClassDef) {
@@ -1172,7 +1174,7 @@ class Writer
 
                 write(") ? ");
                 writeExpr(e1);
-                write(cfg.spacesOnTypeColon ? " : " : ":");
+                write(getColon());
                 writeExpr(e2);
             case EWhile(cond, e, doWhile): rv = writeEWhile(cond, e, doWhile);
             case EFor(inits, conds, incrs, e): rv = writeEFor(inits, conds, incrs, e);
@@ -2679,6 +2681,18 @@ class Writer
                             result = ECall(rebuiltExpr, params);
                         }
                     }
+                }
+            case EParent(e):
+                result = switch(fullExpr) {
+                    case ECall(e, params):
+                        var f:Expr->Expr = null;
+                        f = function(e) return switch(e) {
+                            case EParent(e): f(e);
+                            default: e;
+                        }
+                        e = f(e);
+                        ECall(e, params);
+                    default: null;
                 }
             default:
                 var ident = getIdentString(expr);
