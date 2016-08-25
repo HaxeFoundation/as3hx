@@ -309,8 +309,8 @@ class AS3HXTest {
     }
     
     @Test("array.insertAt(position, element) -> array.insert(position, element)")
-    public function issue182() {
-        generate("Issue182.as", "Issue182.hx");
+    public function issue184() {
+        generate("Issue184.as", "Issue184.hx");
     }
     
     function generate(as3FileName:String, expectedHaxeFileName:String) {
