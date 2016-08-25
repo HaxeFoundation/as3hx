@@ -111,6 +111,11 @@ class AS3HXTest {
         generate("Issue65.as", "Issue65.hx");
     }
     
+    @Test("var i:int = (int)(number) -> var i:Int = as3hx.Compat.parseInt(number)")
+    public function issue66() {
+        generate("Issue66.as", "Issue66.hx");
+    }
+    
     @Test("array.slice() -> array.copy()")
     public function issue68() {
         generate("Issue68.as", "Issue68.hx");
@@ -141,7 +146,7 @@ class AS3HXTest {
         generate("Issue83.as", "Issue83.hx");
     }
     
-    @Test("uint(1) -> as3hx.Compat.parseInt(1)")
+    @Test("var i:uint = uint(1) -> var i:Int = 1")
     public function issue85() {
         generate("Issue85.as", "Issue85.hx");
     }
@@ -156,7 +161,7 @@ class AS3HXTest {
         generate("Issue89.as", "Issue89.hx");
     }
     
-    @Test("var b:Boolean = !int -> var b:Bool = int != 0")
+    @Test("var b:Boolean = !int_value -> var b:Bool = int_value != 0")
     public function issue91() {
         generate("Issue91.as", "Issue91.hx");
     }
@@ -306,6 +311,11 @@ class AS3HXTest {
     @Test
     public function issue178() {
         generate("Issue178.as", "Issue178.hx");
+    }
+    
+    @Test("array.insertAt(position, element) -> array.insert(position, element)")
+    public function issue184() {
+        generate("Issue184.as", "Issue184.hx");
     }
     
     @Test("array.removeAt(0) -> array.splice(0, 1)[0]")
