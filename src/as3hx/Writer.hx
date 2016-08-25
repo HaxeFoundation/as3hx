@@ -1491,15 +1491,7 @@ class Writer
                 addWarning("EXML");
             case ELabel( name ):
                 addWarning("Unhandled ELabel("+name+")", true);
-            case ECommented(s,b,t,ex):
-                if(t)
-                    rv = writeExpr(ex);
-                writeComment(formatComment(s,b));
-                    
-                if(!t) 
-                    rv = writeExpr(ex);
-
-                if (ex == null) rv = Ret;
+            case ECommented(s, b, t, ex): rv = writeECommented(s,b,t,ex);
             case EMeta(m):
                 if (!cfg.convertFlexunit || !writeMunitMetadata(m)) {
                     write("@:meta("+m.name+"(");
@@ -1807,13 +1799,11 @@ class Writer
             //return wether the param at the index is the last
             //method call argument
             var isLastArgument:Array<Expr>->Int->Bool = function(params, index) {
-                
                 //return wether the expression is a method call
                 //argument, which excludes comments and newlines
                 var isArgument : Expr->Bool = null;
                 isArgument = function(fullExpr) {
-                    if (fullExpr == null) return false;
-                    return switch (fullExpr) {
+                    return switch(fullExpr) {
                         case ECommented(s,b,t,expr): isArgument(expr);
                         case ENL(expr): isArgument(expr);
                         default: true;
@@ -1822,7 +1812,7 @@ class Writer
                 
                 //check all remaining parameters
                 var i = index;
-                while(i <= params.length) {
+                while(i < params.length - 1) {
                     if(isArgument(params[i]))
                         return false;
                     i++;
@@ -1833,25 +1823,20 @@ class Writer
             writeExpr(expr);
             write("(");
             var enl = false;
-            for (i in 0...params.length) {
-                if (i > 0) {
-                    //check if arguments remain before adding comma
-                    if(!isLastArgument(params, i))
-                        write(",");
-    
-                    //minor formatting fix, if arg is newline or 
-                    //comment, no need for extra space
-                    switch (params[i]) {
-                        case ECommented(s,b,t,expr):
-                        case ENL(expr):
-                        default:write(" ");
-                    }
+            for(i in 0...params.length) {
+                var isNotLastArgument = !isLastArgument(params, i);
+                var param = params[i];
+                switch(param) {
+                    case ECommented(s, b, t, expr):
+                        var delimiter = t && isNotLastArgument ? ", " : null;
+                        writeECommented(s, b, t, expr, delimiter);
+                    default:
+                        writeExpr(param);
+                        if(isNotLastArgument) write(", ");
                 }
-                var p = params[i];
-                writeExpr(p);
-                if(!enl && (p.match(ECommented(_,false,true,_)) || p.match(ENL(_)))) enl = true;
+                if(!enl && (param.match(ECommented(_,false,true,_)) || param.match(ENL(_)))) enl = true;
             }
-            if (enl) {
+            if(enl) {
                 writeNL();
                 var step = Std.int(lvl / 2);
                 lvl -= step;
@@ -2192,7 +2177,7 @@ class Writer
         writeExpr(e);
     }
     
-    function getCastToStringExpr(e:Expr):Expr { 
+    function getCastToStringExpr(e:Expr):Expr {
         return ECall(EField(EIdent("Std"), "string"), [e]);
     }
     
@@ -2385,6 +2370,27 @@ class Writer
         inE4XFilter = false;
     }
 
+    function writeECommented(s:String, isBlock:Bool, isTail:Bool, e:Expr, ?delimiter:String):BlockEnd {
+        var writeDelimiter = function() {
+            if(delimiter == null) return;
+            lineIsDirty = false;
+            write(delimiter);
+            lineIsDirty = false;
+        }
+        var result:BlockEnd = Semi;
+        if(isTail) {
+            result = writeExpr(e);
+            writeDelimiter();
+        }
+        writeComment(formatComment(s, isBlock));
+        if(!isTail) {
+            writeDelimiter();
+            result = writeExpr(e);
+        }
+        if(e == null) result = Ret;
+        return result;
+    }
+    
     /**
      * Rebuilds any E4X expression to check for instances where the string value
      * is compared to a numerical constant, and change all EIdent instances to
