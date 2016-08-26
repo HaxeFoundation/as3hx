@@ -1,3 +1,4 @@
+import haxe.Constraints.Function;
 
 class Issue176
 {
