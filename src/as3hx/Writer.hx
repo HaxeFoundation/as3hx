@@ -1733,8 +1733,9 @@ class Writer
                 case ECall(e2, params2):
                     expr = e2;
                     params = params2;
+                case EArray(_,_): return writeExpr(eCall);
                 case ECommented(s, b, t, e2):
-                    //This is a hack for the AS3 unit test to 
+                    //This is a hack for the AS3 unit test to
                     //Haxe unit test conversion. In some cases,
                     //the first param of the test if converted
                     //to an end-of-line comment
@@ -2667,6 +2668,13 @@ class Writer
                     if(type == "Function") {
                         params = [EIdent("null"), e].concat([EArrayDecl(params.slice(1))]);
                         result = ECall(EField(EIdent("Reflect"), "callMethod"), params);
+                    }
+                }
+                else if(f == "removeAt") {
+                    var type = getExprType(e);
+                    if (type != null && type.indexOf("Array<") != -1) {
+                        params = params.concat([EConst(CInt("1"))]);
+                        result = EArray(ECall(EField(e, "splice"), params), EConst(CInt("0")));
                     }
                 }
                 else {
