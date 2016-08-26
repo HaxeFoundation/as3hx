@@ -66,22 +66,24 @@ class Writer
             "RegExp", "Std", "String", "StringBuf",
             "StringTools", "Sys", "Type", "Void",
             "Function", "Object", "XML", "XMLList"
-            ];
-        for (c in doNotImportClasses) {
+        ];
+        for(c in doNotImportClasses) {
             this.typeImportMap.set(c, null);
         }
+        if(!cfg.functionToDynamic) typeImportMap.set("Function", "haxe.Constraints.Function");
 
         var topLevelErrorClasses = [
             "ArgumentError", "DefinitionError", "Error",
             "EvalError", "RangeError", "ReferenceError",
             "SecurityError", "SyntaxError", "TypeError",
             "URIError", "VerifyError"
-            ];
-        for (c in topLevelErrorClasses) {
+        ];
+        
+        for(c in topLevelErrorClasses) {
             this.typeImportMap.set(c, "flash.errors." + c);
         }
 
-        for (c in cfg.importTypes.keys()) {
+        for(c in cfg.importTypes.keys()) {
             this.typeImportMap.set(c, cfg.importTypes.get(c));
         }
     }
@@ -198,7 +200,7 @@ class Writer
         for(d in definedTypes) {
             typeImportMap.set(d, null);
         }
-
+        
         // Now convert each seen type enum into the corresponding
         // type import string.
         var uniqueTypes : Map<String,Bool> = new Map<String,Bool>();
@@ -211,7 +213,6 @@ class Writer
         // map.
         var addnImports : Array<String> = new Array<String>();
         for(u in uniqueTypes.keys()) {
-            var importType : String;
             if (typeImportMap.exists(u)) {
                 u = typeImportMap.get(u);
             } else {
@@ -673,16 +674,16 @@ class Writer
      */
     function getCondComp(exprs : Array<Expr>) : Array<String>
     {
-       var condComps = [];
-       for (expr in exprs) 
-       {
+        var condComps = [];
+        for (expr in exprs) 
+        {
             switch (expr) {
                 case ECondComp(v,e,e2):
                     condComps.push(v);
                 default:
             }
-       }
-       return condComps;
+        }
+        return condComps;
     }
 
     /**
@@ -692,7 +693,7 @@ class Writer
     function getECondComp(exprs : Array<Expr>) : Array<Expr>
     {
         var condComps = [];
-        for (expr in exprs) 
+        for (expr in exprs)
         {
             switch (expr) {
                 case ECondComp(v,e,e2):
@@ -710,7 +711,7 @@ class Writer
      */
     function hasCondComp(condComp : String, exprs : Array<Expr>) : Bool
     {
-        for (expr in exprs) 
+        for (expr in exprs)
         {
             switch (expr) {
                 case ECondComp(v,e,e2):

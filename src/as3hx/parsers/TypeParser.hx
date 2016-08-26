@@ -42,6 +42,11 @@ class TypeParser {
             types.seen.push(TDictionary(k, v));
             return TDictionary(k, v);
         }
+        if(!cfg.functionToDynamic && t == "Function") {
+            var result = TPath([t]);
+            types.seen.push(result);
+            return result;
+        }
 
         var a = [t];
         var tk = tokenizer.token();

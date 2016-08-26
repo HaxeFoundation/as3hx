@@ -333,6 +333,11 @@ class AS3HXTest {
         generate("Issue187.as", "Issue187.hx");
     }
     
+    @Test
+    public function issue192() {
+        generate("Issue192.as", "Issue192.hx");
+    }
+    
     function generate(as3FileName:String, expectedHaxeFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var generatedDirectoryPath = '$issuesDirectory/generated';
