@@ -225,13 +225,7 @@ class Writer
         // Finally, if any additional implicit imports were found
         // to be needed, output them.
         if (addnImports.length > 0) {
-            addnImports.sort(
-                function(a : String, b : String) : Int {
-                    if (a<b) return -1;
-                    if (b<a) return 1;
-                    return 0;
-                }
-            );
+            addnImports.sort(Reflect.compare);
             for(a in addnImports) {
                 writeLine("import " + a + ";");
             }
@@ -1684,18 +1678,20 @@ class Writer
             if (v.val != null) {
                 write(" = ");
                 var expr = v.val;
-                switch(type) {
-                    case "Int":
-                        switch(expr) {
-                            case ETypedExpr(e, t):
-                                if (e.match(EBinop("/", _, _, _))) expr = getCastToIntExpr(e);
-                                else switch(e) {
-                                    case EIdent(v) if(getExprType(e) == "Float"): expr = getCastToIntExpr(e);
-                                    default:
-                                }
-                            default:
-                        }
-                    default:
+                if(type == "Int") {
+                    switch(expr) {
+                        case ETypedExpr(e, t):
+                            switch(e) {
+                                case EBinop(op,_,_,_):
+                                    switch(op) {
+                                        case "/" | "-" | "+" | "*": expr = getCastToIntExpr(e);
+                                        default:
+                                    }
+                                case EIdent(v) if(getExprType(e) == "Float"): expr = getCastToIntExpr(e);
+                                default:
+                            }
+                        default:
+                    }
                 }
                 writeExpr(expr);
             }
@@ -2802,8 +2798,11 @@ class Writer
                 }
                 if(getExprType(lvalue) == "Int") {
                     switch(rvalue) {
-                        case EBinop(op, e1, e2, _) if(op == "/"):
-                            return EBinop("=", lvalue, getCastToIntExpr(rvalue), false);
+                        case EBinop(op,_,_,_):
+                            switch(op) {
+                                case "/" | "-" | "+" | "*": return EBinop("=", lvalue, getCastToIntExpr(rvalue), false);
+                                default:
+                            }
                         case EIdent(v) if(getExprType(rvalue) == "Float"):
                             return EBinop("=", lvalue, getCastToIntExpr(rvalue), false);
                         default:
