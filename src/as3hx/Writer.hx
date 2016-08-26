@@ -573,7 +573,7 @@ class Writer
                 write("var " + getModifiedIdent(field.name));
 
                 var type = tstring(t, false); //check wether a specific type was defined for this array
-                if (type != null && type.indexOf("Array") != -1) {
+                if(isArrayType(type)) {
                     for (genType in this.genTypes) {
                         if (field.name == genType.fieldName) {
                             t = TVector(TPath([genType.name]));
@@ -1232,7 +1232,7 @@ class Writer
                     write(")");
                 } else {
                     //write("/*!!!" + etype + "!!!*/");
-                    if(etype != null && !StringTools.startsWith(etype, "Array<") && itype != null && itype != "Int" && itype != "UInt") {
+                    if(isArrayType(etype) && itype != null && itype != "Int" && itype != "UInt") {
                         if (cfg.debugInferredType) {
                             write("/* etype: " + etype + " itype: " + itype + " */");
                         }
@@ -1704,16 +1704,13 @@ class Writer
     function writeECall(fullExpr:Expr, expr:Expr, params:Array<Expr>):BlockEnd {
         switch(expr) {
             case EField(expr, f):
-                if (f == "push" && params.length > 1) {
-                    var type = getExprType(expr);
-                    if (type != null && type.indexOf("Array") != -1) {
-                        for (it in params) {
-                            writeExpr(ECall(EField(expr, f), [it]));
-                            write(";");
-                            writeExpr(ENL(null));
-                        }
-                        return None;
+                if (f == "push" && params.length > 1 && isArrayExpr(expr)) {
+                    for(it in params) {
+                        writeExpr(ECall(EField(expr, f), [it]));
+                        write(";");
+                        writeExpr(ENL(null));
                     }
+                    return None;
                 }
             default:
         }
@@ -2592,20 +2589,19 @@ class Writer
                 }
                 else if(f == "slice") {
                     var type = getExprType(e);
-                    if (type != null) {
-                        if (type.indexOf("String") != -1) {
+                    if(type != null) {
+                        if(type == "String") {
                             //replace AS3 slice by Haxe substr
                             var rebuiltExpr = EField(e, "substring");
                             result = ECall(rebuiltExpr, params);
-                        } else if(type.indexOf("Array") != -1 && params.empty()) {
+                        } else if(isArrayType(type) && params.empty()) {
                             var rebuiltExpr = EField(e, "copy");
                             result = ECall(rebuiltExpr, params);
                         }
                     }
                 }
                 else if(f == "splice") {
-                    var type = getExprType(e);
-                    if (type != null && type.indexOf("Array") != -1) {
+                    if(isArrayExpr(e)) {
                         switch(params.length) {
                             case 0 | 2:
                             case 1:
@@ -2624,10 +2620,10 @@ class Writer
                     //in AS3, indexOf is a method in Array while it is not in Haxe
                     //Replace it by the Labda.indexOf method
                     var type = getExprType(e);
-                    if (type != null) {
+                    if(type != null) {
                         //determine wheter the calling object is an Haxe iterable
                         //if it is, rebuild the expression to use Lamda
-                        if (type.indexOf("Array") != -1 || type.indexOf("Map") != -1) {
+                        if(isArrayType(type) || type.indexOf("Map") != -1) {
                             var rebuiltExpr = EField(EIdent("Lambda"), "indexOf");
                             params.unshift(e);
                             result = ECall(rebuiltExpr, params);
@@ -2635,8 +2631,7 @@ class Writer
                     }
                 }
                 else if(f == "insertAt") {
-                    var type = getExprType(e);
-                    if(type != null && type.indexOf("Array<") != -1) {
+                    if(isArrayExpr(e)) {
                         result = ECall(EField(e, "insert"), params);
                     }
                 }
@@ -2644,21 +2639,19 @@ class Writer
                     result = getToStringExpr(e);
                 }
                 else if(f == "concat" && params.empty()) {
-                    var type = getExprType(e);
-                    if (type != null && type.indexOf("Array") != -1) {
+                    if(isArrayExpr(e)) {
                         var rebuildExpr = EField(e, "copy");
                         result = ECall(rebuildExpr, params);
                     }
                 }
                 else if(f == "join" && params.empty()) {
-                    var type = getExprType(e);
-                    if (type != null && type.indexOf("Array") != -1) {
+                    if(isArrayExpr(e)) {
                         result = ECall(EField(e, f), [EConst(CString(","))]);
                     }
                 }
                 else if(f == "charAt" || f == "charCodeAt") {
                     var type = getExprType(e);
-                    if (type != null && type.indexOf("String") != -1 && params.empty()) {
+                    if (type == "String" && params.empty()) {
                         result = ECall(EField(e, f), [EConst(CInt("0"))]);
                     }
                 }
@@ -2677,8 +2670,7 @@ class Writer
                     }
                 }
                 else if(f == "removeAt") {
-                    var type = getExprType(e);
-                    if (type != null && type.indexOf("Array<") != -1) {
+                    if(isArrayExpr(e)) {
                         params = params.concat([EConst(CInt("1"))]);
                         result = EArray(ECall(EField(e, "splice"), params), EConst(CInt("0")));
                     }
@@ -2796,11 +2788,8 @@ class Writer
                 if(cfg.useCompat) {
                     switch(lvalue) {
                         case EField(e, f):
-                            if(f == "length") {
-                                var type = getExprType(e);
-                                if(type != null && type.indexOf("Array<") != -1) {
-                                    return ECall(EField(EIdent("as3hx.Compat"), "setArrayLength"), [e, rvalue]);
-                                }
+                            if(f == "length" && isArrayExpr(e)) {
+                                return ECall(EField(EIdent("as3hx.Compat"), "setArrayLength"), [e, rvalue]);
                             }
                         default:
                     }
@@ -2899,6 +2888,15 @@ class Writer
         return false;
     }
 
+    inline function isArrayExpr(e:Expr):Bool {
+        var type = getExprType(e);
+        return isArrayType(type);
+    }
+    
+    static inline function isArrayType(s:String):Bool {
+        return s != null && StringTools.startsWith(s, "Array<");
+    }
+    
     function addWarning(type:String, isError = false) {
         warnings.set(type, isError);
     }
