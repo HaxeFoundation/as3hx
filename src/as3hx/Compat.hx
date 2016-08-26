@@ -206,9 +206,26 @@ class Compat {
      * @throws Throws an exception if the fractionDigits argument is outside the range 0 to 20.
      */
     public static inline function toFixed(v:Float, fractionDigits:Int):String {
-        if(fractionDigits < 0 || fractionDigits > 20) throw 'toFixed have a range of 0 to 20. Specified value is not within expected range.';
-        var b = Math.pow(10, fractionDigits);
-        return Std.string(Math.round(v * b) / b);
+        #if (js || flash)
+            return untyped v.toFixed(fractionDigits);
+        #else
+            if(fractionDigits < 0 || fractionDigits > 20) throw 'toFixed have a range of 0 to 20. Specified value is not within expected range.';
+            var b = Math.pow(10, fractionDigits);
+            var s = Std.string(v);
+            var dotIndex = s.indexOf('.');
+            if(dotIndex >= 0) {
+                var diff = fractionDigits - (s.length - (dotIndex + 1));
+                if(diff > 0) {
+                    s = StringTools.rpad(s, "0", s.length + diff);
+                } else {
+                    s = Std.string(Math.round(v * b) / b);
+                }
+            } else {
+                s += ".";
+                s = StringTools.rpad(s, "0", s.length + fractionDigits);
+            }
+            return s;
+        #end
     }
 }
 
