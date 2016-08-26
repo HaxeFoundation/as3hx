@@ -298,7 +298,7 @@ class AS3HXTest {
         generate("Issue165.as", "Issue165.hx");
     }
     
-    @Test("number_value.toFixed(1, fractionDigits) -> as3hx.Compat.toFixed(number_value, fractionDigits)")
+    @Test("number_value.toFixed(fractionDigits) -> as3hx.Compat.toFixed(number_value, fractionDigits)")
     public function issue166() {
         generate("Issue166.as", "Issue166.hx");
     }
