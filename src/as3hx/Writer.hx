@@ -2635,6 +2635,11 @@ class Writer
                         result = ECall(EField(e, "insert"), params);
                     }
                 }
+                else if (f == "toFixed") {
+                    if(getExprType(e) == "Float") {
+                        result = ECall(EField(EIdent("as3hx.Compat"), f), [e].concat(params));
+                    }
+                }
                 else if(f == "toString") {
                     result = getToStringExpr(e);
                 }
