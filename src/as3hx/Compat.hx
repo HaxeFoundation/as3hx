@@ -68,7 +68,14 @@ class Compat {
         }
         return result;
     }
-
+    
+    macro public static function getFunctionLength(f):Int {
+        switch (Context.follow(Context.typeof(f))) {
+            case TFun(args, _): return @:pos(Context.currentPos()) macro $v{args.length}; 
+            default: throw new Error("not a function", f.pos);
+        }
+    }
+    
     /**
      * Converts a typed expression into a Float.
      */
