@@ -2590,6 +2590,18 @@ class Writer
                     var rebuiltExpr = EField(e, "exists");
                     result = ECall(rebuiltExpr, params);
                 }
+                else if(f == "replace") {
+                    var type = getExprType(e);
+                    if(type == "String") {
+                        var param0 = params[0];
+                        switch(param0) {
+                            case ERegexp(str, opts):
+                                params[0] = e;
+                                result = ECall(EField(param0, f), params);
+                            default:
+                        }
+                    }
+                }
                 else if(f == "slice") {
                     var type = getExprType(e);
                     if(type != null) {
@@ -2638,7 +2650,7 @@ class Writer
                         result = ECall(EField(e, "insert"), params);
                     }
                 }
-                else if (f == "toFixed") {
+                else if(f == "toFixed") {
                     if(getExprType(e) == "Float") {
                         result = ECall(EField(EIdent("as3hx.Compat"), f), [e].concat(params));
                     }
