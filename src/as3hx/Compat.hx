@@ -43,11 +43,27 @@ class Compat {
         else a[length - 1] = null;
     }
     
-    public static inline function arraySplice<T>(a:Array<T>, pos:Int, length:Int, ?rest:Array<T>):Array<T> {
-        var result = a.splice(pos, length);
-        if(rest != null) {
-            for(i in 0...rest.length) {
-                a.insert(pos + i, rest[i]);
+    /**
+     * Adds elements to and removes elements from an array. This method modifies the array without making a copy.
+     * @param startIndex An integer that specifies the index of the element in the array where the insertion or
+     *   deletion begins. You can use a negative integer to specify a position relative to the end of the array
+     *   (for example, -1 is the last element of the array).
+     * @param deleteCount An integer that specifies the number of elements to be deleted. This number includes the
+     *   element specified in the startIndex parameter. If you do not specify a value for the
+     *   deleteCount parameter, the method deletes all of the values from the startIndex
+     *   element to the last element in the array. If the value is 0, no elements are deleted.
+     * @param values An optional list of one or more comma-separated values
+     *   to insert into the array at the position specified in the startIndex parameter.
+     *   If an inserted value is of type Array, the array is kept intact and inserted as a single element.
+     *   For example, if you splice an existing array of length three with another array of length three,
+     *   the resulting array will have only four elements. One of the elements, however, will be an array of length three.
+     * @return An array containing the elements that were removed from the original array.
+     */
+    public static inline function arraySplice<T>(a:Array<T>, startIndex:Int, deleteCount:Int, ?values:Array<T>):Array<T> {
+        var result = a.splice(startIndex, deleteCount);
+        if(values != null) {
+            for(i in 0...values.length) {
+                a.insert(startIndex + i, values[i]);
             }
         }
         return result;
@@ -89,19 +105,67 @@ class Compat {
         }
         return _(ECall( _(EField( _(EConst(CType("Std"))), "parseInt")), [_(ECall( _(EField( _(EConst(CType("Std"))), "string")), [e]))]));
     }
-    
-    public static inline function setInterval(callback:Dynamic, milliseconds:Int, ?rest:Array<Dynamic>):Int {
-        if (rest == null) rest = [];
-        return FlashTimerAdapter.setInterval(callback, milliseconds, rest);
+
+    /**
+     * Runs a function at a specified interval (in milliseconds).
+     * 
+     *   Instead of using the setInterval() method, consider
+     * creating a Timer object, with the specified interval, using 0 as the repeatCount
+     * parameter (which sets the timer to repeat indefinitely).If you intend to use the clearInterval() method to cancel the
+     * setInterval() call, be sure to assign the setInterval() call to a
+     * variable (which the clearInterval() function will later reference).
+     * If you do not call the clearInterval() function to cancel the
+     * setInterval() call, the object containing the set timeout closure
+     * function will not be garbage collected.
+     * @param closure The name of the function to execute. Do not include quotation marks or
+     *   parentheses, and do not specify parameters of the function to call. For example, use
+     *   functionName, not functionName() or functionName(param).
+     * @param delay The interval, in milliseconds.
+     * @param arguments An optional list of arguments that are passed to the closure function.
+     * @return Unique numeric identifier for the timed process. Use this identifier to cancel
+     *   the process, by calling the clearInterval() method.
+     */
+    public static inline function setInterval(closure:Dynamic, delay:Int, ?values:Array<Dynamic>):Int {
+        if (values == null) values = [];
+        return FlashTimerAdapter.setInterval(closure, delay, values);
     }
     
+    /**
+     * Cancels a specified setInterval() call.
+     * @param id The ID of the setInterval() call, which you set to a variable, as in the following:
+     * @see setInterval()
+     */
     public static inline function clearInterval(id:Int) FlashTimerAdapter.clearInterval(id);
     
-    public static inline function setTimeout(callback:Dynamic, milliseconds:Int, ?rest:Array<Dynamic>):Int {
-        if (rest == null) rest = [];
-        return FlashTimerAdapter.setTimeout(callback, milliseconds, rest);
+    /**
+     * Runs a specified function after a specified delay (in milliseconds).
+     * 
+     *   Instead of using this method, consider
+     * creating a Timer object, with the specified interval, using 1 as the repeatCount
+     * parameter (which sets the timer to run only once).If you intend to use the clearTimeout() method to cancel the
+     * setTimeout() call, be sure to assign the setTimeout() call to a
+     * variable (which the clearTimeout() function will later reference).
+     * If you do not call the clearTimeout() function to cancel the
+     * setTimeout() call, the object containing the set timeout closure
+     * function will not be garbage collected.
+     * @param closure The name of the function to execute. Do not include quotation marks or
+     *   parentheses, and do not specify parameters of the function to call. For example, use
+     *   functionName, not functionName() or functionName(param).
+     * @param delay The delay, in milliseconds, until the function is executed.
+     * @param arguments An optional list of arguments that are passed to the closure function.
+     * @return Unique numeric identifier for the timed process. Use this identifier to cancel
+     *   the process, by calling the clearTimeout() method.
+     */
+    public static inline function setTimeout(closure:Dynamic, delay:Int, ?values:Array<Dynamic>):Int {
+        if (values == null) values = [];
+        return FlashTimerAdapter.setTimeout(closure, delay, values);
     }
     
+    /**
+     * Cancels a specified setTimeout() call.
+     * @param id The ID of the setTimeout() call, which you set to a variable, as in the following:
+     * @see setTimeout()
+     */
     public static inline function clearTimeout(id:Int) FlashTimerAdapter.clearTimeout(id);
     
     /**
@@ -288,12 +352,31 @@ class FlashRegExpAdapter {
     var _restOfLastTestedString : String;
     var _lastTestedStringProcessedSize = 0;
     
-    public function exec(s:String):Null<Array<String>> {
-        var testStr = _lastTestedString == s ? _restOfLastTestedString : s;
+    /**
+     * Performs a search for the regular expression on the given string str.
+     * 
+     *   If the g (global) flag is not set for the regular
+     * expression, then the search starts
+     * at the beginning of the string (at index position 0); the search ignores
+     * the lastIndex property of the regular expression.If the g (global) flag is set for the regular
+     * expression, then the search starts
+     * at the index position specified by the lastIndex property of the regular expression.
+     * If the search matches a substring, the lastIndex property changes to match the position
+     * of the end of the match.
+     * @param str The string to search.
+     * @return If there is no match, null; otherwise, an object with the following properties:
+     *   
+     *     An array, in which element 0 contains the complete matching substring, and
+     *   other elements of the array (1 through n) contain substrings that match parenthetical groups
+     *   in the regular expression index  The character position of the matched substring within
+     *   the stringinput  The string (str)
+     */
+    public function exec(str:String):Null<Array<String>> {
+        var testStr = _lastTestedString == str ? _restOfLastTestedString : str;
         var matched = _ereg.match(testStr);
         var index = 0;
         if (_global) {
-            _lastTestedString = s;
+            _lastTestedString = str;
             if (matched) {
                 var matchedLeftLength = _ereg.matchedLeft().length;
                 index = _lastTestedStringProcessedSize + matchedLeftLength;
@@ -304,10 +387,22 @@ class FlashRegExpAdapter {
                 _lastTestedStringProcessedSize = 0;
             }
         }
-        return matched ? new FlashRegExpExecResult(s, _ereg, index).matches : null;
+        return matched ? new FlashRegExpExecResult(str, _ereg, index).matches : null;
     }
     
-    public function test(s:String):Bool return match(s);
+    /**
+     * Tests for the match of the regular expression in the given string str.
+     * 
+     *   If the g (global) flag is not set for the regular expression,
+     * then the search starts at the beginning of the string (at index position 0); the search ignores
+     * the lastIndex property of the regular expression.If the g (global) flag is set for the regular expression, then the search starts
+     * at the index position specified by the lastIndex property of the regular expression.
+     * If the search matches a substring, the lastIndex property changes to match the
+     * position of the end of the match.
+     * @param str The string to test.
+     * @return If there is a match, true; otherwise, false.
+     */
+    public function test(str:String):Bool return match(str);
     
     public function map(s:String, f:EReg-> String):String return _ereg.map(s, f);
     
