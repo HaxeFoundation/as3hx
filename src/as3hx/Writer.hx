@@ -2792,6 +2792,11 @@ class Writer
                     }
                     return EBinop("=", lvalue, ETernary(cond, lvalue, rvalue), false);
                 }
+            case "&&=":
+                var type = getExprType(lvalue);
+                if(type == "Bool") {
+                    return EBinop("=", lvalue, EBinop("&&", lvalue, rvalue, false), false);
+                }
             case "=":
                 if(cfg.useCompat) {
                     switch(lvalue) {
