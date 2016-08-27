@@ -1,3 +1,16 @@
+## dev
+ - Call `array.insert(position, element)` instead of `array.insertAt(position, element)`
+ - Call `array.splice(index, 1)[0]` insted of `array.removeAt(index)`
+ - Fixed conversion of function's parameter with comment
+ - Call `as3hx.Compat.toFixed(number, fractionDigits)` instead of `number.toFixed(fractionDigits)`
+ - Import `haxe.Constraints.Function` for modules that use `Function` if not used fync2dyn
+ - Import of classes occur only if they have been imported in AS3 code
+ - Fixed conversion of `&&=` operator
+ - Fixed conversion of `getQualifiedClassName(this)`
+ - Call `regex.replace(string, by)` instead of `string.replace(regex, by)`
+ - Call `as3hx.Compat.getFunctionLength(function)` instead of `function.length`
+ - Fixed conversion of local functions.
+
 ##2016-08-24(1.0.4)
  - Fixed conversion of unary operator after declaration of block
  - Fixed convesion ```of if(number)```
