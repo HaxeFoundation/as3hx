@@ -133,7 +133,7 @@ typedef Program = {
     var header : Array<Expr>; // will hold only comments
     var pack : Array<String>;
     var imports : Array<Array<String>>;
-    var typesSeen : Array<Dynamic>;
+    var typesSeen : Array<T>;
     var typesDefd : Array<Dynamic>;
     var genTypes : Array<GenType>; // will hods types generated for some class vars
     var defs : Array<Definition>;

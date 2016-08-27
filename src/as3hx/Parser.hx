@@ -6,7 +6,7 @@ import as3hx.parsers.ProgramParser;
 using as3hx.Debug;
 
 typedef Types = {
-    var seen : Array<Dynamic>;
+    var seen : Array<T>;
     var defd : Array<Dynamic>;
     var gen : Array<GenType>;
 }

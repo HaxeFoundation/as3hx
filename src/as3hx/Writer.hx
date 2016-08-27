@@ -192,7 +192,7 @@ class Writer
         }
     }
     
-    function writeAdditionalImports(defPackage : Array<String>, allTypes : Array<Dynamic>, definedTypes : Array<String>)
+    function writeAdditionalImports(defPackage : Array<String>, allTypes : Array<T>, definedTypes : Array<String>)
     {
         // We don't want to import any type that is defined within
         // this file, so add each of those to the type import map
@@ -203,20 +203,26 @@ class Writer
         
         // Now convert each seen type enum into the corresponding
         // type import string.
-        var uniqueTypes : Map<String,Bool> = new Map<String,Bool>();
+        var uniqueTypes = new Map<String,Bool>();
         for(t in allTypes) {
-            var importType : String = istring(t);
-            if (importType != null) uniqueTypes.set(importType, true);
+            var importType = istring(t);
+            if(importType != null) {
+                if(!typeImportMap.exists(importType)) {
+                    typeImportMap.set(importType, null);
+                } else {
+                    uniqueTypes.set(importType, true);
+                }
+            }
         }
-
+        
         // Now look up each type import string in the type import
         // map.
-        var addnImports : Array<String> = new Array<String>();
+        var addnImports = new Array<String>();
         for(u in uniqueTypes.keys()) {
-            if (typeImportMap.exists(u)) {
+            if(typeImportMap.exists(u)) {
                 u = typeImportMap.get(u);
             } else {
-                u = properCaseA(defPackage,false).concat([u]).join(".");
+                u = properCaseA(defPackage, false).concat([u]).join(".");
             }
             if (u != null)
                 addnImports.push(u);
@@ -331,7 +337,7 @@ class Writer
         var getOrCreateProperty = function(name, t, stat)
         {
             var property = h.get(name);
-            if (null == property)
+            if (property == null)
             {
                 property = {
                     name : name,
