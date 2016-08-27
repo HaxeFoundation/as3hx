@@ -1635,23 +1635,27 @@ class Writer
                     switch(getModifiedIdent(v)) {
                         case "Int":
                             if(f == "MAX_VALUE") {
-                                writeExpr(EField(EIdent("as3hx.Compat"), "INT_MAX"));
+                                writeExpr(getCompatFieldExpr("INT_MAX"));
                                 return None;
                             }
                             if(f == "MIN_VALUE") {
-                                writeExpr(EField(EIdent("as3hx.Compat"), "INT_MIN"));
+                                writeExpr(getCompatFieldExpr("INT_MIN"));
                                 return None;
                             }
                         case "Float":
                             if(f == "MAX_VALUE") {
-                                writeExpr(EField(EIdent("as3hx.Compat"), "FLOAT_MAX"));
+                                writeExpr(getCompatFieldExpr("FLOAT_MAX"));
                                 return None;
                             }
                             if(f == "MIN_VALUE") {
-                                writeExpr(EField(EIdent("as3hx.Compat"), "FLOAT_MIN"));
+                                writeExpr(getCompatFieldExpr("FLOAT_MIN"));
                                 return None;
                             }
                         default:
+                            if(f == "length" && isFunctionExpr(e)) {
+                                writeExpr(getCompatCallExpr("getFunctionLength", [e]));
+                                return None;
+                            }
                     }
                 case ECall(e, p):
                     switch(e) {
@@ -2192,7 +2196,7 @@ class Writer
     
     function getCastToIntExpr(e:Expr):Expr {
         if(cfg.useCompat) {
-            return ECall(EField(EIdent("as3hx.Compat"), "parseInt"), [e]);
+            return getCompatCallExpr("parseInt", [e]);
         }
         return ECall(EField(EIdent("Std"), "parseInt"), [getToStringExpr(e)]);
     }
@@ -2207,9 +2211,17 @@ class Writer
     
     function getCastToFloatExpr(e:Expr):Expr {
         if (cfg.useCompat) {
-            return ECall(EField(EIdent("as3hx.Compat"), "parseFloat"), [e]);
+            return getCompatCallExpr("parseFloat", [e]);
         }
         return ECall(EField(EIdent("Std"), "parseFloat"), [getToStringExpr(e)]);
+    }
+    
+    inline function getCompatCallExpr(methodName:String, params:Array<Expr>):Expr {
+        return ECall(getCompatFieldExpr(methodName), params);
+    }
+    
+    inline function getCompatFieldExpr(fieldName:String):Expr {
+        return EField(EIdent("as3hx.Compat"), fieldName);
     }
     
     // translate FlexUnit to munit meta data, if present.
@@ -2585,7 +2597,6 @@ class Writer
         var result = null;
         switch (expr) {
             case EField(e, f):
-                //replace "myVar.hasOwnProperty(myProperty)" by "myVar.exists(myProperty)"
                 if(f == "hasOwnProperty") {
                     var rebuiltExpr = EField(e, "exists");
                     result = ECall(rebuiltExpr, params);
@@ -2626,7 +2637,7 @@ class Writer
                                 if(cfg.useCompat) {
                                     var p = [e].concat(params.slice(0, 2));
                                     p.push(EArrayDecl(params.slice(2, params.length)));
-                                    result = ECall(EField(EIdent("as3hx.Compat"), "arraySplice"), p);
+                                    result = getCompatCallExpr("arraySplice", p);
                                 }
                         }
                     }
@@ -2652,7 +2663,7 @@ class Writer
                 }
                 else if(f == "toFixed") {
                     if(getExprType(e) == "Float") {
-                        result = ECall(EField(EIdent("as3hx.Compat"), f), [e].concat(params));
+                        result = getCompatCallExpr(f, [e].concat(params));
                     }
                 }
                 else if(f == "toString") {
@@ -2676,15 +2687,13 @@ class Writer
                     }
                 }
                 else if(f == "apply") {
-                    var type = getExprType(e);
-                    if(type == "Function") {
+                    if(isFunctionExpr(e)) {
                         params = [EIdent("null"), e].concat(params.slice(1));
                         result = ECall(EField(EIdent("Reflect"), "callMethod"), params);
                     }
                 }
                 else if(f == "call") {
-                    var type = getExprType(e);
-                    if(type == "Function") {
+                    if(isFunctionExpr(e)) {
                         params = [EIdent("null"), e].concat([EArrayDecl(params.slice(1))]);
                         result = ECall(EField(EIdent("Reflect"), "callMethod"), params);
                     }
@@ -2814,7 +2823,7 @@ class Writer
                     switch(lvalue) {
                         case EField(e, f):
                             if(f == "length" && isArrayExpr(e)) {
-                                return ECall(EField(EIdent("as3hx.Compat"), "setArrayLength"), [e, rvalue]);
+                                return getCompatCallExpr("setArrayLength", [e, rvalue]);
                             }
                         default:
                     }
@@ -2924,6 +2933,8 @@ class Writer
     static inline function isArrayType(s:String):Bool {
         return s != null && StringTools.startsWith(s, "Array<");
     }
+    
+    inline function isFunctionExpr(e:Expr):Bool return getExprType(e) == "Function";
     
     function addWarning(type:String, isError = false) {
         warnings.set(type, isError);
