@@ -293,6 +293,11 @@ class AS3HXTest {
         generate("Issue162.as", "Issue162.hx");
     }
     
+    @Test
+    public function issue164() {
+        generate("Issue164.as", "Issue164.hx");
+    }
+    
     @Test("array.splice(0,0,1,2,3,4,5) -> as3hx.Compat.arraySplice(a, 0, 0, [1,2,3,4,5])")
     public function issue165() {
         generate("Issue165.as", "Issue165.hx");
