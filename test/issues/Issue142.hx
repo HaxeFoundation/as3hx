@@ -1,4 +1,3 @@
-import SceneClass;
 import flash.display.Scene;
 import flash.display.Sprite;
 import flash.events.DataEvent;

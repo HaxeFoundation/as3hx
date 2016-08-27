@@ -50,9 +50,9 @@ class TypeParser {
 
         var a = [t];
         var tk = tokenizer.token();
-        while( true ) {
+        while(true) {
             //trace(Std.string(tk));
-            switch( tk ) {
+            switch(tk) {
             case TDot:
                 tk = tokenizer.token();
                 switch(ParserUtils.uncomment(tk)) {
@@ -60,7 +60,6 @@ class TypeParser {
                     default: ParserUtils.unexpected(ParserUtils.uncomment(tk));
                 }
             case TCommented(s,b,t):
-
                 //this check prevents from losing the comment
                 //token
                 if (t == TDot) {
@@ -71,17 +70,26 @@ class TypeParser {
                     tokenizer.add(tk);
                     break;
                 }
-
             default:
                 tokenizer.add(tk);
                 break;
             }
             tk = tokenizer.token();
         }
-        types.seen.push(TPath(a));
-        return TPath(a);
+        var result = TPath(a);
+        for(it in types.seen) {
+            switch(it) {
+                case TPath(p):
+                    if(Lambda.foreach(a, function(it) return p.indexOf(it) != -1)) {
+                        return result;
+                    }
+                default:
+            }
+        }
+        types.seen.push(result);
+        return result;
     }
-
+    
     private static function splitEndTemplateOps(tokenizer:Tokenizer) {
         switch( tokenizer.peek() ) {
             case TOp(s):
