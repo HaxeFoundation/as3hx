@@ -353,6 +353,11 @@ class AS3HXTest {
         generate("Issue200.as", "Issue200.hx");
     }
     
+    @Test
+    public function issue204() {
+        generate("Issue204.as", "Issue204.hx");
+    }
+    
     @Test("function.length -> as3hx.Compat.getFunctionLength(function)")
     public function issue205() {
         generate("Issue205.as", "Issue205.hx");

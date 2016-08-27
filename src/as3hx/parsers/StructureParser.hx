@@ -110,11 +110,13 @@ class StructureParser {
         case "continue": EContinue;
         case "else": ParserUtils.unexpected(TId(kwd));
         case "function":
-            var name = switch( tokenizer.peek() ) {
-            case TId(n): tokenizer.token(); n;
-            default: null;
+            var name = switch(tokenizer.peek()) {
+                case TId(n):
+                    tokenizer.token();
+                    n;
+                default: null;
             };
-            EFunction(parseFunction(false),name);
+            EFunction(parseFunction(false), name);
         case "return":
             EReturn(if( tokenizer.peek() == TSemicolon ) null else parseExpr(false));
         case "new":

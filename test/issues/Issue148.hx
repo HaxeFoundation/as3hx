@@ -5,6 +5,7 @@ class Issue148
     {
     }
     
-    public function enqueue(rawAssets : Array<Dynamic> = null) : Void{
+    public function enqueue(rawAssets : Array<Dynamic> = null) : Void
+    {
     }
 }

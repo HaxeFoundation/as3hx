@@ -58,6 +58,7 @@ enum T {
     TPath( p : Array<String> );
     TComplex( e : Expr );
     TDictionary( k : T, v :T );
+    TFunction(p:Array<T>);
 }
 
 enum FieldKind {

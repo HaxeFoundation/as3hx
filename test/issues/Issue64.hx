@@ -23,7 +23,8 @@ class Issue64
 
 class Timeline
 {
-    public function apply(object : Dynamic, lastTime : Float, time : Float, events : Array<Event>, number : Float) : Void{
+    public function apply(object : Dynamic, lastTime : Float, time : Float, events : Array<Event>, number : Float) : Void
+    {
     }
 
     public function new()
