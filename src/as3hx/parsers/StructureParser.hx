@@ -231,6 +231,10 @@ class StructureParser {
         case "getQualifiedClassName":
             tokenizer.ensure(TPOpen);
             var e = parseExpr(false);
+            e = switch(e) {
+                case EIdent(v) if(v == "this"): ECall(EField(EIdent("Type"), "getClass"), [e]);
+                default: e;
+            }
             tokenizer.ensure(TPClose);
             ECall(EField(EIdent("Type"), "getClassName"), [e]);
         case "getQualifiedSuperclassName":
