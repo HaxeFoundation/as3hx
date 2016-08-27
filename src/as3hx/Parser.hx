@@ -1,23 +1,7 @@
 package as3hx;
 import as3hx.As3;
 import as3hx.Tokenizer;
-import as3hx.ParserUtils;
 import as3hx.parsers.ProgramParser;
-import as3hx.parsers.PackageNameParser;
-import as3hx.parsers.DefinitionParser;
-import as3hx.parsers.ExprParser;
-import as3hx.parsers.IncludeParser;
-import as3hx.parsers.FunctionParser;
-import as3hx.parsers.ClassParser;
-import as3hx.parsers.UseParser;
-import as3hx.parsers.MetadataParser;
-import as3hx.parsers.CaseBlockParser;
-import as3hx.parsers.XMLReader;
-import as3hx.parsers.StructureParser;
-import as3hx.parsers.TypeParser;
-import as3hx.parsers.E4XParser;
-import as3hx.parsers.ImportParser;
-import as3hx.Error;
 
 using as3hx.Debug;
 
