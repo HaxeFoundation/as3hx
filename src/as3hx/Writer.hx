@@ -267,7 +267,7 @@ class Writer
             case ECommented(s,b,t,e):
                 writeExpr(d);
             case ENL(e):
-                writeNL(); 
+                writeNL();
                 writeIndent();
             case ECondComp(v,e, e2):
                 if (isFirstCondComp) {
@@ -874,12 +874,10 @@ class Writer
         if(isSetter && !isNative && f.args.length == 1) {
             es.push(ENL(EReturn(EIdent(f.args[0].name))));
         }
-        if(!es.empty()) {
-            if (cfg.bracesOnNewline) {
-                writeNL();
-                writeIndent();
-            } else write(" ");
-        }
+        if (cfg.bracesOnNewline) {
+            writeNL();
+            writeIndent();
+        } else write(" ");
         writeExpr(EBlock(es));
     }
     
@@ -1067,28 +1065,12 @@ class Writer
                 write(getConst(c));
             case EIdent( v ):
                 writeModifiedIdent(v);
-            case EVars(vars): writeEVars(vars);
+            case EVars(vars): rv = writeEVars(vars);
             case EParent( e ):
                 write("(");
                 writeExpr(e);
                 write(")");
-            case EBlock( e ):
-                if(!isInterface) {
-                    openContext();
-                    write("{");
-                    lvl++;
-                    for (ex in e)
-                    {
-                        writeFinish(writeExpr(ex));
-                    }
-                    lvl--;
-                    write(closeb());
-                    closeContext();
-                    rv = None;
-                } else {
-                    write(";");
-                    rv = None;
-                }
+            case EBlock(e): rv = writeEBlock(e);
             case EField(e, f): rv = writeEField(expr, e, f);
             case EBinop(op, e1, e2, newLineAfterOp): rv = writeEBinop(op, e1, e2, newLineAfterOp);
             case EUnop( op, prefix, e ):
@@ -1596,7 +1578,7 @@ class Writer
                 writeIndent();
                 rv = Ret;
 
-            case ENL( e ): 
+            case ENL(e):
                 //newline starts new indented line before parsing
                 //wrapped expression
                 writeNL( );
@@ -1605,6 +1587,26 @@ class Writer
             case EImport(s):
         }
         return rv;
+    }
+    
+    function writeEBlock(e:Array<Expr>):BlockEnd {
+        var result = Semi;
+        if(!isInterface) {
+            openContext();
+            write("{");
+            lvl++;
+            for (ex in e) {
+                writeFinish(writeExpr(ex));
+            }
+            lvl--;
+            write(closeb());
+            closeContext();
+            result = None;
+        } else {
+            write(";");
+            result = None;
+        }
+        return result;
     }
     
     function writeEField(fullExpr:Expr, e:Expr, f:String):BlockEnd {
@@ -1674,9 +1676,10 @@ class Writer
         return Semi;
     }
     
-    inline function writeEVars(vars:Array<{name:String, t:Null<T>, val:Null<Expr>}>) {
-        for (i in 0...vars.length) {
-            if (i > 0) {
+    inline function writeEVars(vars:Array<{name:String, t:Null<T>, val:Null<Expr>}>):BlockEnd {
+        var result = Semi;
+        for(i in 0...vars.length) {
+            if(i > 0) {
                 writeNL(";");
                 writeIndent("");
             }
@@ -1685,7 +1688,7 @@ class Writer
             context.set(v.name, type);
             write("var " + getModifiedIdent(v.name));
             writeVarType(v.t);
-            if (v.val != null) {
+            if(v.val != null) {
                 write(" = ");
                 var expr = v.val;
                 if(type == "Int") {
@@ -1704,8 +1707,15 @@ class Writer
                     }
                 }
                 writeExpr(expr);
+                if(i == vars.length - 1) {
+                    switch(expr) {
+                        case ETypedExpr(e, _) if(e.match(EFunction(_, _))): result = None;
+                        default:
+                    }
+                }
             }
         }
+        return result;
     }
     
     function writeECall(fullExpr:Expr, expr:Expr, params:Array<Expr>):BlockEnd {
@@ -3000,41 +3010,28 @@ class Writer
         return Lambda.has(kwds, "const");
     }
     
-    function istring(t : T, fixCase:Bool=true) : String
-    {
+    function istring(t : T, fixCase:Bool = true) : String {
         if(t == null) return null;
-        switch(t)
-        {
-            case TStar: return null;
-            case TVector(t): return null;
-            case TComplex(e): return null;
+        return switch(t) {
             case TPath(p):
                 if (p.length > 1) return null;
                 var c = p[0];
-                switch(c)
-                {
-                    case "int": return null;
-                    case "uint": return null;
-                    case "void": return null;
+                return switch(c) {
+                    case "int" | "uint" | "void": return null;
                     default: return fixCase ? properCase(c, true) : c;
                 }
-            case TDictionary(k, v): return null;
+            default: null;
         }
     }
     
-    function tstring(t : T, isNativeGetSet:Bool=false, fixCase:Bool=true) : String
-    {
+    function tstring(t : T, isNativeGetSet:Bool = false, fixCase:Bool = true) : String {
         if(t == null) return null;
-        switch(t)
-        {
-            case TStar:
-                return "Dynamic";
-            case TVector( t ):
-                return cfg.vectorToArray ? "Array<" + tstring(t) + ">" : "Vector<" + tstring(t) + ">";
-            case TPath( p ):
+        return switch(t) {
+            case TStar: "Dynamic";
+            case TVector(t): cfg.vectorToArray ? "Array<" + tstring(t) + ">" : "Vector<" + tstring(t) + ">";
+            case TPath(p):
                 var c = p.join(".");
-                return switch(c)
-                {
+                return switch(c) {
                     case "Array"    : "Array<Dynamic>";
                     case "Boolean"  : "Bool";
                     case "Class"    : "Class<Dynamic>";
@@ -3049,10 +3046,9 @@ class Writer
                     case "RegExp"   : cfg.useCompat ? "as3hx.Compat.Regex" : "flash.utils.RegExp";
                     default         : fixCase ? properCase(c, true) : c;
                 }
-            case TComplex(e):
-                return buffer(function() { writeExpr(e); });
-            case TDictionary(k, v):
-                return "haxe.ds.ObjectMap<" + tstring(k) + ", " + tstring(v) + ">";
+            case TComplex(e): buffer(function() { writeExpr(e); });
+            case TDictionary(k, v): "haxe.ds.ObjectMap<" + tstring(k) + ", " + tstring(v) + ">";
+            case TFunction(p): p.map(function(it) return tstring(it)).join("->");
         }
     }
     
@@ -3182,8 +3178,7 @@ class Writer
             return " {";
     }
     
-    function closeb() : String
-    {
+    inline function closeb() : String {
         return cfg.newlineChars + indent() + "}";
     }
     
@@ -3301,8 +3296,7 @@ class Writer
         return b.join("");
     }
     
-    public function process(program : Program, writer : Output):Map<String, Bool>
-    {
+    public function process(program : Program, writer : Output):Map<String, Bool> {
         warnings = new Map();
 
         //list of imported types must be reseted for each file,

@@ -242,7 +242,7 @@ class ClassParser {
                 throw "Assert error: " + m;
             }
         }
-        Debug.closeDebug("parseClass("+cname+") finished", tokenizer.line);
+        Debug.closeDebug("parseClass(" + cname+") finished", tokenizer.line);
         return {
             meta : classMeta,
             kwds : kwds,

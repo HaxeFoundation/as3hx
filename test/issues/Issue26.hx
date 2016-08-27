@@ -11,10 +11,12 @@ class Issue26
 class Foo
 {
     @:allow()
-    private function foo() : Void{
+    private function foo() : Void
+    {
     }
     
-    private function some() : Void{
+    private function some() : Void
+    {
     }
 
     public function new()

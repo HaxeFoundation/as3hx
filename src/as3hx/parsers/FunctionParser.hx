@@ -6,7 +6,7 @@ import as3hx.Parser;
 
 class FunctionParser {
 
-    public static function parse(tokenizer:Tokenizer, types:Types, cfg:Config, isInterfaceFun : Bool) : Function {
+    public static function parse(tokenizer:Tokenizer, types:Types, cfg:Config, isInterfaceFun:Bool):Function {
         var parseType = TypeParser.parse.bind(tokenizer, types, cfg);
         var parseExpr = ExprParser.parse.bind(tokenizer, types, cfg);
 
@@ -116,7 +116,7 @@ class FunctionParser {
             }
         }
 
-        if( tokenizer.peek() == TBrOpen ) {
+        if(tokenizer.peek() == TBrOpen) {
             f.expr = parseExpr(true);
             switch(ParserUtils.removeNewLineExpr(f.expr)) {
             case EObject(fl):
@@ -132,12 +132,12 @@ class FunctionParser {
             }
         }
         Debug.closeDebug("end parseFun()", tokenizer.line);
+        rebuildLocalFunctions(f);
         return f;
     }
 
-    public static function parseDef(tokenizer:Tokenizer, types:Types, cfg:Config, kwds:Array<String>, meta:Array<Expr>) : FunctionDef {
+    public static function parseDef(tokenizer:Tokenizer, types:Types, cfg:Config, kwds:Array<String>, meta:Array<Expr>):FunctionDef {
         var parseFunction = FunctionParser.parse.bind(tokenizer, types, cfg);
-
         Debug.dbgln("parseFunDef()", tokenizer.line);
         var fname = tokenizer.id();
         var f = parseFunction(false);
@@ -147,5 +147,40 @@ class FunctionParser {
             name : fname,
             f : f
         };
+    }
+    
+    inline static function rebuildLocalFunctions(f:Function) {
+        switch(f.expr) {
+            case EBlock(e):
+                var result = [];
+                for(i in 0...e.length) {
+                    var f:Expr->Expr = null;
+                    f = function(expr) return switch(expr) {
+                        case EFunction(f, name):
+                            if(name != null) {
+                                var t = f.args.map(function(it) return it.t);
+                                if(f.varArgs != null) t.push(TPath(["Array<Dynamic>"]));
+                                t.push(f.ret.t);
+                                var type = TFunction(t);
+                                expr = EVars([{
+                                    name: name,
+                                    t: type,
+                                    val: ETypedExpr(EFunction({
+                                        args:f.args,
+                                        varArgs:f.varArgs,
+                                        expr:f.expr,
+                                        ret:f.ret
+                                    }, null), type)
+                                }]);
+                            }
+                            return expr;
+                        case ENL(e): ENL(f(e));
+                        default: expr;
+                    }
+                    result[i] = f(e[i]);
+                }
+                f.expr = EBlock(result);
+            default:
+        }
     }
 }
