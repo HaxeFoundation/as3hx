@@ -353,6 +353,11 @@ class AS3HXTest {
         generate("Issue200.as", "Issue200.hx");
     }
     
+    @Test("string.replace(new Regex(pattern, opts), by) -> new Regex(pattern, opts).replace(string, by)")
+    public function issue202() {
+        generate("Issue202.as", "Issue202.hx");
+    }
+    
     @Test
     public function issue204() {
         generate("Issue204.as", "Issue204.hx");
@@ -371,6 +376,11 @@ class AS3HXTest {
     @Test("Number.NaN -> Math.NaN")
     public function issue210() {
         generate("Issue210.as", "Issue210.hx");
+    }
+    
+    @Test("string.replace(regex, by) -> regex.replace(string, by)")
+    public function issue215() {
+        generate("Issue215.as", "Issue215.hx");
     }
     
     function generate(as3FileName:String, expectedHaxeFileName:String) {
