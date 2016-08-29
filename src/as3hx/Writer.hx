@@ -126,6 +126,7 @@ class Writer
                         else result.push(ex[i]);
                     }
                 case ENL(ex): f(ex);
+                case EObject(fl) if(fl.empty()):
                 default: result.push(ENL(e));
             }
         }
@@ -874,10 +875,7 @@ class Writer
         if(isSetter && !isNative && f.args.length == 1) {
             es.push(ENL(EReturn(EIdent(f.args[0].name))));
         }
-        if (cfg.bracesOnNewline) {
-            writeNL();
-            writeIndent();
-        } else write(" ");
+        writeStartStatement();
         writeExpr(EBlock(es));
     }
     
@@ -1087,66 +1085,7 @@ class Writer
                     write(op);
                 }
             case ECall(e, params): rv = writeECall(expr, e, params);
-            case EIf(cond, e1, e2):
-                write("if (");
-                lvl++; //extra indenting if condition on multiple lines
-                var rb = rebuildIfExpr(cond);
-                if(rb != null)
-                    writeExpr(rb);
-                else
-                    writeExpr(cond);
-                lvl--;
-
-                //check if if expr is one line
-                //with no block bracket
-                if (isOneLiner(e1)) {
-                    switch (e1) {
-                        //if it is, start a new line
-                        //if present in formatting
-                        case ENL(e):
-                            write(")");
-                            writeNL();
-                            e1 = e;
-                            //add extra level of indent for
-                            //teh one liner
-                            lvl += 1;
-                            writeIndent();
-                            lvl -= 1;
-                        default:
-                            write(") ");
-                    }
-                } else writeCloseStatement();
-                e1 = EBlock(formatBlockBody(e1));
-                writeExpr(e1);
-                if (e2 != null) {
-                    //corner case : comment located
-                    //before the "else" keyword in the
-                    //source file.
-                    //As to be called recursively, in 
-                    //case of multiple one-line comment
-                    //before the "else"
-                    var f:Expr->Expr = null;
-                    f = function(e2) {
-                        return switch (e2) {
-                            case ECommented(s,b,t,e):
-                                writeNL();
-                                writeIndent(s);
-                                f(e); //skip the comment
-                            default: e2;
-                        }
-                    }
-                    e2 = f(e2);
-                    e2 = EBlock(formatBlockBody(e2));
-                    writeNL();
-                    if (cfg.bracesOnNewline) {
-                        writeIndent("else");
-                        writeNL();
-                        writeIndent();
-                    } else writeIndent("else ");
-                    rv = writeExpr(e2);
-                } else {
-                    rv = getEIfBlockEnd(e1);
-                }
+            case EIf(cond, e1, e2): rv = writeEIf(cond, e1, e2);
             case ETernary( cond, e1, e2 ):
                 write("(");
                 var rb = rebuildIfExpr(cond);
@@ -1304,16 +1243,7 @@ class Writer
             case EThrow( e ):
                 write("throw ");
                 writeExpr(e);
-            case ETry( e, catches ):
-                write("try");
-                writeExpr(e);
-                for (c in catches)
-                {
-                    writeIndent("catch (" + c.name);
-                    writeVarType(c.t, "Dynamic");
-                    writeCloseStatement();
-                    rv = writeExpr(c.e);
-                }
+            case ETry(e, catches): rv = writeETry(e, catches);
             case EObject(fl):
                 if (fl.empty()) {
                     write("{ }");
@@ -1866,21 +1796,75 @@ class Writer
         return Semi;
     }
     
+    function writeEIf(cond:Expr, e1:Expr, ?e2:Expr):BlockEnd {
+        var result = Semi;
+        write("if (");
+        lvl++; //extra indenting if condition on multiple lines
+        var rb = rebuildIfExpr(cond);
+        if(rb != null)
+            writeExpr(rb);
+        else
+            writeExpr(cond);
+        lvl--;
+    
+        //check if if expr is one line
+        //with no block bracket
+        if (isOneLiner(e1)) {
+            switch (e1) {
+                //if it is, start a new line
+                //if present in formatting
+                case ENL(e):
+                    write(")");
+                    writeNL();
+                    e1 = e;
+                    //add extra level of indent for
+                    //teh one liner
+                    lvl += 1;
+                    writeIndent();
+                    lvl -= 1;
+                default:
+                    write(") ");
+            }
+        } else writeCloseStatement();
+        e1 = EBlock(formatBlockBody(e1));
+        writeExpr(e1);
+        if (e2 != null) {
+            //corner case : comment located
+            //before the "else" keyword in the
+            //source file.
+            //As to be called recursively, in 
+            //case of multiple one-line comment
+            //before the "else"
+            var f:Expr->Expr = null;
+            f = function(e2) {
+                return switch (e2) {
+                    case ECommented(s,b,t,e):
+                        writeNL();
+                        writeIndent(s);
+                        f(e); //skip the comment
+                    default: e2;
+                }
+            }
+            e2 = f(e2);
+            e2 = EBlock(formatBlockBody(e2));
+            writeNL();
+            writeIndent("else");
+            writeStartStatement();
+            result = writeExpr(e2);
+        } else {
+            result = getEIfBlockEnd(e1);
+        }
+        return result;
+    }
+    
     inline function writeEWhile(cond:Expr, e:Expr, doWhile:Bool):BlockEnd {
         var result:BlockEnd;
         if (doWhile) {
             write("do");
-            if (!cfg.bracesOnNewline) write(" ");
-            else {
-                writeNL();
-                writeIndent();
-            }
+            writeStartStatement();
             writeExpr(EBlock(formatBlockBody(e)));
-            if (cfg.bracesOnNewline) {
-                writeNL();
-                writeIndent("while (");
-            } 
-            else write(" while (");
+            writeStartStatement();
+            write("while (");
             result = writeExpr(cond);
             write(")");
         } else {
@@ -2411,6 +2395,23 @@ class Writer
             result = writeExpr(e);
         }
         if(e == null) result = Ret;
+        return result;
+    }
+    
+    inline function writeETry(e:Expr, catches:Array<{name:String, t:Null<T>, e:Expr}>):BlockEnd {
+        var result = Semi;
+        write("try");
+        writeStartStatement();
+        e = EBlock(formatBlockBody(e));
+        writeExpr(e);
+        for(it in catches) {
+            writeStartStatement();
+            write("catch (" + it.name);
+            writeVarType(it.t, "Dynamic");
+            writeCloseStatement();
+            e = EBlock(formatBlockBody(it.e));
+            result = writeExpr(e);
+        }
         return result;
     }
     
@@ -3232,15 +3233,23 @@ class Writer
         write(cfg.newlineChars);
     }
     
-    function writeCloseStatement()
-    {
-        if (cfg.bracesOnNewline)
-        {
+    inline function writeStartStatement() {
+        if(cfg.bracesOnNewline) {
+            writeNL();
+            writeIndent();
+        } else {
+            write(" ");
+        }
+    }
+    
+    inline function writeCloseStatement() {
+        if(cfg.bracesOnNewline) {
             write(")");
             writeNL();
             writeIndent();
+        } else {
+            write(") ");
         }
-        else write(") ");
     }
 
     function writeFinish(cond:BlockEnd) {
