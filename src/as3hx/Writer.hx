@@ -997,11 +997,13 @@ class Writer
                     case CFloat(_): "Float";
                     case CString(_): "String";
                 }
-            case ERegexp(str, opt): return cfg.useCompat ? "as3hx.Compat.Regex" : "flash.utils.RegExp";
+            case ERegexp(str, opt): return getRegexpType();
             default:
         }
         return null;
     }
+    
+    inline function getRegexpType():String return cfg.useCompat ? "as3hx.Compat.Regex" : "flash.utils.RegExp";
 
     /**
      * Returns the base variable from expressions like xml.user
@@ -2620,11 +2622,13 @@ class Writer
                     var type = getExprType(e);
                     if(type == "String") {
                         var param0 = params[0];
-                        switch(param0) {
-                            case ERegexp(str, opts):
-                                params[0] = e;
-                                result = ECall(EField(param0, f), params);
-                            default:
+                        var isRegexp = switch(param0) {
+                            case ERegexp(str, opts): true;
+                            default: getExprType(param0) == getRegexpType();
+                        }
+                        if(isRegexp) {
+                            params[0] = e;
+                            result = ECall(EField(param0, f), params);
                         }
                     }
                 }
