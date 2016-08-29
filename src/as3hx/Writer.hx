@@ -2622,13 +2622,23 @@ class Writer
                     var type = getExprType(e);
                     if(type == "String") {
                         var param0 = params[0];
+                        var param0Type = getExprType(param0);
                         var isRegexp = switch(param0) {
                             case ERegexp(str, opts): true;
-                            default: getExprType(param0) == getRegexpType();
+                            default: param0Type == getRegexpType();
                         }
                         if(isRegexp) {
                             params[0] = e;
                             result = ECall(EField(param0, f), params);
+                        } else {
+                            var isString = switch(param0) {
+                                case ECall(e,_): getIdentString(e) == "String";
+                                default: param0Type == "String";
+                            }
+                            if(isString) {
+                                params.insert(0, e);
+                                result = ECall(EField(EIdent("StringTools"), f), params);
+                            }
                         }
                     }
                 }

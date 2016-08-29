@@ -383,6 +383,11 @@ class AS3HXTest {
         generate("Issue215.as", "Issue215.hx");
     }
     
+    @Test("string.replace(stribg_sub, by) -> StringTools.replace(string, stribg_sub, by)")
+    public function issue218() {
+        generate("Issue218.as", "Issue218.hx");
+    }
+    
     function generate(as3FileName:String, expectedHaxeFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var generatedDirectoryPath = '$issuesDirectory/generated';
