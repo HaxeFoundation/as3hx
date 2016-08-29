@@ -160,6 +160,7 @@ class FunctionParser {
                             if(name != null) {
                                 var t = f.args.map(function(it) return it.t);
                                 if(f.varArgs != null) t.push(TPath(["Array<Dynamic>"]));
+                                if(t.length == 0) t.push(TPath(["Void"]));
                                 t.push(f.ret.t);
                                 var type = TFunction(t);
                                 expr = EVars([{
@@ -174,7 +175,7 @@ class FunctionParser {
                                 }]);
                             }
                             return expr;
-                        case ENL(e): ENL(f(e));
+                        case ENL(e) if(e != null): ENL(f(e));
                         default: expr;
                     }
                     result[i] = f(e[i]);
