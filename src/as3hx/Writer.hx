@@ -1583,6 +1583,10 @@ class Writer
                                 writeExpr(getCompatFieldExpr("FLOAT_MIN"));
                                 return None;
                             }
+                            if(f == "NaN") {
+                                writeExpr(EField(EIdent("Math"), f));
+                                return None;
+                            }
                         default:
                             if(f == "length" && isFunctionExpr(e)) {
                                 writeExpr(getCompatCallExpr("getFunctionLength", [e]));

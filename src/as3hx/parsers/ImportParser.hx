@@ -3,14 +3,17 @@ package as3hx.parsers;
 class ImportParser {
 
     static var doNotImport = [
+        "clearInterval",
+        "clearTimeout",
+        "describeType",
+        "escapeMultiByte",
+        "getDefinitionByName",
         "getQualifiedClassName",
         "getQualifiedSuperclassName",
         "getTimer",
-        "getDefinitionByName",
-        "setTimeout",
         "setInterval",
-        "clearTimeout",
-        "clearInterval",
+        "setTimeout",
+        "unescapeMultiByte"
     ];
     
     public static function parse(tokenizer:Tokenizer, cfg:Config) {
