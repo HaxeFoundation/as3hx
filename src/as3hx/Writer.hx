@@ -2715,6 +2715,14 @@ class Writer
                         result = ECall(EField(e, "insert"), params);
                     }
                 }
+                else if((f == "min" || f == "max") && params.length > 2) {
+                    if(getIdentString(e) == "Math") {
+                        result = ECall(EField(e, f), params.slice(0, 2));
+                        for(i in 2...params.length) {
+                            result = ECall(EField(e, f), [result, params[i]]);
+                        }
+                    }
+                }
                 else if(f == "toFixed") {
                     if(getExprType(e) == "Float") {
                         result = getCompatCallExpr(f, [e].concat(params));
