@@ -15,5 +15,9 @@ package {
             var k:int = n + j;
             var k:int = n * j;
         }
+        
+        public function getInt(n:Number):int {
+            return n + 10;
+        }
     }
 }
