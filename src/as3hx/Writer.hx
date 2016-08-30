@@ -857,8 +857,7 @@ class Writer
         }
     }
 
-    function writeFunction(f : Function, isGetter:Bool, isSetter:Bool, isNative:Bool, ?name : Null<String>, ?ret : FunctionRet)
-    {
+    function writeFunction(f : Function, isGetter:Bool, isSetter:Bool, isNative:Bool, ?name : Null<String>, ?ret : FunctionRet) {
         write("function");
         if(name != null)
             write(" " + name);
@@ -871,34 +870,37 @@ class Writer
         writeFunctionReturn(ret, isGetter, isSetter, isNative);
         // ensure the function body is in a block
         var es = f.expr != null ? formatBlockBody(f.expr) : [];
+        var formatExpr:Expr->(Expr->Expr)->Expr = null;
+        var formatBlock:Array<Expr>->(Expr->Expr)->Array<Expr> = function(exprs, getResult) {
+            for(i in 0...exprs.length) {
+                exprs[i] = formatExpr(exprs[i], getResult);
+            }
+            return exprs;
+        }
+        formatExpr = function(?e, getResult) {
+            if(e == null) return null;
+            return switch(e) {
+                case EReturn(e): EReturn(getResult(e));
+                case ENL(e): ENL(formatExpr(e, getResult));
+                case EIf(cond, e1, e2): EIf(cond, formatExpr(e1, getResult), formatExpr(e2, getResult));
+                case EFor(inits, conds, incrs, e): EFor(inits, conds, incrs, formatExpr(e, getResult));
+                case EForIn(ev, e, block): EForIn(ev, e, formatExpr(block, getResult));
+                case EForEach(ev, e, block): EForEach(ev, e, formatExpr(block, getResult));
+                case EWhile(cond, e, doWhile): EWhile(cond, formatExpr(e, getResult), doWhile);
+                case ETernary(cond, e1, e2): ETernary(cond, formatExpr(e1, getResult), formatExpr(e2, getResult));
+                case ETry(e, catches): ETry(formatExpr(e, getResult), catches);
+                case EBlock(e): EBlock(formatBlock(e, getResult));
+                default: e;
+            }
+        }
+        if(isIntType(tstring(ret.t))) {
+            formatBlock(es, function(e) return needCastToInt(e) ? getCastToIntExpr(e) : e);
+        }
         // haxe setters must return the provided type
         if(isSetter && !isNative && f.args.length == 1) {
-            var result = EReturn(EIdent(f.args[0].name));
-            var formatExpr:Expr->Expr = null;
-            var formatBlock:Array<Expr>->Array<Expr> = function(exprs) {
-                for(i in 0...exprs.length) {
-                    exprs[i] = formatExpr(exprs[i]);
-                }
-                return exprs;
-            }
-            formatExpr = function(?e) {
-                if(e == null) return null;
-                return switch(e) {
-                    case EReturn(e) if(e == null): result;
-                    case ENL(e): ENL(formatExpr(e));
-                    case EIf(cond, e1, e2): EIf(cond, formatExpr(e1), formatExpr(e2));
-                    case EFor(inits, conds, incrs, e): EFor(inits, conds, incrs, formatExpr(e));
-                    case EForIn(ev, e, block): EForIn(ev, e, formatExpr(block));
-                    case EForEach(ev, e, block): EForEach(ev, e, formatExpr(block));
-                    case EWhile(cond, e, doWhile): EWhile(cond, formatExpr(e), doWhile);
-                    case ETernary(cond, e1, e2): ETernary(cond, formatExpr(e1), formatExpr(e2));
-                    case ETry(e, catches): ETry(formatExpr(e), catches);
-                    case EBlock(e): EBlock(formatBlock(e));
-                    default: e;
-                }
-            }
-            formatBlock(es);
-            es.push(ENL(result));
+            var result = EIdent(f.args[0].name);
+            formatBlock(es, function(e) return result);
+            es.push(ENL(EReturn(result)));
         }
         writeStartStatement();
         writeExpr(EBlock(es));
@@ -1084,12 +1086,9 @@ class Writer
         var rv = Semi;
         switch(expr)
         {
-            case ETypedExpr( e, t ):
-                rv = writeExpr(e);
-            case EConst( c ):
-                write(getConst(c));
-            case EIdent( v ):
-                writeModifiedIdent(v);
+            case ETypedExpr(e, t): rv = writeExpr(e);
+            case EConst(c): write(getConst(c));
+            case EIdent(v): writeModifiedIdent(v);
             case EVars(vars): rv = writeEVars(vars);
             case EParent( e ):
                 write("(");
@@ -1100,7 +1099,7 @@ class Writer
             case EBinop(op, e1, e2, newLineAfterOp): rv = writeEBinop(op, e1, e2, newLineAfterOp);
             case EUnop( op, prefix, e ):
                 var type = getExprType(e);
-                if ((type == "Int" || type == "UInt") && op == "!") {
+                if ((isIntType(type) || type == "UInt") && op == "!") {
                     writeExpr(EBinop("!=", e, EConst(CInt("0")), false));
                     return None;
                 }
@@ -1642,7 +1641,7 @@ class Writer
         for(i in 0...vars.length) {
             if(i > 0) {
                 writeNL(";");
-                writeIndent("");
+                writeIndent();
             }
             var v = vars[i];
             var type = tstring(v.t, false);
@@ -1652,18 +1651,9 @@ class Writer
             if(v.val != null) {
                 write(" = ");
                 var expr = v.val;
-                if(type == "Int") {
+                if(isIntType(type)) {
                     switch(expr) {
-                        case ETypedExpr(e, t):
-                            switch(e) {
-                                case EBinop(op,_,_,_):
-                                    switch(op) {
-                                        case "/" | "-" | "+" | "*": expr = getCastToIntExpr(e);
-                                        default:
-                                    }
-                                case EIdent(v) if(getExprType(e) == "Float"): expr = getCastToIntExpr(e);
-                                default:
-                            }
+                        case ETypedExpr(e, t) if(needCastToInt(e)): expr = getCastToIntExpr(e);
                         default:
                     }
                 }
@@ -2062,7 +2052,7 @@ class Writer
                     write(vars[0].name);
                     if (!isMap || regexp.matched(1) == null) {
                         context.set(vars[0].name, "String");
-                    } else if (regexp.matched(1) == "Int") {
+                    } else if (isIntType(regexp.matched(1))) {
                         context.set(vars[0].name, "Int");
                     } else {
                         context.set(vars[0].name, regexp.matched(1));
@@ -2217,6 +2207,18 @@ class Writer
             e = getCastToIntExpr(e);
         }
         writeExpr(e);
+    }
+    
+    inline function needCastToInt(e:Expr):Bool {
+        return switch(e) {
+            case EBinop(op,_,_,_):
+                switch(op) {
+                    case "/" | "-" | "+" | "*": true;
+                    default: false;
+                }
+            case EIdent(v) if(getExprType(e) == "Float"): true;
+            default: false;
+        }
     }
     
     function getCastToIntExpr(e:Expr):Expr {
@@ -2541,7 +2543,7 @@ class Writer
      */
     function rebuildIfExpr(e:Expr) : Expr {
         var isNumericType = function(s) {
-            return (s == "Float" || s == "Int" || s == "UInt");
+            return (s == "Float" || isIntType(s) || s == "UInt");
         }
         switch(e) {
         case EIdent(id):
@@ -2891,17 +2893,8 @@ class Writer
                         default:
                     }
                 }
-                if(getExprType(lvalue) == "Int") {
-                    switch(rvalue) {
-                        case EBinop(op,_,_,_):
-                            switch(op) {
-                                case "/" | "-" | "+" | "*": return EBinop("=", lvalue, getCastToIntExpr(rvalue), false);
-                                default:
-                            }
-                        case EIdent(v) if(getExprType(rvalue) == "Float"):
-                            return EBinop("=", lvalue, getCastToIntExpr(rvalue), false);
-                        default:
-                    }
+                if(isIntExpr(lvalue) && needCastToInt(rvalue)) {
+                    return EBinop("=", lvalue, getCastToIntExpr(rvalue), false);
                 }
         }
         return null;
@@ -2998,6 +2991,13 @@ class Writer
     }
     
     inline function isFunctionExpr(e:Expr):Bool return getExprType(e) == "Function";
+    
+    inline function isIntExpr(e:Expr):Bool {
+        var type = getExprType(e);
+        return isIntType(type);
+    }
+    
+    inline function isIntType(s:String):Bool return s == "Int";
     
     function addWarning(type:String, isError = false) {
         warnings.set(type, isError);

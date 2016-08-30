@@ -17,4 +17,9 @@ class Issue24
         var k : Int = as3hx.Compat.parseInt(n + j);
         var k : Int = as3hx.Compat.parseInt(n * j);
     }
+    
+    public function getInt(n : Float) : Int
+    {
+        return as3hx.Compat.parseInt(n + 10);
+    }
 }
