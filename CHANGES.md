@@ -1,15 +1,22 @@
 ## dev
- - Call `array.insert(position, element)` instead of `array.insertAt(position, element)`
- - Call `array.splice(index, 1)[0]` insted of `array.removeAt(index)`
  - Fixed conversion of function's parameter with comment
- - Call `as3hx.Compat.toFixed(number, fractionDigits)` instead of `number.toFixed(fractionDigits)`
- - Import `haxe.Constraints.Function` for modules that use `Function` if not used fync2dyn
- - Import of classes occur only if they have been imported in AS3 code
  - Fixed conversion of `&&=` operator
  - Fixed conversion of `getQualifiedClassName(this)`
+ - Fixed conversion of local functions.
+ - Fixed conversion of Math.min() with several args
+ - Fixed conversion of Math.max() with several args
+ - Import `haxe.Constraints.Function` for modules that use `Function` if not used fync2dyn
+ - Import of classes occur only if they have been imported in AS3 code
+ - Replace `Number.NaN` with `Math.NaN`
+ - Call `array.insert(position, element)` instead of `array.insertAt(position, element)`
+ - Call `array.splice(index, 1)[0]` insted of `array.removeAt(index)`
+ - Call `as3hx.Compat.toFixed(number, fractionDigits)` instead of `number.toFixed(fractionDigits)`
  - Call `regex.replace(string, by)` instead of `string.replace(regex, by)`
  - Call `as3hx.Compat.getFunctionLength(function)` instead of `function.length`
- - Fixed conversion of local functions.
+ - Call `regex.replace(string, by)` instead of `string.replace(regex, by)`
+ - Call `StringTools.replace(string, string_sub, by)` instead of `string.replace(string_sub, by)`
+ - Call `StringTools.trim(string)` instead of `mx.utils.StringUtil.trim(string)`
+ - Call `StringTools.isSpace(string, 0)` instead of `mx.utils.StringUtil.isWhitespace(string)`
 
 ##2016-08-24(1.0.4)
  - Fixed conversion of unary operator after declaration of block
