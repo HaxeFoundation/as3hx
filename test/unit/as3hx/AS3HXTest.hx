@@ -378,6 +378,11 @@ class AS3HXTest {
         generate("Issue210.as", "Issue210.hx");
     }
     
+    @Test
+    public function issue213() {
+        generate("Issue213.as", "Issue213.hx");
+    }
+    
     @Test("string.replace(regex, by) -> regex.replace(string, by)")
     public function issue215() {
         generate("Issue215.as", "Issue215.hx");

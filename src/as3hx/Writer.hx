@@ -2733,18 +2733,19 @@ class Writer
                         result = EArray(ECall(EField(e, "splice"), params), EConst(CInt("0")));
                     }
                 }
-                else {
-                    var ident = getIdentString(e);
-                    if (ident != null) {
-                        //replace AS3 StringUtil by Haxe StringTools
-                        if (ident == "StringUtil") {
-                            var rebuiltExpr = EField(EIdent("StringTools"), f);
-                            result = ECall(rebuiltExpr, params);
-                        } else if (ident == "JSON") {
-                            var rebuiltExpr = EField(EIdent("haxe.Json"), f);
-                            result = ECall(rebuiltExpr, params);
-                        }
+                else if(f == "trim") {
+                    if(getIdentString(e) == "StringUtil") {
+                        result = ECall(EField(EIdent("StringTools"), f), params);
                     }
+                }
+                else if(f == "isWhitespace") {
+                    if(getIdentString(e) == "StringUtil") {
+                        params.push(EConst(CInt("0")));
+                        result = ECall(EField(EIdent("StringTools"), "isSpace"), params);
+                    }
+                }
+                else if(getIdentString(e) == "JSON") {
+                    result = ECall(EField(EIdent("haxe.Json"), f), params);
                 }
             case EParent(e):
                 result = switch(fullExpr) {
