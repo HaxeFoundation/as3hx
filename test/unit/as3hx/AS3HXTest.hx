@@ -379,6 +379,11 @@ class AS3HXTest {
     }
     
     @Test
+    public function issue213() {
+        generate("Issue213.as", "Issue213.hx");
+    }
+    
+    @Test
     public function issue214() {
         generate("Issue214.as", "Issue214.hx");
     }
