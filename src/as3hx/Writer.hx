@@ -873,7 +873,32 @@ class Writer
         var es = f.expr != null ? formatBlockBody(f.expr) : [];
         // haxe setters must return the provided type
         if(isSetter && !isNative && f.args.length == 1) {
-            es.push(ENL(EReturn(EIdent(f.args[0].name))));
+            var result = EReturn(EIdent(f.args[0].name));
+            var formatExpr:Expr->Expr = null;
+            var formatBlock:Array<Expr>->Array<Expr> = function(exprs) {
+                for(i in 0...exprs.length) {
+                    exprs[i] = formatExpr(exprs[i]);
+                }
+                return exprs;
+            }
+            formatExpr = function(?e) {
+                if(e == null) return null;
+                return switch(e) {
+                    case EReturn(e) if(e == null): result;
+                    case ENL(e): ENL(formatExpr(e));
+                    case EIf(cond, e1, e2): EIf(cond, formatExpr(e1), formatExpr(e2));
+                    case EFor(inits, conds, incrs, e): EFor(inits, conds, incrs, formatExpr(e));
+                    case EForIn(ev, e, block): EForIn(ev, e, formatExpr(block));
+                    case EForEach(ev, e, block): EForEach(ev, e, formatExpr(block));
+                    case EWhile(cond, e, doWhile): EWhile(cond, formatExpr(e), doWhile);
+                    case ETernary(cond, e1, e2): ETernary(cond, formatExpr(e1), formatExpr(e2));
+                    case ETry(e, catches): ETry(formatExpr(e), catches);
+                    case EBlock(e): EBlock(formatBlock(e));
+                    default: e;
+                }
+            }
+            formatBlock(es);
+            es.push(ENL(result));
         }
         writeStartStatement();
         writeExpr(EBlock(es));
