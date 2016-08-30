@@ -398,6 +398,11 @@ class AS3HXTest {
         generate("Issue218.as", "Issue218.hx");
     }
     
+    @Test("Math.min(1, 2, 3) -> Math.min(Math.min(1, 2), 3)")
+    public function issue223() {
+        generate("Issue223.as", "Issue223.hx");
+    }
+    
     function generate(as3FileName:String, expectedHaxeFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var generatedDirectoryPath = '$issuesDirectory/generated';
