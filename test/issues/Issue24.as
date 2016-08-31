@@ -8,12 +8,28 @@ package {
             c = n - a;
             c = n + a;
             c = n * a;
+            c = n << a;
+            c = n >> a;
+            c = n >>> a;
+            c = n & a;
+            c = n ^ a;
+            c = n | a;
+            c = ~n;
+            c = n | n;
             
             var i:int = a / b;
             var j:int = n;
             var k:int = n - j;
             var k:int = n + j;
             var k:int = n * j;
+            var k:int = n << j;
+            var k:int = n >> j;
+            var k:int = n >>> j;
+            var k:int = n & j;
+            var k:int = n ^ j;
+            var k:int = n | j;
+            var n2:Number;
+            var k:int = ~n2;
         }
         
         public function getInt(n:Number):int {
