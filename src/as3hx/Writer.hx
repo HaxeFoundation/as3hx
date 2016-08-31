@@ -1129,8 +1129,7 @@ class Writer
             case EFor(inits, conds, incrs, e): rv = writeEFor(inits, conds, incrs, e);
             case EForEach(ev, e, block): rv = writeEForEach(ev, e, block);
             case EForIn(ev, e, block): rv = writeEForIn(ev, e, block);
-            case EBreak(label):
-                write("break");
+            case EBreak(label): write("break");
             case EContinue:
                 if(loopIncrements != null && loopIncrements.length > 0) {
                     var exp = loopIncrements.slice(0);
@@ -1139,8 +1138,7 @@ class Writer
                 } else {
                     write("continue");
                 }
-            case EFunction(f, name):
-                writeFunction(f, false, false, false, name);
+            case EFunction(f, name): writeFunction(f, false, false, false, name);
             case EReturn(e):
                 write("return");
                 if (e != null)
@@ -1233,40 +1231,7 @@ class Writer
                     lvl += step;
                 }
                 write("]");
-            case ENew(t, params):
-                //write("/* " +context.get(tstring(t,false,false))+ " */");
-                var origType = context.get(tstring(t, false, false));
-                if(origType == "Class<Dynamic>") {
-                    write("Type.createInstance(");
-                    write(tstring(t, false, false));
-                    write(", [");
-                    for (i in 0...params.length) {
-                        if (i > 0)
-                            write(", ");
-                        writeExpr(params[i]);
-                    }
-                    write("])");
-                } 
-                //in AS3, if Date constructed without argument, uses current time
-                else if (tstring(t) == "Date" && params.empty()) {
-                    write("Date.now()"); //use Haxe constructor for current time
-                } else {
-                    write("new " + tstring(t) + "(");
-                    var out = true;
-                    // prevent params when converting vector to array
-                    switch(t) {
-                        case TVector(_): out = !cfg.vectorToArray;
-                        default:
-                    }
-                    if(out) {
-                        for (i in 0...params.length) {
-                            if (i > 0)
-                                write(", ");
-                            writeExpr(params[i]);
-                        }
-                    }
-                    write(")");
-                }
+            case ENew(t, params): writeENew(t, params);
             case EThrow( e ):
                 write("throw ");
                 writeExpr(e);
@@ -2396,6 +2361,40 @@ class Writer
         return result;
     }
     
+    inline function writeENew(t : T, params : Array<Expr>):Void {
+        var writeParams = function() {
+            for(i in 0...params.length) {
+                if(i > 0)
+                    write(", ");
+                writeExpr(params[i]);
+            }
+        }
+        //write("/* " +context.get(tstring(t,false,false))+ " */");
+        var origType = context.get(tstring(t, false, false));
+        if(origType == "Class<Dynamic>") {
+            write("Type.createInstance(");
+            write(tstring(t, false, false));
+            write(", [");
+            writeParams();
+            write("])");
+        } 
+        //in AS3, if Date constructed without argument, uses current time
+        else if (tstring(t) == "Date" && params.empty()) {
+            write("Date.now()"); //use Haxe constructor for current time
+        } else {
+            write("new " + tstring(t) + "(");
+            var out = true;
+            // prevent params when converting vector to array
+            switch(t) {
+                case TVector(_): out = !cfg.vectorToArray;
+                case TDictionary(_,_): out = !cfg.dictionaryToHash;
+                default:
+            }
+            if(out) writeParams();
+            write(")");
+        }
+    }
+    
     inline function writeETry(e:Expr, catches:Array<{name:String, t:Null<T>, e:Expr}>):BlockEnd {
         var result = Semi;
         write("try");
@@ -3084,6 +3083,8 @@ class Writer
             default: null;
         }
     }
+    
+    var i = 0;
     
     function tstring(t : T, isNativeGetSet:Bool = false, fixCase:Bool = true) : String {
         if(t == null) return null;
