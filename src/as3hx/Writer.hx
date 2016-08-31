@@ -4,6 +4,7 @@ using Lambda;
 
 import as3hx.As3;
 import haxe.io.Output;
+using StringTools;
 
 enum BlockEnd {
     None;
@@ -1160,7 +1161,7 @@ class Writer
                     write(".get(");
                     writeExpr(index);
                     write(")");
-                } else if (etype != null && StringTools.startsWith(etype, "Map")) {
+                } else if (isMapType(etype)) {
                     writeExpr(e);
                     inArrayAccess = old;
                     var oldInLVA = inLvalAssign;
@@ -1467,43 +1468,7 @@ class Writer
                     }
                 }
                 addWarning("ETypeof");
-            case EDelete(e):
-                switch(e) {
-                    case EArray(a, i):
-                        var atype = getExprType(a);
-                        if (atype != null) {
-                            if (StringTools.startsWith(atype, "Map")) {
-                                writeExpr(a);
-                                write(".remove(");
-                                writeExpr(i);
-                                write(")");
-                            } else if (atype == "Dynamic") {
-                                switch(i) {
-                                    case EConst(c):
-                                        switch(c) {
-                                            case CInt(v) | CFloat(v): i = EConst(CString(v));
-                                            default:
-                                        }
-                                    case EIdent(_):
-                                        var type = getExprType(i);
-                                        if (type == null || type != "String") {
-                                            i = getToStringExpr(i);
-                                        }
-                                    default:
-                                }
-                                writeExpr(ECall(EField(EIdent("Reflect"), "deleteField"), [a, i]));
-                            } else if(atype == "Dictionary") {
-                                addWarning("EDelete");
-                                writeNL("This is an intentional compilation error. See the README for handling the delete keyword");
-                                writeIndent('delete ${getIdentString(a)}[${getIdentString(i)}]');
-                            }
-                        }
-                    default: 
-                        addWarning("EDelete");
-                        writeNL("This is an intentional compilation error. See the README for handling the delete keyword");
-                        writeIndent("delete ");
-                        writeExpr(e);
-                }
+            case EDelete(e): writeEDelete(e);
             case ECondComp( kwd, e , e2):
                 var writeECondComp:Expr->Void = null;
                 writeECondComp = function(e) {
@@ -2448,6 +2413,45 @@ class Writer
         return result;
     }
     
+    inline function writeEDelete(e:Expr) {
+        switch(e) {
+            case EArray(a, i):
+                var atype = getExprType(a);
+                if (atype != null) {
+                    if (isMapType(atype)) {
+                        writeExpr(a);
+                        write(".remove(");
+                        writeExpr(i);
+                        write(")");
+                    } else if (atype == "Dynamic") {
+                        switch(i) {
+                            case EConst(c):
+                                switch(c) {
+                                    case CInt(v) | CFloat(v): i = EConst(CString(v));
+                                    default:
+                                }
+                            case EIdent(_):
+                                var type = getExprType(i);
+                                if (type == null || type != "String") {
+                                    i = getToStringExpr(i);
+                                }
+                            default:
+                        }
+                        writeExpr(ECall(EField(EIdent("Reflect"), "deleteField"), [a, i]));
+                    } else if(atype == "Dictionary") {
+                        addWarning("EDelete");
+                        writeNL("This is an intentional compilation error. See the README for handling the delete keyword");
+                        writeIndent('delete ${getIdentString(a)}[${getIdentString(i)}]');
+                    }
+                }
+            default: 
+                addWarning("EDelete");
+                writeNL("This is an intentional compilation error. See the README for handling the delete keyword");
+                writeIndent("delete ");
+                writeExpr(e);
+        }
+    }
+    
     /**
      * Rebuilds any E4X expression to check for instances where the string value
      * is compared to a numerical constant, and change all EIdent instances to
@@ -2705,7 +2709,7 @@ class Writer
                     if(type != null) {
                         //determine wheter the calling object is an Haxe iterable
                         //if it is, rebuild the expression to use Lamda
-                        if(isArrayType(type) || type.indexOf("Map") != -1) {
+                        if(isArrayType(type) || isMapType(type)) {
                             var rebuiltExpr = EField(EIdent("Lambda"), "indexOf");
                             params.unshift(e);
                             result = ECall(rebuiltExpr, params);
@@ -2988,6 +2992,10 @@ class Writer
     
     static inline function isArrayType(s:String):Bool {
         return s != null && StringTools.startsWith(s, "Array<");
+    }
+    
+    static inline function isMapType(s:String):Bool {
+        return s != null && (s.startsWith("Map") || s.startsWith("haxe.ds.ObjectMap"));
     }
     
     inline function isFunctionExpr(e:Expr):Bool return getExprType(e) == "Function";

@@ -403,6 +403,13 @@ class AS3HXTest {
         generate("Issue223.as", "Issue223.hx");
     }
     
+    @Test
+    public function issue226() {
+        cfg.dictionaryToHash = true;
+        generate("Issue226.as", "Issue226.hx");
+        cfg.dictionaryToHash = false;
+    }
+    
     function generate(as3FileName:String, expectedHaxeFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var generatedDirectoryPath = '$issuesDirectory/generated';
