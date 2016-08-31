@@ -858,6 +858,18 @@ class Writer
         }
     }
 
+    inline function writeEContinue():BlockEnd {
+        var result = Semi;
+        if(loopIncrements != null && loopIncrements.length > 0) {
+            var exp = loopIncrements.slice(0);
+            exp.push(EIdent("continue"));
+            result = writeExpr(EBlock(exp));
+        } else {
+            write("continue");
+        }
+        return result;
+    }
+    
     function writeFunction(f : Function, isGetter:Bool, isSetter:Bool, isNative:Bool, ?name : Null<String>, ?ret : FunctionRet) {
         write("function");
         if(name != null)
@@ -1086,64 +1098,29 @@ class Writer
 
         if (expr == null) return None;
         var rv = Semi;
-        switch(expr)
-        {
+        switch(expr) {
             case ETypedExpr(e, t): rv = writeExpr(e);
             case EConst(c): write(getConst(c));
             case EIdent(v): writeModifiedIdent(v);
             case EVars(vars): rv = writeEVars(vars);
-            case EParent( e ):
-                write("(");
-                writeExpr(e);
-                write(")");
+            case EParent(e): writeEParent(e);
             case EBlock(e): rv = writeEBlock(e);
             case EField(e, f): rv = writeEField(expr, e, f);
             case EBinop(op, e1, e2, newLineAfterOp): rv = writeEBinop(op, e1, e2, newLineAfterOp);
-            case EUnop( op, prefix, e ):
-                var type = getExprType(e);
-                if ((isIntType(type) || type == "UInt") && op == "!") {
-                    writeExpr(EBinop("!=", e, EConst(CInt("0")), false));
-                    return None;
-                }
-                if (prefix) {
-                    write(op);
-                    writeExpr(e);
-                } else {
-                    writeExpr(e);
-                    write(op);
-                }
+            case EUnop(op, prefix, e): rv = writeEUnop(op, prefix, e);
             case ECall(e, params): rv = writeECall(expr, e, params);
             case EIf(cond, e1, e2): rv = writeEIf(cond, e1, e2);
-            case ETernary( cond, e1, e2 ):
-                write("(");
-                var rb = rebuildIfExpr(cond);
-                if(rb != null)
-                    writeExpr(rb);
-                else
-                    writeExpr(cond);
-
-                write(") ? ");
-                writeExpr(e1);
-                write(getColon());
-                writeExpr(e2);
+            case ETernary(cond, e1, e2): writeETernarny(cond, e1, e2);
             case EWhile(cond, e, doWhile): rv = writeEWhile(cond, e, doWhile);
             case EFor(inits, conds, incrs, e): rv = writeEFor(inits, conds, incrs, e);
             case EForEach(ev, e, block): rv = writeEForEach(ev, e, block);
             case EForIn(ev, e, block): rv = writeEForIn(ev, e, block);
             case EBreak(label): write("break");
-            case EContinue:
-                if(loopIncrements != null && loopIncrements.length > 0) {
-                    var exp = loopIncrements.slice(0);
-                    exp.push(EIdent("continue"));
-                    rv = writeExpr(EBlock(exp));
-                } else {
-                    write("continue");
-                }
+            case EContinue: rv = writeEContinue();
             case EFunction(f, name): writeFunction(f, false, false, false, name);
             case EReturn(e):
                 write("return");
-                if (e != null)
-                {
+                if (e != null) {
                     write(" ");
                     writeExpr(e);
                 }
@@ -1254,8 +1231,7 @@ class Writer
                     writeNL();
                     writeIndent("}");
                 }
-            case ERegexp( str, opts ):
-                write('new ${getExprType(expr)}(' + eregQuote(str) + ', "' + opts + '")');
+            case ERegexp(str, opts): write('new ${getExprType(expr)}(' + eregQuote(str) + ', "' + opts + '")');
             case ESwitch( e, cases, def):
                 var newCases : Array<CaseDef> = new Array();
                 var writeTestVar = false;
@@ -1468,8 +1444,8 @@ class Writer
             case ENL(e):
                 //newline starts new indented line before parsing
                 //wrapped expression
-                writeNL( );
-                writeIndent( );
+                writeNL();
+                writeIndent();
                 rv = writeExpr(e);
             case EImport(s):
         }
@@ -1586,6 +1562,10 @@ class Writer
                     switch(expr) {
                         case ETypedExpr(e, t) if(needCastToInt(e)):
                             expr = switch(e) {
+                                case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiceOp(op)):
+                                    if(needCastToInt(e1)) e1 = getCastToIntExpr(e1);
+                                    if(needCastToInt(e2)) e2 = getCastToIntExpr(e2);
+                                    EBinop(op, e1, e2, newLineAfterOp);
                                 case EUnop(op, prefix, ex):
                                     if(isBitwiceOp(op) && needCastToInt(ex)) EUnop(op, prefix, getCastToIntExpr(ex));
                                     else e;
@@ -1604,6 +1584,16 @@ class Writer
             }
         }
         return result;
+    }
+    
+    inline function writeEParent(e:Expr) {
+        switch(e) {
+            case EParent(e): writeExpr(e);
+            default:
+                write("(");
+                writeExpr(e);
+                write(")");
+        }
     }
     
     function writeECall(fullExpr:Expr, expr:Expr, params:Array<Expr>):BlockEnd {
@@ -1640,6 +1630,12 @@ class Writer
                 default:
             }
         }
+        var f:Expr->Expr = null;
+        f = function(e) return switch(e) {
+            case EParent(e): f(e);
+            default: e;
+        }
+        for(i in 0...params.length) params[i] = f(params[i]);
     
         //func call use 2 levels of indentation if
         //spread on multiple lines
@@ -1813,6 +1809,17 @@ class Writer
             result = getEIfBlockEnd(e1);
         }
         return result;
+    }
+    
+    inline function writeETernarny(cond:Expr, e1:Expr, ?e2:Expr) {
+        write("(");
+        var rb = rebuildIfExpr(cond);
+        if(rb != null) writeExpr(rb);
+        else writeExpr(cond);
+        write(") ? ");
+        writeExpr(e1);
+        write(getColon());
+        writeExpr(e2);
     }
     
     inline function writeEWhile(cond:Expr, e:Expr, doWhile:Bool):BlockEnd {
@@ -2128,6 +2135,22 @@ class Writer
         return Semi;
     }
     
+    inline function writeEUnop(op:String, prefix:Bool, e:Expr):BlockEnd {
+        var result = Semi;
+        var type = getExprType(e);
+        if((isIntType(type) || type == "UInt") && op == "!") {
+            writeExpr(EBinop("!=", e, EConst(CInt("0")), false));
+            result = None;
+        } else if(prefix) {
+            write(op);
+            writeExpr(e);
+        } else {
+            writeExpr(e);
+            write(op);
+        }
+        return result;
+    }
+    
     function writeToString(e:Expr) {
         var type = getExprType(e);
         if (type != "String") {
@@ -2152,6 +2175,7 @@ class Writer
             case EBinop(op,e1,_,_): !isCompatParseInt(e1) && (isBitwiceOp(op) || isNumericOp(op));
             case EUnop(op,_,e): op == "~" && !isCompatParseInt(e);
             case EIdent(v): getExprType(e) == "Float";
+            case EParent(e): needCastToInt(e);
             default: false;
         }
     }
@@ -2876,7 +2900,7 @@ class Writer
     }
 
     function rebuildBinopExpr(op:String, lvalue:Expr, rvalue:Expr):Expr {
-        switch (op) {
+        switch(op) {
             case "||=":
                 var type = getExprType(lvalue);
                 if(type != null) {
@@ -2912,8 +2936,19 @@ class Writer
                             rvalue = EUnop(op, prefix, e);
                         default: rvalue = getCastToIntExpr(rvalue);
                     }
-                    return EBinop("=", lvalue, rvalue, false);
+                    return EBinop(op, lvalue, rvalue, false);
                 }
+            case "&":
+                var changed = false;
+                if(needCastToInt(lvalue)) {
+                    lvalue = getCastToIntExpr(lvalue);
+                    changed = true;
+                }
+                if(needCastToInt(rvalue)) {
+                    rvalue = getCastToIntExpr(rvalue);
+                    changed = true;
+                }
+                return changed ? EBinop(op, lvalue, rvalue, false) : null;
         }
         return null;
     }
