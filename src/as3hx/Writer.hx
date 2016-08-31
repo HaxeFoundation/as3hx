@@ -1,9 +1,9 @@
 package as3hx;
 
-using Lambda;
-
 import as3hx.As3;
 import haxe.io.Output;
+
+using Lambda;
 using StringTools;
 
 enum BlockEnd {
@@ -891,6 +891,7 @@ class Writer
                 case ETernary(cond, e1, e2): ETernary(cond, formatExpr(e1, getResult), formatExpr(e2, getResult));
                 case ETry(e, catches): ETry(formatExpr(e, getResult), catches);
                 case EBlock(e): EBlock(formatBlock(e, getResult));
+                case ECommented(s, b, t, e): ECommented(s, b, t, formatExpr(e, getResult));
                 default: e;
             }
         }
@@ -1583,7 +1584,13 @@ class Writer
                 var expr = v.val;
                 if(isIntType(type)) {
                     switch(expr) {
-                        case ETypedExpr(e, t) if(needCastToInt(e)): expr = getCastToIntExpr(e);
+                        case ETypedExpr(e, t) if(needCastToInt(e)):
+                            expr = switch(e) {
+                                case EUnop(op, prefix, ex):
+                                    if(isBitwiceOp(op) && needCastToInt(ex)) EUnop(op, prefix, getCastToIntExpr(ex));
+                                    else e;
+                                default: getCastToIntExpr(e);
+                            }
                         default:
                     }
                 }
@@ -2140,13 +2147,13 @@ class Writer
     }
     
     inline function needCastToInt(e:Expr):Bool {
+        var isCompatParseInt:Expr->Bool = function(e) return e.match(ECall(EField(EIdent("as3hx.Compat"), "parseInt"), _));
         return switch(e) {
-            case EBinop(op,_,_,_):
-                switch(op) {
-                    case "/" | "-" | "+" | "*": true;
-                    default: false;
-                }
-            case EIdent(v) if(getExprType(e) == "Float"): true;
+            case EBinop(op,e1,_,_):
+                if(isCompatParseInt(e1)) return false;
+                return isBitwiceOp(op) || op == "/" || op == "-" || op == "+" || op == "*";
+            case EUnop(op,_,e): op == "~" && !isCompatParseInt(e);
+            case EIdent(v): getExprType(e) == "Float";
             default: false;
         }
     }
@@ -2897,7 +2904,17 @@ class Writer
                     }
                 }
                 if(isIntExpr(lvalue) && needCastToInt(rvalue)) {
-                    return EBinop("=", lvalue, getCastToIntExpr(rvalue), false);
+                    switch(rvalue) {
+                        case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiceOp(op)):
+                            if(needCastToInt(e1)) e1 = getCastToIntExpr(e1);
+                            if(needCastToInt(e2)) e2 = getCastToIntExpr(e2);
+                            rvalue = EBinop(op, e1, e2, newLineAfterOp);
+                        case EUnop(op, prefix, e) if(op == "~"):
+                            if(needCastToInt(e)) e = getCastToIntExpr(e);
+                            rvalue = EUnop(op, prefix, e);
+                        default: rvalue = getCastToIntExpr(rvalue);
+                    }
+                    return EBinop("=", lvalue, rvalue, false);
                 }
         }
         return null;
@@ -3005,6 +3022,8 @@ class Writer
     }
     
     inline function isIntType(s:String):Bool return s == "Int";
+    
+    inline function isBitwiceOp(s:String):Bool return s == "<<" || s == ">>" || s == ">>>" || s == "^" || s == "|" || s == "&" || s == "~";
     
     function addWarning(type:String, isError = false) {
         warnings.set(type, isError);
