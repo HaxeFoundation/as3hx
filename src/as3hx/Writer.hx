@@ -1755,10 +1755,15 @@ class Writer
         write("if (");
         lvl++; //extra indenting if condition on multiple lines
         var rb = rebuildIfExpr(cond);
-        if(rb != null)
+        if(rb != null) {
+            var f:Expr->Expr = null;
+            f = function(e) return switch(e) {
+                case EParent(e): f(e);
+                default: e;
+            }
+            rb = f(rb);
             writeExpr(rb);
-        else
-            writeExpr(cond);
+        } else writeExpr(cond);
         lvl--;
     
         //check if if expr is one line
@@ -2593,6 +2598,7 @@ class Writer
                 default: EBinop("!=", e, EIdent("null"), false);
             }
         case EBinop(op, e2, e3, n):
+            if(isBitwiceOp(op)) return EBinop("!=", EParent(e), EConst(CInt("0")), false);
             if(isNumericConst(e2) || isNumericConst(e3))
                 return null;
             if(op == "==" || op == "!=" || op == "!==" || op == "===")
@@ -2603,8 +2609,6 @@ class Writer
                 return null;
             if(op == "?:")
                 return null;
-            if(op == "&" || op == "|" || op == "^")
-                return EBinop("!=", e, EConst(CInt("0")), false);
             var r1 = rebuildIfExpr(e2);
             var r2 = rebuildIfExpr(e3);
             if(r1 == null) r1 = e2;
@@ -2612,18 +2616,19 @@ class Writer
             return EBinop(op, r1, r2, n);
         case EUnop(op, prefix, e2):
             var r2 = rebuildIfExpr(e2);
-            if(r2 == null)
-                return null;
+            if(r2 == null) return null;
             if(op == "!") {
-                if(!prefix)
-                    return null;
-                switch(r2) {
+                if(!prefix) return null;
+                var f:Expr->Expr = null;
+                f = function(r2) return switch(r2) {
                     case EBinop(op2, e3, e4, n):
                         if(op2 == "==") return EBinop("!=", e3, e4, n);
                         if(op2 == "!=") return EBinop("==", e3, e4, n);
-                    default:
+                        return null;
+                    case EParent(e): f(e);
+                    default: null;
                 }
-                return null;
+                return f(r2);
             }
             var t = getExprType(e2);
             if(t == null) return null;
@@ -2635,8 +2640,7 @@ class Writer
             if(r2 == null) return null;
             return EParent(r2);
         case ECall(e2, params): //These would require a full typer
-        case EField(e2, f):
-            null;
+        case EField(e2, f): null;
         case ENL(e): 
             var expr = rebuildIfExpr(e);
             if (expr != null) {
@@ -3137,8 +3141,6 @@ class Writer
             default: null;
         }
     }
-    
-    var i = 0;
     
     function tstring(t : T, isNativeGetSet:Bool = false, fixCase:Bool = true) : String {
         if(t == null) return null;
