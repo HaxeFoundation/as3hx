@@ -2900,6 +2900,19 @@ class Writer
     }
 
     function rebuildBinopExpr(op:String, lvalue:Expr, rvalue:Expr):Expr {
+        var f:String->Expr->Expr->Null<Expr> = null;
+        f = function(op, lvalue, rvalue) {
+            var changed = false;
+            if(needCastToInt(lvalue)) {
+                lvalue = getCastToIntExpr(lvalue);
+                changed = true;
+            }
+            if(needCastToInt(rvalue)) {
+                rvalue = getCastToIntExpr(rvalue);
+                changed = true;
+            }
+            return changed ? EBinop(op, lvalue, rvalue, false) : null;
+        }
         switch(op) {
             case "||=":
                 var type = getExprType(lvalue);
@@ -2927,28 +2940,15 @@ class Writer
                 }
                 if(isIntExpr(lvalue) && needCastToInt(rvalue)) {
                     switch(rvalue) {
-                        case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiceOp(op)):
-                            if(needCastToInt(e1)) e1 = getCastToIntExpr(e1);
-                            if(needCastToInt(e2)) e2 = getCastToIntExpr(e2);
-                            rvalue = EBinop(op, e1, e2, newLineAfterOp);
+                        case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiceOp(op)):  rvalue = f(op, e1, e2);
                         case EUnop(op, prefix, e) if(op == "~"):
                             if(needCastToInt(e)) e = getCastToIntExpr(e);
                             rvalue = EUnop(op, prefix, e);
                         default: rvalue = getCastToIntExpr(rvalue);
                     }
-                    return EBinop(op, lvalue, rvalue, false);
+                    return rvalue != null ? EBinop(op, lvalue, rvalue, false) : null;
                 }
-            case "&":
-                var changed = false;
-                if(needCastToInt(lvalue)) {
-                    lvalue = getCastToIntExpr(lvalue);
-                    changed = true;
-                }
-                if(needCastToInt(rvalue)) {
-                    rvalue = getCastToIntExpr(rvalue);
-                    changed = true;
-                }
-                return changed ? EBinop(op, lvalue, rvalue, false) : null;
+            case "&": return f(op, lvalue, rvalue);
         }
         return null;
     }
