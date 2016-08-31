@@ -2149,9 +2149,7 @@ class Writer
     inline function needCastToInt(e:Expr):Bool {
         var isCompatParseInt:Expr->Bool = function(e) return e.match(ECall(EField(EIdent("as3hx.Compat"), "parseInt"), _));
         return switch(e) {
-            case EBinop(op,e1,_,_):
-                if(isCompatParseInt(e1)) return false;
-                return isBitwiceOp(op) || op == "/" || op == "-" || op == "+" || op == "*";
+            case EBinop(op,e1,_,_): !isCompatParseInt(e1) && (isBitwiceOp(op) || isNumericOp(op));
             case EUnop(op,_,e): op == "~" && !isCompatParseInt(e);
             case EIdent(v): getExprType(e) == "Float";
             default: false;
@@ -3022,6 +3020,8 @@ class Writer
     }
     
     inline function isIntType(s:String):Bool return s == "Int";
+    
+    inline function isNumericOp(s:String):Bool return s == "/" || s == "-" || s == "+" || s == "*" || s == "%" || s == "--" || s == "++";
     
     inline function isBitwiceOp(s:String):Bool return s == "<<" || s == ">>" || s == ">>>" || s == "^" || s == "|" || s == "&" || s == "~";
     
