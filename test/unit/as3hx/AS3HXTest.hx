@@ -422,6 +422,13 @@ class AS3HXTest {
         cfg.dictionaryToHash = false;
     }
     
+    @Test("if(!(mask & flag)) -> if((mask & flag) == 0), if((mask & flag)) -> if((mask & flag) != 0)")
+    public function issue235() {
+        cfg.dictionaryToHash = true;
+        generate("Issue235.as", "Issue235.hx");
+        cfg.dictionaryToHash = false;
+    }
+    
     function generate(as3FileName:String, expectedHaxeFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var generatedDirectoryPath = '$issuesDirectory/generated';
