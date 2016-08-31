@@ -410,6 +410,11 @@ class AS3HXTest {
         cfg.dictionaryToHash = false;
     }
     
+    @Test("Number.POSITIVE_INFINITY -> Math.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY -> Math.NEGATIVE_INFINITY")
+    public function issue228() {
+        generate("Issue228.as", "Issue228.hx");
+    }
+    
     function generate(as3FileName:String, expectedHaxeFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var generatedDirectoryPath = '$issuesDirectory/generated';

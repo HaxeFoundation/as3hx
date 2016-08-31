@@ -1574,7 +1574,7 @@ class Writer
                                 writeExpr(getCompatFieldExpr("FLOAT_MIN"));
                                 return None;
                             }
-                            if(f == "NaN") {
+                            if(f == "NaN" || f == "POSITIVE_INFINITY" || f == "NEGATIVE_INFINITY") {
                                 writeExpr(EField(EIdent("Math"), f));
                                 return None;
                             }
