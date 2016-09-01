@@ -69,9 +69,9 @@ class Compat {
         return result;
     }
     
-    macro public static function getFunctionLength(f):Int {
-        switch (Context.follow(Context.typeof(f))) {
-            case TFun(args, _): return @:pos(Context.currentPos()) macro $v{args.length}; 
+    macro public static function getFunctionLength(f) {
+        switch(Context.follow(Context.typeof(f))) {
+            case TFun(args, _): return @:pos(Context.currentPos()) macro $v{args.length};
             default: throw new Error("not a function", f.pos);
         }
     }
@@ -92,7 +92,7 @@ class Compat {
                     }
             default:
         }
-        return _(ECall( _(EField( _(EConst(CType("Std"))), "parseFloat")), [_(ECall( _(EField( _(EConst(CType("Std"))), "string")), [e]))]));
+        return _(ECall( _(EField( _(EConst(CIdent("Std"))), "parseFloat")), [_(ECall( _(EField( _(EConst(CIdent("Std"))), "string")), [e]))]));
     }
 
     /**
@@ -105,12 +105,12 @@ class Compat {
                 if (t.get().pack.length == 0)
                     switch (t.get().name) {
                         case "Int": return _(ECast(e, TPath({name:"Int", pack:[], params:[], sub:null})));
-                        case "Float": return _(ECall( _(EField( _(EConst(CType("Std"))), "int")), [_(ECast(e, TPath({name:"Float", pack:[], params:[], sub:null})))]));
+                        case "Float": return _(ECall( _(EField( _(EConst(CIdent("Std"))), "int")), [_(ECast(e, TPath({name:"Float", pack:[], params:[], sub:null})))]));
                         default:
                     }
             default:
         }
-        return _(ECall( _(EField( _(EConst(CType("Std"))), "parseInt")), [_(ECall( _(EField( _(EConst(CType("Std"))), "string")), [e]))]));
+        return _(ECall( _(EField( _(EConst(CIdent("Std"))), "parseInt")), [_(ECall( _(EField( _(EConst(CIdent("Std"))), "string")), [e]))]));
     }
 
     /**
