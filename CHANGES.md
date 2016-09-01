@@ -5,9 +5,14 @@
  - Fixed conversion of local functions.
  - Fixed conversion of Math.min() with several args
  - Fixed conversion of Math.max() with several args
+ - Fixed conversion of `delete dictionary[key]` when using setting -dict2hash
+ - Fixed conversion of `new Dictionary(true)` when using setting -dict2hash
+ - Fixed conversion of bitwise operations in conditions
  - Import `haxe.Constraints.Function` for modules that use `Function` if not used fync2dyn
  - Import of classes occur only if they have been imported in AS3 code
  - Replace `Number.NaN` with `Math.NaN`
+ - Replace `Number.POSITIVE_INFINITY` with `Math.POSITIVE_INFINITY`
+ - Replace `Number.NEGATIVE_INFINITY` with `Math.NEGATIVE_INFINITY`
  - Call `array.insert(position, element)` instead of `array.insertAt(position, element)`
  - Call `array.splice(index, 1)[0]` insted of `array.removeAt(index)`
  - Call `as3hx.Compat.toFixed(number, fractionDigits)` instead of `number.toFixed(fractionDigits)`
