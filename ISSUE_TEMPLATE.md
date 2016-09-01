@@ -3,7 +3,7 @@ as3 code for example:
 package {
     public class Issue {
         public function Issue() {
-          //code here...
+            //code here...
         }
     }
 }
@@ -16,7 +16,7 @@ public class Issue
 {
     public function Issue()
     {
-      //code here...
+        //code here...
     }
 }
 ```
@@ -28,7 +28,7 @@ public class Issue
 {
     public function Issue()
     {
-      //code here...
+        //code here...
     }
 }
 ```
