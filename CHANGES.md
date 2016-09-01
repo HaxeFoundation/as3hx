@@ -8,6 +8,7 @@
  - Fixed conversion of `delete dictionary[key]` when using setting -dict2hash
  - Fixed conversion of `new Dictionary(true)` when using setting -dict2hash
  - Fixed conversion of bitwise operations in conditions
+ - Fixed conversion of `d is Dictionary` when using setting -dict2hash.
  - Import `haxe.Constraints.Function` for modules that use `Function` if not used fync2dyn
  - Import of classes occur only if they have been imported in AS3 code
  - Replace `Number.NaN` with `Math.NaN`
