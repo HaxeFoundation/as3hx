@@ -2904,8 +2904,8 @@ class Writer
     }
 
     function rebuildBinopExpr(op:String, lvalue:Expr, rvalue:Expr):Expr {
-        var f:String->Expr->Expr->Null<Expr> = null;
-        f = function(op, lvalue, rvalue) {
+        var getResultForNumerics:String->Expr->Expr->Null<Expr> = null;
+        getResultForNumerics = function(op, lvalue, rvalue) {
             var changed = false;
             if(needCastToInt(lvalue)) {
                 lvalue = getCastToIntExpr(lvalue);
@@ -2917,7 +2917,8 @@ class Writer
             }
             return changed ? EBinop(op, lvalue, rvalue, false) : null;
         }
-        switch(op) {
+        if(isBitwiseAndAssignmetnOp(op)) return EBinop("=", lvalue, EBinop(op.charAt(0), lvalue, rvalue, false), false);
+        else switch(op) {
             case "||=":
                 var type = getExprType(lvalue);
                 if(type != null) {
@@ -2944,7 +2945,7 @@ class Writer
                 }
                 if(isIntExpr(lvalue) && needCastToInt(rvalue)) {
                     switch(rvalue) {
-                        case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiceOp(op)):  rvalue = f(op, e1, e2);
+                        case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiceOp(op)):  rvalue = getResultForNumerics(op, e1, e2);
                         case EUnop(op, prefix, e) if(op == "~"):
                             if(needCastToInt(e)) e = getCastToIntExpr(e);
                             rvalue = EUnop(op, prefix, e);
@@ -2952,7 +2953,7 @@ class Writer
                     }
                     return rvalue != null ? EBinop(op, lvalue, rvalue, false) : null;
                 }
-            case "&": return f(op, lvalue, rvalue);
+            case "&": return getResultForNumerics(op, lvalue, rvalue);
         }
         return null;
     }
@@ -3060,9 +3061,20 @@ class Writer
     
     inline function isIntType(s:String):Bool return s == "Int";
     
-    inline function isNumericOp(s:String):Bool return s == "/" || s == "-" || s == "+" || s == "*" || s == "%" || s == "--" || s == "++";
+    inline function isNumericOp(s:String):Bool return switch(s) {
+        case "/" | "-" | "+" | "*" | "%" | "--" | "++": true;
+        default: false;
+    } 
     
-    inline function isBitwiceOp(s:String):Bool return s == "<<" || s == ">>" || s == ">>>" || s == "^" || s == "|" || s == "&" || s == "~";
+    inline function isBitwiceOp(s:String):Bool return switch(s) {
+        case "<<" | ">>" | ">>>" | "^" | "|" | "&" | "~": true;
+        default: false;
+    } 
+    
+    inline function isBitwiseAndAssignmetnOp(s:String):Bool return switch(s) {
+        case "&=" | "|=" | "^=": true;
+        default: false;
+    }
     
     function addWarning(type:String, isError = false) {
         warnings.set(type, isError);

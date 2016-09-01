@@ -429,6 +429,11 @@ class AS3HXTest {
         cfg.dictionaryToHash = false;
     }
     
+    @Test("x &= y -> x = x & y; x |= y -> x = x | y; x ^= y -> x = x ^ y")
+    public function issue238() {
+        generate("Issue238.as", "Issue238.hx");
+    }
+    
     function generate(as3FileName:String, expectedHaxeFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var generatedDirectoryPath = '$issuesDirectory/generated';
