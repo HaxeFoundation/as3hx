@@ -437,7 +437,7 @@ class AS3HXTest {
     @Test("d is Dictionary -> Std.is(d, haxe.ds.ObjectMap)")
     public function issue241() {
         cfg.dictionaryToHash = true;
-        generate("Issue242.as", "Issue241.hx");
+        generate("Issue241.as", "Issue241.hx");
         cfg.dictionaryToHash = false;
     }
     
