@@ -1068,18 +1068,19 @@ class Writer
 
     function getModifiedIdent(s : String) : String {
         return switch(s) {
-            case "int":                 "Int";
-            case "uint":                cfg.uintToInt ? "Int" : "UInt";
+            case "int": "Int";
+            case "uint": cfg.uintToInt ? "Int" : "UInt";
             case "Number": "Float";
             case "Boolean": "Bool";
-            case "Function":            cfg.functionToDynamic ? "Dynamic" : s;
-            case "Object":              "Dynamic";
-            case "undefined":           "null";
-            //case "Error":     cfg.mapFlClasses ? "flash.errors.Error" : s;
-            case "XML":                 "FastXML";
-            case "XMLList":             "FastXMLList";
+            case "Function": cfg.functionToDynamic ? "Dynamic" : s;
+            case "Object": "Dynamic";
+            case "undefined": "null";
+            //case "Error": cfg.mapFlClasses ? "flash.errors.Error" : s;
+            case "XML": "FastXML";
+            case "XMLList": "FastXMLList";
             case "NaN":"Math.NaN";
-            //case "QName":     cfg.mapFlClasses ? "flash.utils.QName" : s;
+            case "Dictionary": cfg.dictionaryToHash ? "haxe.ds.ObjectMap" : s;
+            //case "QName": cfg.mapFlClasses ? "flash.utils.QName" : s;
             default: s;
         };
     }
