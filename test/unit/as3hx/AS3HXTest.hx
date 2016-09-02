@@ -11,9 +11,9 @@ class AS3HXTest {
 
     public function new() {}
     
-    var cfg:as3hx.Config;
-    var parser:as3hx.Parser;
-    var writer:as3hx.Writer;
+    var cfg:Config;
+    var parser:Parser;
+    var writer:Writer;
     var output:haxe.io.BytesOutput;
     
     @BeforeClass
@@ -439,6 +439,11 @@ class AS3HXTest {
         cfg.dictionaryToHash = true;
         generate("Issue241.as", "Issue241.hx");
         cfg.dictionaryToHash = false;
+    }
+    
+    @Test
+    public function issue244() {
+        generate("Issue244.as", "Issue244.hx");
     }
     
     function generate(as3FileName:String, expectedHaxeFileName:String) {
