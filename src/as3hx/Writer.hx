@@ -943,6 +943,13 @@ class Writer
         }
     }
 
+    inline function writeEReturn(?e:Expr) {
+        write("return");
+        if(e == null) return;
+        write(" ");
+        writeExpr(e);
+    }
+    
     function writeLoop(incrs:Array<Expr>, f:Void->Void) {
         var old = loopIncrements;
         loopIncrements = incrs.slice(0);
@@ -1114,12 +1121,7 @@ class Writer
             case EBreak(label): write("break");
             case EContinue: rv = writeEContinue();
             case EFunction(f, name): writeFunction(f, false, false, false, name);
-            case EReturn(e):
-                write("return");
-                if (e != null) {
-                    write(" ");
-                    writeExpr(e);
-                }
+            case EReturn(e): writeEReturn(e);
             case EArray(e, index):
                 //write("/* EArray ("+Std.string(e)+","+Std.string(index)+") " + Std.string(getExprType(e, true)) + "  */ ");
                 var old = inArrayAccess;
@@ -2960,6 +2962,14 @@ class Writer
                         default: rvalue = getCastToIntExpr(rvalue);
                     }
                     return rvalue != null ? EBinop(op, lvalue, rvalue, false) : null;
+                }
+                switch(rvalue) {
+                    case EBinop(op,e1,e2,_) if(op == "||="):
+                        writeExpr(rebuildBinopExpr(op, e1, e2));
+                        writeNL();
+                        writeIndent();
+                        return EBinop("=", lvalue, e1, false);
+                    default:
                 }
             case "&": return getResultForNumerics(op, lvalue, rvalue);
         }
