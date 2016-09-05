@@ -31,11 +31,20 @@ class FunctionParser {
                         tokenizer.ensure(TDot);
                         tokenizer.ensure(TDot);
                         f.varArgs = tokenizer.id();
-                        if( ParserUtils.opt(tokenizer, TColon) )
-                            tokenizer.ensure(TId("Array"));
+                        if(ParserUtils.opt(tokenizer, TColon)) {
+                            var t = tokenizer.token();
+                            switch(t) {
+                                case TId("Array"):
+                                    tokenizer.add(t);
+                                    tokenizer.ensure(t);
+                                case TOp("*"):
+                                    tokenizer.add(t);
+                                    tokenizer.ensure(t);
+                                default:
+                            }
+                        }
                         tokenizer.ensure(TPClose);
                         break;
-
                     case TId(s): //argument's name
                         var name = ParserUtils.escapeName(s);
                         var t = null, val = null;
