@@ -38,7 +38,7 @@ class Compat {
         };
     }
 
-    public static inline function setArrayLength<T>(a:Array<T>, length:Int) {
+    public static inline function setArrayLength<T>(a:Array<Null<T>>, length:Int) {
         if (a.length > length) a.splice(length, a.length - length);
         else a[length - 1] = null;
     }
