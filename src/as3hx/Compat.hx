@@ -133,8 +133,17 @@ class Compat {
      *   the process, by calling the clearInterval() method.
      */
     public static inline function setInterval(closure:Dynamic, delay:Int, ?values:Array<Dynamic>):Int {
+        #if flash
+        return untyped __global__['flash.utils.setInterval'](closure, delay, values);
+        #elseif js
+        return untyped __js__('setInterval')(closure, delay, values);
+        #elseif (haxe_ver >= "3.3")
         if (values == null) values = [];
         return FlashTimerAdapter.setInterval(closure, delay, values);
+        #else
+        throw "Supported by version 3.3 or higher";
+        return -1;
+        #end
     }
     
     /**
@@ -142,7 +151,17 @@ class Compat {
      * @param id The ID of the setInterval() call, which you set to a variable, as in the following:
      * @see setInterval()
      */
-    public static inline function clearInterval(id:Int) FlashTimerAdapter.clearInterval(id);
+    public static inline function clearInterval(id:Int) {
+        #if flash
+        untyped __global__['flash.utils.clearInterval'](id);
+        #elseif js
+        untyped __js__('clearInterval')(id);
+        #elseif (haxe_ver >= "3.3")
+        FlashTimerAdapter.clearInterval(id);
+        #else
+        throw "Supported by version 3.3 or higher";
+        #end
+    }
     
     /**
      * Runs a specified function after a specified delay (in milliseconds).
@@ -164,8 +183,17 @@ class Compat {
      *   the process, by calling the clearTimeout() method.
      */
     public static inline function setTimeout(closure:Dynamic, delay:Int, ?values:Array<Dynamic>):Int {
+        #if flash
+        return untyped __global__['flash.utils.setTimeout'](closure, delay, values);
+        #elseif js
+        return untyped __js__('setTimeout')(closure, delay, values);
+        #elseif (haxe_ver >= "3.3")
         if (values == null) values = [];
         return FlashTimerAdapter.setTimeout(closure, delay, values);
+        #else
+        throw "Supported by version 3.3 or higher";
+        return -1;
+        #end
     }
     
     /**
@@ -173,7 +201,17 @@ class Compat {
      * @param id The ID of the setTimeout() call, which you set to a variable, as in the following:
      * @see setTimeout()
      */
-    public static inline function clearTimeout(id:Int) FlashTimerAdapter.clearTimeout(id);
+    public static inline function clearTimeout(id:Int) {
+        #if flash
+        untyped __global__['flash.utils.clearTimeout'](id);
+        #elseif js
+        untyped __js__('clearTimeout')(id);
+        #elseif (haxe_ver >= "3.3")
+        FlashTimerAdapter.clearInterval(id);
+        #else
+        throw "Supported by version 3.3 or higher";
+        #end
+    }
     
     /**
      * Runtime value of FLOAT_MAX depends on target platform
@@ -300,6 +338,7 @@ class Compat {
     }
 }
 
+#if (!flash && !js && (haxe_ver >= "3.3"))
 private class FlashTimerAdapter {
     
     public static var timers:Array<haxe.Timer> = [];
@@ -332,6 +371,7 @@ private class FlashTimerAdapter {
         timers[id] = null;
     }
 }
+#end
 
 #if python
 @:pythonImport("sys")
