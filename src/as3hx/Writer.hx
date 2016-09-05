@@ -441,7 +441,7 @@ class Writer
                     }
                 }
 
-                context.set(property.name, tstring(property.ret, false));
+                context.set(property.name, tstring(property.ret));
             }
         }
         if (c.isInterface) {
@@ -575,7 +575,7 @@ class Writer
                 start(field.name, false);
                 write("var " + getModifiedIdent(field.name));
 
-                var type = tstring(t, false); //check wether a specific type was defined for this array
+                var type = tstring(t); //check wether a specific type was defined for this array
                 if(isArrayType(type)) {
                     for (genType in this.genTypes) {
                         if (field.name == genType.fieldName) {
@@ -584,7 +584,7 @@ class Writer
                     }
                 }
                 writeVarType(t);
-                context.set(field.name, tstring(t, false));
+                context.set(field.name, tstring(t));
 
                 //initialise class property
                 if(val != null) {
@@ -791,7 +791,7 @@ class Writer
                         }
                     case ETypedExpr(e, t):
                         writeVarType(t);
-                        context.set(arg.name, tstring(arg.t, false));
+                        context.set(arg.name, tstring(arg.t));
                         if(arg.val != null) {
                             write(" = ");
                             writeExpr(arg.val);
@@ -943,6 +943,13 @@ class Writer
         }
     }
 
+    inline function writeEReturn(?e:Expr) {
+        write("return");
+        if(e == null) return;
+        write(" ");
+        writeExpr(e);
+    }
+    
     function writeLoop(incrs:Array<Expr>, f:Void->Void) {
         var old = loopIncrements;
         loopIncrements = incrs.slice(0);
@@ -995,8 +1002,7 @@ class Writer
     function getExprType(e:Expr) : String {
         /*EField(ECall(EField(EIdent(xml),descendants),[]),user)*/
         switch(e) {
-            case ETypedExpr(e2, t):
-                return tstring(t, false);
+            case ETypedExpr(e2, t): return tstring(t);
             case EField(e2, f):
                 var t2 = getExprType(e2);
                 //write("/* e2 " + e2 + "."+f+" type: "+t2+" */");
@@ -1023,15 +1029,11 @@ class Writer
                 //  write("/* AS3HX WARNING var " + s + " is not in scope */");
                 return context.get(s);
             case EVars(vars):
-                if(vars.length != 1)
-                    return null;
-                return tstring(vars[0].t, false);
-            case EArray(n, i):
-                return getExprType(n);
-            case EArrayDecl(e):
-                return "Array<Dynamic>";
-            case EUnop(op, prefix, e2):
-                return getExprType(e2);
+                if(vars.length != 1) return null;
+                return tstring(vars[0].t);
+            case EArray(n, i): return getExprType(n);
+            case EArrayDecl(e): return "Array<Dynamic>";
+            case EUnop(op, prefix, e2): return getExprType(e2);
             case EConst(c):
                 return switch(c) {
                     case CInt(_): "Int";
@@ -1068,18 +1070,19 @@ class Writer
 
     function getModifiedIdent(s : String) : String {
         return switch(s) {
-            case "int":                 "Int";
-            case "uint":                cfg.uintToInt ? "Int" : "UInt";
+            case "int": "Int";
+            case "uint": cfg.uintToInt ? "Int" : "UInt";
             case "Number": "Float";
             case "Boolean": "Bool";
-            case "Function":            cfg.functionToDynamic ? "Dynamic" : s;
-            case "Object":              "Dynamic";
-            case "undefined":           "null";
-            //case "Error":     cfg.mapFlClasses ? "flash.errors.Error" : s;
-            case "XML":                 "FastXML";
-            case "XMLList":             "FastXMLList";
+            case "Function": cfg.functionToDynamic ? "Dynamic" : s;
+            case "Object": "Dynamic";
+            case "undefined": "null";
+            //case "Error": cfg.mapFlClasses ? "flash.errors.Error" : s;
+            case "XML": "FastXML";
+            case "XMLList": "FastXMLList";
             case "NaN":"Math.NaN";
-            //case "QName":     cfg.mapFlClasses ? "flash.utils.QName" : s;
+            case "Dictionary": cfg.dictionaryToHash ? "haxe.ds.ObjectMap" : s;
+            //case "QName": cfg.mapFlClasses ? "flash.utils.QName" : s;
             default: s;
         };
     }
@@ -1118,12 +1121,7 @@ class Writer
             case EBreak(label): write("break");
             case EContinue: rv = writeEContinue();
             case EFunction(f, name): writeFunction(f, false, false, false, name);
-            case EReturn(e):
-                write("return");
-                if (e != null) {
-                    write(" ");
-                    writeExpr(e);
-                }
+            case EReturn(e): writeEReturn(e);
             case EArray(e, index):
                 //write("/* EArray ("+Std.string(e)+","+Std.string(index)+") " + Std.string(getExprType(e, true)) + "  */ ");
                 var old = inArrayAccess;
@@ -1157,7 +1155,7 @@ class Writer
                     write(")");
                 } else {
                     //write("/*!!!" + etype + "!!!*/");
-                    if(isArrayType(etype) && itype != null && itype != "Int" && itype != "UInt") {
+                    if(isDynamicType(etype) || (isArrayType(etype) && itype != null && itype != "Int" && itype != "UInt")) {
                         if (cfg.debugInferredType) {
                             write("/* etype: " + etype + " itype: " + itype + " */");
                         }
@@ -1551,17 +1549,31 @@ class Writer
                 writeIndent();
             }
             var v = vars[i];
-            var type = tstring(v.t, false);
+            var rvalue = v.val;
+            if(rvalue != null) {
+                switch(rvalue) {
+                    case ETypedExpr(e,_):
+                        switch(e) {
+                            case EBinop("||=", e1,_,_):
+                                writeExpr(e);
+                                writeNL();
+                                writeIndent();
+                                rvalue = e1;
+                            default:
+                        }
+                    default:
+                }
+            }
+            var type = tstring(v.t);
             context.set(v.name, type);
             write("var " + getModifiedIdent(v.name));
             writeVarType(v.t);
-            if(v.val != null) {
+            if(rvalue != null) {
                 write(" = ");
-                var expr = v.val;
                 if(isIntType(type)) {
-                    switch(expr) {
+                    switch(rvalue) {
                         case ETypedExpr(e, t) if(needCastToInt(e)):
-                            expr = switch(e) {
+                            rvalue = switch(e) {
                                 case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiceOp(op)):
                                     if(needCastToInt(e1)) e1 = getCastToIntExpr(e1);
                                     if(needCastToInt(e2)) e2 = getCastToIntExpr(e2);
@@ -1574,9 +1586,9 @@ class Writer
                         default:
                     }
                 }
-                writeExpr(expr);
+                writeExpr(rvalue);
                 if(i == vars.length - 1) {
-                    switch(expr) {
+                    switch(rvalue) {
                         case ETypedExpr(e, _) if(e.match(EFunction(_, _))): result = None;
                         default:
                     }
@@ -2416,16 +2428,20 @@ class Writer
         else if (tstring(t) == "Date" && params.empty()) {
             write("Date.now()"); //use Haxe constructor for current time
         } else {
-            write("new " + tstring(t) + "(");
-            var out = true;
+            var isObject = switch(t) {
+                case TPath(p) if(p[0] == "Object"): true;
+                default: false;
+            }
+            if(isObject) write("{}");
+            else write("new " + tstring(t) + "(");
             // prevent params when converting vector to array
-            switch(t) {
-                case TVector(_): out = !cfg.vectorToArray;
-                case TDictionary(_,_): out = !cfg.dictionaryToHash;
-                default:
+            var out = switch(t) {
+                case TVector(_): !cfg.vectorToArray;
+                case TDictionary(_,_): !cfg.dictionaryToHash;
+                default: true;
             }
             if(out) writeParams();
-            write(")");
+            if(!isObject) write(")");
         }
     }
     
@@ -2583,73 +2599,62 @@ class Writer
             return (s == "Float" || isIntType(s) || s == "UInt");
         }
         switch(e) {
-        case EIdent(id):
-            if(id == "null")
-                return null;
-            var t = getExprType(e);
-            if(t == null || t == "Bool")
-                return null;
-            return switch(t) {
-                case "Int" | "UInt": EBinop("!=", e, EConst(CInt("0")), false);
-                case "Float":
-                    var lvalue = EBinop("!=", e, EConst(CInt("0")), false);
-                    var rvalue = EUnop("!", true, ECall(EField(EIdent("Math"), "isNaN"), [e]));
-                    EParent(EBinop("&&", lvalue, rvalue, false));
-                default: EBinop("!=", e, EIdent("null"), false);
-            }
-        case EBinop(op, e2, e3, n):
-            if(isBitwiceOp(op)) return EBinop("!=", EParent(e), EConst(CInt("0")), false);
-            if(isNumericConst(e2) || isNumericConst(e3))
-                return null;
-            if(op == "==" || op == "!=" || op == "!==" || op == "===")
-                return null;
-            if(op == "is" || op == "in" || op == "as")
-                return null;
-            if(op == "<" || op == ">" || op == ">=" || op == "<=")
-                return null;
-            if(op == "?:")
-                return null;
-            var r1 = rebuildIfExpr(e2);
-            var r2 = rebuildIfExpr(e3);
-            if(r1 == null) r1 = e2;
-            if(r2 == null) r2 = e3;
-            return EBinop(op, r1, r2, n);
-        case EUnop(op, prefix, e2):
-            var r2 = rebuildIfExpr(e2);
-            if(r2 == null) return null;
-            if(op == "!") {
-                if(!prefix) return null;
-                var f:Expr->Expr = null;
-                f = function(r2) return switch(r2) {
-                    case EBinop(op2, e3, e4, n):
-                        if(op2 == "==") return EBinop("!=", e3, e4, n);
-                        if(op2 == "!=") return EBinop("==", e3, e4, n);
-                        return null;
-                    case EParent(e): f(e);
-                    default: null;
+            case EArray(_,_): return EBinop("!=", e, EIdent("null"), false);
+            case EIdent(id):
+                if(id == "null") return null;
+                var t = getExprType(e);
+                if(t == null || t == "Bool") return null;
+                return switch(t) {
+                    case "Int" | "UInt": EBinop("!=", e, EConst(CInt("0")), false);
+                    case "Float":
+                        var lvalue = EBinop("!=", e, EConst(CInt("0")), false);
+                        var rvalue = EUnop("!", true, ECall(EField(EIdent("Math"), "isNaN"), [e]));
+                        EParent(EBinop("&&", lvalue, rvalue, false));
+                    default: EBinop("!=", e, EIdent("null"), false);
                 }
-                return f(r2);
-            }
-            var t = getExprType(e2);
-            if(t == null) return null;
-            if(isNumericType(t))
-                return EBinop("!=", e, EConst(CInt("0")), false);
-            return EBinop("!=", e, EIdent("null"), false);
-        case EParent(e2):
-            var r2 = rebuildIfExpr(e2);
-            if(r2 == null) return null;
-            return EParent(r2);
-        case ECall(e2, params): //These would require a full typer
-        case EField(e2, f): null;
-        case ENL(e): 
-            var expr = rebuildIfExpr(e);
-            if (expr != null) {
+            case EBinop(op, e2, e3, n):
+                if(isBitwiceOp(op)) return EBinop("!=", EParent(e), EConst(CInt("0")), false);
+                if(isNumericConst(e2) || isNumericConst(e3)) return null;
+                if(op == "==" || op == "!=" || op == "!==" || op == "===") return null;
+                if(op == "is" || op == "in" || op == "as") return null;
+                if(op == "<" || op == ">" || op == ">=" || op == "<=") return null;
+                if(op == "?:") return null;
+                var r1 = rebuildIfExpr(e2);
+                var r2 = rebuildIfExpr(e3);
+                if(r1 == null) r1 = e2;
+                if(r2 == null) r2 = e3;
+                return EBinop(op, r1, r2, n);
+            case EUnop(op, prefix, e2):
+                var r2 = rebuildIfExpr(e2);
+                if(r2 == null) return null;
+                if(op == "!") {
+                    if(!prefix) return null;
+                    var f:Expr->Expr = null;
+                    f = function(r2) return switch(r2) {
+                        case EBinop(op2, e3, e4, n):
+                            if(op2 == "==") return EBinop("!=", e3, e4, n);
+                            if(op2 == "!=") return EBinop("==", e3, e4, n);
+                            return null;
+                        case EParent(e): f(e);
+                        default: null;
+                    }
+                    return f(r2);
+                }
+                var t = getExprType(e2);
+                if(t == null) return null;
+                if(isNumericType(t)) return EBinop("!=", e, EConst(CInt("0")), false);
+                return EBinop("!=", e, EIdent("null"), false);
+            case EParent(e2):
+                var r2 = rebuildIfExpr(e2);
+                if(r2 == null) return null;
+                return EParent(r2);
+            case ECall(e2, params): //These would require a full typer
+            case EField(e2, f): null;
+            case ENL(e): 
+                var expr = rebuildIfExpr(e);
+                if (expr == null) return null;
                 return ENL(expr);
-            }
-            else {
-                return null;
-            }
-        default:
+            default:
         }
         return null;
     }
@@ -2658,11 +2663,9 @@ class Writer
      * utils returning the ident string of an
      * expr or null if the expr is not an ident
      */
-    function getIdentString(e:Expr):String {
-        return switch (e) {
-            case EIdent(v): v;
-            default: null;
-        }
+    inline static function getIdentString(e:Expr):String return switch (e) {
+        case EIdent(v): v;
+        default: null;
     }
     
     /**
@@ -2926,6 +2929,13 @@ class Writer
                         case "Bool": lvalue;
                         case "Int" | "UInt" | "Float" | _: rebuildIfExpr(lvalue);
                     }
+                    if(isDynamicType(type)) {
+                        cond = switch(cond) {
+                            case EBinop(op, e1, e2, false) if(op == "!="): EBinop("==", e1, e2, false);
+                            default: cond;
+                        }
+                        return EIf(cond, EBinop("=", lvalue, rvalue, false));
+                    }
                     return EBinop("=", lvalue, ETernary(cond, lvalue, rvalue), false);
                 }
             case "&&=":
@@ -2953,6 +2963,14 @@ class Writer
                     }
                     return rvalue != null ? EBinop(op, lvalue, rvalue, false) : null;
                 }
+                switch(rvalue) {
+                    case EBinop(op,e1,e2,_) if(op == "||="):
+                        writeExpr(rebuildBinopExpr(op, e1, e2));
+                        writeNL();
+                        writeIndent();
+                        return EBinop("=", lvalue, e1, false);
+                    default:
+                }
             case "&": return getResultForNumerics(op, lvalue, rvalue);
         }
         return null;
@@ -2976,7 +2994,6 @@ class Writer
             case ECommented(s,b,t,e): getEIfBlockEnd(e);
             //like comment, wrapped expression used instead
             case ENL(e): getEIfBlockEnd(e); 
-
             default: Semi;
         }
     }
@@ -2985,8 +3002,7 @@ class Writer
      * Return wether the expression contained in an
      * "if" statement is a one liner with no block bracket  
      */
-    function isOneLiner(e : Expr) : Bool
-    {
+    function isOneLiner(e : Expr) : Bool {
         return switch (e) {
             case ENL(e): //ignore newline
                 return isOneLiner(e);
@@ -3027,16 +3043,9 @@ class Writer
      * Checks if 'e' represents a numerical constant value
      * @return true if so
      */
-    function isNumericConst(e:Expr) : Bool {
-        switch(e) {
-            case EConst(c):
-                switch(c) {
-                    case CInt(_), CFloat(_): return true;
-                    default:
-                }
-            default:
-        }
-        return false;
+    static inline function isNumericConst(e:Expr) : Bool return switch(e) {
+        case EConst(c): c.match(CInt(_)) || c.match(CFloat(_));
+        default: false;
     }
 
     inline function isArrayExpr(e:Expr):Bool {
@@ -3047,6 +3056,8 @@ class Writer
     static inline function isArrayType(s:String):Bool {
         return s != null && StringTools.startsWith(s, "Array<");
     }
+    
+    static inline function isDynamicType(s:String):Bool return s == "Dynamic";
     
     static inline function isMapType(s:String):Bool {
         return s != null && (s.startsWith("Map") || s.startsWith("haxe.ds.ObjectMap"));

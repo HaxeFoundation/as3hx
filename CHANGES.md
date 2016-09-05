@@ -3,82 +3,85 @@
  - Fixed conversion of `&&=` operator
  - Fixed conversion of `getQualifiedClassName(this)`
  - Fixed conversion of local functions.
- - Fixed conversion of Math.min() with several args
- - Fixed conversion of Math.max() with several args
- - Fixed conversion of `delete dictionary[key]` when using setting -dict2hash
- - Fixed conversion of `new Dictionary(true)` when using setting -dict2hash
+ - Fixed conversion of `Math.min()` with several args
+ - Fixed conversion of `Math.max()` with several args
  - Fixed conversion of bitwise operations in conditions
- - Import `haxe.Constraints.Function` for modules that use `Function` if not used fync2dyn
- - Import of classes occur only if they have been imported in AS3 code
- - Replace `Number.NaN` with `Math.NaN`
- - Replace `Number.POSITIVE_INFINITY` with `Math.POSITIVE_INFINITY`
- - Replace `Number.NEGATIVE_INFINITY` with `Math.NEGATIVE_INFINITY`
+ - Fixed conversion of `delete dictionary[key]` when using setting `-dict2hash`
+ - Fixed conversion of `new Dictionary(true)` when using setting `-dict2hash`
+ - Fixed conversion of `d is Dictionary` when using setting `-dict2hash`
+ - Fixed conversion of `||=` operator when using with array access
+ - Fixed conversion of `function(...args:*)`
  - Call `array.insert(position, element)` instead of `array.insertAt(position, element)`
  - Call `array.splice(index, 1)[0]` insted of `array.removeAt(index)`
+ - Call `as3hx.Compat.getFunctionLength(function)` instead of `function.length`
  - Call `as3hx.Compat.toFixed(number, fractionDigits)` instead of `number.toFixed(fractionDigits)`
  - Call `regex.replace(string, by)` instead of `string.replace(regex, by)`
- - Call `as3hx.Compat.getFunctionLength(function)` instead of `function.length`
  - Call `regex.replace(string, by)` instead of `string.replace(regex, by)`
+ - Call `StringTools.isSpace(string, 0)` instead of `mx.utils.StringUtil.isWhitespace(string)`
  - Call `StringTools.replace(string, string_sub, by)` instead of `string.replace(string_sub, by)`
  - Call `StringTools.trim(string)` instead of `mx.utils.StringUtil.trim(string)`
- - Call `StringTools.isSpace(string, 0)` instead of `mx.utils.StringUtil.isWhitespace(string)`
+ - Import `haxe.Constraints.Function` for modules that use `Function` if not used `-fync2dyn`
+ - Import of classes occur only if they have been imported in AS3 code
+ - Replace `Number.NaN` with `Math.NaN`
+ - Replace `Number.NEGATIVE_INFINITY` with `Math.NEGATIVE_INFINITY`
+ - Replace `Number.POSITIVE_INFINITY` with `Math.POSITIVE_INFINITY`
 
 ##2016-08-24(1.0.4)
  - Fixed conversion of unary operator after declaration of block
- - Fixed convesion ```of if(number)```
- - Fixed conversion of ```array.join("\n")```
- - Fixed conversion of ```var cls : Class = Object(this).constructor as Class```
- - Fixed conversion of ```var some : Some = new someType() as Class```
+ - Fixed convesion `of if(number)`
+ - Fixed conversion of `array.join("\n")`
+ - Fixed conversion of `var cls : Class = Object(this).constructor as Class`
+ - Fixed conversion of `var some : Some = new someType() as Class`
  - Fixed parsing when semicolumn is missing
- - Fixed conversion of ```some || = new Some()```
+ - Fixed conversion of `some || = new Some()`
  - Fixed crash when using setting -dictionary2hash
- - Fixed ```@:allow``` position in the order of access modifiers
+ - Fixed `@:allow` position in the order of access modifiers
  - Fixed int() and Number() casts when applied to Numbers
- - Only first character of package will be transformed to lower case
- - Loops will be converted to ```while``` instead of ```for``` for proper iteration variable modification
+ - Call `as3hx.Compat.arraySplice(array, position, length, args)` instead of `array.splice(position, length, args)`
+ - Call `as3hx.Compat.FLOAT_MAX` instead of `Number.MAX_VALUE`
+ - Call `as3hx.Compat.FLOAT_MIN` instead of `Number.MIN_VALUE`
+ - Call `as3hx.Compat.INT_MAX` instead of `int.MAX_VALUE`
+ - Call `as3hx.Compat.INT_MIN` instead of `int.MIN_VALUE`
+ - Call `as3hx.Compat.parseFloat` instead `parseFloat`
+ - Call `as3hx.Compat.parseInt` instead `parseInt`
+ - Call `as3hx.Compat.Regex::exec` instead of `RegExp::exec`
+ - Call `Reflect.callMethod(null, function, [arg0, arg1])` instead of `function.call(null, arg0, args1)`
+ - Call `Reflect.callMethod(null, function, args)` instead of `function.apply(null, args)`
+ - Call `Reflect.deleteField(dynamic, fieldName)` instead of `delete object[fieldname]`
  - Inline alert message in generated code when trying to `delete` Dictionary keys
- - Call ```Reflect.deleteField(dynamic, fieldName)``` instead of ```delete object[fieldname]```
- - Call ```as3hx.Compat.Regex::exec``` instead of ```RegExp::exec```
- - Call ```as3hx.Compat.FLOAT_MAX``` instead of ```Number.MAX_VALUE```
- - Call ```as3hx.Compat.FLOAT_MIN``` instead of ```Number.MIN_VALUE```
- - Call ```as3hx.Compat.INT_MAX``` instead of ```int.MAX_VALUE```
- - Call ```as3hx.Compat.INT_MIN``` instead of ```int.MIN_VALUE```
- - Call ```as3hx.Compat.parseFloat``` instead ```parseFloat```
- - Call ```as3hx.Compat.parseInt``` instead ```parseInt```
- - Call ```as3hx.Compat.arraySplice(array, position, length, args)``` instead of ```array.splice(position, length, args)```
- - Call ```Reflect.callMethod(null, function, args)``` instead of ```function.apply(null, args)```
- - Call ```Reflect.callMethod(null, function, [arg0, arg1])``` instead of ```function.call(null, arg0, args1)```
+ - Loops will be converted to `while` instead of `for` for proper iteration variable modification
+ - Only first character of package will be transformed to lower case
  
 ##2016-08-05(1.0.3)
- - Fixed conversion of regular expressions with '[' character (closes issue #14)
- - Fixed ternary operator conversion (closes issue #28)
- - Fixed conversion of compound loop conditions (closes issue #29)
- - Replace array.concat() with array.copy() (closes issue #32)
+ - Fixed call for `haxe.Json.parse` instead of `JSON.parse` (closes issue #83)
+ - Fixed casting of `uint(1)` (closes issue #85)
+ - Fixed conversion of [String.]charAt() with zero args (closes issue #69)
  - Fixed conversion of [String.]charCodeAt() with zero args (closes issue #36)
- - Call FastXML.parse() for casting string to xml in AS3 code. (closes issue #37)
- - Remove breaks from switch statement (closes issue #38)
+ - Fixed conversion of `var string : String = "";` (closes issue #103)
+ - Fixed conversion of `array.push()` with several args (closes issue #94)
+ - Fixed conversion of compound loop conditions (closes issue #29)
+ - Fixed conversion of regular expressions with '[' character (closes issue #14)
+ - Fixed conversion of the ternary statement where condition is `some is T` (closes issue #96)
+ - Fixed conversion of var `a:Bool = !i` where type of i is numeric (closes issue #91)
  - Fixed crash on class member level variable with no type (closes issue #52)
  - Fixed crash on new object literal with new line in declaration just after "{" (closes issue #56)
- - Added conversion of "for" loop without break condition (to "while(true)") (closes issue #58)
- - Implemented setting length to arrays (closes issue #68)
+ - Fixed exception on code `Security.allowDomain("*");` (closes issue #81)
+ - Fixed extra increment call in `for` loop conversion (closes issue #65)
  - Fixed loop conversion with more than one counters defined (closes issue #64)
- - Fixed extra increment call in "for" loop conversion (closes issue #65)
- - Replace array.slice() with array.copy() (closes issue #68)
- - Fixed conversion of [String.]charAt() with zero args (closes issue #69)
- - Escape DOLLAR sign in the function arg name (closes issue #71)
- - Fixed exception on code "Security.allowDomain("*");" (closes issue #81)
- - Fixed call for haxe.Json.parse instead of JSON.parse (closes issue #83)
- - Fixed casting of "uint(1)" (closes issue #85)
- - Escape "cast" keyword (closes issue #87)
- - Replace NaN with Math.NaN (closes issue #89)
- - Fixed conversion of var a:Bool = !i where type of i is numeric (closes issue #91)
- - Replace "array.join();" with "array.join(",");" (closes issue #93)
- - Fixed conversion of array.push() with several args (closes issue #94)
+ - Fixed ternary operator conversion (closes issue #28)
+ - Added conversion of `for` loop without break condition (to `while(true)`) (closes issue #58)
  - Added generation of typedefs for anonymous object declaration (closes issue #95)
- - Fixed conversion of the ternary statement where condition is "some is T" (closes issue #96)
- - Fixed conversion of "var string : String = "";" (closes issue #103)
- - Call  as3hx.Compat.setTimeout instead of setTimeout (closes issue #112)
- - added many improvements to generated code style
+ - Added many improvements to generated code style
+ - Call `as3hx.Compat.setTimeout` instead of `setTimeout` (closes issue #112)
+ - Call `FastXML.parse()` for casting string to xml in AS3 code. (closes issue #37)
+ - Escape `cast` keyword (closes issue #87)
+ - Escape DOLLAR sign in the function arg name (closes issue #71)
+ - Implemented setting length to arrays (closes issue #68)
+ - Remove breaks from switch statement (closes issue #38)
+ - Replace `array.join();` with `array.join(",");` (closes issue #93)
+ - Replace `array.concat()` with `array.copy()` (closes issue #32)
+ - Replace `array.slice()` with `array.copy()` (closes issue #68)
+ - Replace `NaN` with `Math.NaN` (closes issue #89)
 
 ##2013-10-28 - Scott Lee
  - Move to Haxe 3 and neko 2

@@ -11,9 +11,9 @@ class AS3HXTest {
 
     public function new() {}
     
-    var cfg:as3hx.Config;
-    var parser:as3hx.Parser;
-    var writer:as3hx.Writer;
+    var cfg:Config;
+    var parser:Parser;
+    var writer:Writer;
     var output:haxe.io.BytesOutput;
     
     @BeforeClass
@@ -432,6 +432,23 @@ class AS3HXTest {
     @Test("x &= y -> x = x & y; x |= y -> x = x | y; x ^= y -> x = x ^ y")
     public function issue238() {
         generate("Issue238.as", "Issue238.hx");
+    }
+    
+    @Test("d is Dictionary -> Std.is(d, haxe.ds.ObjectMap)")
+    public function issue241() {
+        cfg.dictionaryToHash = true;
+        generate("Issue241.as", "Issue241.hx");
+        cfg.dictionaryToHash = false;
+    }
+    
+    @Test
+    public function issue244() {
+        generate("Issue244.as", "Issue244.hx");
+    }
+    
+    @Test("function(...args:*) -> function(args:Array<Dynamic> = null)")
+    public function issue247() {
+        generate("Issue247.as", "Issue247.hx");
     }
     
     function generate(as3FileName:String, expectedHaxeFileName:String) {
