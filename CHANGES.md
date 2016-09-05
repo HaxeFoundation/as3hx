@@ -10,6 +10,7 @@
  - Fixed conversion of `new Dictionary(true)` when using setting `-dict2hash`
  - Fixed conversion of `d is Dictionary` when using setting `-dict2hash`
  - Fixed conversion of `||=` operator when using with array access
+ - Fixed conversion of `function(...args:*)`
  - Call `array.insert(position, element)` instead of `array.insertAt(position, element)`
  - Call `array.splice(index, 1)[0]` insted of `array.removeAt(index)`
  - Call `as3hx.Compat.getFunctionLength(function)` instead of `function.length`
