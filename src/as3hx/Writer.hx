@@ -908,7 +908,7 @@ class Writer
             }
         }
         if(isIntType(tstring(ret.t))) {
-            formatBlock(es, function(e) return needCastToInt(e) ? getCastToIntExpr(e) : e);
+            formatBlock(es, function(?e) return e != null && needCastToInt(e) ? getCastToIntExpr(e) : e);
         }
         // haxe setters must return the provided type
         if(isSetter && !isNative && f.args.length == 1) {
