@@ -227,7 +227,7 @@ class Compat {
         #elseif java
         return untyped __java__('Double.MAX_VALUE');
         #elseif cpp
-        return untyped __cpp__('std::numeric_limits<double>::max()');
+        return untyped __cpp__('LLONG_MAX');
         #elseif python
         return PythonSysAdapter.float_info.max;
         #else
@@ -249,7 +249,7 @@ class Compat {
         #elseif java
         return untyped __java__('Double.MIN_VALUE');
         #elseif cpp
-        return untyped __cpp__('std::numeric_limits<double>::min()');
+        return untyped __cpp__('LLONG_MIN');
         #elseif python
         return PythonSysAdapter.float_info.min;
         #else
@@ -271,7 +271,7 @@ class Compat {
         #elseif java
         return untyped __java__('Integer.MAX_VALUE');
         #elseif cpp
-        return untyped __cpp__('std::numeric_limits<int>::max()');
+        return untyped __cpp__('LONG_MAX');
         #elseif python
         return PythonSysAdapter.maxint;
         #elseif php
@@ -295,7 +295,7 @@ class Compat {
         #elseif java
         return untyped __java__('Integer.MIN_VALUE');
         #elseif cpp
-        return untyped __cpp__('std::numeric_limits<int>::min()');
+        return untyped __cpp__('LONG_MIN');
         #elseif python
         return -PythonSysAdapter.maxint - 1;
         #elseif php
