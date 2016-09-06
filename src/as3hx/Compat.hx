@@ -226,12 +226,10 @@ class Compat {
         return untyped __cs__('double.MaxValue');
         #elseif java
         return untyped __java__('Double.MAX_VALUE');
+        #elseif (cpp && HX_LINUX)
+        return 1.79769313486232e+308;
         #elseif cpp
-            #if HX_LINUX
-            return 1.79769313486232e+308;
-            #else
-            return untyped __cpp__('std::numeric_limits<double>::max()');
-            #end
+        return untyped __cpp__('std::numeric_limits<double>::max()');
         #elseif python
         return PythonSysAdapter.float_info.max;
         #else
@@ -252,12 +250,10 @@ class Compat {
         return untyped __cs__('double.MinValue');
         #elseif java
         return untyped __java__('Double.MIN_VALUE');
+        #elseif (cpp && HX_LINUX)
+        return 2.2250738585072e-308;
         #elseif cpp
-            #if HX_LINUX
-            return 2.2250738585072e-308;
-            #else
-            return untyped __cpp__('std::numeric_limits<double>::min()');
-            #end
+        return untyped __cpp__('std::numeric_limits<double>::min()');
         #elseif python
         return PythonSysAdapter.float_info.min;
         #else
@@ -278,12 +274,10 @@ class Compat {
         return untyped __cs__('int.MaxValue');
         #elseif java
         return untyped __java__('Integer.MAX_VALUE');
+        #elseif (cpp && HX_LINUX)
+        return 2147483647;
         #elseif cpp
-            #if HX_LINUX
-            return 2147483647;
-            #else
-            return untyped __cpp__('std::numeric_limits<int>::max()');
-            #end
+        return untyped __cpp__('std::numeric_limits<int>::max()');
         #elseif python
         return PythonSysAdapter.maxint;
         #elseif php
@@ -306,12 +300,10 @@ class Compat {
         return untyped __cs__('int.MinValue');
         #elseif java
         return untyped __java__('Integer.MIN_VALUE');
+        #elseif (cpp && HX_LINUX)
+        return -2147483648;
         #elseif cpp
-            #if HX_LINUX
-            return -2147483648;
-            #else
-            return untyped __cpp__('std::numeric_limits<int>::min()');
-            #end
+        return untyped __cpp__('std::numeric_limits<int>::min()');
         #elseif python
         return -PythonSysAdapter.maxint - 1;
         #elseif php
