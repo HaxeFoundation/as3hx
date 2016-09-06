@@ -317,7 +317,10 @@ class Compat {
         #end
     }
     
-    macro static function isHXLinux() return macro $v{Context.getDefines().exists("HX_LINUX")};
+    macro static function isHXLinux() {
+        trace(Context.getDefines());
+        return macro $v{Context.getDefines().exists("HX_LINUX")};
+    }
     
     /**
      * Returns a string representation of the number in fixed-point notation.
