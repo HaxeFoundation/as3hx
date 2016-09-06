@@ -227,10 +227,7 @@ class Compat {
         #elseif java
         return untyped __java__('Double.MAX_VALUE');
         #elseif cpp
-        if(isHXLinux()) {
-            return 1.79769313486232e+308;
-        }
-        return untyped __cpp__('std::numeric_limits<double>::max()');
+        return 1.79769313486232e+308;
         #elseif python
         return PythonSysAdapter.float_info.max;
         #else
@@ -252,10 +249,7 @@ class Compat {
         #elseif java
         return untyped __java__('Double.MIN_VALUE');
         #elseif cpp
-        if(isHXLinux()) {
-            return 2.2250738585072e-308;
-        }
-        return untyped __cpp__('std::numeric_limits<double>::min()');
+        return 2.2250738585072e-308;
         #elseif python
         return PythonSysAdapter.float_info.min;
         #else
@@ -277,10 +271,7 @@ class Compat {
         #elseif java
         return untyped __java__('Integer.MAX_VALUE');
         #elseif cpp
-        if(isHXLinux()) {
-            return 2147483647;
-        }
-        return untyped __cpp__('std::numeric_limits<int>::max()');
+        return 2147483647;
         #elseif python
         return PythonSysAdapter.maxint;
         #elseif php
@@ -304,10 +295,7 @@ class Compat {
         #elseif java
         return untyped __java__('Integer.MIN_VALUE');
         #elseif cpp
-        if(isHXLinux()) {
-            return -2147483648;
-        }
-        return untyped __cpp__('std::numeric_limits<int>::min()');
+        return -2147483648;
         #elseif python
         return -PythonSysAdapter.maxint - 1;
         #elseif php
@@ -315,11 +303,6 @@ class Compat {
         #else
         return -2^31;
         #end
-    }
-    
-    macro static function isHXLinux() {
-        trace(Context.getDefines());
-        return macro $v{Context.getDefines().exists("HX_LINUX")};
     }
     
     /**
