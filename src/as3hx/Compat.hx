@@ -226,7 +226,7 @@ class Compat {
         return untyped __cs__('double.MaxValue');
         #elseif java
         return untyped __java__('Double.MAX_VALUE');
-        #elseif (cpp && HX_LINUX)
+        #elseif (cpp && linux)
         return 1.79769313486232e+308;
         #elseif cpp
         return untyped __cpp__('std::numeric_limits<double>::max()');
@@ -250,7 +250,7 @@ class Compat {
         return untyped __cs__('double.MinValue');
         #elseif java
         return untyped __java__('Double.MIN_VALUE');
-        #elseif (cpp && HX_LINUX)
+        #elseif (cpp && linux)
         return 2.2250738585072e-308;
         #elseif cpp
         return untyped __cpp__('std::numeric_limits<double>::min()');
@@ -274,7 +274,7 @@ class Compat {
         return untyped __cs__('int.MaxValue');
         #elseif java
         return untyped __java__('Integer.MAX_VALUE');
-        #elseif (cpp && HX_LINUX)
+        #elseif (cpp && linux)
         return 2147483647;
         #elseif cpp
         return untyped __cpp__('std::numeric_limits<int>::max()');
@@ -300,7 +300,7 @@ class Compat {
         return untyped __cs__('int.MinValue');
         #elseif java
         return untyped __java__('Integer.MIN_VALUE');
-        #elseif (cpp && HX_LINUX)
+        #elseif (cpp && linux)
         return -2147483648;
         #elseif cpp
         return untyped __cpp__('std::numeric_limits<int>::min()');
