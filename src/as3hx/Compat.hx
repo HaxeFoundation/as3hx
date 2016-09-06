@@ -226,9 +226,10 @@ class Compat {
         return untyped __cs__('double.MaxValue');
         #elseif java
         return untyped __java__('Double.MAX_VALUE');
-        #elseif (cpp && linux)
-        return 1.79769313486232e+308;
         #elseif cpp
+        if(isHXLinux()) {
+            return 1.79769313486232e+308;
+        }
         return untyped __cpp__('std::numeric_limits<double>::max()');
         #elseif python
         return PythonSysAdapter.float_info.max;
@@ -250,9 +251,10 @@ class Compat {
         return untyped __cs__('double.MinValue');
         #elseif java
         return untyped __java__('Double.MIN_VALUE');
-        #elseif (cpp && linux)
-        return 2.2250738585072e-308;
         #elseif cpp
+        if(isHXLinux()) {
+            return 2.2250738585072e-308;
+        }
         return untyped __cpp__('std::numeric_limits<double>::min()');
         #elseif python
         return PythonSysAdapter.float_info.min;
@@ -274,9 +276,10 @@ class Compat {
         return untyped __cs__('int.MaxValue');
         #elseif java
         return untyped __java__('Integer.MAX_VALUE');
-        #elseif (cpp && linux)
-        return 2147483647;
         #elseif cpp
+        if(isHXLinux()) {
+            return 2147483647;
+        }
         return untyped __cpp__('std::numeric_limits<int>::max()');
         #elseif python
         return PythonSysAdapter.maxint;
@@ -300,9 +303,10 @@ class Compat {
         return untyped __cs__('int.MinValue');
         #elseif java
         return untyped __java__('Integer.MIN_VALUE');
-        #elseif (cpp && linux)
-        return -2147483648;
         #elseif cpp
+        if(isHXLinux()) {
+            return -2147483648;
+        }
         return untyped __cpp__('std::numeric_limits<int>::min()');
         #elseif python
         return -PythonSysAdapter.maxint - 1;
@@ -312,6 +316,8 @@ class Compat {
         return -2^31;
         #end
     }
+    
+    macro static function isHXLinux() return macro $v{Context.getDefines().exists("HX_LINUX")};
     
     /**
      * Returns a string representation of the number in fixed-point notation.
