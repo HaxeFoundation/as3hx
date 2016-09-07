@@ -38,7 +38,7 @@ class Compat {
         };
     }
 
-    public static inline function setArrayLength<T>(a:Array<T>, length:Int) {
+    public static inline function setArrayLength<T>(a:Array<Null<T>>, length:Int) {
         if (a.length > length) a.splice(length, a.length - length);
         else a[length - 1] = null;
     }
@@ -69,9 +69,9 @@ class Compat {
         return result;
     }
     
-    macro public static function getFunctionLength(f):Int {
-        switch (Context.follow(Context.typeof(f))) {
-            case TFun(args, _): return @:pos(Context.currentPos()) macro $v{args.length}; 
+    macro public static function getFunctionLength(f) {
+        switch(Context.follow(Context.typeof(f))) {
+            case TFun(args, _): return @:pos(Context.currentPos()) macro $v{args.length};
             default: throw new Error("not a function", f.pos);
         }
     }
@@ -92,7 +92,7 @@ class Compat {
                     }
             default:
         }
-        return _(ECall( _(EField( _(EConst(CType("Std"))), "parseFloat")), [_(ECall( _(EField( _(EConst(CType("Std"))), "string")), [e]))]));
+        return _(ECall( _(EField( _(EConst(CIdent("Std"))), "parseFloat")), [_(ECall( _(EField( _(EConst(CIdent("Std"))), "string")), [e]))]));
     }
 
     /**
@@ -105,12 +105,12 @@ class Compat {
                 if (t.get().pack.length == 0)
                     switch (t.get().name) {
                         case "Int": return _(ECast(e, TPath({name:"Int", pack:[], params:[], sub:null})));
-                        case "Float": return _(ECall( _(EField( _(EConst(CType("Std"))), "int")), [_(ECast(e, TPath({name:"Float", pack:[], params:[], sub:null})))]));
+                        case "Float": return _(ECall( _(EField( _(EConst(CIdent("Std"))), "int")), [_(ECast(e, TPath({name:"Float", pack:[], params:[], sub:null})))]));
                         default:
                     }
             default:
         }
-        return _(ECall( _(EField( _(EConst(CType("Std"))), "parseInt")), [_(ECall( _(EField( _(EConst(CType("Std"))), "string")), [e]))]));
+        return _(ECall( _(EField( _(EConst(CIdent("Std"))), "parseInt")), [_(ECall( _(EField( _(EConst(CIdent("Std"))), "string")), [e]))]));
     }
 
     /**
@@ -133,8 +133,17 @@ class Compat {
      *   the process, by calling the clearInterval() method.
      */
     public static inline function setInterval(closure:Dynamic, delay:Int, ?values:Array<Dynamic>):Int {
+        #if flash
+        return untyped __global__['flash.utils.setInterval'](closure, delay, values);
+        #elseif js
+        return untyped __js__('setInterval')(closure, delay, values);
+        #elseif (haxe_ver >= "3.3")
         if (values == null) values = [];
         return FlashTimerAdapter.setInterval(closure, delay, values);
+        #else
+        throw "Supported by version 3.3 or higher";
+        return -1;
+        #end
     }
     
     /**
@@ -142,7 +151,17 @@ class Compat {
      * @param id The ID of the setInterval() call, which you set to a variable, as in the following:
      * @see setInterval()
      */
-    public static inline function clearInterval(id:Int) FlashTimerAdapter.clearInterval(id);
+    public static inline function clearInterval(id:Int) {
+        #if flash
+        untyped __global__['flash.utils.clearInterval'](id);
+        #elseif js
+        untyped __js__('clearInterval')(id);
+        #elseif (haxe_ver >= "3.3")
+        FlashTimerAdapter.clearInterval(id);
+        #else
+        throw "Supported by version 3.3 or higher";
+        #end
+    }
     
     /**
      * Runs a specified function after a specified delay (in milliseconds).
@@ -164,8 +183,17 @@ class Compat {
      *   the process, by calling the clearTimeout() method.
      */
     public static inline function setTimeout(closure:Dynamic, delay:Int, ?values:Array<Dynamic>):Int {
+        #if flash
+        return untyped __global__['flash.utils.setTimeout'](closure, delay, values);
+        #elseif js
+        return untyped __js__('setTimeout')(closure, delay, values);
+        #elseif (haxe_ver >= "3.3")
         if (values == null) values = [];
         return FlashTimerAdapter.setTimeout(closure, delay, values);
+        #else
+        throw "Supported by version 3.3 or higher";
+        return -1;
+        #end
     }
     
     /**
@@ -173,7 +201,17 @@ class Compat {
      * @param id The ID of the setTimeout() call, which you set to a variable, as in the following:
      * @see setTimeout()
      */
-    public static inline function clearTimeout(id:Int) FlashTimerAdapter.clearTimeout(id);
+    public static inline function clearTimeout(id:Int) {
+        #if flash
+        untyped __global__['flash.utils.clearTimeout'](id);
+        #elseif js
+        untyped __js__('clearTimeout')(id);
+        #elseif (haxe_ver >= "3.3")
+        FlashTimerAdapter.clearInterval(id);
+        #else
+        throw "Supported by version 3.3 or higher";
+        #end
+    }
     
     /**
      * Runtime value of FLOAT_MAX depends on target platform
@@ -189,7 +227,7 @@ class Compat {
         #elseif java
         return untyped __java__('Double.MAX_VALUE');
         #elseif cpp
-        return untyped __cpp__('std::numeric_limits<double>::max()');
+        return 1.79769313486232e+308;
         #elseif python
         return PythonSysAdapter.float_info.max;
         #else
@@ -211,7 +249,7 @@ class Compat {
         #elseif java
         return untyped __java__('Double.MIN_VALUE');
         #elseif cpp
-        return untyped __cpp__('std::numeric_limits<double>::min()');
+        return 2.2250738585072e-308;
         #elseif python
         return PythonSysAdapter.float_info.min;
         #else
@@ -233,7 +271,7 @@ class Compat {
         #elseif java
         return untyped __java__('Integer.MAX_VALUE');
         #elseif cpp
-        return untyped __cpp__('std::numeric_limits<int>::max()');
+        return 2147483647;
         #elseif python
         return PythonSysAdapter.maxint;
         #elseif php
@@ -257,7 +295,7 @@ class Compat {
         #elseif java
         return untyped __java__('Integer.MIN_VALUE');
         #elseif cpp
-        return untyped __cpp__('std::numeric_limits<int>::min()');
+        return -2147483648;
         #elseif python
         return -PythonSysAdapter.maxint - 1;
         #elseif php
@@ -300,6 +338,7 @@ class Compat {
     }
 }
 
+#if (!flash && !js && (haxe_ver >= "3.3"))
 private class FlashTimerAdapter {
     
     public static var timers:Array<haxe.Timer> = [];
@@ -332,6 +371,7 @@ private class FlashTimerAdapter {
         timers[id] = null;
     }
 }
+#end
 
 #if python
 @:pythonImport("sys")
