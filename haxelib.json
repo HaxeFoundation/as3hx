@@ -5,6 +5,7 @@
   "tags": [ ],
   "description": "as3hx is a utility to help automatically convert ActionScript source code into compatible Haxe code",
   "version": "1.0.4",
+  "classPath": "src",
   "releasenote": "Parser fixes",
   "contributors": [ "singmajesty", "slavara" ],
   "dependencies": {}
