@@ -27,6 +27,8 @@ To get the basic tool usage :
 
     neko run.n -help
 
+###Config
+
 There are many configuration options to choose how the Haxe code
 is generated, check the src/as3hx/Config.hx file for the full list.
 
