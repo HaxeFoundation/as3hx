@@ -1,7 +1,7 @@
-#as3hx [![Build Status](https://travis-ci.org/HaxeFoundation/as3hx.svg?branch=master)](https://travis-ci.org/HaxeFoundation/as3hx)
+# as3hx [![Build Status](https://travis-ci.org/HaxeFoundation/as3hx.svg?branch=master)](https://travis-ci.org/HaxeFoundation/as3hx)
 Convert ActionScript 3 to Haxe 3 code.
 
-###Build
+### Build
 You'll need Haxe 3.* to build the project and Neko 2.* to run it.
     
     haxe --no-traces as3hx.hxml
@@ -10,7 +10,7 @@ Build the as3hx tool.
     haxe -debug as3hx.hxml
 Build with debug output when converting files.
 
-###Use
+### Use
 
     neko run.n test/ out/
     
@@ -27,7 +27,7 @@ To get the basic tool usage :
 
     neko run.n -help
 
-###Config
+### Config
 
 There are many configuration options to choose how the Haxe code
 is generated, check the src/as3hx/Config.hx file for the full list.
@@ -37,15 +37,15 @@ called ".as3hx_config.xml". You can also create one in the directory
 you are running as3hx from, which will override the home file.
 
 
-####Licence
+#### Licence
 
 MIT, see [LICENCE.md](LICENCE.md)
 
 
 
-###Current failures:
+### Current failures:
 
-####'delete' keyword:
+#### 'delete' keyword:
 In ActionScript, the `delete` keyword will cause an intentional failure in the
 generated .hx file. Take a close look at the object being deleted.
 
@@ -57,11 +57,11 @@ Senocular did a little writeup on `delete` that might make it more clear
 http://www.kirupa.com/forum/showthread.php?223798-ActionScript-3-Tip-of-the-Day/page3
 
 
-####E4X:
+#### E4X:
 E4X is currently partly done. This will fail in some cases, just examine source
 and output carefully.
 
-####For Initializations:
+#### For Initializations:
 The output of
 
 ```as3

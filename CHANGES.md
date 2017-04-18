@@ -26,7 +26,7 @@
  - Replace `Number.NEGATIVE_INFINITY` with `Math.NEGATIVE_INFINITY`
  - Replace `Number.POSITIVE_INFINITY` with `Math.POSITIVE_INFINITY`
 
-##2016-08-24(1.0.4)
+## 2016-08-24(1.0.4)
  - Fixed conversion of unary operator after declaration of block
  - Fixed convesion `of if(number)`
  - Fixed conversion of `array.join("\n")`
@@ -52,7 +52,7 @@
  - Loops will be converted to `while` instead of `for` for proper iteration variable modification
  - Only first character of package will be transformed to lower case
  
-##2016-08-05(1.0.3)
+## 2016-08-05(1.0.3)
  - Fixed call for `haxe.Json.parse` instead of `JSON.parse` (closes issue #83)
  - Fixed casting of `uint(1)` (closes issue #85)
  - Fixed conversion of [String.]charAt() with zero args (closes issue #69)
@@ -83,10 +83,10 @@
  - Replace `array.slice()` with `array.copy()` (closes issue #68)
  - Replace `NaN` with `Math.NaN` (closes issue #89)
 
-##2013-10-28 - Scott Lee
+## 2013-10-28 - Scott Lee
  - Move to Haxe 3 and neko 2
 
-##2013-08-01 - Yanhick, Richard, Todd
+## 2013-08-01 - Yanhick, Richard, Todd
  - added many improvements to generated code style
  - replaced as3 "toString" by Haxe "Std.string"
  - replaced as3 "Date" by Haxe "Date.now" for current time
@@ -111,7 +111,7 @@
  - Removed conversion of escape sequences in Parser.readString
  - Added odd as3 vector constructor style: mStringVec = new <String>["a","b"];
 
-##2011-10-19 - Russell
+## 2011-10-19 - Russell
  - Added writing out class inits
  - Fixed empty functions returning f.expr = Object (messed up metadata parsing)
  - Improved metadata support for [Bindable("move")]
@@ -132,12 +132,12 @@
  - Skip comments in object create or fuction calls
  - Support for Vector added to Writer
 
-##2011-10-14 - Russell
+## 2011-10-14 - Russell
  - cleaned formatting on comments
  - added === support (missed)
  - added -no-cast-guess 
 
-##2011-10-12 - Russell
+## 2011-10-12 - Russell
  - added comments
  - fixed static var initializations were not output
  - added output for the "as" keyword
