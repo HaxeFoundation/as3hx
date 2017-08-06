@@ -62,6 +62,9 @@ class Run {
                 var fw = File.write(name, false);
                 warnings.set(name, writer.process(program, fw));
                 fw.close();
+                if(cfg.postProcessor != "") {
+                    postProcessor(cfg.postProcessor, name);
+                }
                 if(cfg.verifyGeneratedFiles) {
                     verifyGeneratedFile(f, src, name);
                 }
@@ -69,6 +72,13 @@ class Run {
         }
         for (name in subDirList) {
             loop((src.addTrailingSlash() + name), (dst.addTrailingSlash() + name), excludes);
+        }
+    }
+
+    static function postProcessor(?postProcessor:String = "", ?outFile:String = "") {
+        if(postProcessor != "" && outFile != "") {
+            Sys.println('Running post-processor ' + postProcessor + ' on file: ' + outFile);
+            Sys.command(postProcessor, [outFile]);
         }
     }
 
