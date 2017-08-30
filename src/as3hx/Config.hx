@@ -62,6 +62,12 @@ class Config {
     public var useCompat : Bool;
     /** diff the generated .hx files against expected .hx files if they exists **/
     public var verifyGeneratedFiles : Bool;
+    /**
+     * run a postProcessor script on the generated .hx fiels after generation
+     * specify full path + script name and make sure it's executable, e.g. "/usr/bin/postprocessor.sh"
+     * the first passed on argument will be the full path + filename of the .hx file, e.g. "/usr/bin/postprocessor.sh /my/folder/out/generated.hx"
+     */
+    public var postProcessor : String = "";
 
     /**
      * a list of absolute or relative directory paths.
@@ -313,6 +319,7 @@ class Config {
             case "getterMethods":       setCharField(el, "get_%I");
             case "setterMethods":       setCharField(el, "set_%I");
             case "getterSetterStyle":   setCharField(el, "haxe", ["haxe","flash","combined"]);
+            case "postProcessor":       setCharField(el, "%I");
             case "forcePrivateGetter":  setBoolField(el, true);
             case "forcePrivateSetter":  setBoolField(el, true);
             case "errorContinue":       setBoolField(el, true);
@@ -429,6 +436,7 @@ class Config {
     <verifyGeneratedFiles value="false" />
     <useFastXML value="true" />
     <useCompat value="true" />
+    <postProcessor value="" />
     <importPaths></importPaths>
 </as3hx>';
     }
