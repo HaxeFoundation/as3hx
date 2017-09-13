@@ -4,9 +4,9 @@
   "license": "MIT",
   "tags": [ ],
   "description": "as3hx is a utility to help automatically convert ActionScript source code into compatible Haxe code",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "classPath": "src",
-  "releasenote": "Parser fixes",
-  "contributors": [ "singmajesty", "slavara" ],
+  "releasenote": "Continued improvements",
+  "contributors": [ "singmajesty" ],
   "dependencies": {}
 }
