@@ -1,4 +1,4 @@
-## dev
+## 2017-09-13(1.0.5)
  - Fixed conversion of function's parameter with comment
  - Fixed conversion of `&&=` operator
  - Fixed conversion of `getQualifiedClassName(this)`
