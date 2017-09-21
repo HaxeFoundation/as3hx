@@ -1,8 +1,11 @@
+## dev
+ - Replace `navigateToURL` with `flash.Lib.getURL` (fixes issue #257)
+
 ## 2017-09-13(1.0.5)
  - Fixed conversion of function's parameter with comment
  - Fixed conversion of `&&=` operator
  - Fixed conversion of `getQualifiedClassName(this)`
- - Fixed conversion of local functions.
+ - Fixed conversion of local functions
  - Fixed conversion of `Math.min()` with several args
  - Fixed conversion of `Math.max()` with several args
  - Fixed conversion of bitwise operations in conditions
@@ -16,7 +19,6 @@
  - Call `as3hx.Compat.getFunctionLength(function)` instead of `function.length`
  - Call `as3hx.Compat.toFixed(number, fractionDigits)` instead of `number.toFixed(fractionDigits)`
  - Call `regex.replace(string, by)` instead of `string.replace(regex, by)`
- - Call `regex.replace(string, by)` instead of `string.replace(regex, by)`
  - Call `StringTools.isSpace(string, 0)` instead of `mx.utils.StringUtil.isWhitespace(string)`
  - Call `StringTools.replace(string, string_sub, by)` instead of `string.replace(string_sub, by)`
  - Call `StringTools.trim(string)` instead of `mx.utils.StringUtil.trim(string)`
@@ -28,13 +30,13 @@
 
 ## 2016-08-24(1.0.4)
  - Fixed conversion of unary operator after declaration of block
- - Fixed convesion `of if(number)`
+ - Fixed conversion of `if(number)`
  - Fixed conversion of `array.join("\n")`
  - Fixed conversion of `var cls : Class = Object(this).constructor as Class`
  - Fixed conversion of `var some : Some = new someType() as Class`
  - Fixed parsing when semicolumn is missing
  - Fixed conversion of `some || = new Some()`
- - Fixed crash when using setting -dictionary2hash
+ - Fixed crash when using setting `-dictionary2hash`
  - Fixed `@:allow` position in the order of access modifiers
  - Fixed int() and Number() casts when applied to Numbers
  - Call `as3hx.Compat.arraySplice(array, position, length, args)` instead of `array.splice(position, length, args)`
@@ -62,7 +64,7 @@
  - Fixed conversion of compound loop conditions (closes issue #29)
  - Fixed conversion of regular expressions with '[' character (closes issue #14)
  - Fixed conversion of the ternary statement where condition is `some is T` (closes issue #96)
- - Fixed conversion of var `a:Bool = !i` where type of i is numeric (closes issue #91)
+ - Fixed conversion of var `a:Bool = !i` where type of `i` is numeric (closes issue #91)
  - Fixed crash on class member level variable with no type (closes issue #52)
  - Fixed crash on new object literal with new line in declaration just after "{" (closes issue #56)
  - Fixed exception on code `Security.allowDomain("*");` (closes issue #81)
@@ -73,7 +75,7 @@
  - Added generation of typedefs for anonymous object declaration (closes issue #95)
  - Added many improvements to generated code style
  - Call `as3hx.Compat.setTimeout` instead of `setTimeout` (closes issue #112)
- - Call `FastXML.parse()` for casting string to xml in AS3 code. (closes issue #37)
+ - Call `FastXML.parse()` for casting string to xml in AS3 code (closes issue #37)
  - Escape `cast` keyword (closes issue #87)
  - Escape DOLLAR sign in the function arg name (closes issue #71)
  - Implemented setting length to arrays (closes issue #68)
