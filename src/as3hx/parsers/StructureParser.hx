@@ -256,31 +256,9 @@ class StructureParser {
             }
             ECall(EField(EIdent("Math"), "round"), [EBinop("*", ECall(EField(EIdent("haxe.Timer"), "stamp"), []), EConst(CInt("1000")), false)]);
         case "setTimeout" | "setInterval":
-            var t = tokenizer.token();
-            if (Type.enumEq(t, TPOpen)) {
-                var params = [];
-                var parCount = 1;
-                while (parCount > 0) {
-                    t = tokenizer.token();
-                    switch(t) {
-                        case TPOpen: parCount++;
-                        case TPClose: parCount--;
-                        case TComma:
-                        default:
-                            tokenizer.add(t);
-                            if (params.length < 2) params.push(parseExpr(false));
-                            else {
-                                if (params.length == 2) params.push(EArrayDecl([]));
-                                switch(params[2]) {
-                                    case EArrayDecl(e): e.push(parseExpr(false));
-                                    default:
-                            }
-                        }
-                    }
-                }
-                return ECall(EField(EIdent("as3hx.Compat"), kwd), params);
-            }
-            null;
+            var params = getParams(tokenizer, parseExpr);
+            if(params != null) return ECall(EField(EIdent("as3hx.Compat"), kwd), params);
+            return null;
         case "clearTimeout" | "clearInterval":
             tokenizer.ensure(TPOpen);
             var e = parseExpr(false);
@@ -296,7 +274,39 @@ class StructureParser {
                 EField(EIdent("Std"), kwd);
             }
             ECall(efield, [e]);
+        case "navigateToURL":
+            var params = getParams(tokenizer, parseExpr);
+            if(params != null) return ECall(EField(EIdent("flash.Lib"), "getURL"), params);
+            return null;
         default: null;
+        }
+    }
+    
+    static function getParams(tokenizer:Tokenizer, parseExpr) {
+        return switch(tokenizer.token()) {
+            case TPOpen:
+                var params = [];
+                var parCount = 1;
+                while(parCount > 0) {
+                    var t = tokenizer.token();
+                    switch(t) {
+                        case TPOpen: parCount++;
+                        case TPClose: parCount--;
+                        case TComma:
+                        case _:
+                            tokenizer.add(t);
+                            if(params.length < 2) params.push(parseExpr(false));
+                            else {
+                                if(params.length == 2) params.push(EArrayDecl([]));
+                                switch(params[2]) {
+                                    case EArrayDecl(e): e.push(parseExpr(false));
+                                    case _:
+                            }
+                        }
+                    }
+                }
+                params;
+            case _: null;
         }
     }
 }

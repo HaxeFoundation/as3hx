@@ -13,7 +13,8 @@ class ImportParser {
         "getTimer",
         "setInterval",
         "setTimeout",
-        "unescapeMultiByte"
+        "unescapeMultiByte",
+        "navigateToURL"
     ];
     
     public static function parse(tokenizer:Tokenizer, cfg:Config) {
