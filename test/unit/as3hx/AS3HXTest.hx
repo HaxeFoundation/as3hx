@@ -24,6 +24,7 @@ class AS3HXTest {
         output = new BytesOutput();
     }
     
+	/*
     @Test
     public function issue14() {
         generate("Issue14.as", "Issue14.hx");
@@ -464,6 +465,12 @@ class AS3HXTest {
     @Test("navigateToURL(request, window) -> flash.Lib.getURL(request, window)")
     public function issue257() {
         generate("Issue257.as", "Issue257.hx");
+    }
+	*/
+    
+    @Test("Issue 261")
+    public function issue257() {
+        generate("Issue261.as", "Issue261.hx");
     }
     
     function generate(as3FileName:String, expectedHaxeFileName:String) {
