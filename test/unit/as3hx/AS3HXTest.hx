@@ -466,6 +466,11 @@ class AS3HXTest {
         generate("Issue257.as", "Issue257.hx");
     }
     
+    @Test("flash.display3D.Context3D['supportsVideoTexture'] -> Reflect.field(flash.display3D.Context3D, 'supportsVideoTexture')")
+    public function issue234() {
+        generate("Issue234.as", "Issue234.hx");
+    }
+    
     function generate(as3FileName:String, expectedHaxeFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var generatedDirectoryPath = '$issuesDirectory/generated';
