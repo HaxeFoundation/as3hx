@@ -4,6 +4,9 @@ import Type;
 import haxe.macro.Expr;
 import haxe.macro.Context;
 
+#if cpp
+@:cppInclude('limits.h')
+#end
 /**
  * Collection of functions that just have no real way to be compatible in Haxe 
  */
