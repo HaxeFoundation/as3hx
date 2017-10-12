@@ -4,9 +4,6 @@ import Type;
 import haxe.macro.Expr;
 import haxe.macro.Context;
 
-#if cpp
-@:cppInclude('limits.h')
-#end
 /**
  * Collection of functions that just have no real way to be compatible in Haxe 
  */
@@ -230,7 +227,7 @@ class Compat {
         #elseif java
         return untyped __java__('Double.MAX_VALUE');
         #elseif cpp
-        return untyped __cpp__('std::numeric_limits<int>::max()');
+        return 1.79769313486232e+308;
         #elseif python
         return PythonSysAdapter.float_info.max;
         #else
@@ -252,7 +249,7 @@ class Compat {
         #elseif java
         return untyped __java__('Double.MIN_VALUE');
         #elseif cpp
-        return untyped __cpp__('std::numeric_limits<int>::min()');
+        return 2.2250738585072e-308;
         #elseif python
         return PythonSysAdapter.float_info.min;
         #else
