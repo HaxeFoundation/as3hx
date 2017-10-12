@@ -1,4 +1,5 @@
 ## dev
+ - Fixed Conversion of `SomeClass['staticFieldName']` (fixes issue #234)
  - Replace `navigateToURL` with `flash.Lib.getURL` (fixes issue #257)
 
 ## 2017-09-13(1.0.5)
