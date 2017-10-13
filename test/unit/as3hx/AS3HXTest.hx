@@ -441,12 +441,12 @@ class AS3HXTest {
         cfg.dictionaryToHash = false;
     }
     
-    @Test
+    @Test("https://github.com/HaxeFoundation/as3hx/issues/244")
     public function issue244() {
         generate("Issue244.as", "Issue244.hx");
     }
     
-    @Test
+    @Test("https://github.com/HaxeFoundation/as3hx/issues/246")
     public function issue246() {
         generate("Issue246.as", "Issue246.hx");
     }
@@ -464,6 +464,11 @@ class AS3HXTest {
     @Test("navigateToURL(request, window) -> flash.Lib.getURL(request, window)")
     public function issue257() {
         generate("Issue257.as", "Issue257.hx");
+    }
+    
+    @Test("https://github.com/HaxeFoundation/as3hx/issues/254")
+    public function issue254() {
+        generate("Issue254.as", "Issue254.hx");
     }
     
     function generate(as3FileName:String, expectedHaxeFileName:String) {
