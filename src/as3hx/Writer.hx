@@ -544,37 +544,34 @@ class Writer
             else if(!isInterface) {
                 write("private ");
             }
-            if(isStatic(field.kwds))
-                write("static ");
-            
             //check wheter the field is an AS3 constants, which can be inlined in Haxe
             //the field must be either a static constant or a private constant. 
             //If it is a non-static public constant it can't be inlined as Haxe can only inline
             //static field. Converting non-static public field to static will likely cause compilation
             //errors, whereas it won't for private field as they will be accessed in the same way
-            if (isConst(field.kwds) && (isStatic(field.kwds) || isPrivate(field.kwds))) {
-                switch(field.kind) {
-                    case FVar(t, val):
-                        //only constants (bool, string, int/float) field can
-                        //be safely inlined for Haxe as we don't havve full typing
-                        //available. For instance trying to inline a field referencing another
-                        //static non-inlined field would prevent Haxe compilation
-                        if (val != null) {
-                            switch (val) {
-                                case EConst(c): write("inline ");
-                                default:
-                            }
-                        }
-                    default:
-                }
+            if(isStatic(field.kwds)) {
+				write("static ");
+				if(isConst(field.kwds)) {
+					switch(field.kind) {
+						case FVar(t, val) if(val != null):
+							//only constants (bool, string, int/float) field can
+							//be safely inlined for Haxe as we don't havve full typing
+							//available. For instance trying to inline a field referencing another
+							//static non-inlined field would prevent Haxe compilation
+							switch(val) {
+								case EConst(c): write("inline ");
+								default:
+							}
+						default:
+					}
+				}
             }
         }
-        switch(field.kind)
-        {
-            case FVar( t, val ):
+        switch(field.kind) {
+            case FVar(t, val):
                 start(field.name, false);
                 write("var " + getModifiedIdent(field.name));
-
+				if(!isStatic(field.kwds) && isConst(field.kwds)) write("(default, never)");
                 var type = tstring(t); //check wether a specific type was defined for this array
                 if(isArrayType(type)) {
                     for (genType in this.genTypes) {
@@ -950,6 +947,75 @@ class Writer
         writeExpr(e);
     }
     
+    function writeEArray(e:Expr, index:Expr) {
+        //write("/* EArray ("+Std.string(e)+","+Std.string(index)+") " + Std.string(getExprType(e, true)) + "  */ ");
+        var old = inArrayAccess;
+        inArrayAccess = true;
+        // this test can be generalized to any array[]->get() translation
+        var etype = getExprType(e);
+        var itype = getExprType(index);
+        if(etype == "FastXML" || etype == "FastXMLList") {
+            writeExpr(e);
+            inArrayAccess = old;
+            write(".get(");
+            writeExpr(index);
+            write(")");
+        } else if(isMapType(etype)) {
+            writeExpr(e);
+            inArrayAccess = old;
+            var oldInLVA = inLvalAssign;
+            inLvalAssign = false;
+            if (oldInLVA) {
+                write(".set(");
+            } else {
+                write(".get(");
+            }
+            writeExpr(index);
+            if (oldInLVA) {
+                write(", ");
+                writeExpr(rvalue);
+                rvalue = null;
+            }
+            inLvalAssign = oldInLVA;
+            write(")");
+        } else {
+            //write("/*!!!" + etype + "!!!*/");
+            if(isDynamicType(etype) || ((isArrayType(etype) || e.match(EIdent(_))) && itype != null && itype != "Int" && itype != "UInt")) {
+                if(cfg.debugInferredType) {
+                    write("/* etype: " + etype + " itype: " + itype + " */");
+                }
+                var isString = (itype == "String");
+                var oldInLVA = inLvalAssign;
+                inLvalAssign = false;
+                if(oldInLVA)
+                    write("Reflect.setField(");
+                else
+                    write("Reflect.field(");
+                writeExpr(e);
+                inArrayAccess = old;
+                write(", ");
+                if(!isString)
+                    write("Std.string(");
+                writeExpr(index);
+                if(!isString)
+                    write(")");
+                if(oldInLVA) {
+                    write(", ");
+                    writeExpr(rvalue);
+                    rvalue = null;
+                }
+                inLvalAssign = oldInLVA;
+                write(")");
+            } else {
+                writeExpr(e);
+                inArrayAccess = old;
+                write("[");
+                writeExpr(index); 
+                write("]");
+            }
+        }
+    }
+    
     function writeLoop(incrs:Array<Expr>, f:Void->Void) {
         var old = loopIncrements;
         loopIncrements = incrs.slice(0);
@@ -978,13 +1044,15 @@ class Writer
             return;
         writeNL("");
         writeIndent();
-        writeNL("private static var init = {");
+        writeNL('private static var ${c.name}_static_initializer = {');
         lvl++;
         for(e in c.inits) {
             writeIndent();
             writeExpr(e);
             writeNL(";");
         }
+		writeIndent("true;");
+		writeNL();
         lvl--;
         writeIndent();
         writeNL("}");
@@ -1122,73 +1190,7 @@ class Writer
             case EContinue: rv = writeEContinue();
             case EFunction(f, name): writeFunction(f, false, false, false, name);
             case EReturn(e): writeEReturn(e);
-            case EArray(e, index):
-                //write("/* EArray ("+Std.string(e)+","+Std.string(index)+") " + Std.string(getExprType(e, true)) + "  */ ");
-                var old = inArrayAccess;
-                inArrayAccess = true;
-                // this test can be generalized to any array[]->get() translation
-                var etype = getExprType(e);
-                var itype = getExprType(index);
-                if(etype == "FastXML" || etype == "FastXMLList") {
-                    writeExpr(e);
-                    inArrayAccess = old;
-                    write(".get(");
-                    writeExpr(index);
-                    write(")");
-                } else if (isMapType(etype)) {
-                    writeExpr(e);
-                    inArrayAccess = old;
-                    var oldInLVA = inLvalAssign;
-                    inLvalAssign = false;
-                    if (oldInLVA) {
-                        write(".set(");
-                    } else {
-                        write(".get(");
-                    }
-                    writeExpr(index);
-                    if (oldInLVA) {
-                        write(", ");
-                        writeExpr(rvalue);
-                        rvalue = null;
-                    }
-                    inLvalAssign = oldInLVA;
-                    write(")");
-                } else {
-                    //write("/*!!!" + etype + "!!!*/");
-                    if(isDynamicType(etype) || (isArrayType(etype) && itype != null && itype != "Int" && itype != "UInt")) {
-                        if (cfg.debugInferredType) {
-                            write("/* etype: " + etype + " itype: " + itype + " */");
-                        }
-                        var isString = (itype == "String");
-                        var oldInLVA = inLvalAssign;
-                        inLvalAssign = false;
-                        if(oldInLVA)
-                            write("Reflect.setField(");
-                        else
-                            write("Reflect.field(");
-                        writeExpr(e);
-                        inArrayAccess = old;
-                        write(", ");
-                        if(!isString)
-                            write("Std.string(");
-                        writeExpr(index);
-                        if(!isString)
-                            write(")");
-                        if(oldInLVA) {
-                            write(", ");
-                            writeExpr(rvalue);
-                            rvalue = null;
-                        }
-                        inLvalAssign = oldInLVA;
-                        write(")");
-                    } else {
-                        writeExpr(e);
-                        inArrayAccess = old;
-                        write("[");
-                        writeExpr(index); 
-                        write("]");
-                    }
-                }
+            case EArray(e, index): writeEArray(e, index);
             case EArrayDecl(e):
                 var enl = false;
                 write("[");
@@ -3043,7 +3045,7 @@ class Writer
      * Checks if 'e' represents a numerical constant value
      * @return true if so
      */
-    static inline function isNumericConst(e:Expr) : Bool return switch(e) {
+    static inline function isNumericConst(e:Expr):Bool return switch(e) {
         case EConst(c): c.match(CInt(_)) || c.match(CFloat(_));
         default: false;
     }
