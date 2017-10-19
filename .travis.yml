@@ -3,7 +3,7 @@ language: haxe
 haxe:
   - development
   - 3.4.2
-  - 3.4.3
+  - 3.4.4
 
 os:
   - linux
