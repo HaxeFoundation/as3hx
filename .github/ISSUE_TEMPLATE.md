@@ -10,25 +10,25 @@ package {
 ```
 expected result
 ```haxe
-package;
 
-public class Issue
+class Issue
 {
-    public function Issue()
+    public function new()
     {
         //code here...
     }
 }
+
 ```
 actual result
 ```haxe
-package;
 
-public class Issue
+class Issue
 {
-    public function Issue()
+    public function new()
     {
         //code here...
     }
 }
+
 ```
