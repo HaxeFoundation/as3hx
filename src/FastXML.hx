@@ -86,15 +86,15 @@ private class NodeListAccess implements Dynamic<FastXMLList> {
 class FastXML {
 
     public var x(default,null) : Xml;
-    public var name(getName,null) : String;
-    public var innerData(getInnerData,null) : String;
-    public var innerHTML(getInnerHTML,null) : String;
+    public var name(get,null) : String;
+    public var innerData(get,null) : String;
+    public var innerHTML(get,null) : String;
     public var node(default,null) : NodeAccess;
     public var nodes(default,null) : NodeListAccess;
     public var att(default,null) : AttribAccess;
     public var has(default,null) : HasAttribAccess;
     public var hasNode(default,null) : HasNodeAccess;
-    public var elements(getElements,null) : Iterator<FastXML>;
+    public var elements(get,null) : Iterator<FastXML>;
 
     public function new( x : Xml ) {
         if( x.nodeType != Xml.Document && x.nodeType != Xml.Element )
@@ -138,11 +138,11 @@ class FastXML {
         return v;
     }
 
-    function getName() {
+    function get_name():String {
         return if( x.nodeType == Xml.Document ) "Document" else x.nodeName;
     }
 
-    function getInnerData() {
+    function get_innerData():String {
         var it = x.iterator();
         if( !it.hasNext() )
             throw name+" does not have data";
@@ -162,14 +162,14 @@ class FastXML {
         return v.nodeValue;
     }
 
-    function getInnerHTML() {
+    function get_innerHTML():String {
         var s = new StringBuf();
         for( x in x )
             s.add(x.toString());
         return s.toString();
     }
 
-    function getElements() {
+    function get_elements():Iterator<FastXML> {
         var it = x.elements();
         return {
             hasNext : it.hasNext,
