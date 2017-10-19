@@ -1044,13 +1044,15 @@ class Writer
             return;
         writeNL("");
         writeIndent();
-        writeNL("private static var init = {");
+        writeNL('private static var ${c.name}_static_initializer = {');
         lvl++;
         for(e in c.inits) {
             writeIndent();
             writeExpr(e);
             writeNL(";");
         }
+		writeIndent("true;");
+		writeNL();
         lvl--;
         writeIndent();
         writeNL("}");

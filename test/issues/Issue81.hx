@@ -6,8 +6,9 @@ class Issue81
     public function new()
     {
     }
-    private static var init = {
+    private static var Issue81_static_initializer = {
         Security.allowDomain("*");
+        true;
     }
 
 }
