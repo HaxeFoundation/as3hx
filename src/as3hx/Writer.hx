@@ -544,37 +544,34 @@ class Writer
             else if(!isInterface) {
                 write("private ");
             }
-            if(isStatic(field.kwds))
-                write("static ");
-            
             //check wheter the field is an AS3 constants, which can be inlined in Haxe
             //the field must be either a static constant or a private constant. 
             //If it is a non-static public constant it can't be inlined as Haxe can only inline
             //static field. Converting non-static public field to static will likely cause compilation
             //errors, whereas it won't for private field as they will be accessed in the same way
-            if (isConst(field.kwds) && (isStatic(field.kwds) || isPrivate(field.kwds))) {
-                switch(field.kind) {
-                    case FVar(t, val):
-                        //only constants (bool, string, int/float) field can
-                        //be safely inlined for Haxe as we don't havve full typing
-                        //available. For instance trying to inline a field referencing another
-                        //static non-inlined field would prevent Haxe compilation
-                        if (val != null) {
-                            switch (val) {
-                                case EConst(c): write("inline ");
-                                default:
-                            }
-                        }
-                    default:
-                }
+            if(isStatic(field.kwds)) {
+				write("static ");
+				if(isConst(field.kwds)) {
+					switch(field.kind) {
+						case FVar(t, val) if(val != null):
+							//only constants (bool, string, int/float) field can
+							//be safely inlined for Haxe as we don't havve full typing
+							//available. For instance trying to inline a field referencing another
+							//static non-inlined field would prevent Haxe compilation
+							switch(val) {
+								case EConst(c): write("inline ");
+								default:
+							}
+						default:
+					}
+				}
             }
         }
-        switch(field.kind)
-        {
-            case FVar( t, val ):
+        switch(field.kind) {
+            case FVar(t, val):
                 start(field.name, false);
                 write("var " + getModifiedIdent(field.name));
-
+				if(!isStatic(field.kwds) && isConst(field.kwds)) write("(default, never)");
                 var type = tstring(t); //check wether a specific type was defined for this array
                 if(isArrayType(type)) {
                     for (genType in this.genTypes) {
