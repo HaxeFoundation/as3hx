@@ -127,7 +127,6 @@ class Writer
                         else result.push(ex[i]);
                     }
                 case ECommented(s,b,t,e):
-                    // issue 264
                     // catch comments before else blocks
                     writeNL();
                     writeIndent(s);
@@ -664,7 +663,7 @@ class Writer
                 }
                 break;
             }
-            else if (field == f){
+            else if (field == f) {
                 foundSelf = true;
             }
         } 
@@ -802,7 +801,7 @@ class Writer
                         pendingComma = true;
 
                     case ENL(e): //newline
-                        if (pendingComma){
+                        if (pendingComma) {
                             pendingComma = false;
                             write(",");
                         }
@@ -810,7 +809,7 @@ class Writer
                         writeIndent();
 
                     case ECommented(s,b,t,e): // comment among arguments
-                        if (pendingComma){
+                        if (pendingComma) {
                             pendingComma = false;
                             write(",");
                         }
@@ -1828,13 +1827,12 @@ class Writer
             e2 = EBlock(formatBlockBody(e2));
             writeNL();
             var elseif:Expr = null;
-            // issue 277
             // if we find an EBlock([ENL(EIf(...))])
             // after an `else` then we have an
             // `else if` statement
             switch(e2) {
                 case EBlock(e3):
-                    if(e3 != null && e3.length == 1) {
+                    if (e3 != null && e3.length == 1) {
                         switch(e3[0]) {
                             case ENL(e4):
                                 switch(e4) {
@@ -1845,7 +1843,6 @@ class Writer
                                         // the same line as the `else` -> `else if`
                                         elseif = e4;
                                     case EBlock(_):
-                                        // issue 264
                                         // catch double-nested blocks and replace
                                         // outer block with inner block
                                         e2 = e4;
@@ -1858,10 +1855,10 @@ class Writer
                     elseif = e2;
                 default:
             }
-            if(elseif != null) {
+            if (elseif != null) {
                 writeIndent("else ");
                 result = writeExpr(elseif);
-            }else{
+            } else {
                 writeIndent("else");
                 writeStartStatement();
                 result = writeExpr(e2);
