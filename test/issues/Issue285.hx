@@ -5,8 +5,9 @@ class Issue285
     {
         var x : Int = 1;
         var max : Int = 10;
-        for (x in x...max)
+        while (x < max)
         {
+            ++x;
         }
     }
 }

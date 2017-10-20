@@ -501,7 +501,7 @@ class AS3HXTest {
         generate("Issue275.as", "Issue275.hx");
     }
     
-    @Test("for(i; i < max; i++) -> for(i in i...max)")
+    @Test("for(i; i < max; i++) -> whil(i < max) { ++i; }")
     public function issue285() {
         generate("Issue285.as", "Issue285.hx");
     }

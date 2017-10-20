@@ -1905,7 +1905,8 @@ class Writer
         var useWhileLoop:Void->Bool = function() {
             if (inits.empty() || conds.empty()) return true;
             switch(inits[0]) {
-                case EVars(vars): if (vars.length > 1) return true;
+                case EVars(vars) if(vars.length > 1): return true;
+                case EIdent(v): return true;
                 default:
             }
             if (conds[0].match(EBinop("&&" | "||", _, _, _))) return true;
@@ -1928,9 +1929,6 @@ class Writer
                     write(" in ");
                     writeExpr(v[0].val);
                     write("...");
-                // var i:int = 0;
-                // for(i; i < max; i++)
-                case EIdent(v): write('${v} in ');
                 // var i:int = 0;
                 // for (i = 0; i < size; i++)
                 case EBinop(op, e1, e2, newLineAfterOp):
@@ -1961,23 +1959,18 @@ class Writer
                                     writeExpr(e2);
                                     write(" + 1");
                             }
-                        // var i:int = 0;
-                        // for(i; i < max; i++)
-                        case _ if(inits[0].match(EIdent(_))):
-                            writeExpr(e1);
-                            write("...");
-                            writeExpr(e2);
                         case _: writeExpr(e2);
                     }
                     writeCloseStatement();
                 default:
             }
         } else {
-            for (init in inits) {
+            inits = inits.filter(function(it) return !it.match(EIdent(_)));
+            for(init in inits) {
                 writeExpr(init);
                 writeNL(";");
             }
-            writeIndent();
+            if(!inits.empty()) writeIndent();
             write("while (");
             if (conds.empty()) {
                 write("true");
