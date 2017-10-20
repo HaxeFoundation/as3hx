@@ -1821,9 +1821,40 @@ class Writer
             e2 = f(e2);
             e2 = EBlock(formatBlockBody(e2));
             writeNL();
-            writeIndent("else");
-            writeStartStatement();
-            result = writeExpr(e2);
+            var elseif:Expr = null;
+            // issue 277
+            // if we find an EBlock([ENL(EIf(...))])
+            // after an `else` then we have an
+            // `else if` statement
+            switch(e2) {
+                case EBlock(e3):
+                    if(e3 != null && e3.length == 1) {
+                        switch(e3[0]) {
+                            case ENL(e4):
+                                switch(e4) {
+                                    case EIf(_, _, _):
+                                        // found single if statement after an else
+                                        // replace parent `block` + `new line` with
+                                        // the `if` statement instead so we stay on
+                                        // the same line as the `else` -> `else if`
+                                        elseif = e4;
+                                    default:
+                                }
+                            default:
+                        }
+                    }
+                case EIf(_, _, _):
+                    elseif = e2;
+                default:
+            }
+            if(elseif != null) {
+                writeIndent("else ");
+                result = writeExpr(elseif);
+            }else{
+                writeIndent("else");
+                writeStartStatement();
+                result = writeExpr(e2);
+            }
         } else {
             result = getEIfBlockEnd(e1);
         }
