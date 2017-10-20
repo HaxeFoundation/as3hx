@@ -144,7 +144,10 @@ class ExprParser {
             var e2 = parseExpr(false);
             switch(e2) {
                 case ETernary(cond, te1, te2):
-                    if (op != "=") return ETernary(ParserUtils.makeBinop(tokenizer, op, e1, cond, pendingNewLines != 0), te1, te2);
+                    switch(op) {
+                        case "=", "+=", "-=", "*=", "%=", "/=", "<<=", ">>=", ">>>=", "&=", "^=", "|=", "&&=", "||=":
+                        case _: return ETernary(ParserUtils.makeBinop(tokenizer, op, e1, cond, pendingNewLines != 0), te1, te2);
+                    }
                 default:
             }
             return ParserUtils.makeBinop(tokenizer, op, e1, e2, pendingNewLines != 0);
@@ -213,7 +216,6 @@ class ExprParser {
                 tokenizer.ensure(TOp(">"));
                 return parseExprNext(EVector(t), 0);
             case TPOpen:
-
                 var e2 = parseE4X();
                 tokenizer.ensure(TPClose);
                 return EE4XFilter(e1, e2);
