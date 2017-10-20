@@ -1,7 +1,7 @@
 ## dev
  - Fixed conversion of `private const FOO : int = 1;`. fixes #255
  - Fixed conversion of `if(true) return\n`. fixes #254
- - Fixed Conversion of `SomeClass['staticFieldName']`. fixes #234
+ - Fixed conversion of `SomeClass['staticFieldName']`. fixes #234
  - Replace `navigateToURL` with `flash.Lib.getURL`. fixes #257
  - Replace `static var init = {...}` by `static var ClassName_static_initializer = {...}`. fixes #276
 
