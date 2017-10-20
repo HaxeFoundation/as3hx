@@ -1900,11 +1900,13 @@ class Writer
     }
     
     inline function writeEFor(inits:Array<Expr>, conds:Array<Expr>, incrs:Array<Expr>, e:Expr):BlockEnd {
+        //Sys.println('inits: ${inits}; conds: ${conds}; incrs: ${incrs}');
         openContext();
         var useWhileLoop:Void->Bool = function() {
             if (inits.empty() || conds.empty()) return true;
             switch(inits[0]) {
-                case EVars(vars): if (vars.length > 1) return true;
+                case EVars(vars) if(vars.length > 1): return true;
+                case EIdent(v): return true;
                 default:
             }
             if (conds[0].match(EBinop("&&" | "||", _, _, _))) return true;
@@ -1943,31 +1945,32 @@ class Writer
             }
             switch(conds[0]) {
                 case EBinop(op, e1, e2, nl):
-                    //corne case, for "<=" binop, limit value should be incremented
-                    if (op == "<=") {
-                        switch (e2) {
-                            case EConst(CInt(v)):
-                                //increment int constants
-                                var e = EConst(CInt(Std.string(Std.parseInt(v) + 1)));
-                                writeExpr(e2);
-                            default:
-                                //when var used (like <= array.length), no choice but
-                                //to append "+1"
-                                writeExpr(e2);
-                                write(" + 1");
-                        }
-                    } else {
-                        writeExpr(e2);
+                    switch(op) {
+                        //corne case, for "<=" binop, limit value should be incremented
+                        case "<=":
+                            switch(e2) {
+                                case EConst(CInt(v)):
+                                    //increment int constants
+                                    var e = EConst(CInt(Std.string(Std.parseInt(v) + 1)));
+                                    writeExpr(e2);
+                                case _:
+                                    //when var used (like <= array.length), no choice but
+                                    //to append "+1"
+                                    writeExpr(e2);
+                                    write(" + 1");
+                            }
+                        case _: writeExpr(e2);
                     }
                     writeCloseStatement();
                 default:
             }
         } else {
-            for (init in inits) {
+            inits = inits.filter(function(it) return !it.match(EIdent(_)));
+            for(init in inits) {
                 writeExpr(init);
                 writeNL(";");
             }
-            writeIndent();
+            if(!inits.empty()) writeIndent();
             write("while (");
             if (conds.empty()) {
                 write("true");
