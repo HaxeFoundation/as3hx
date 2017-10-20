@@ -1,5 +1,6 @@
 bin/
 build/
 report/
+test/issues/generated/
 run.n
 *.hxproj
