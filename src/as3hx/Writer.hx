@@ -555,28 +555,28 @@ class Writer
             //static field. Converting non-static public field to static will likely cause compilation
             //errors, whereas it won't for private field as they will be accessed in the same way
             if(isStatic(field.kwds)) {
-				write("static ");
-				if(isConst(field.kwds)) {
-					switch(field.kind) {
-						case FVar(t, val) if(val != null):
-							//only constants (bool, string, int/float) field can
-							//be safely inlined for Haxe as we don't havve full typing
-							//available. For instance trying to inline a field referencing another
-							//static non-inlined field would prevent Haxe compilation
-							switch(val) {
-								case EConst(c): write("inline ");
-								default:
-							}
-						default:
-					}
-				}
+                write("static ");
+                if(isConst(field.kwds)) {
+                    switch(field.kind) {
+                        case FVar(t, val) if(val != null):
+                            //only constants (bool, string, int/float) field can
+                            //be safely inlined for Haxe as we don't havve full typing
+                            //available. For instance trying to inline a field referencing another
+                            //static non-inlined field would prevent Haxe compilation
+                            switch(val) {
+                                case EConst(c): write("inline ");
+                                default:
+                            }
+                        default:
+                    }
+                }
             }
         }
         switch(field.kind) {
             case FVar(t, val):
                 start(field.name, false);
                 write("var " + getModifiedIdent(field.name));
-				if(!isStatic(field.kwds) && isConst(field.kwds)) write("(default, never)");
+                if(!isStatic(field.kwds) && isConst(field.kwds)) write("(default, never)");
                 var type = tstring(t); //check wether a specific type was defined for this array
                 if(isArrayType(type)) {
                     for (genType in this.genTypes) {
@@ -1056,8 +1056,8 @@ class Writer
             writeExpr(e);
             writeNL(";");
         }
-		writeIndent("true;");
-		writeNL();
+        writeIndent("true;");
+        writeNL();
         lvl--;
         writeIndent();
         writeNL("}");
@@ -2984,7 +2984,7 @@ class Writer
                 if(type == "Bool") {
                     return EBinop("=", lvalue, EBinop("&&", lvalue, rvalue, false), false);
                 }
-            case "=":
+            case "=" | "+=" | "-=" | "*=" | "/=":
                 if(cfg.useCompat) {
                     switch(lvalue) {
                         case EField(e, f):
@@ -2994,15 +2994,20 @@ class Writer
                         default:
                     }
                 }
-                if(isIntExpr(lvalue) && needCastToInt(rvalue)) {
-                    switch(rvalue) {
-                        case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiceOp(op)):  rvalue = getResultForNumerics(op, e1, e2);
-                        case EUnop(op, prefix, e) if(op == "~"):
-                            if(needCastToInt(e)) e = getCastToIntExpr(e);
-                            rvalue = EUnop(op, prefix, e);
-                        default: rvalue = getCastToIntExpr(rvalue);
+                if(isIntExpr(lvalue)) {
+                    if(needCastToInt(rvalue)) {
+                        switch(rvalue) {
+                            case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiceOp(op)):  rvalue = getResultForNumerics(op, e1, e2);
+                            case EUnop(op, prefix, e) if(op == "~"):
+                                if(needCastToInt(e)) e = getCastToIntExpr(e);
+                                rvalue = EUnop(op, prefix, e);
+                            default: rvalue = getCastToIntExpr(rvalue);
+                        }
+                        return rvalue != null ? EBinop(op, lvalue, rvalue, false) : null;
+                    } else switch(rvalue) {
+                        case EBinop(rop, _, _, nl) if(isBooleanOp(rop)): return EBinop(op, lvalue, ETernary(rvalue, EConst(CInt("1")), EConst(CInt("0"))), nl);
+                        case _: 
                     }
-                    return rvalue != null ? EBinop(op, lvalue, rvalue, false) : null;
                 }
                 switch(rvalue) {
                     case EBinop(op,e1,e2,_) if(op == "||="):
@@ -3116,12 +3121,17 @@ class Writer
     inline function isNumericOp(s:String):Bool return switch(s) {
         case "/" | "-" | "+" | "*" | "%" | "--" | "++": true;
         default: false;
-    } 
+    }
     
     inline function isBitwiceOp(s:String):Bool return switch(s) {
         case "<<" | ">>" | ">>>" | "^" | "|" | "&" | "~": true;
         default: false;
-    } 
+    }
+    
+    inline function isBooleanOp(s:String):Bool return switch(s) {
+        case "||" | "&&" | "!=" | "!==" | "==" | "===": true;
+        case _: false;
+    }
     
     inline function isBitwiseAndAssignmetnOp(s:String):Bool return switch(s) {
         case "&=" | "|=" | "^=": true;
