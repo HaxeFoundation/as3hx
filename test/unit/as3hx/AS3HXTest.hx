@@ -469,7 +469,7 @@ class AS3HXTest {
     @Test("https://github.com/HaxeFoundation/as3hx/issues/254")
     public function issue254() {
         generate("Issue254.as", "Issue254.hx");
-	}
+    }
     
     @Test("private const NORMAL:int = 0 -> private var NORMAL(default, never) : Int = 0")
     public function issue255() {
@@ -484,6 +484,16 @@ class AS3HXTest {
     @Test("https://github.com/HaxeFoundation/as3hx/issues/274")
     public function issue274() {
         generate("Issue274.as", "Issue274.hx");
+    }
+    
+    @Test("https://github.com/HaxeFoundation/as3hx/issues/264")
+    public function issue264() {
+        generate("Issue264.as", "Issue264.hx");
+    }
+    
+    @Test("https://github.com/HaxeFoundation/as3hx/issues/277")
+    public function issue277() {
+        generate("Issue277.as", "Issue277.hx");
     }
     
     function generate(as3FileName:String, expectedHaxeFileName:String) {
