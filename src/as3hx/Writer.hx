@@ -126,6 +126,12 @@ class Writer
                         if (i == 0) f(ex[0]);
                         else result.push(ex[i]);
                     }
+                case ECommented(s,b,t,e):
+                    // issue 264
+                    // catch comments before else blocks
+                    writeNL();
+                    writeIndent(s);
+                    result.push(ENL(e));
                 case ENL(ex): f(ex);
                 case EObject(fl) if(fl.empty()):
                 default: result.push(ENL(e));
@@ -1838,6 +1844,11 @@ class Writer
                                         // the `if` statement instead so we stay on
                                         // the same line as the `else` -> `else if`
                                         elseif = e4;
+                                    case EBlock(_):
+                                        // issue 264
+                                        // catch double-nested blocks and replace
+                                        // outer block with inner block
+                                        e2 = e4;
                                     default:
                                 }
                             default:
