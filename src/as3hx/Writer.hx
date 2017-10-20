@@ -1167,7 +1167,7 @@ class Writer
         if(cfg.debugExpr)
             write(" /* " + Std.string(expr) + " */ ");
 
-        if (expr == null) return None;
+        if(expr == null) return None;
         var rv = Semi;
         switch(expr) {
             case ETypedExpr(e, t): rv = writeExpr(e);
