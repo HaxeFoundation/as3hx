@@ -421,6 +421,11 @@ class AS3HXTest {
         generate("Issue230.as", "Issue230.hx");
         cfg.dictionaryToHash = false;
     }
+	
+    @Test("flash.display3D.Context3D['supportsVideoTexture'] -> Reflect.field(flash.display3D.Context3D, 'supportsVideoTexture')")
+    public function issue234() {
+        generate("Issue234.as", "Issue234.hx");
+    }
     
     @Test("if(!(mask & flag)) -> if((mask & flag) == 0), if((mask & flag)) -> if((mask & flag) != 0)")
     public function issue235() {
@@ -441,12 +446,12 @@ class AS3HXTest {
         cfg.dictionaryToHash = false;
     }
     
-    @Test
+    @Test("https://github.com/HaxeFoundation/as3hx/issues/244")
     public function issue244() {
         generate("Issue244.as", "Issue244.hx");
     }
     
-    @Test
+    @Test("https://github.com/HaxeFoundation/as3hx/issues/246")
     public function issue246() {
         generate("Issue246.as", "Issue246.hx");
     }
@@ -461,19 +466,19 @@ class AS3HXTest {
         generate("Issue250.as", "Issue250.hx");
     }
     
-    @Test("navigateToURL(request, window) -> flash.Lib.getURL(request, window)")
-    public function issue257() {
-        generate("Issue257.as", "Issue257.hx");
-    }
-    
-    @Test("flash.display3D.Context3D['supportsVideoTexture'] -> Reflect.field(flash.display3D.Context3D, 'supportsVideoTexture')")
-    public function issue234() {
-        generate("Issue234.as", "Issue234.hx");
-    }
+    @Test("https://github.com/HaxeFoundation/as3hx/issues/254")
+    public function issue254() {
+        generate("Issue254.as", "Issue254.hx");
+	}
     
     @Test("private const NORMAL:int = 0 -> private var NORMAL(default, never) : Int = 0")
     public function issue255() {
         generate("Issue255.as", "Issue255.hx");
+    }
+    
+    @Test("navigateToURL(request, window) -> flash.Lib.getURL(request, window)")
+    public function issue257() {
+        generate("Issue257.as", "Issue257.hx");
     }
     
     function generate(as3FileName:String, expectedHaxeFileName:String) {

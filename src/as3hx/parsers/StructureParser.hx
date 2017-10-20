@@ -13,7 +13,7 @@ class StructureParser {
         var parseFunction = FunctionParser.parse.bind(tokenizer, types, cfg);
         var parseCaseBlock = CaseBlockParser.parse.bind(tokenizer, types, cfg);
 
-        Debug.dbgln("parseStructure("+kwd+")", tokenizer.line);
+        Debug.dbgln("parseStructure(" + kwd + ")", tokenizer.line);
         return switch(kwd) {
         case "if":
             var f:Expr->Expr = null;
@@ -118,7 +118,12 @@ class StructureParser {
             };
             EFunction(parseFunction(false), name);
         case "return":
-            EReturn(if( tokenizer.peek() == TSemicolon ) null else parseExpr(false));
+            var t = tokenizer.peek();
+            var e = switch(t) {
+                case TSemicolon | TBrClose: null;
+                case _: parseExpr(false);
+            }
+            EReturn(e);
         case "new":
             if(ParserUtils.opt(tokenizer, TOp("<"))) {
                 // o = new <VectorType>[a,b,c..]
