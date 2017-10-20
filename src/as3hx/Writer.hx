@@ -1900,6 +1900,7 @@ class Writer
     }
     
     inline function writeEFor(inits:Array<Expr>, conds:Array<Expr>, incrs:Array<Expr>, e:Expr):BlockEnd {
+        //Sys.println('inits: ${inits}; conds: ${conds}; incrs: ${incrs}');
         openContext();
         var useWhileLoop:Void->Bool = function() {
             if (inits.empty() || conds.empty()) return true;
@@ -1928,6 +1929,9 @@ class Writer
                     writeExpr(v[0].val);
                     write("...");
                 // var i:int = 0;
+                // for(i; i < max; i++)
+                case EIdent(v): write('${v} in ');
+                // var i:int = 0;
                 // for (i = 0; i < size; i++)
                 case EBinop(op, e1, e2, newLineAfterOp):
                     if (op == "=") {
@@ -1943,21 +1947,27 @@ class Writer
             }
             switch(conds[0]) {
                 case EBinop(op, e1, e2, nl):
-                    //corne case, for "<=" binop, limit value should be incremented
-                    if (op == "<=") {
-                        switch (e2) {
-                            case EConst(CInt(v)):
-                                //increment int constants
-                                var e = EConst(CInt(Std.string(Std.parseInt(v) + 1)));
-                                writeExpr(e2);
-                            default:
-                                //when var used (like <= array.length), no choice but
-                                //to append "+1"
-                                writeExpr(e2);
-                                write(" + 1");
-                        }
-                    } else {
-                        writeExpr(e2);
+                    switch(op) {
+                        //corne case, for "<=" binop, limit value should be incremented
+                        case "<=":
+                            switch(e2) {
+                                case EConst(CInt(v)):
+                                    //increment int constants
+                                    var e = EConst(CInt(Std.string(Std.parseInt(v) + 1)));
+                                    writeExpr(e2);
+                                case _:
+                                    //when var used (like <= array.length), no choice but
+                                    //to append "+1"
+                                    writeExpr(e2);
+                                    write(" + 1");
+                            }
+                        // var i:int = 0;
+                        // for(i; i < max; i++)
+                        case _ if(inits[0].match(EIdent(_))):
+                            writeExpr(e1);
+                            write("...");
+                            writeExpr(e2);
+                        case _: writeExpr(e2);
                     }
                     writeCloseStatement();
                 default:
