@@ -1,4 +1,5 @@
 ## dev
+ - Fixed conversion of `v_numeric += condition1 || condition2`. fixes #275
  - Fixed conversion of `v += condition ? 1 : 0`. fixes #274
  - Fixed conversion of `private const FOO : int = 1;`. fixes #255
  - Fixed conversion of `if(true) return\n`. fixes #254
