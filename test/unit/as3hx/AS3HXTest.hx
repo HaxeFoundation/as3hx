@@ -421,7 +421,7 @@ class AS3HXTest {
         generate("Issue230.as", "Issue230.hx");
         cfg.dictionaryToHash = false;
     }
-	
+    
     @Test("flash.display3D.Context3D['supportsVideoTexture'] -> Reflect.field(flash.display3D.Context3D, 'supportsVideoTexture')")
     public function issue234() {
         generate("Issue234.as", "Issue234.hx");
@@ -481,7 +481,7 @@ class AS3HXTest {
         generate("Issue257.as", "Issue257.hx");
     }
     
-    @Test("https://github.com/HaxeFoundation/as3hx/issues/274")
+    @Test("v += condition ? 1 : 0")
     public function issue274() {
         generate("Issue274.as", "Issue274.hx");
     }
@@ -496,9 +496,14 @@ class AS3HXTest {
         generate("Issue277.as", "Issue277.hx");
     }
     
-    @Test("https://github.com/HaxeFoundation/as3hx/issues/275")
+    @Test("v_numeric += condition1 || condition2 -> v_numeric = (condition1 || condition2) ? 1 : 0")
     public function issue275() {
         generate("Issue275.as", "Issue275.hx");
+    }
+    
+    @Test("for(i; i < max; i++) -> whil(i < max) { ++i; }")
+    public function issue285() {
+        generate("Issue285.as", "Issue285.hx");
     }
     
     function generate(as3FileName:String, expectedHaxeFileName:String) {
