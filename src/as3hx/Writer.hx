@@ -1466,6 +1466,18 @@ class Writer
     }
     
     function writeSwitchDefault(def:SwitchDefault) {
+        if(def.vals != null && def.vals.length > 0) {
+            writeNL();
+            writeIndent();
+            write("/* covers case ");
+            for (i in 0 ... def.vals.length) {
+                write(i>0 ? ", " : "");
+                writeExpr(def.vals[i]);
+            }
+            write(":");
+            write(" */");
+        }
+
         writeMetaData(newMeta); //write comment and newline before "default"
         write("default:");
         lvl++;
