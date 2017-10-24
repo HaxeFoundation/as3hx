@@ -1,4 +1,5 @@
 ## dev
+ - Fixed conversion of `default` keyword within `switch` statements. fixes #273
  - Fixed conversion of `for(i; i < max; i++)`. fixes #285
  - Fixed conversion of `v_numeric += condition1 || condition2`. fixes #275
  - Fixed conversion of `v += condition ? 1 : 0`. fixes #274
