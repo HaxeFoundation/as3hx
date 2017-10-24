@@ -122,6 +122,7 @@ typedef SwitchCase = {
 typedef SwitchDefault = {
     var el : Array<Expr>;
     var meta : Array<Expr>;
+    @:optional var vals : Array<Expr>;
     @:optional var before : SwitchCase;
 }
 
