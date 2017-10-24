@@ -1,8 +1,21 @@
 ## dev
+ - Fixed conversion of `default` keyword within `switch` statements. fixes #273
+ - Fixed conversion of `for(i; i < max; i++)`. fixes #285
+ - Fixed conversion of `v_numeric += condition1 || condition2`. fixes #275
+ - Fixed conversion of `v += condition ? 1 : 0`. fixes #274
+ - Fixed conversion of `private const FOO : int = 1;`. fixes #255
+ - Fixed conversion of `if(true) return\n`. fixes #254
+ - Fixed conversion of `SomeClass['staticFieldName']`. fixes #234
+ - Fixed conversion of `else if` blocks. fixes #277
+ - Fixed conversion of comments before `else` blocks. fixes #264
+ - Replace `navigateToURL` with `flash.Lib.getURL`. fixes #257
+ - Replace `static var init = {...}` by `static var ClassName_static_initializer = {...}`. fixes #276
+
+## 2017-09-13(1.0.5)
  - Fixed conversion of function's parameter with comment
  - Fixed conversion of `&&=` operator
  - Fixed conversion of `getQualifiedClassName(this)`
- - Fixed conversion of local functions.
+ - Fixed conversion of local functions
  - Fixed conversion of `Math.min()` with several args
  - Fixed conversion of `Math.max()` with several args
  - Fixed conversion of bitwise operations in conditions
@@ -16,7 +29,6 @@
  - Call `as3hx.Compat.getFunctionLength(function)` instead of `function.length`
  - Call `as3hx.Compat.toFixed(number, fractionDigits)` instead of `number.toFixed(fractionDigits)`
  - Call `regex.replace(string, by)` instead of `string.replace(regex, by)`
- - Call `regex.replace(string, by)` instead of `string.replace(regex, by)`
  - Call `StringTools.isSpace(string, 0)` instead of `mx.utils.StringUtil.isWhitespace(string)`
  - Call `StringTools.replace(string, string_sub, by)` instead of `string.replace(string_sub, by)`
  - Call `StringTools.trim(string)` instead of `mx.utils.StringUtil.trim(string)`
@@ -26,15 +38,15 @@
  - Replace `Number.NEGATIVE_INFINITY` with `Math.NEGATIVE_INFINITY`
  - Replace `Number.POSITIVE_INFINITY` with `Math.POSITIVE_INFINITY`
 
-##2016-08-24(1.0.4)
+## 2016-08-24(1.0.4)
  - Fixed conversion of unary operator after declaration of block
- - Fixed convesion `of if(number)`
+ - Fixed conversion of `if(number)`
  - Fixed conversion of `array.join("\n")`
  - Fixed conversion of `var cls : Class = Object(this).constructor as Class`
  - Fixed conversion of `var some : Some = new someType() as Class`
  - Fixed parsing when semicolumn is missing
  - Fixed conversion of `some || = new Some()`
- - Fixed crash when using setting -dictionary2hash
+ - Fixed crash when using setting `-dictionary2hash`
  - Fixed `@:allow` position in the order of access modifiers
  - Fixed int() and Number() casts when applied to Numbers
  - Call `as3hx.Compat.arraySplice(array, position, length, args)` instead of `array.splice(position, length, args)`
@@ -52,7 +64,7 @@
  - Loops will be converted to `while` instead of `for` for proper iteration variable modification
  - Only first character of package will be transformed to lower case
  
-##2016-08-05(1.0.3)
+## 2016-08-05(1.0.3)
  - Fixed call for `haxe.Json.parse` instead of `JSON.parse` (closes issue #83)
  - Fixed casting of `uint(1)` (closes issue #85)
  - Fixed conversion of [String.]charAt() with zero args (closes issue #69)
@@ -62,7 +74,7 @@
  - Fixed conversion of compound loop conditions (closes issue #29)
  - Fixed conversion of regular expressions with '[' character (closes issue #14)
  - Fixed conversion of the ternary statement where condition is `some is T` (closes issue #96)
- - Fixed conversion of var `a:Bool = !i` where type of i is numeric (closes issue #91)
+ - Fixed conversion of var `a:Bool = !i` where type of `i` is numeric (closes issue #91)
  - Fixed crash on class member level variable with no type (closes issue #52)
  - Fixed crash on new object literal with new line in declaration just after "{" (closes issue #56)
  - Fixed exception on code `Security.allowDomain("*");` (closes issue #81)
@@ -73,7 +85,7 @@
  - Added generation of typedefs for anonymous object declaration (closes issue #95)
  - Added many improvements to generated code style
  - Call `as3hx.Compat.setTimeout` instead of `setTimeout` (closes issue #112)
- - Call `FastXML.parse()` for casting string to xml in AS3 code. (closes issue #37)
+ - Call `FastXML.parse()` for casting string to xml in AS3 code (closes issue #37)
  - Escape `cast` keyword (closes issue #87)
  - Escape DOLLAR sign in the function arg name (closes issue #71)
  - Implemented setting length to arrays (closes issue #68)
@@ -83,10 +95,10 @@
  - Replace `array.slice()` with `array.copy()` (closes issue #68)
  - Replace `NaN` with `Math.NaN` (closes issue #89)
 
-##2013-10-28 - Scott Lee
+## 2013-10-28 - Scott Lee
  - Move to Haxe 3 and neko 2
 
-##2013-08-01 - Yanhick, Richard, Todd
+## 2013-08-01 - Yanhick, Richard, Todd
  - added many improvements to generated code style
  - replaced as3 "toString" by Haxe "Std.string"
  - replaced as3 "Date" by Haxe "Date.now" for current time
@@ -111,7 +123,7 @@
  - Removed conversion of escape sequences in Parser.readString
  - Added odd as3 vector constructor style: mStringVec = new <String>["a","b"];
 
-##2011-10-19 - Russell
+## 2011-10-19 - Russell
  - Added writing out class inits
  - Fixed empty functions returning f.expr = Object (messed up metadata parsing)
  - Improved metadata support for [Bindable("move")]
@@ -132,12 +144,12 @@
  - Skip comments in object create or fuction calls
  - Support for Vector added to Writer
 
-##2011-10-14 - Russell
+## 2011-10-14 - Russell
  - cleaned formatting on comments
  - added === support (missed)
  - added -no-cast-guess 
 
-##2011-10-12 - Russell
+## 2011-10-12 - Russell
  - added comments
  - fixed static var initializations were not output
  - added output for the "as" keyword

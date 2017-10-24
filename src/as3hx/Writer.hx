@@ -126,6 +126,11 @@ class Writer
                         if (i == 0) f(ex[0]);
                         else result.push(ex[i]);
                     }
+                case ECommented(s,b,t,e):
+                    // catch comments before else blocks
+                    writeNL();
+                    writeIndent(s);
+                    result.push(ENL(e));
                 case ENL(ex): f(ex);
                 case EObject(fl) if(fl.empty()):
                 default: result.push(ENL(e));
@@ -544,37 +549,34 @@ class Writer
             else if(!isInterface) {
                 write("private ");
             }
-            if(isStatic(field.kwds))
-                write("static ");
-            
             //check wheter the field is an AS3 constants, which can be inlined in Haxe
             //the field must be either a static constant or a private constant. 
             //If it is a non-static public constant it can't be inlined as Haxe can only inline
             //static field. Converting non-static public field to static will likely cause compilation
             //errors, whereas it won't for private field as they will be accessed in the same way
-            if (isConst(field.kwds) && (isStatic(field.kwds) || isPrivate(field.kwds))) {
-                switch(field.kind) {
-                    case FVar(t, val):
-                        //only constants (bool, string, int/float) field can
-                        //be safely inlined for Haxe as we don't havve full typing
-                        //available. For instance trying to inline a field referencing another
-                        //static non-inlined field would prevent Haxe compilation
-                        if (val != null) {
-                            switch (val) {
+            if(isStatic(field.kwds)) {
+                write("static ");
+                if(isConst(field.kwds)) {
+                    switch(field.kind) {
+                        case FVar(t, val) if(val != null):
+                            //only constants (bool, string, int/float) field can
+                            //be safely inlined for Haxe as we don't havve full typing
+                            //available. For instance trying to inline a field referencing another
+                            //static non-inlined field would prevent Haxe compilation
+                            switch(val) {
                                 case EConst(c): write("inline ");
                                 default:
                             }
-                        }
-                    default:
+                        default:
+                    }
                 }
             }
         }
-        switch(field.kind)
-        {
-            case FVar( t, val ):
+        switch(field.kind) {
+            case FVar(t, val):
                 start(field.name, false);
                 write("var " + getModifiedIdent(field.name));
-
+                if(!isStatic(field.kwds) && isConst(field.kwds)) write("(default, never)");
                 var type = tstring(t); //check wether a specific type was defined for this array
                 if(isArrayType(type)) {
                     for (genType in this.genTypes) {
@@ -661,7 +663,7 @@ class Writer
                 }
                 break;
             }
-            else if (field == f){
+            else if (field == f) {
                 foundSelf = true;
             }
         } 
@@ -799,7 +801,7 @@ class Writer
                         pendingComma = true;
 
                     case ENL(e): //newline
-                        if (pendingComma){
+                        if (pendingComma) {
                             pendingComma = false;
                             write(",");
                         }
@@ -807,7 +809,7 @@ class Writer
                         writeIndent();
 
                     case ECommented(s,b,t,e): // comment among arguments
-                        if (pendingComma){
+                        if (pendingComma) {
                             pendingComma = false;
                             write(",");
                         }
@@ -950,6 +952,75 @@ class Writer
         writeExpr(e);
     }
     
+    function writeEArray(e:Expr, index:Expr) {
+        //write("/* EArray ("+Std.string(e)+","+Std.string(index)+") " + Std.string(getExprType(e, true)) + "  */ ");
+        var old = inArrayAccess;
+        inArrayAccess = true;
+        // this test can be generalized to any array[]->get() translation
+        var etype = getExprType(e);
+        var itype = getExprType(index);
+        if(etype == "FastXML" || etype == "FastXMLList") {
+            writeExpr(e);
+            inArrayAccess = old;
+            write(".get(");
+            writeExpr(index);
+            write(")");
+        } else if(isMapType(etype)) {
+            writeExpr(e);
+            inArrayAccess = old;
+            var oldInLVA = inLvalAssign;
+            inLvalAssign = false;
+            if (oldInLVA) {
+                write(".set(");
+            } else {
+                write(".get(");
+            }
+            writeExpr(index);
+            if (oldInLVA) {
+                write(", ");
+                writeExpr(rvalue);
+                rvalue = null;
+            }
+            inLvalAssign = oldInLVA;
+            write(")");
+        } else {
+            //write("/*!!!" + etype + "!!!*/");
+            if(isDynamicType(etype) || ((isArrayType(etype) || e.match(EIdent(_))) && itype != null && itype != "Int" && itype != "UInt")) {
+                if(cfg.debugInferredType) {
+                    write("/* etype: " + etype + " itype: " + itype + " */");
+                }
+                var isString = (itype == "String");
+                var oldInLVA = inLvalAssign;
+                inLvalAssign = false;
+                if(oldInLVA)
+                    write("Reflect.setField(");
+                else
+                    write("Reflect.field(");
+                writeExpr(e);
+                inArrayAccess = old;
+                write(", ");
+                if(!isString)
+                    write("Std.string(");
+                writeExpr(index);
+                if(!isString)
+                    write(")");
+                if(oldInLVA) {
+                    write(", ");
+                    writeExpr(rvalue);
+                    rvalue = null;
+                }
+                inLvalAssign = oldInLVA;
+                write(")");
+            } else {
+                writeExpr(e);
+                inArrayAccess = old;
+                write("[");
+                writeExpr(index); 
+                write("]");
+            }
+        }
+    }
+    
     function writeLoop(incrs:Array<Expr>, f:Void->Void) {
         var old = loopIncrements;
         loopIncrements = incrs.slice(0);
@@ -978,13 +1049,15 @@ class Writer
             return;
         writeNL("");
         writeIndent();
-        writeNL("private static var init = {");
+        writeNL('private static var ${c.name}_static_initializer = {');
         lvl++;
         for(e in c.inits) {
             writeIndent();
             writeExpr(e);
             writeNL(";");
         }
+        writeIndent("true;");
+        writeNL();
         lvl--;
         writeIndent();
         writeNL("}");
@@ -1122,73 +1195,7 @@ class Writer
             case EContinue: rv = writeEContinue();
             case EFunction(f, name): writeFunction(f, false, false, false, name);
             case EReturn(e): writeEReturn(e);
-            case EArray(e, index):
-                //write("/* EArray ("+Std.string(e)+","+Std.string(index)+") " + Std.string(getExprType(e, true)) + "  */ ");
-                var old = inArrayAccess;
-                inArrayAccess = true;
-                // this test can be generalized to any array[]->get() translation
-                var etype = getExprType(e);
-                var itype = getExprType(index);
-                if(etype == "FastXML" || etype == "FastXMLList") {
-                    writeExpr(e);
-                    inArrayAccess = old;
-                    write(".get(");
-                    writeExpr(index);
-                    write(")");
-                } else if (isMapType(etype)) {
-                    writeExpr(e);
-                    inArrayAccess = old;
-                    var oldInLVA = inLvalAssign;
-                    inLvalAssign = false;
-                    if (oldInLVA) {
-                        write(".set(");
-                    } else {
-                        write(".get(");
-                    }
-                    writeExpr(index);
-                    if (oldInLVA) {
-                        write(", ");
-                        writeExpr(rvalue);
-                        rvalue = null;
-                    }
-                    inLvalAssign = oldInLVA;
-                    write(")");
-                } else {
-                    //write("/*!!!" + etype + "!!!*/");
-                    if(isDynamicType(etype) || (isArrayType(etype) && itype != null && itype != "Int" && itype != "UInt")) {
-                        if (cfg.debugInferredType) {
-                            write("/* etype: " + etype + " itype: " + itype + " */");
-                        }
-                        var isString = (itype == "String");
-                        var oldInLVA = inLvalAssign;
-                        inLvalAssign = false;
-                        if(oldInLVA)
-                            write("Reflect.setField(");
-                        else
-                            write("Reflect.field(");
-                        writeExpr(e);
-                        inArrayAccess = old;
-                        write(", ");
-                        if(!isString)
-                            write("Std.string(");
-                        writeExpr(index);
-                        if(!isString)
-                            write(")");
-                        if(oldInLVA) {
-                            write(", ");
-                            writeExpr(rvalue);
-                            rvalue = null;
-                        }
-                        inLvalAssign = oldInLVA;
-                        write(")");
-                    } else {
-                        writeExpr(e);
-                        inArrayAccess = old;
-                        write("[");
-                        writeExpr(index); 
-                        write("]");
-                    }
-                }
+            case EArray(e, index): writeEArray(e, index);
             case EArrayDecl(e):
                 var enl = false;
                 write("[");
@@ -1269,7 +1276,14 @@ class Writer
                         f(def.el[def.el.length - 1], def.el);
                     }
                 }
-                newCases = loopCases(cases.slice(0), def == null ? null : def.el.slice(0), testVar, newCases);
+
+                if (def != null && def.before == null) {
+                    // default is in the end
+                    newCases = loopCases(cases.copy(), def.el.copy(), testVar, newCases);
+                } else {
+                    // default is not in the end, so don't catch fall-through
+                    newCases = loopCases(cases.copy(), null, testVar, newCases);
+                }
   
                 if(writeTestVar) {
                     write("var ");
@@ -1292,6 +1306,14 @@ class Writer
                 
                 lvl++;
                 for(c in newCases) {
+
+                    if(def != null &&
+                        def.before != null &&
+                        def.before.el.toString() == c.el.toString()) {
+                            writeSwitchDefault(def);
+                            def = null;
+                    }
+
                     writeMetaData(c.meta); //write commnent and newline before "case"
                     write("case ");
                     for(i in 0...c.vals.length) {
@@ -1316,16 +1338,9 @@ class Writer
                     if (didIndent)
                         lvl--;
                 }
-                if (def != null)
-                {
-                    writeMetaData(def.meta); //write commnent and newline before "default"
-                    write("default:");
-                    lvl++;
-                    for (i in 0...def.el.length)
-                    {
-                        writeFinish(writeExpr(def.el[i]));
-                    }
-                    lvl--;
+                if(def != null) {
+                    writeSwitchDefault(def);
+                    def = null;
                 }
                 lvl--;
                 write(closeb());
@@ -1450,6 +1465,41 @@ class Writer
         return rv;
     }
     
+    function writeSwitchDefault(def:SwitchDefault) {
+        if(def.vals != null && def.vals.length > 0) {
+            writeNL();
+            writeIndent();
+            write("/* covers case ");
+            for (i in 0 ... def.vals.length) {
+                write(i>0 ? ", " : "");
+                writeExpr(def.vals[i]);
+            }
+            write(":");
+            write(" */");
+        }
+
+        var newMeta = [];
+        var lastNL = false;
+        for(d in def.meta) {
+            switch(d) {
+                case ENL(e):
+                    if(!lastNL) newMeta.push(d);
+                    lastNL = true;
+                default:
+                    lastNL = false;
+                    newMeta.push(d);
+            }
+        }
+        writeMetaData(newMeta); //write comment and newline before "default"
+        write("default:");
+        lvl++;
+        for (i in 0...def.el.length)
+        {
+            writeFinish(writeExpr(def.el[i]));
+        }
+        lvl--;
+    }
+
     function writeEBlock(e:Array<Expr>):BlockEnd {
         var result = Semi;
         if(!isInterface) {
@@ -1819,9 +1869,43 @@ class Writer
             e2 = f(e2);
             e2 = EBlock(formatBlockBody(e2));
             writeNL();
-            writeIndent("else");
-            writeStartStatement();
-            result = writeExpr(e2);
+            var elseif:Expr = null;
+            // if we find an EBlock([ENL(EIf(...))])
+            // after an `else` then we have an
+            // `else if` statement
+            switch(e2) {
+                case EBlock(e3):
+                    if (e3 != null && e3.length == 1) {
+                        switch(e3[0]) {
+                            case ENL(e4):
+                                switch(e4) {
+                                    case EIf(_, _, _):
+                                        // found single if statement after an else
+                                        // replace parent `block` + `new line` with
+                                        // the `if` statement instead so we stay on
+                                        // the same line as the `else` -> `else if`
+                                        elseif = e4;
+                                    case EBlock(_):
+                                        // catch double-nested blocks and replace
+                                        // outer block with inner block
+                                        e2 = e4;
+                                    default:
+                                }
+                            default:
+                        }
+                    }
+                case EIf(_, _, _):
+                    elseif = e2;
+                default:
+            }
+            if (elseif != null) {
+                writeIndent("else ");
+                result = writeExpr(elseif);
+            } else {
+                writeIndent("else");
+                writeStartStatement();
+                result = writeExpr(e2);
+            }
         } else {
             result = getEIfBlockEnd(e1);
         }
@@ -1859,11 +1943,13 @@ class Writer
     }
     
     inline function writeEFor(inits:Array<Expr>, conds:Array<Expr>, incrs:Array<Expr>, e:Expr):BlockEnd {
+        //Sys.println('inits: ${inits}; conds: ${conds}; incrs: ${incrs}');
         openContext();
         var useWhileLoop:Void->Bool = function() {
             if (inits.empty() || conds.empty()) return true;
             switch(inits[0]) {
-                case EVars(vars): if (vars.length > 1) return true;
+                case EVars(vars) if(vars.length > 1): return true;
+                case EIdent(v): return true;
                 default:
             }
             if (conds[0].match(EBinop("&&" | "||", _, _, _))) return true;
@@ -1902,31 +1988,32 @@ class Writer
             }
             switch(conds[0]) {
                 case EBinop(op, e1, e2, nl):
-                    //corne case, for "<=" binop, limit value should be incremented
-                    if (op == "<=") {
-                        switch (e2) {
-                            case EConst(CInt(v)):
-                                //increment int constants
-                                var e = EConst(CInt(Std.string(Std.parseInt(v) + 1)));
-                                writeExpr(e2);
-                            default:
-                                //when var used (like <= array.length), no choice but
-                                //to append "+1"
-                                writeExpr(e2);
-                                write(" + 1");
-                        }
-                    } else {
-                        writeExpr(e2);
+                    switch(op) {
+                        //corne case, for "<=" binop, limit value should be incremented
+                        case "<=":
+                            switch(e2) {
+                                case EConst(CInt(v)):
+                                    //increment int constants
+                                    var e = EConst(CInt(Std.string(Std.parseInt(v) + 1)));
+                                    writeExpr(e2);
+                                case _:
+                                    //when var used (like <= array.length), no choice but
+                                    //to append "+1"
+                                    writeExpr(e2);
+                                    write(" + 1");
+                            }
+                        case _: writeExpr(e2);
                     }
                     writeCloseStatement();
                 default:
             }
         } else {
-            for (init in inits) {
+            inits = inits.filter(function(it) return !it.match(EIdent(_)));
+            for(init in inits) {
                 writeExpr(init);
                 writeNL(";");
             }
-            writeIndent();
+            if(!inits.empty()) writeIndent();
             write("while (");
             if (conds.empty()) {
                 write("true");
@@ -2943,7 +3030,7 @@ class Writer
                 if(type == "Bool") {
                     return EBinop("=", lvalue, EBinop("&&", lvalue, rvalue, false), false);
                 }
-            case "=":
+            case "=" | "+=" | "-=" | "*=" | "/=":
                 if(cfg.useCompat) {
                     switch(lvalue) {
                         case EField(e, f):
@@ -2953,15 +3040,20 @@ class Writer
                         default:
                     }
                 }
-                if(isIntExpr(lvalue) && needCastToInt(rvalue)) {
-                    switch(rvalue) {
-                        case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiceOp(op)):  rvalue = getResultForNumerics(op, e1, e2);
-                        case EUnop(op, prefix, e) if(op == "~"):
-                            if(needCastToInt(e)) e = getCastToIntExpr(e);
-                            rvalue = EUnop(op, prefix, e);
-                        default: rvalue = getCastToIntExpr(rvalue);
+                if(isIntExpr(lvalue)) {
+                    if(needCastToInt(rvalue)) {
+                        switch(rvalue) {
+                            case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiceOp(op)):  rvalue = getResultForNumerics(op, e1, e2);
+                            case EUnop(op, prefix, e) if(op == "~"):
+                                if(needCastToInt(e)) e = getCastToIntExpr(e);
+                                rvalue = EUnop(op, prefix, e);
+                            default: rvalue = getCastToIntExpr(rvalue);
+                        }
+                        return rvalue != null ? EBinop(op, lvalue, rvalue, false) : null;
+                    } else switch(rvalue) {
+                        case EBinop(rop, _, _, nl) if(isBooleanOp(rop)): return EBinop(op, lvalue, ETernary(rvalue, EConst(CInt("1")), EConst(CInt("0"))), nl);
+                        case _: 
                     }
-                    return rvalue != null ? EBinop(op, lvalue, rvalue, false) : null;
                 }
                 switch(rvalue) {
                     case EBinop(op,e1,e2,_) if(op == "||="):
@@ -3043,7 +3135,7 @@ class Writer
      * Checks if 'e' represents a numerical constant value
      * @return true if so
      */
-    static inline function isNumericConst(e:Expr) : Bool return switch(e) {
+    static inline function isNumericConst(e:Expr):Bool return switch(e) {
         case EConst(c): c.match(CInt(_)) || c.match(CFloat(_));
         default: false;
     }
@@ -3075,12 +3167,17 @@ class Writer
     inline function isNumericOp(s:String):Bool return switch(s) {
         case "/" | "-" | "+" | "*" | "%" | "--" | "++": true;
         default: false;
-    } 
+    }
     
     inline function isBitwiceOp(s:String):Bool return switch(s) {
         case "<<" | ">>" | ">>>" | "^" | "|" | "&" | "~": true;
         default: false;
-    } 
+    }
+    
+    inline function isBooleanOp(s:String):Bool return switch(s) {
+        case "||" | "&&" | "!=" | "!==" | "==" | "===": true;
+        case _: false;
+    }
     
     inline function isBitwiseAndAssignmetnOp(s:String):Bool return switch(s) {
         case "&=" | "|=" | "^=": true;

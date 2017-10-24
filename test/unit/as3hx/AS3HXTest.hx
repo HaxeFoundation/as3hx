@@ -422,6 +422,11 @@ class AS3HXTest {
         cfg.dictionaryToHash = false;
     }
     
+    @Test("flash.display3D.Context3D['supportsVideoTexture'] -> Reflect.field(flash.display3D.Context3D, 'supportsVideoTexture')")
+    public function issue234() {
+        generate("Issue234.as", "Issue234.hx");
+    }
+    
     @Test("if(!(mask & flag)) -> if((mask & flag) == 0), if((mask & flag)) -> if((mask & flag) != 0)")
     public function issue235() {
         cfg.dictionaryToHash = true;
@@ -441,12 +446,12 @@ class AS3HXTest {
         cfg.dictionaryToHash = false;
     }
     
-    @Test
+    @Test("https://github.com/HaxeFoundation/as3hx/issues/244")
     public function issue244() {
         generate("Issue244.as", "Issue244.hx");
     }
     
-    @Test
+    @Test("https://github.com/HaxeFoundation/as3hx/issues/246")
     public function issue246() {
         generate("Issue246.as", "Issue246.hx");
     }
@@ -459,6 +464,56 @@ class AS3HXTest {
     @Test("new Object() -> {}")
     public function issue250() {
         generate("Issue250.as", "Issue250.hx");
+    }
+    
+    @Test("https://github.com/HaxeFoundation/as3hx/issues/254")
+    public function issue254() {
+        generate("Issue254.as", "Issue254.hx");
+    }
+    
+    @Test("private const NORMAL:int = 0 -> private var NORMAL(default, never) : Int = 0")
+    public function issue255() {
+        generate("Issue255.as", "Issue255.hx");
+    }
+    
+    @Test("navigateToURL(request, window) -> flash.Lib.getURL(request, window)")
+    public function issue257() {
+        generate("Issue257.as", "Issue257.hx");
+    }
+    
+    @Test("v += condition ? 1 : 0")
+    public function issue274() {
+        generate("Issue274.as", "Issue274.hx");
+    }
+    
+    @Test("https://github.com/HaxeFoundation/as3hx/issues/264")
+    public function issue264() {
+        generate("Issue264.as", "Issue264.hx");
+    }
+    
+    @Test("https://github.com/HaxeFoundation/as3hx/issues/277")
+    public function issue277() {
+        generate("Issue277.as", "Issue277.hx");
+    }
+    
+    @Test("v_numeric += condition1 || condition2 -> v_numeric = (condition1 || condition2) ? 1 : 0")
+    public function issue275() {
+        generate("Issue275.as", "Issue275.hx");
+    }
+    
+    @Test("for(i; i < max; i++) -> whil(i < max) { ++i; }")
+    public function issue285() {
+        generate("Issue285.as", "Issue285.hx");
+    }
+    
+    @Test("https://github.com/HaxeFoundation/as3hx/issues/2")
+    public function issue2() {
+        generate("Issue2.as", "Issue2.hx");
+    }
+    
+    @Test("https://github.com/HaxeFoundation/as3hx/issues/273")
+    public function issue273() {
+        generate("Issue273.as", "Issue273.hx");
     }
     
     function generate(as3FileName:String, expectedHaxeFileName:String) {
