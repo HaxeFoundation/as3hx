@@ -4,3 +4,4 @@ report/
 test/issues/generated/
 run.n
 *.hxproj
+out/

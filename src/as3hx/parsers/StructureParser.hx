@@ -173,7 +173,7 @@ class StructureParser {
             var e = EParent(parseExpr(false));
             tokenizer.ensure(TPClose);
 
-            var def = null, cl = [], meta = [];
+            var def:SwitchDefault = null, cl = [], meta = [];
             tokenizer.ensure(TBrOpen);
 
             //parse all "case" and "default"
@@ -185,14 +185,40 @@ class StructureParser {
                     case TId(s):
                         if (s == "default") {
                             tokenizer.ensure(TColon);
-                            def = { el : parseCaseBlock(), meta : meta };
+                            def = { el : parseCaseBlock(), meta : meta, before: null };
                             meta = [];
                         }
                         else if (s == "case"){
                             var val = parseExpr(false);
                             tokenizer.ensure(TColon);
                             var el = parseCaseBlock();
-                            cl.push( { val : val, el : el, meta : meta } );
+
+                            // default already set, and is empty
+                            // we assign this case to default
+                            if(def != null && def.el.length == 0) {
+                                def.el = el;
+                                def.meta = def.meta.concat(meta);
+                                if(def.vals == null) def.vals = [];
+                                def.vals.push(val);
+                            }
+                            // default already set, and has same
+                            // content as this case
+                            else if(def != null && def.el == el){
+                                def.meta = def.meta.concat(meta);
+                                def.el = el;
+                                if(def.vals == null) def.vals = [];
+                                def.vals.push(val);
+                            }
+                            // normal case, default not set yet, or differs
+                            else {
+                                var caseObj = { val : val, el : el, meta : meta }
+                                // default already set, but case follows it
+                                // mark that default is before this case
+                                if(def != null && def.before == null) {
+                                    def.before = caseObj;
+                                }
+                                cl.push(caseObj);
+                            }
                             
                             //reset for next case or default
                             meta = [];

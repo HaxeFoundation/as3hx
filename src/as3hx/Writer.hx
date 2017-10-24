@@ -1172,7 +1172,7 @@ class Writer
         if(cfg.debugExpr)
             write(" /* " + Std.string(expr) + " */ ");
 
-        if(expr == null) return None;
+        if (expr == null) return None;
         var rv = Semi;
         switch(expr) {
             case ETypedExpr(e, t): rv = writeExpr(e);
@@ -1276,7 +1276,14 @@ class Writer
                         f(def.el[def.el.length - 1], def.el);
                     }
                 }
-                newCases = loopCases(cases.slice(0), def == null ? null : def.el.slice(0), testVar, newCases);
+
+                if (def != null && def.before == null) {
+                    // default is in the end
+                    newCases = loopCases(cases.copy(), def.el.copy(), testVar, newCases);
+                } else {
+                    // default is not in the end, so don't catch fall-through
+                    newCases = loopCases(cases.copy(), null, testVar, newCases);
+                }
   
                 if(writeTestVar) {
                     write("var ");
@@ -1299,6 +1306,14 @@ class Writer
                 
                 lvl++;
                 for(c in newCases) {
+
+                    if(def != null &&
+                        def.before != null &&
+                        def.before.el.toString() == c.el.toString()) {
+                            writeSwitchDefault(def);
+                            def = null;
+                    }
+
                     writeMetaData(c.meta); //write commnent and newline before "case"
                     write("case ");
                     for(i in 0...c.vals.length) {
@@ -1323,16 +1338,9 @@ class Writer
                     if (didIndent)
                         lvl--;
                 }
-                if (def != null)
-                {
-                    writeMetaData(def.meta); //write commnent and newline before "default"
-                    write("default:");
-                    lvl++;
-                    for (i in 0...def.el.length)
-                    {
-                        writeFinish(writeExpr(def.el[i]));
-                    }
-                    lvl--;
+                if(def != null) {
+                    writeSwitchDefault(def);
+                    def = null;
                 }
                 lvl--;
                 write(closeb());
@@ -1457,6 +1465,41 @@ class Writer
         return rv;
     }
     
+    function writeSwitchDefault(def:SwitchDefault) {
+        if(def.vals != null && def.vals.length > 0) {
+            writeNL();
+            writeIndent();
+            write("/* covers case ");
+            for (i in 0 ... def.vals.length) {
+                write(i>0 ? ", " : "");
+                writeExpr(def.vals[i]);
+            }
+            write(":");
+            write(" */");
+        }
+
+        var newMeta = [];
+        var lastNL = false;
+        for(d in def.meta) {
+            switch(d) {
+                case ENL(e):
+                    if(!lastNL) newMeta.push(d);
+                    lastNL = true;
+                default:
+                    lastNL = false;
+                    newMeta.push(d);
+            }
+        }
+        writeMetaData(newMeta); //write comment and newline before "default"
+        write("default:");
+        lvl++;
+        for (i in 0...def.el.length)
+        {
+            writeFinish(writeExpr(def.el[i]));
+        }
+        lvl--;
+    }
+
     function writeEBlock(e:Array<Expr>):BlockEnd {
         var result = Semi;
         if(!isInterface) {
