@@ -1330,16 +1330,9 @@ class Writer
                     if (didIndent)
                         lvl--;
                 }
-                if (def != null)
-                {
-                    writeMetaData(def.meta); //write commnent and newline before "default"
-                    write("default:");
-                    lvl++;
-                    for (i in 0...def.el.length)
-                    {
-                        writeFinish(writeExpr(def.el[i]));
-                    }
-                    lvl--;
+                if(def != null) {
+                    writeSwitchDefault(def);
+                    def = null;
                 }
                 lvl--;
                 write(closeb());
@@ -1464,6 +1457,17 @@ class Writer
         return rv;
     }
     
+    function writeSwitchDefault(def:SwitchDefault) {
+        writeMetaData(newMeta); //write comment and newline before "default"
+        write("default:");
+        lvl++;
+        for (i in 0...def.el.length)
+        {
+            writeFinish(writeExpr(def.el[i]));
+        }
+        lvl--;
+    }
+
     function writeEBlock(e:Array<Expr>):BlockEnd {
         var result = Semi;
         if(!isInterface) {
