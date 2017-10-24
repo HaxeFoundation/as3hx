@@ -1279,10 +1279,10 @@ class Writer
 
                 if (def != null && def.before == null) {
                     // default is in the end
-                    newCases = loopCases(cases.slice(0), def.el.copy(), testVar, newCases);
+                    newCases = loopCases(cases.copy(), def.el.copy(), testVar, newCases);
                 } else {
                     // default is not in the end, so don't catch fall-through
-                    newCases = loopCases(cases.slice(0), null, testVar, newCases);
+                    newCases = loopCases(cases.copy(), null, testVar, newCases);
                 }
   
                 if(writeTestVar) {
