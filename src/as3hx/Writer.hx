@@ -1478,6 +1478,18 @@ class Writer
             write(" */");
         }
 
+        var newMeta = [];
+        var lastNL = false;
+        for(d in def.meta) {
+            switch(d) {
+                case ENL(e):
+                    if(!lastNL) newMeta.push(d);
+                    lastNL = true;
+                default:
+                    lastNL = false;
+                    newMeta.push(d);
+            }
+        }
         writeMetaData(newMeta); //write comment and newline before "default"
         write("default:");
         lvl++;
