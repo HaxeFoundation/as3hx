@@ -1172,7 +1172,7 @@ class Writer
         if(cfg.debugExpr)
             write(" /* " + Std.string(expr) + " */ ");
 
-        if(expr == null) return None;
+        if (expr == null) return None;
         var rv = Semi;
         switch(expr) {
             case ETypedExpr(e, t): rv = writeExpr(e);
@@ -1276,7 +1276,14 @@ class Writer
                         f(def.el[def.el.length - 1], def.el);
                     }
                 }
-                newCases = loopCases(cases.slice(0), def == null ? null : def.el.slice(0), testVar, newCases);
+
+                if (def != null && def.before == null) {
+                    // default is in the end
+                    newCases = loopCases(cases.slice(0), def.el.slice(0), testVar, newCases);
+                } else {
+                    // default is not in the end, so don't catch fall-through
+                    newCases = loopCases(cases.slice(0), null, testVar, newCases);
+                }
   
                 if(writeTestVar) {
                     write("var ");
