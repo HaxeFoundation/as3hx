@@ -217,7 +217,7 @@ class StructureParser {
                                 if(def != null && def.before == null) {
                                     def.before = caseObj;
                                 }
-                                cl.push( caseObj );
+                                cl.push(caseObj);
                             }
                             
                             //reset for next case or default
