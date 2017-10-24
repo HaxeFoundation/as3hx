@@ -1306,6 +1306,14 @@ class Writer
                 
                 lvl++;
                 for(c in newCases) {
+
+                    if(def != null &&
+                        def.before != null &&
+                        def.before.el.toString() == c.el.toString()) {
+                            writeSwitchDefault(def);
+                            def = null;
+                    }
+
                     writeMetaData(c.meta); //write commnent and newline before "case"
                     write("case ");
                     for(i in 0...c.vals.length) {
