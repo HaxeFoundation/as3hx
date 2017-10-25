@@ -4,6 +4,8 @@ import Type;
 import haxe.macro.Expr;
 import haxe.macro.Context;
 
+using StringTools;
+
 /**
  * Collection of functions that just have no real way to be compatible in Haxe 
  */
@@ -95,7 +97,7 @@ class Compat {
     /**
      * Converts a typed expression into an Int.
      */
-    macro public static function parseInt<T>(e:ExprOf<T>):ExprOf<T> {
+    macro public static function parseInt<T>(e:ExprOf<T>, ?base:ExprOf<Int>):ExprOf<T> {
         var type = switch(Context.typeof(e)) {
             case TAbstract(t, _) if(t.get().pack.length == 0): t.get().name;
             case TInst(t, _) if(t.get().pack.length == 0): t.get().name;
@@ -104,9 +106,50 @@ class Compat {
         return switch(type) {
             case "Int": macro ${e};
             case "Float": macro Std.int(${e});
-            case "String": macro Std.parseInt(${e});
+            case "String": macro @:privateAccess as3hx.Compat._parseInt(${e}, ${base});
             case _: macro Std.parseInt(Std.string(${e}));
         }
+    }
+    
+    static function _parseInt(s:String, ?base:Int):Null<Int> {
+        #if js
+        if(base == null) base = s.indexOf("0x") == 0 ? 16 : 10;
+        var v:Int = untyped __js__("parseInt")(s, base);
+        return Math.isNaN(v) ? null : v;
+        #elseif flash
+        if(base == null) base = 0;
+        var v:Int = untyped __global__["parseInt"](s, base);
+        return Math.isNaN(v) ? null : v;
+        #else
+        var BASE = "0123456789abcdefghijklmnopqrstuvwxyz";
+        if(base != null && (base < 2 || base > BASE.length))
+            return throw 'invalid base ${base}, it must be between 2 and ${BASE.length}';
+        s = s.trim().toLowerCase();
+        var sign = if(s.startsWith("+")) {
+            s = s.substring(1);
+            1;
+        } else if(s.startsWith("-")) {
+            s = s.substring(1);
+            -1;
+        } else {
+            1;
+        };
+        if(s.length == 0) return null;
+        if(s.startsWith('0x')) {
+            if(base != null && base != 16) return null; // attempting at converting a hex using a different base
+            base = 16;
+            s = s.substring(2);
+        } else if(base == null) {
+            base = 10;
+        }
+        var acc = 0;
+        try s.split('').map(function(c) {
+            var i = BASE.indexOf(c);
+            if(i < 0 || i >= base) throw 'invalid';
+            acc = (acc * base) + i;
+        }) catch(e:Dynamic) {};
+        return acc * sign;
+        #end
     }
 
     /**
