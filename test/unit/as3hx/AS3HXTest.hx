@@ -511,6 +511,11 @@ class AS3HXTest {
         generate("Issue2.as", "Issue2.hx");
     }
     
+    @Test("var v:int = parseInt('0xffffff', 16) -> var v:Int = as3hx.Compat.parseInt('0xffffff', 16)")
+    public function issue265() {
+        generate("Issue265.as", "Issue265.hx");
+    }
+    
     @Test("https://github.com/HaxeFoundation/as3hx/issues/273")
     public function issue273() {
         generate("Issue273.as", "Issue273.hx");

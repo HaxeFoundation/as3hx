@@ -295,16 +295,15 @@ class StructureParser {
             var e = parseExpr(false);
             tokenizer.ensure(TPClose);
             ECall(EField(EIdent("as3hx.Compat"), kwd), [e]);
+        case "parseInt" | "parseFloat" if(cfg.useCompat):
+            var params = getParams(tokenizer, parseExpr);
+            if(params != null) return ECall(EField(EIdent("as3hx.Compat"), kwd), params);
+            null;
         case "parseInt" | "parseFloat":
             tokenizer.ensure(TPOpen);
             var e = parseExpr(false);
             tokenizer.ensure(TPClose);
-            var efield = if(cfg.useCompat) {
-                EField(EIdent("as3hx.Compat"), kwd);
-            } else {
-                EField(EIdent("Std"), kwd);
-            }
-            ECall(efield, [e]);
+            ECall(EField(EIdent("Std"), kwd), [e]);
         case "navigateToURL":
             var params = getParams(tokenizer, parseExpr);
             if(params != null) return ECall(EField(EIdent("flash.Lib"), "getURL"), params);
