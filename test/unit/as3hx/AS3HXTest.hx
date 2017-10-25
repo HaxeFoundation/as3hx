@@ -521,6 +521,11 @@ class AS3HXTest {
         generate("Issue273.as", "Issue273.hx");
     }
     
+    @Test("setTimeout(callback, (a + b) * 1000, args)")
+    public function issue293() {
+        generate("Issue293.as", "Issue293.hx");
+    }
+    
     function generate(as3FileName:String, expectedHaxeFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var generatedDirectoryPath = '$issuesDirectory/generated';

@@ -1,4 +1,5 @@
 ## dev
+ - Fixed conversion of `setTimeout(callback, (a + b) * 1000)`. fixes #293
  - Fixed conversion of `parseInt('0xFFFFFF', 16)`. fixes #265
  
 ## 2017-10-24(1.0.6)
