@@ -219,14 +219,15 @@ class Config {
         var println = Sys.println;
         println("Usage: as3hx [options] sourceDir [outdir]");
         println("  Options:");
-        println("    -no-cast-guess\t : will not try to handle MyClass(obj) casts");
-        println("    -func2dyn\t\t : will change Function types to Dynamic");
-        println("    -no-uint2int\t : will not convert uint to Int");
-        println("    -no-vector2array\t : will not convert Vectors to haxe Arrays");
-        println("    -dict2hash\t\t : will convert Dictionary to haxe ObjectMap");
-        println("    -debug-expr\t\t : will output debug information");
+        println("    -no-cast-guess       : will not try to handle MyClass(obj) casts");
+        println("    -func2dyn            : will change Function types to Dynamic");
+        println("    -no-uint2int         : will not convert uint to Int");
+        println("    -no-vector2array     : will not convert Vectors to haxe Arrays");
+        println("    -dict2hash           : will convert Dictionary to haxe ObjectMap");
+        println("    -debug-expr          : will output debug information");
         println("    -debug-inferred-type : will output inferred type debug information");
-        println("    -convert-flexunit\t : will convert FlexUnit metadata and calls to munit form");
+        println("    -convert-flexunit    : will convert FlexUnit metadata and calls to munit form");
+        println("    -error-continue      : will continue parsing despite errors");
         println("");
         println("  outdir\t\t : defaults to './out'");
     }

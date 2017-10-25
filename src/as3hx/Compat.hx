@@ -4,6 +4,8 @@ import Type;
 import haxe.macro.Expr;
 import haxe.macro.Context;
 
+using StringTools;
+
 /**
  * Collection of functions that just have no real way to be compatible in Haxe 
  */
@@ -79,38 +81,75 @@ class Compat {
     /**
      * Converts a typed expression into a Float.
      */
-    macro public static function parseFloat(e:Expr) : Expr {
-        var _ = function (e:ExprDef) return { expr: e, pos: Context.currentPos() };
-        switch (Context.typeof(e)) {
-            case TInst(t,params): 
-                var castToFloat = _(ECast(e, TPath({name:"Float", pack:[], params:[], sub:null})));
-                if (t.get().pack.length == 0)
-                    switch (t.get().name) {
-                        case "Int": return castToFloat;
-                        case "Float": return castToFloat;
-                        default:
-                    }
-            default:
+    macro public static function parseFloat<T>(e:ExprOf<T>):ExprOf<T> {
+        var type = switch(Context.typeof(e)) {
+            case TAbstract(t, _) if(t.get().pack.length == 0): t.get().name;
+            case TInst(t, _) if(t.get().pack.length == 0): t.get().name;
+            case _: null;
         }
-        return _(ECall( _(EField( _(EConst(CIdent("Std"))), "parseFloat")), [_(ECall( _(EField( _(EConst(CIdent("Std"))), "string")), [e]))]));
+        return switch(type) {
+            case "Float" | "Int": macro ${e};
+            case "String": macro Std.parseFloat(${e});
+            case _: macro Std.parseFloat(Std.string(${e}));
+        }
     }
 
     /**
      * Converts a typed expression into an Int.
      */
-    macro public static function parseInt(e:Expr) : Expr {
-        var _ = function (e:ExprDef) return { expr: e, pos: Context.currentPos() };
-        switch (Context.typeof(e)) {
-            case TInst(t,params): 
-                if (t.get().pack.length == 0)
-                    switch (t.get().name) {
-                        case "Int": return _(ECast(e, TPath({name:"Int", pack:[], params:[], sub:null})));
-                        case "Float": return _(ECall( _(EField( _(EConst(CIdent("Std"))), "int")), [_(ECast(e, TPath({name:"Float", pack:[], params:[], sub:null})))]));
-                        default:
-                    }
-            default:
+    macro public static function parseInt<T>(e:ExprOf<T>, ?base:ExprOf<Int>):ExprOf<T> {
+        var type = switch(Context.typeof(e)) {
+            case TAbstract(t, _) if(t.get().pack.length == 0): t.get().name;
+            case TInst(t, _) if(t.get().pack.length == 0): t.get().name;
+            case _: null;
         }
-        return _(ECall( _(EField( _(EConst(CIdent("Std"))), "parseInt")), [_(ECall( _(EField( _(EConst(CIdent("Std"))), "string")), [e]))]));
+        return switch(type) {
+            case "Int": macro ${e};
+            case "Float": macro Std.int(${e});
+            case "String": macro @:privateAccess as3hx.Compat._parseInt(${e}, ${base});
+            case _: macro Std.parseInt(Std.string(${e}));
+        }
+    }
+    
+    static function _parseInt(s:String, ?base:Int):Null<Int> {
+        #if js
+        if(base == null) base = s.indexOf("0x") == 0 ? 16 : 10;
+        var v:Int = untyped __js__("parseInt")(s, base);
+        return Math.isNaN(v) ? null : v;
+        #elseif flash
+        if(base == null) base = 0;
+        var v:Int = untyped __global__["parseInt"](s, base);
+        return Math.isNaN(v) ? null : v;
+        #else
+        var BASE = "0123456789abcdefghijklmnopqrstuvwxyz";
+        if(base != null && (base < 2 || base > BASE.length))
+            return throw 'invalid base ${base}, it must be between 2 and ${BASE.length}';
+        s = s.trim().toLowerCase();
+        var sign = if(s.startsWith("+")) {
+            s = s.substring(1);
+            1;
+        } else if(s.startsWith("-")) {
+            s = s.substring(1);
+            -1;
+        } else {
+            1;
+        };
+        if(s.length == 0) return null;
+        if(s.startsWith('0x')) {
+            if(base != null && base != 16) return null; // attempting at converting a hex using a different base
+            base = 16;
+            s = s.substring(2);
+        } else if(base == null) {
+            base = 10;
+        }
+        var acc = 0;
+        try s.split('').map(function(c) {
+            var i = BASE.indexOf(c);
+            if(i < 0 || i >= base) throw 'invalid';
+            acc = (acc * base) + i;
+        }) catch(e:Dynamic) {};
+        return acc * sign;
+        #end
     }
 
     /**

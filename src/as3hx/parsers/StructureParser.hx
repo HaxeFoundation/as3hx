@@ -13,7 +13,7 @@ class StructureParser {
         var parseFunction = FunctionParser.parse.bind(tokenizer, types, cfg);
         var parseCaseBlock = CaseBlockParser.parse.bind(tokenizer, types, cfg);
 
-        Debug.dbgln("parseStructure("+kwd+")", tokenizer.line);
+        Debug.dbgln("parseStructure(" + kwd + ")", tokenizer.line);
         return switch(kwd) {
         case "if":
             var f:Expr->Expr = null;
@@ -118,7 +118,12 @@ class StructureParser {
             };
             EFunction(parseFunction(false), name);
         case "return":
-            EReturn(if( tokenizer.peek() == TSemicolon ) null else parseExpr(false));
+            var t = tokenizer.peek();
+            var e = switch(t) {
+                case TSemicolon | TBrClose: null;
+                case _: parseExpr(false);
+            }
+            EReturn(e);
         case "new":
             if(ParserUtils.opt(tokenizer, TOp("<"))) {
                 // o = new <VectorType>[a,b,c..]
@@ -168,7 +173,7 @@ class StructureParser {
             var e = EParent(parseExpr(false));
             tokenizer.ensure(TPClose);
 
-            var def = null, cl = [], meta = [];
+            var def:SwitchDefault = null, cl = [], meta = [];
             tokenizer.ensure(TBrOpen);
 
             //parse all "case" and "default"
@@ -180,14 +185,40 @@ class StructureParser {
                     case TId(s):
                         if (s == "default") {
                             tokenizer.ensure(TColon);
-                            def = { el : parseCaseBlock(), meta : meta };
+                            def = { el : parseCaseBlock(), meta : meta, before: null };
                             meta = [];
                         }
                         else if (s == "case"){
                             var val = parseExpr(false);
                             tokenizer.ensure(TColon);
                             var el = parseCaseBlock();
-                            cl.push( { val : val, el : el, meta : meta } );
+
+                            // default already set, and is empty
+                            // we assign this case to default
+                            if(def != null && def.el.length == 0) {
+                                def.el = el;
+                                def.meta = def.meta.concat(meta);
+                                if(def.vals == null) def.vals = [];
+                                def.vals.push(val);
+                            }
+                            // default already set, and has same
+                            // content as this case
+                            else if(def != null && def.el == el){
+                                def.meta = def.meta.concat(meta);
+                                def.el = el;
+                                if(def.vals == null) def.vals = [];
+                                def.vals.push(val);
+                            }
+                            // normal case, default not set yet, or differs
+                            else {
+                                var caseObj = { val : val, el : el, meta : meta }
+                                // default already set, but case follows it
+                                // mark that default is before this case
+                                if(def != null && def.before == null) {
+                                    def.before = caseObj;
+                                }
+                                cl.push(caseObj);
+                            }
                             
                             //reset for next case or default
                             meta = [];
@@ -264,16 +295,15 @@ class StructureParser {
             var e = parseExpr(false);
             tokenizer.ensure(TPClose);
             ECall(EField(EIdent("as3hx.Compat"), kwd), [e]);
+        case "parseInt" | "parseFloat" if(cfg.useCompat):
+            var params = getParams(tokenizer, parseExpr);
+            if(params != null) return ECall(EField(EIdent("as3hx.Compat"), kwd), params);
+            null;
         case "parseInt" | "parseFloat":
             tokenizer.ensure(TPOpen);
             var e = parseExpr(false);
             tokenizer.ensure(TPClose);
-            var efield = if(cfg.useCompat) {
-                EField(EIdent("as3hx.Compat"), kwd);
-            } else {
-                EField(EIdent("Std"), kwd);
-            }
-            ECall(efield, [e]);
+            ECall(EField(EIdent("Std"), kwd), [e]);
         case "navigateToURL":
             var params = getParams(tokenizer, parseExpr);
             if(params != null) return ECall(EField(EIdent("flash.Lib"), "getURL"), params);
@@ -291,8 +321,12 @@ class StructureParser {
                     var t = tokenizer.token();
                     switch(t) {
                         case TPOpen: parCount++;
-                        case TPClose: parCount--;
+                        case TPClose:
+                            parCount--;
+                            if(params.length > 0) params[params.length - 1] = EParent(params[params.length - 1]);
                         case TComma:
+                        case TOp(op) if(params.length > 0):
+                            params[params.length - 1] = ParserUtils.makeBinop(tokenizer, op, params[params.length - 1], parseExpr(false));
                         case _:
                             tokenizer.add(t);
                             if(params.length < 2) params.push(parseExpr(false));
@@ -301,8 +335,8 @@ class StructureParser {
                                 switch(params[2]) {
                                     case EArrayDecl(e): e.push(parseExpr(false));
                                     case _:
+                                }
                             }
-                        }
                     }
                 }
                 params;

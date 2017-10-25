@@ -1,5 +1,19 @@
 ## dev
- - Replace `navigateToURL` with `flash.Lib.getURL` (fixes issue #257)
+ - Fixed conversion of `setTimeout(callback, (a + b) * 1000)`. fixes #293
+ - Fixed conversion of `parseInt('0xFFFFFF', 16)`. fixes #265
+ 
+## 2017-10-24(1.0.6)
+ - Fixed conversion of `default` keyword within `switch` statements. fixes #273
+ - Fixed conversion of `for(i; i < max; i++)`. fixes #285
+ - Fixed conversion of `v_numeric += condition1 || condition2`. fixes #275
+ - Fixed conversion of `v += condition ? 1 : 0`. fixes #274
+ - Fixed conversion of `private const FOO : int = 1;`. fixes #255
+ - Fixed conversion of `if(true) return\n`. fixes #254
+ - Fixed conversion of `SomeClass['staticFieldName']`. fixes #234
+ - Fixed conversion of `else if` blocks. fixes #277
+ - Fixed conversion of comments before `else` blocks. fixes #264
+ - Replace `navigateToURL` with `flash.Lib.getURL`. fixes #257
+ - Replace `static var init = {...}` by `static var ClassName_static_initializer = {...}`. fixes #276
 
 ## 2017-09-13(1.0.5)
  - Fixed conversion of function's parameter with comment
