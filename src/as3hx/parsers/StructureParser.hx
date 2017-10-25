@@ -321,8 +321,12 @@ class StructureParser {
                     var t = tokenizer.token();
                     switch(t) {
                         case TPOpen: parCount++;
-                        case TPClose: parCount--;
+                        case TPClose:
+                            parCount--;
+                            if(params.length > 0) params[params.length - 1] = EParent(params[params.length - 1]);
                         case TComma:
+                        case TOp(op) if(params.length > 0):
+                            params[params.length - 1] = ParserUtils.makeBinop(tokenizer, op, params[params.length - 1], parseExpr(false));
                         case _:
                             tokenizer.add(t);
                             if(params.length < 2) params.push(parseExpr(false));
@@ -331,8 +335,8 @@ class StructureParser {
                                 switch(params[2]) {
                                     case EArrayDecl(e): e.push(parseExpr(false));
                                     case _:
+                                }
                             }
-                        }
                     }
                 }
                 params;
