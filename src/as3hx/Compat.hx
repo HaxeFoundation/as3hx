@@ -79,38 +79,34 @@ class Compat {
     /**
      * Converts a typed expression into a Float.
      */
-    macro public static function parseFloat(e:Expr) : Expr {
-        var _ = function (e:ExprDef) return { expr: e, pos: Context.currentPos() };
-        switch (Context.typeof(e)) {
-            case TInst(t,params): 
-                var castToFloat = _(ECast(e, TPath({name:"Float", pack:[], params:[], sub:null})));
-                if (t.get().pack.length == 0)
-                    switch (t.get().name) {
-                        case "Int": return castToFloat;
-                        case "Float": return castToFloat;
-                        default:
-                    }
-            default:
+    macro public static function parseFloat<T>(e:ExprOf<T>):ExprOf<T> {
+        var type = switch(Context.typeof(e)) {
+            case TAbstract(t, _) if(t.get().pack.length == 0): t.get().name;
+            case TInst(t, _) if(t.get().pack.length == 0): t.get().name;
+            case _: null;
         }
-        return _(ECall( _(EField( _(EConst(CIdent("Std"))), "parseFloat")), [_(ECall( _(EField( _(EConst(CIdent("Std"))), "string")), [e]))]));
+        return switch(type) {
+            case "Float" | "Int": macro ${e};
+            case "String": macro Std.parseFloat(${e});
+            case _: macro Std.parseFloat(Std.string(${e}));
+        }
     }
 
     /**
      * Converts a typed expression into an Int.
      */
-    macro public static function parseInt(e:Expr) : Expr {
-        var _ = function (e:ExprDef) return { expr: e, pos: Context.currentPos() };
-        switch (Context.typeof(e)) {
-            case TInst(t,params): 
-                if (t.get().pack.length == 0)
-                    switch (t.get().name) {
-                        case "Int": return _(ECast(e, TPath({name:"Int", pack:[], params:[], sub:null})));
-                        case "Float": return _(ECall( _(EField( _(EConst(CIdent("Std"))), "int")), [_(ECast(e, TPath({name:"Float", pack:[], params:[], sub:null})))]));
-                        default:
-                    }
-            default:
+    macro public static function parseInt<T>(e:ExprOf<T>):ExprOf<T> {
+        var type = switch(Context.typeof(e)) {
+            case TAbstract(t, _) if(t.get().pack.length == 0): t.get().name;
+            case TInst(t, _) if(t.get().pack.length == 0): t.get().name;
+            case _: null;
         }
-        return _(ECall( _(EField( _(EConst(CIdent("Std"))), "parseInt")), [_(ECall( _(EField( _(EConst(CIdent("Std"))), "string")), [e]))]));
+        return switch(type) {
+            case "Int": macro ${e};
+            case "Float": macro Std.int(${e});
+            case "String": macro Std.parseInt(${e});
+            case _: macro Std.parseInt(Std.string(${e}));
+        }
     }
 
     /**

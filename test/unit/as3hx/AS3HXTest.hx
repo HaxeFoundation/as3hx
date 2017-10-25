@@ -23,7 +23,7 @@ class AS3HXTest {
         writer = new Writer(cfg);
         output = new BytesOutput();
     }
-    
+    /*
     @Test
     public function issue14() {
         generate("Issue14.as", "Issue14.hx");
@@ -509,6 +509,11 @@ class AS3HXTest {
     @Test("https://github.com/HaxeFoundation/as3hx/issues/2")
     public function issue2() {
         generate("Issue2.as", "Issue2.hx");
+    }
+    */
+    @Test("var v:int = parseInt('0xffffff', 16) -> var v:Int = as3hx.Compat.parseInt('0xffffff', 16)")
+    public function issue265() {
+        generate("Issue265.as", "Issue265.hx");
     }
     
     function generate(as3FileName:String, expectedHaxeFileName:String) {
