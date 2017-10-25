@@ -10,6 +10,8 @@ Build the as3hx tool.
     haxe -debug as3hx.hxml
 Build with debug output when converting files.
 
+Note: If this doesn't seem to work, you can try running the command manually, pulling everything from as3hx.hxml, e.g.: `haxe -cp ./src/ -neko run.n -main Run`
+
 ### Use
 
     neko run.n test/ out/
