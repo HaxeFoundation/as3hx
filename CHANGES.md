@@ -1,4 +1,5 @@
 ## dev
+ - Fixed conversion of `array[index]['key']`. fixes #261
  - Fixed conversion of `setTimeout(callback, (a + b) * 1000)`. fixes #293
  - Fixed conversion of `parseInt('0xFFFFFF', 16)`. fixes #265
  

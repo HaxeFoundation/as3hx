@@ -999,11 +999,9 @@ class Writer
                 writeExpr(e);
                 inArrayAccess = old;
                 write(", ");
-                if(!isString)
-                    write("Std.string(");
+                if(!isString) write("Std.string(");
                 writeExpr(index);
-                if(!isString)
-                    write(")");
+                if(!isString) write(")");
                 if(oldInLVA) {
                     write(", ");
                     writeExpr(rvalue);
@@ -1072,7 +1070,7 @@ class Writer
         }
     }
 
-    function getExprType(e:Expr) : String {
+    function getExprType(e:Expr):Null<String> {
         /*EField(ECall(EField(EIdent(xml),descendants),[]),user)*/
         switch(e) {
             case ETypedExpr(e2, t): return tstring(t);
@@ -1081,15 +1079,12 @@ class Writer
                 //write("/* e2 " + e2 + "."+f+" type: "+t2+" */");
                 switch(t2) {
                     case "FastXML":
-                        switch(f) {
-                            case "descendants", "nodes":
-                                return "FastXMLList";
-                            case "node":
-                                return "FastXML";
-                            case "length":
-                                return "Int";
+                        return switch(f) {
+                            case "descendants", "nodes": "FastXMLList";
+                            case "node": "FastXML";
+                            case "length": "Int";
+                            case _: "FastXMLList"; 
                         }
-                        return "FastXMLList";
                     case "FastXMLList":
                         switch(f) {
                             case "length": return "Int";
@@ -1101,19 +1096,19 @@ class Writer
                 //if(context.get(s) == null)
                 //  write("/* AS3HX WARNING var " + s + " is not in scope */");
                 return context.get(s);
-            case EVars(vars):
-                if(vars.length != 1) return null;
-                return tstring(vars[0].t);
-            case EArray(n, i): return getExprType(n);
-            case EArrayDecl(e): return "Array<Dynamic>";
-            case EUnop(op, prefix, e2): return getExprType(e2);
+            case EVars(vars) if(vars.length == 1): return tstring(vars[0].t);
+            case EArray(n, _): return getExprType(n);
+            case EArrayDecl(_): return "Array<Dynamic>";
+            case EUnop(_, _, e2): return getExprType(e2);
+            case EBinop(_ => "/", _, _, _): return "Float";
+            case EBinop(_, e1, e2, _) if(getExprType(e1) != "Float" && getExprType(e2) != "Float"): return "Int";
             case EConst(c):
                 return switch(c) {
                     case CInt(_): "Int";
                     case CFloat(_): "Float";
                     case CString(_): "String";
                 }
-            case ERegexp(str, opt): return getRegexpType();
+            case ERegexp(_, _): return getRegexpType();
             default:
         }
         return null;
@@ -2194,9 +2189,8 @@ class Writer
             if (eBinop != null) return writeExpr(eBinop);
             
             var oldInLVA = inLvalAssign;
-            rvalue = e2;
-            if(op == "=")
-                inLvalAssign = true;
+            if(op.indexOf("=") != -1) rvalue = e2;
+            if(op == "=") inLvalAssign = true;
                 
             switch(e1) {
                 case EIdent(s): writeModifiedIdent(s);
@@ -2221,10 +2215,10 @@ class Writer
                 
                 //minor formatting fix, if right expression starts
                 //with a newline or comment, no need for extra 
-                switch (e2) {
-                    case ECommented(s,b,t,e):
-                    case ENL(e):
-                    default:write(" ");
+                switch(e2) {
+                    case ECommented(_,_,_,_):
+                    case ENL(_):
+                    default: write(" ");
                 }
     
                 switch(e2) {
@@ -2993,9 +2987,8 @@ class Writer
         return result;
     }
 
-    function rebuildBinopExpr(op:String, lvalue:Expr, rvalue:Expr):Expr {
-        var getResultForNumerics:String->Expr->Expr->Null<Expr> = null;
-        getResultForNumerics = function(op, lvalue, rvalue) {
+    function rebuildBinopExpr(op:String, lvalue:Expr, rvalue:Expr):Null<Expr> {
+        function getResultForNumerics(op:String, lvalue:Expr, rvalue:Expr):Null<Expr> {
             var changed = false;
             if(needCastToInt(lvalue)) {
                 lvalue = getCastToIntExpr(lvalue);
@@ -3008,7 +3001,7 @@ class Writer
             return changed ? EBinop(op, lvalue, rvalue, false) : null;
         }
         if(isBitwiseAndAssignmetnOp(op)) return EBinop("=", lvalue, EBinop(op.charAt(0), lvalue, rvalue, false), false);
-        else switch(op) {
+        switch(op) {
             case "||=":
                 var type = getExprType(lvalue);
                 if(type != null) {
