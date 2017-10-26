@@ -178,16 +178,17 @@ class Tokenizer {
                         char = nextChar();
                     } while( char >= '0'.code && char <= '9'.code );
                     switch( char ) {
-                        case 'e'.code:
+                        case 'e'.code | 'E'.code:
                             if( buf.toString() == '.' ) {
                                 pushBackChar(char);
                                 return TDot;
                             }
                             buf.addChar(char);
                             char = nextChar();
-                            if( char == '-'.code ) {
-                                buf.addChar(char);
-                                char = nextChar();
+							switch(char) {
+								case '-'.code | '+'.code:
+									buf.addChar(char);
+									char = nextChar();
                             }
                             while( char >= '0'.code && char <= '9'.code ) {
                                 buf.addChar(char);
