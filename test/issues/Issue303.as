@@ -1,6 +1,6 @@
 package {
-    public class Issue302 {
-        public function Issue302(i:int = 1.5) {
+    public class Issue303 {
+        public function Issue303(i:int = 1e3) {
         }
     }
 }
