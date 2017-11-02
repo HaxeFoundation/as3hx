@@ -1,7 +1,6 @@
 package {
-    public class Issue2 {
-        public function Issue2() {
-            trace({name : "hello" });
+    public class Issue302 {
+        public function Issue302(i:int = 1.5) {
         }
     }
 }
