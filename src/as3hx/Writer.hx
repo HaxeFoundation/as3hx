@@ -800,16 +800,16 @@ class Writer
                                 case "Int" if(needCastToInt(arg.val)): 
                                     switch(arg.val) {
                                         case EConst(_ => CFloat(f)):
-											var index = f.indexOf('.');
-											if(index != -1) write(f.substring(0, index));
-											else {
-												index = f.indexOf('e');
-												if(index != -1) {
-													var parts = f.split('e');
-													var lv = parts[0];
-													write(StringTools.rpad(lv, '0', lv.length + Std.parseInt(parts[1])));
-												}
-											}
+                                            var index = f.indexOf('.');
+                                            if(index != -1) write(f.substring(0, index));
+                                            else {
+                                                index = f.indexOf('e');
+                                                if(index != -1) {
+                                                    var parts = f.split('e');
+                                                    var lv = parts[0];
+                                                    write(StringTools.rpad(lv, '0', lv.length + Std.parseInt(parts[1])));
+                                                }
+                                            }
                                         case _:
                                     }
                                 case _: writeExpr(arg.val);
