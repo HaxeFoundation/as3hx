@@ -1,4 +1,5 @@
 ## dev
+ - Fixed conversion of `function(i:int = 1e5)`. fixes #303
  - Fixed conversion of `function(i:int = 1.5)`. fixes #302
  - Fixed conversion of `1.79E+308`. fixes #298
  - Fixed conversion of `array[index]['key']`. fixes #261
