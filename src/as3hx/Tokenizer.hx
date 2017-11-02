@@ -39,7 +39,7 @@ class Tokenizer {
     var ops : Array<Bool>;
     var idents : Array<Bool>;
     var tokens : haxe.ds.GenericStack<Token>;
-
+    
     public function new(s:haxe.io.Input) {
         line = 1;
         pc = 1;
@@ -185,10 +185,10 @@ class Tokenizer {
                             }
                             buf.addChar(char);
                             char = nextChar();
-							switch(char) {
-								case '-'.code | '+'.code:
-									buf.addChar(char);
-									char = nextChar();
+                            switch(char) {
+                                case '-'.code | '+'.code:
+                                    buf.addChar(char);
+                                    char = nextChar();
                             }
                             while( char >= '0'.code && char <= '9'.code ) {
                                 buf.addChar(char);

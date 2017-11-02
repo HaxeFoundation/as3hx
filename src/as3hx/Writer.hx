@@ -791,16 +791,23 @@ class Writer
 
                             write(s);
                         }
-                    case ETypedExpr(e, t):
+                    case ETypedExpr(_, t):
                         writeVarType(t);
                         context.set(arg.name, tstring(arg.t));
                         if(arg.val != null) {
                             write(" = ");
-                            writeExpr(arg.val);
+                            switch(tstring(t)) {
+                                case "Int" if(needCastToInt(arg.val)): 
+                                    switch(arg.val) {
+                                        case EConst(_ => CFloat(f)): write(f.substring(0, f.indexOf('.')));
+                                        case _:
+                                    }
+                                case _: writeExpr(arg.val);
+                            }
                         }
                         pendingComma = true;
 
-                    case ENL(e): //newline
+                    case ENL(_): //newline
                         if (pendingComma) {
                             pendingComma = false;
                             write(",");
@@ -823,8 +830,7 @@ class Writer
         return fst;
     }
     
-    function writeConstructor(f : Function, isSubClass:Bool)
-    {
+    function writeConstructor(f:Function, isSubClass:Bool) {
         //add super if missing, as it is mandatory in Haxe for subclasses
         if (isSubClass && !constructorHasSuper(f.expr)) {
             switch(f.expr) {
@@ -1164,10 +1170,8 @@ class Writer
      * @return if the block requires a terminating ;
      */
     function writeExpr(?expr : Expr) : BlockEnd {
-        if(cfg.debugExpr)
-            write(" /* " + Std.string(expr) + " */ ");
-
-        if (expr == null) return None;
+        if(cfg.debugExpr) write(" /* " + Std.string(expr) + " */ ");
+        if(expr == null) return None;
         var rv = Semi;
         switch(expr) {
             case ETypedExpr(e, t): rv = writeExpr(e);
@@ -2272,9 +2276,9 @@ class Writer
         return switch(e) {
             case EBinop(op,e1,_,_): !isCompatParseInt(e1) && (isBitwiceOp(op) || isNumericOp(op));
             case EUnop(op,_,e): op == "~" && !isCompatParseInt(e);
-            case EIdent(v): getExprType(e) == "Float";
+            case EIdent(_) | EConst(_): getExprType(e) == "Float";
             case EParent(e): needCastToInt(e);
-            default: false;
+            case _: false;
         }
     }
     
