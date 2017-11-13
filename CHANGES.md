@@ -1,4 +1,5 @@
 ## dev
+ - Fixed conversion of `typeof 3`. fixes #300
  - Fixed conversion of `1.79E+308`. fixes #298
  - Fixed conversion of `array[index]['key']`. fixes #261
  - Fixed conversion of `setTimeout(callback, (a + b) * 1000)`. fixes #293

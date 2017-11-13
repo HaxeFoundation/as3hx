@@ -23,7 +23,7 @@ class AS3HXTest {
         writer = new Writer(cfg);
         output = new BytesOutput();
     }
-    /*
+    
     @Test
     public function issue14() {
         generate("Issue14.as", "Issue14.hx");
@@ -535,10 +535,10 @@ class AS3HXTest {
     public function issue298() {
         generate("Issue298.as", "Issue298.hx");
     }
-    */
-    @Test("typeof 3 -> ")
-    public function issue() {
-        generate("Issue.as", "Issue.hx");
+    
+    @Test("typeof 3 -> as3hx.Compat.typeof(3)")
+    public function issue300() {
+        generate("Issue300.as", "Issue300.hx");
     }
     
     function generate(as3FileName:String, expectedHaxeFileName:String) {
