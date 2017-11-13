@@ -247,14 +247,13 @@ class StructureParser {
         case "typeof":
             var e = parseExpr(false);
             switch(e) {
-            case EBinop(op, e1, e2, n):
-                //if(op != "==" && op != "!=")
-                //  ParserUtils.unexpected(TOp(op));
-            case EParent(e1):
-            case EIdent(id):
-                null;
-            default:
-                ParserUtils.unexpected(TId(Std.string(e)));
+                case EBinop(_, _, _, _):
+                    //if(op != "==" && op != "!=")
+                    //  ParserUtils.unexpected(TOp(op));
+                case EParent(_):
+                case EIdent(_):
+                case EConst(_):
+                default: ParserUtils.unexpected(TId(Std.string(e)));
             }
             ETypeof(e);
         case "delete":

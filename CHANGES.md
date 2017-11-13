@@ -1,11 +1,12 @@
 ## dev
+ - Fixed conversion of `typeof 3`. fixes #300
  - Fixed conversion of `function(i:int = 1e5)`. fixes #303
  - Fixed conversion of `function(i:int = 1.5)`. fixes #302
  - Fixed conversion of `1.79E+308`. fixes #298
  - Fixed conversion of `array[index]['key']`. fixes #261
  - Fixed conversion of `setTimeout(callback, (a + b) * 1000)`. fixes #293
  - Fixed conversion of `parseInt('0xFFFFFF', 16)`. fixes #265
- 
+
 ## 2017-10-24(1.0.6)
  - Fixed conversion of `default` keyword within `switch` statements. fixes #273
  - Fixed conversion of `for(i; i < max; i++)`. fixes #285
@@ -71,7 +72,7 @@
  - Inline alert message in generated code when trying to `delete` Dictionary keys
  - Loops will be converted to `while` instead of `for` for proper iteration variable modification
  - Only first character of package will be transformed to lower case
- 
+
 ## 2016-08-05(1.0.3)
  - Fixed call for `haxe.Json.parse` instead of `JSON.parse` (closes issue #83)
  - Fixed casting of `uint(1)` (closes issue #85)
@@ -155,13 +156,13 @@
 ## 2011-10-14 - Russell
  - cleaned formatting on comments
  - added === support (missed)
- - added -no-cast-guess 
+ - added -no-cast-guess
 
 ## 2011-10-12 - Russell
  - added comments
  - fixed static var initializations were not output
  - added output for the "as" keyword
- - fixed "interface extends" to "interface implements" 
+ - fixed "interface extends" to "interface implements"
  - fixed interface functions were outputting empty bodies
  - added ETernary
  - fixed formatting on if...else

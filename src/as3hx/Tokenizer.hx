@@ -39,7 +39,7 @@ class Tokenizer {
     var ops : Array<Bool>;
     var idents : Array<Bool>;
     var tokens : haxe.ds.GenericStack<Token>;
-    
+
     public function new(s:haxe.io.Input) {
         line = 1;
         pc = 1;
@@ -115,7 +115,7 @@ class Tokenizer {
     }
 
     public function token() : Token {
-        if( !tokens.isEmpty() ) 
+        if( !tokens.isEmpty() )
             return tokens.pop();
 
         var char = nextChar();
@@ -446,7 +446,7 @@ class Tokenizer {
         }
         return b.getBytes().toString();
     }
-    
+
     public function end() {
         Debug.openDebug("function end()", line, true);
         while( ParserUtils.opt(this, TSemicolon) ) {
