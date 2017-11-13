@@ -1,9 +1,8 @@
 package {
-    public class Issue261_1 {
-        public function randomGen(param1:int) : int
+    public class Issue2612 {
+        function frame1() : *
         {
-            var _loc2_:int = Math.floor(Math.random() * param1);
-            return _loc2_;
+            gotoAndPlay((this.randomGen(48) + 1) * 4 + 1);
         }
     }
 }

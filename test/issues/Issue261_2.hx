@@ -1,10 +1,9 @@
 
-class Issue2611
+class Issue2612
 {
-    public function randomGen(param1 : Int) : Int
+    private function frame1() : Dynamic
     {
-        var _loc2_ : Int = Math.floor(Math.random() * param1);
-        return _loc2_;
+        gotoAndPlay((this.randomGen(48) + 1) * 4 + 1);
     }
 
     public function new()
