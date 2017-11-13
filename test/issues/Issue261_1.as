@@ -1,8 +1,9 @@
 package {
-    public class Issue261 {
-        public function Issue261() {
-            var a:Array = [{}];
-            a[a.length - 1]["some"] = 10;
+    public class Issue261_1 {
+        public function randomGen(param1:int) : int
+        {
+            var _loc2_:int = Math.floor(Math.random() * param1);
+            return _loc2_;
         }
     }
 }
