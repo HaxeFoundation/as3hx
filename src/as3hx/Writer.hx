@@ -42,7 +42,7 @@ class Writer
     var genTypes : Array<GenType>; //typedef generated while parsing
     var imported : Array<String>; // store written imports to prevent duplicated
     var pack : Array<String>; // stores the haxe file package
-    
+
     public function new(config:Config)
     {
         this.lvl = 0;
@@ -79,7 +79,7 @@ class Writer
             "SecurityError", "SyntaxError", "TypeError",
             "URIError", "VerifyError"
         ];
-        
+
         for(c in topLevelErrorClasses) {
             this.typeImportMap.set(c, "flash.errors." + c);
         }
@@ -139,9 +139,9 @@ class Writer
         f(expr);
         return result;
     }
-    
+
     inline function getColon():String return cfg.spacesOnTypeColon ? " : " : ":";
-    
+
     function writeComments(comments : Array<Expr>) {
         for(c in comments) {
             switch(c) {
@@ -170,10 +170,10 @@ class Writer
         if (pack.length > 0)
         {
             writeLine("package " + properCaseA(pack,false).join(".") + ";");
-            writeNL(); 
+            writeNL();
         }
     }
-    
+
     function writeImports(imports : Array<Array<String>>)
     {
         if (imports.length > 0)
@@ -198,7 +198,7 @@ class Writer
             typeImportMap.set(i[i.length - 1], null);
         }
     }
-    
+
     function writeAdditionalImports(defPackage : Array<String>, allTypes : Array<T>, definedTypes : Array<String>)
     {
         // We don't want to import any type that is defined within
@@ -207,7 +207,7 @@ class Writer
         for(d in definedTypes) {
             typeImportMap.set(d, null);
         }
-        
+
         // Now convert each seen type enum into the corresponding
         // type import string.
         var uniqueTypes = new Map<String,Bool>();
@@ -221,7 +221,7 @@ class Writer
                 }
             }
         }
-        
+
         // Now look up each type import string in the type import
         // map.
         var addnImports = new Array<String>();
@@ -250,7 +250,7 @@ class Writer
         for(d in defs)
             writeDefinition(d);
     }
-    
+
     function writeDefinition(def : Definition)
     {
         switch(def)
@@ -266,7 +266,7 @@ class Writer
             return;
 
         var isFirstCondComp = true;
-        
+
         for(d in data) {
             switch(d) {
             case EMeta(_):
@@ -283,7 +283,7 @@ class Writer
                 }
                 else {
                     write(" && ");
-                } 
+                }
                 write(v);
             case EImport(i):
                 writeImport(i);
@@ -299,7 +299,7 @@ class Writer
 
         var buf = new StringBuf();
         this.isInterface = c.isInterface;
-        
+
         if (!c.isInterface && isFinal(c.kwds)) {
             buf.add("@:final ");
         }
@@ -307,7 +307,7 @@ class Writer
         buf.add(c.isInterface ? "interface " : "class ");
 
         buf.add(properCase(c.name,true));
-        
+
         var parents = [];
         if (null != c.extend) {
             parents.push((isInterface ? "implements " : "extends ") + tstring(c.extend));
@@ -319,24 +319,24 @@ class Writer
         buf.add(openb());
         write(buf.toString());
         lvl++;
-        
+
         // process properties
         writeProperties(c);
-    
+
         // process fields
         writeFields(c);
 
         // a list of TId(ClassName),TSemicolon pairs that is used to force
         // compiling/linking classes
         writeInits(c);
-        
+
         lvl--;
         write(closeb());
 
         //close conditional compilation block if needed
         writeECondCompEnd(getCondComp(c.meta));
     }
-    
+
     function writeProperties(c : ClassDef)
     {
         var p = [];
@@ -380,32 +380,32 @@ class Writer
                         property.getMeta = field.meta;
                         if (isPublic(field.kwds))
                         {
-                            property.get = getterDirective; 
+                            property.get = getterDirective;
                             property.pub = true;
                         } else {
-                            property.get = getterDirective; 
+                            property.get = getterDirective;
                         }
                     }
                     else if (isSetter(field.kwds))
                     {
-                        var setterDirective : String = "set"; // haxe 3 
+                        var setterDirective : String = "set"; // haxe 3
                                                               // haxe 2: cfg.makeSetterName(field.name);
 
                         var property = getOrCreateProperty(field.name, f.args[0].t, isStatic(field.kwds));
                         property.setMeta = field.meta;
                         if (isPublic(field.kwds))
                         {
-                            property.set = setterDirective; 
+                            property.set = setterDirective;
                             property.pub = true;
                         } else {
-                            property.set = setterDirective; 
+                            property.set = setterDirective;
                         }
                     }
                 default:
                     continue;
             }
         }
-        
+
         if (p.length > 0) {
             writeNL();
         }
@@ -423,14 +423,14 @@ class Writer
 
                 if(cfg.getterSetterStyle == "combined")
                     write("#if !flash ");
-                if (property.pub) { 
+                if (property.pub) {
                     write("public ");
-                }    
+                }
                 else {
                     if (! isInterface) {
                         write("private ");
                     }
-                }    
+                }
                 if (property.sta)
                     write("static ");
                 write("var " + property.name + "(" + property.get + ", " + property.set + ")");
@@ -453,14 +453,14 @@ class Writer
             writeNL();
         }
     }
-    
+
     function writeFields(c : ClassDef)
     {
         for (field in c.fields)
             writeField(field, c);
         if(c.isInterface)
             return;
-            
+
         if(!Lambda.exists(c.fields,
             function(field:ClassField) {
                 switch(field.kind) {
@@ -492,7 +492,7 @@ class Writer
             }, c.extend != null);
         }
     }
-    
+
     function writeField(field : ClassField, c : ClassDef)
     {
         var isGet : Bool = isGetter(field.kwds);
@@ -505,7 +505,7 @@ class Writer
             return;
 
         writeMetaData(field.meta);
-        
+
         var start = function(name:String, isFlashNative:Bool=false, isConstructor=false) {
             if((isGet || isSet) && cfg.getterSetterStyle == "combined") {
                 writeNL(isFlashNative ? "#if flash" : "#else");
@@ -532,8 +532,8 @@ class Writer
                 writeAllow();
             if(isOverride(field.kwds))
                 write((isFlashNative && (isGet || isSet)) ? "" : "override ");
-            
-            //coner-case, constructor of internal AS3 class is set to private in 
+
+            //coner-case, constructor of internal AS3 class is set to private in
             //Haxe with a meta allowing access from same package
             if(isConstructor && isInternal(c.kwds)) {
                 write("private ");
@@ -550,7 +550,7 @@ class Writer
                 write("private ");
             }
             //check wheter the field is an AS3 constants, which can be inlined in Haxe
-            //the field must be either a static constant or a private constant. 
+            //the field must be either a static constant or a private constant.
             //If it is a non-static public constant it can't be inlined as Haxe can only inline
             //static field. Converting non-static public field to static will likely cause compilation
             //errors, whereas it won't for private field as they will be accessed in the same way
@@ -638,11 +638,11 @@ class Writer
                 null;
         }
 
-        //if this field is not wrapped in conditional compilation, 
+        //if this field is not wrapped in conditional compilation,
         //do nothing
         if (field.condVars.length == 0)
             return;
-       
+
         //here we will find wether this field is the last field
         //of some conditional compilation and write the conditional
         //compilation ending statement if it is
@@ -666,12 +666,12 @@ class Writer
             else if (field == f) {
                 foundSelf = true;
             }
-        } 
+        }
 
         //close conditional compilation block
         writeECondCompEnd(condVars);
     }
-    
+
     /**
      * Return a new array containing all the conditional
      * compilation constants from the provided array
@@ -679,7 +679,7 @@ class Writer
     function getCondComp(exprs : Array<Expr>) : Array<String>
     {
         var condComps = [];
-        for (expr in exprs) 
+        for (expr in exprs)
         {
             switch (expr) {
                 case ECondComp(v,e,e2):
@@ -729,7 +729,7 @@ class Writer
     }
 
     /**
-     * Write closing statement ("#end") for conditional 
+     * Write closing statement ("#end") for conditional
      * conpilation if any
      */
     function writeECondCompEnd(condComps : Array<String>) : Void
@@ -744,7 +744,7 @@ class Writer
             write(condComps[i]);
         }
     }
-    
+
     function writeArgs(args : Array<{ name : String, t : Null<T>, val : Null<Expr>, exprs : Array<Expr> }>, ?varArgs:String)
     {
         if(varArgs != null) {
@@ -763,9 +763,9 @@ class Writer
         //store first argument
         var fst = null;
 
-        //set to true at the end of the argument, 
+        //set to true at the end of the argument,
         //trigger writing a comma for next expression
-        var pendingComma = false; 
+        var pendingComma = false;
 
         for (arg in args) //for each method argument
         {
@@ -782,7 +782,7 @@ class Writer
                                 pendingComma = false;
                                 write(",");
                             }
-                            
+
                             //if arg is not first element on the line, add space
                             //before it, unless first argument which never has space
                             if (lineIsDirty && !isFirst) {
@@ -797,7 +797,7 @@ class Writer
                         if(arg.val != null) {
                             write(" = ");
                             switch(tstring(t)) {
-                                case "Int" if(needCastToInt(arg.val)): 
+                                case "Int" if(needCastToInt(arg.val)):
                                     switch(arg.val) {
                                         case EConst(_ => CFloat(f)):
                                             var index = f.indexOf('.');
@@ -839,7 +839,7 @@ class Writer
         lvl -= 2;
         return fst;
     }
-    
+
     function writeConstructor(f:Function, isSubClass:Bool) {
         //add super if missing, as it is mandatory in Haxe for subclasses
         if (isSubClass && !constructorHasSuper(f.expr)) {
@@ -855,7 +855,7 @@ class Writer
         var es = formatBlockBody(f.expr);
         writeExpr(EBlock(es));
     }
-    
+
     /**
      * Wether constructor method has a super() call
      */
@@ -864,7 +864,7 @@ class Writer
         if (expr == null) return false;
         return switch(expr) {
             case ECall(EIdent("super"), _): true;
-            case EBlock(exprs): 
+            case EBlock(exprs):
                 for (expr in exprs) {
                     if (constructorHasSuper(expr)) {
                         return true;
@@ -887,7 +887,7 @@ class Writer
         }
         return result;
     }
-    
+
     function writeFunction(f : Function, isGetter:Bool, isSetter:Bool, isNative:Bool, ?name : Null<String>, ?ret : FunctionRet) {
         write("function");
         if(name != null)
@@ -937,7 +937,7 @@ class Writer
         writeStartStatement();
         writeExpr(EBlock(es));
     }
-    
+
     /**
      * Write the returned typed of a function and all
      * comments and newline until opening bracket
@@ -967,7 +967,7 @@ class Writer
         write(" ");
         writeExpr(e);
     }
-    
+
     function writeEArray(e:Expr, index:Expr) {
         //write("/* EArray ("+Std.string(e)+","+Std.string(index)+") " + Std.string(getExprType(e, true)) + "  */ ");
         var old = inArrayAccess;
@@ -1029,24 +1029,24 @@ class Writer
                 writeExpr(e);
                 inArrayAccess = old;
                 write("[");
-                writeExpr(index); 
+                writeExpr(index);
                 write("]");
             }
         }
     }
-    
+
     function writeLoop(incrs:Array<Expr>, f:Void->Void) {
         var old = loopIncrements;
         loopIncrements = incrs.slice(0);
         f();
         loopIncrements = old;
     }
-    
+
     static function ucfirst(s : String) : String
     {
         return s.substr(0, 1).toUpperCase() + s.substr(1);
     }
-    
+
     function writeVarType(?t : Null<T>, ?alt : String, isNativeGetSet:Bool=false)
     {
         if (t == null)
@@ -1076,7 +1076,7 @@ class Writer
         writeIndent();
         writeNL("}");
     }
-    
+
     function getConst(c : Const) : String
     {
         return switch(c)
@@ -1099,7 +1099,7 @@ class Writer
                             case "descendants", "nodes": "FastXMLList";
                             case "node": "FastXML";
                             case "length": "Int";
-                            case _: "FastXMLList"; 
+                            case _: "FastXMLList";
                         }
                     case "FastXMLList":
                         switch(f) {
@@ -1129,7 +1129,7 @@ class Writer
         }
         return null;
     }
-    
+
     inline function getRegexpType():String return cfg.useCompat ? "as3hx.Compat.Regex" : "flash.utils.RegExp";
 
     /**
@@ -1270,7 +1270,7 @@ class Writer
                         f = function(e, els) {
                             switch(e) {
                                 case EBreak(lbl):
-                                    if(lbl == null) 
+                                    if(lbl == null)
                                         def.el.pop(); // remove break
                                 case EBlock(exprs):
                                     switch (exprs[exprs.length -1]) {
@@ -1293,7 +1293,7 @@ class Writer
                     // default is not in the end, so don't catch fall-through
                     newCases = loopCases(cases.copy(), null, testVar, newCases);
                 }
-  
+
                 if(writeTestVar) {
                     write("var ");
                     writeExpr(testVar);
@@ -1312,7 +1312,7 @@ class Writer
                 write("switch (");
                 writeExpr(testVar);
                 write(")" + openb());
-                
+
                 lvl++;
                 for(c in newCases) {
 
@@ -1441,7 +1441,7 @@ class Writer
                             for (ex in elist) {
                                 writeFinish(writeExpr(ex));
                             }
-                        case ENL(e): 
+                        case ENL(e):
                             writeECondComp(e);
                         case ECommented(s,b,t,e): writeECondComp(e);
                         default:
@@ -1473,7 +1473,7 @@ class Writer
         }
         return rv;
     }
-    
+
     function writeSwitchDefault(def:SwitchDefault) {
         if(def.vals != null && def.vals.length > 0) {
             writeNL();
@@ -1528,7 +1528,7 @@ class Writer
         }
         return result;
     }
-    
+
     function writeEField(fullExpr:Expr, e:Expr, f:String):BlockEnd {
         var n = checkE4XDescendants(fullExpr);
         if(n != null) return writeExpr(n);
@@ -1599,7 +1599,7 @@ class Writer
         inArrayAccess = old;
         return Semi;
     }
-    
+
     inline function writeEVars(vars:Array<{name:String, t:Null<T>, val:Null<Expr>}>):BlockEnd {
         var result = Semi;
         for(i in 0...vars.length) {
@@ -1656,7 +1656,7 @@ class Writer
         }
         return result;
     }
-    
+
     inline function writeEParent(e:Expr) {
         switch(e) {
             case EParent(e): writeExpr(e);
@@ -1666,7 +1666,7 @@ class Writer
                 write(")");
         }
     }
-    
+
     function writeECall(fullExpr:Expr, expr:Expr, params:Array<Expr>):BlockEnd {
         switch(expr) {
             case EField(expr, f):
@@ -1707,11 +1707,11 @@ class Writer
             default: e;
         }
         for(i in 0...params.length) params[i] = f(params[i]);
-    
+
         //func call use 2 levels of indentation if
         //spread on multiple lines
         lvl += 2;
-    
+
         var handled = false;
         if(cfg.guessCasts && params.length == 1) {
             switch(expr) {
@@ -1781,7 +1781,7 @@ class Writer
                         default: true;
                     }
                 }
-                
+
                 //check all remaining parameters
                 var i = index;
                 while(i < params.length - 1) {
@@ -1791,7 +1791,7 @@ class Writer
                 }
                 return true;
             }
-    
+
             writeExpr(expr);
             write("(");
             var enl = false;
@@ -1820,7 +1820,7 @@ class Writer
         lvl -= 2;
         return Semi;
     }
-    
+
     function writeEIf(cond:Expr, e1:Expr, ?e2:Expr):BlockEnd {
         var result = Semi;
         write("if (");
@@ -1836,7 +1836,7 @@ class Writer
             writeExpr(rb);
         } else writeExpr(cond);
         lvl--;
-    
+
         //check if if expr is one line
         //with no block bracket
         if (isOneLiner(e1)) {
@@ -1862,7 +1862,7 @@ class Writer
             //corner case : comment located
             //before the "else" keyword in the
             //source file.
-            //As to be called recursively, in 
+            //As to be called recursively, in
             //case of multiple one-line comment
             //before the "else"
             var f:Expr->Expr = null;
@@ -1920,7 +1920,7 @@ class Writer
         }
         return result;
     }
-    
+
     inline function writeETernarny(cond:Expr, e1:Expr, ?e2:Expr) {
         write("(");
         var rb = rebuildIfExpr(cond);
@@ -1931,7 +1931,7 @@ class Writer
         write(getColon());
         writeExpr(e2);
     }
-    
+
     inline function writeEWhile(cond:Expr, e:Expr, doWhile:Bool):BlockEnd {
         var result:BlockEnd;
         if (doWhile) {
@@ -1950,7 +1950,7 @@ class Writer
         }
         return result;
     }
-    
+
     inline function writeEFor(inits:Array<Expr>, conds:Array<Expr>, incrs:Array<Expr>, e:Expr):BlockEnd {
         //Sys.println('inits: ${inits}; conds: ${conds}; incrs: ${incrs}');
         openContext();
@@ -2046,7 +2046,7 @@ class Writer
         closeContext();
         return None;
     }
-    
+
     inline function writeEForEach(ev:Expr, e:Expr, block:Expr):BlockEnd {
         openContext();
         var varName = null;
@@ -2096,7 +2096,7 @@ class Writer
         closeContext();
         return result;
     }
-    
+
     inline function writeEForIn(ev:Expr, e:Expr, block:Expr):BlockEnd {
         openContext();
         var etype = getExprType(e);
@@ -2137,7 +2137,7 @@ class Writer
         closeContext();
         return result;
     }
-    
+
     function writeEBinop(op:String, e1:Expr, e2:Expr, newLineAfterOp:Bool):BlockEnd {
         if(op == "as") {
             switch(e2) {
@@ -2201,21 +2201,26 @@ class Writer
         } else { // op e1 e2
             var eBinop = rebuildBinopExpr(op, e1, e2);
             if (eBinop != null) return writeExpr(eBinop);
-            
+
             var oldInLVA = inLvalAssign;
-            if(op.indexOf("=") != -1) rvalue = e2;
+            switch(e1) {
+                case EArray(_, _): if(op.indexOf("=") != -1) rvalue = e2;
+                case ECall(_, _): rvalue = e1;
+                case _:
+            }
+            if(op.indexOf("=") != -1 || e1.match(EArrayDecl(_))) rvalue = e2;
             if(op == "=") inLvalAssign = true;
-                
+
             switch(e1) {
                 case EIdent(s): writeModifiedIdent(s);
                 default: writeExpr(e1);
             }
-            
+
             //for right part of indenting, add 2 extra
             //indenting level if spead on multiple lines
             if (op == "=")
                 lvl += 2;
-    
+
             inLvalAssign = oldInLVA;
             if(rvalue != null) {
                 //check wether newline was found just before
@@ -2226,27 +2231,27 @@ class Writer
                 } else {
                     write(" " + op);
                 }
-                
+
                 //minor formatting fix, if right expression starts
-                //with a newline or comment, no need for extra 
+                //with a newline or comment, no need for extra
                 switch(e2) {
                     case ECommented(_,_,_,_):
                     case ENL(_):
                     default: write(" ");
                 }
-    
+
                 switch(e2) {
                     case EIdent(s): writeModifiedIdent(s);
                     default: writeExpr(e2);
                 }
             }
-            
+
             if (op == "=")
                 lvl -= 2;
         }
         return Semi;
     }
-    
+
     inline function writeEUnop(op:String, prefix:Bool, e:Expr):BlockEnd {
         var result = Semi;
         var type = getExprType(e);
@@ -2262,7 +2267,7 @@ class Writer
         }
         return result;
     }
-    
+
     function writeToString(e:Expr) {
         var type = getExprType(e);
         if (type != "String") {
@@ -2270,9 +2275,9 @@ class Writer
         }
         writeExpr(e);
     }
-    
+
     inline function getToStringExpr(e:Expr):Expr return ECall(EField(EIdent("Std"), "string"), [e]);
-    
+
     function writeCastToInt(e:Expr) {
         var type = getExprType(e);
         if(type != "Int") {
@@ -2280,7 +2285,7 @@ class Writer
         }
         writeExpr(e);
     }
-    
+
     inline function needCastToInt(e:Expr):Bool {
         var isCompatParseInt:Expr->Bool = function(e) return e.match(ECall(EField(EIdent("as3hx.Compat"), "parseInt"), _));
         return switch(e) {
@@ -2291,14 +2296,14 @@ class Writer
             case _: false;
         }
     }
-    
+
     function getCastToIntExpr(e:Expr):Expr {
         if(cfg.useCompat) {
             return getCompatCallExpr("parseInt", [e]);
         }
         return ECall(EField(EIdent("Std"), "parseInt"), [getToStringExpr(e)]);
     }
-    
+
     function writeCastToFloat(e:Expr) {
         var type = getExprType(e);
         if (type != "Float" && type != "Int") {
@@ -2306,22 +2311,22 @@ class Writer
         }
         writeExpr(e);
     }
-    
+
     function getCastToFloatExpr(e:Expr):Expr {
         if (cfg.useCompat) {
             return getCompatCallExpr("parseFloat", [e]);
         }
         return ECall(EField(EIdent("Std"), "parseFloat"), [getToStringExpr(e)]);
     }
-    
+
     inline function getCompatCallExpr(methodName:String, params:Array<Expr>):Expr {
         return ECall(getCompatFieldExpr(methodName), params);
     }
-    
+
     inline function getCompatFieldExpr(fieldName:String):Expr {
         return EField(EIdent("as3hx.Compat"), fieldName);
     }
-    
+
     // translate FlexUnit to munit meta data, if present.
     function writeMunitMetadata(m:Metadata) : Bool {
         var rv : Bool = false;
@@ -2427,8 +2432,8 @@ class Writer
                             first = false;
                         }
                         if (arg.name != null) {
-                            write(arg.name); 
-                            write("="); 
+                            write(arg.name);
+                            write("=");
                         }
                         writeExpr(arg.val);
                     }
@@ -2461,9 +2466,9 @@ class Writer
             context.set(n, "FastXML"); // current context
         var old = inArrayAccess;
         inArrayAccess = true; // ensure 'nodes' vs. 'node'
-        writeExpr(e1); 
+        writeExpr(e1);
         inArrayAccess = old;
-        
+
         inE4XFilter = true;
         write(", function(x:FastXML) {\n");
         lvl++;
@@ -2501,7 +2506,7 @@ class Writer
         if(e == null) result = Ret;
         return result;
     }
-    
+
     inline function writeENew(t : T, params : Array<Expr>):Void {
         var writeParams = function() {
             for(i in 0...params.length) {
@@ -2518,7 +2523,7 @@ class Writer
             write(", [");
             writeParams();
             write("])");
-        } 
+        }
         //in AS3, if Date constructed without argument, uses current time
         else if (tstring(t) == "Date" && params.empty()) {
             write("Date.now()"); //use Haxe constructor for current time
@@ -2539,7 +2544,7 @@ class Writer
             if(!isObject) write(")");
         }
     }
-    
+
     inline function writeETry(e:Expr, catches:Array<{name:String, t:Null<T>, e:Expr}>):BlockEnd {
         var result = Semi;
         write("try");
@@ -2556,7 +2561,7 @@ class Writer
         }
         return result;
     }
-    
+
     inline function writeEDelete(e:Expr) {
         switch(e) {
             case EArray(a, i):
@@ -2588,14 +2593,14 @@ class Writer
                         writeIndent('delete ${getIdentString(a)}[${getIdentString(i)}]');
                     }
                 }
-            default: 
+            default:
                 addWarning("EDelete");
                 writeNL("This is an intentional compilation error. See the README for handling the delete keyword");
                 writeIndent("delete ");
                 writeExpr(e);
         }
     }
-    
+
     /**
      * Rebuilds any E4X expression to check for instances where the string value
      * is compared to a numerical constant, and change all EIdent instances to
@@ -2745,7 +2750,7 @@ class Writer
                 return EParent(r2);
             case ECall(e2, params): //These would require a full typer
             case EField(e2, f): null;
-            case ENL(e): 
+            case ENL(e):
                 var expr = rebuildIfExpr(e);
                 if (expr == null) return null;
                 return ENL(expr);
@@ -2762,13 +2767,13 @@ class Writer
         case EIdent(v): v;
         default: null;
     }
-    
+
     /**
      * Reconstruct a call expression before writing it if necessary. Used
      * for example to replace some ActionScript built-in method be Haxe ones.
-     * 
+     *
      * This is TiVo specific code
-     * 
+     *
      * @return the new expression, or null if no change were needed
      */
     function rebuildCallExpr(fullExpr : Expr, expr : Expr, params : Array<Expr>) : Expr {
@@ -2823,7 +2828,7 @@ class Writer
                             case 1:
                                 params.push(EField(e, "length"));
                                 result = ECall(EField(e, f), params);
-                            default: 
+                            default:
                                 if(cfg.useCompat) {
                                     var p = [e].concat(params.slice(0, 2));
                                     p.push(EArrayDecl(params.slice(2, params.length)));
@@ -2944,8 +2949,8 @@ class Writer
                     //helper to convert an AS3 test case to an Haxe one
                     var getUnitTestExpr = function(rebuiltExpr, params, commentFirstParam) {
                         var result = ECall(rebuiltExpr, params);
-                        
-                        //in some cases, the first param is a description of the test, 
+
+                        //in some cases, the first param is a description of the test,
                         //which should be converted to a comment
                         if (commentFirstParam) {
                             var comment = getCommentedParam(params.shift());
@@ -2953,7 +2958,7 @@ class Writer
                         }
                         return result;
                     }
-                    
+
                     switch (ident) {
                         //replace "hasAnyProperty(myVar)" by "myVar.keys().hasNext()"
                         // "myVar" is assumed to be an iterable
@@ -3059,7 +3064,7 @@ class Writer
                         return rvalue != null ? EBinop(op, lvalue, rvalue, false) : null;
                     } else switch(rvalue) {
                         case EBinop(rop, _, _, nl) if(isBooleanOp(rop)): return EBinop(op, lvalue, ETernary(rvalue, EConst(CInt("1")), EConst(CInt("0"))), nl);
-                        case _: 
+                        case _:
                     }
                 }
                 switch(rvalue) {
@@ -3074,9 +3079,9 @@ class Writer
         }
         return null;
     }
-    
+
     /**
-     * For an if statement, return the 
+     * For an if statement, return the
      * the appropriate block end, based on the
      * type of the first child expression
      */
@@ -3086,20 +3091,20 @@ class Writer
             case EBlock(_): None;
             case EIf(_,_,_): Semi;
             case EReturn(_): Semi;
-           
-            //comments expression are ignored for this purpose, 
+
+            //comments expression are ignored for this purpose,
             //and instead the first expression
             //following the comment is used
             case ECommented(s,b,t,e): getEIfBlockEnd(e);
             //like comment, wrapped expression used instead
-            case ENL(e): getEIfBlockEnd(e); 
+            case ENL(e): getEIfBlockEnd(e);
             default: Semi;
         }
     }
 
     /**
      * Return wether the expression contained in an
-     * "if" statement is a one liner with no block bracket  
+     * "if" statement is a one liner with no block bracket
      */
     function isOneLiner(e : Expr) : Bool {
         return switch (e) {
@@ -3151,50 +3156,50 @@ class Writer
         var type = getExprType(e);
         return isArrayType(type);
     }
-    
+
     static inline function isArrayType(s:String):Bool {
         return s != null && StringTools.startsWith(s, "Array<");
     }
-    
+
     static inline function isDynamicType(s:String):Bool return s == "Dynamic";
-    
+
     static inline function isMapType(s:String):Bool {
         return s != null && (s.startsWith("Map") || s.startsWith("haxe.ds.ObjectMap"));
     }
-    
+
     inline function isFunctionExpr(e:Expr):Bool return getExprType(e) == "Function";
-    
+
     inline function isIntExpr(e:Expr):Bool {
         var type = getExprType(e);
         return isIntType(type);
     }
-    
+
     inline function isIntType(s:String):Bool return s == "Int";
-    
+
     inline function isNumericOp(s:String):Bool return switch(s) {
         case "/" | "-" | "+" | "*" | "%" | "--" | "++": true;
         default: false;
     }
-    
+
     inline function isBitwiceOp(s:String):Bool return switch(s) {
         case "<<" | ">>" | ">>>" | "^" | "|" | "&" | "~": true;
         default: false;
     }
-    
+
     inline function isBooleanOp(s:String):Bool return switch(s) {
         case "||" | "&&" | "!=" | "!==" | "==" | "===": true;
         case _: false;
     }
-    
+
     inline function isBitwiseAndAssignmetnOp(s:String):Bool return switch(s) {
         case "&=" | "|=" | "^=": true;
         default: false;
     }
-    
+
     function addWarning(type:String, isError = false) {
         warnings.set(type, isError);
     }
-    
+
     static function quote(s : String) : String
     {
         return '"' + StringTools.replace(s, '"', '\\"') + '"';
@@ -3204,17 +3209,17 @@ class Writer
     {
         return "'" + StringTools.replace(s, "\\", "\\\\") + "'";
     }
-    
+
     function isOverride(kwds : Array<String>) : Bool
     {
         return Lambda.has(kwds, "override");
     }
-    
+
     function isStatic(kwds : Array<String>) : Bool
     {
         return Lambda.has(kwds, "static");
     }
-    
+
     function isPublic(kwds : Array<String>) : Bool
     {
         return Lambda.has(kwds, "public");
@@ -3229,12 +3234,12 @@ class Writer
     {
         return Lambda.has(kwds, "internal");
     }
-    
+
     function isFinal(kwds : Array<String>) : Bool
     {
         return Lambda.has(kwds, "final");
     }
-    
+
     function isProtected(kwds : Array<String>) : Bool
     {
         return Lambda.has(kwds, "protected");
@@ -3244,7 +3249,7 @@ class Writer
     {
         return Lambda.has(kwds, "get");
     }
-    
+
     function isSetter(kwds : Array<String>) : Bool
     {
         return Lambda.has(kwds, "set");
@@ -3254,7 +3259,7 @@ class Writer
     {
         return Lambda.has(kwds, "const");
     }
-    
+
     function istring(t : T, fixCase:Bool = true) : String {
         if(t == null) return null;
         return switch(t) {
@@ -3268,7 +3273,7 @@ class Writer
             default: null;
         }
     }
-    
+
     function tstring(t : T, isNativeGetSet:Bool = false, fixCase:Bool = true) : String {
         if(t == null) return null;
         return switch(t) {
@@ -3296,7 +3301,7 @@ class Writer
             case TFunction(p): p.map(function(it) return tstring(it)).join("->");
         }
     }
-    
+
     /**
      * Write an As3 package level function. As Haxe
      * does not have this, wrap it in a class definition
@@ -3345,10 +3350,10 @@ class Writer
             inits : []
         };
     }
-    
+
     function writeNamespaceDef(n : NamespaceDef)
     {
-        
+
     }
 
     function loopCases(cases : Array<SwitchCase>, def: Null<Array<Expr>>, testVar:Expr, out:Array<CaseDef>):Array<CaseDef> {
@@ -3370,7 +3375,7 @@ class Writer
             f = function(e, els) {
                 switch(e) {
                     case EBreak(lbl):
-                        if(lbl == null) 
+                        if(lbl == null)
                             els.pop(); // remove break
                         falls = false;
                     case EReturn(ex):
@@ -3397,12 +3402,12 @@ class Writer
                 el.push(EBreak(null));
                 nextCase.el.unshift(ESwitch(EParent(testVar), [{val:c.val, el: el, meta:[]}], null));
             }
-        } else { 
+        } else {
             outCase.vals.push(c .val);
             for(e in c.el)
                 outCase.el.push(e);
             for(m in c.meta)
-                outCase.meta.push(m);   
+                outCase.meta.push(m);
             if(falls) {
                 // last case before default, add default code since this case has no break
                 if(def != null)
@@ -3410,7 +3415,7 @@ class Writer
                         outCase.el.push(e);
             }
             out.unshift(outCase);
-        } 
+        }
         out = loopCases(cases, null, testVar, out);
         return out;
     }
@@ -3422,11 +3427,11 @@ class Writer
         else
             return " {";
     }
-    
+
     inline function closeb() : String {
         return cfg.newlineChars + indent() + "}";
     }
-    
+
     function write(s : String)
     {
         //set line as dirty if string contains something other
@@ -3436,7 +3441,7 @@ class Writer
 
         o.writeString(s);
     }
-    
+
     /** write Haxe "allow" metadata using current package */
     function writeAllow() {
         write("@:allow("+properCaseA(this.pack,false).join(".")+")");
@@ -3445,7 +3450,7 @@ class Writer
     }
 
     /**
-     * Writing for block and line comment. If 
+     * Writing for block and line comment. If
      * comment written on dirty line (not first text on line),
      * add extra whitespace before and after comment
      */
@@ -3461,14 +3466,14 @@ class Writer
     {
         write(indent() + s);
     }
-    
+
     function writeLine(s = "")
     {
         lineIsDirty = false;
 
         write(indent() + s + cfg.newlineChars);
     }
-    
+
     function writeNL(s = "")
     {
         lineIsDirty = false; //reset line dirtyness
@@ -3476,7 +3481,7 @@ class Writer
         write(s);
         write(cfg.newlineChars);
     }
-    
+
     inline function writeStartStatement() {
         if(cfg.bracesOnNewline) {
             writeNL();
@@ -3485,7 +3490,7 @@ class Writer
             write(" ");
         }
     }
-    
+
     inline function writeCloseStatement() {
         if(cfg.bracesOnNewline) {
             write(")");
@@ -3540,7 +3545,7 @@ class Writer
         o = old;
         return rv;
     }
-    
+
     function indent() : String
     {
         var b = [];
@@ -3548,7 +3553,7 @@ class Writer
             b.push(cfg.indentChars);
         return b.join("");
     }
-    
+
     public function process(program : Program, writer : Output):Map<String, Bool> {
         warnings = new Map();
 
@@ -3571,7 +3576,7 @@ class Writer
                 }
             default:
         }
-        
+
         o = writer;
         genTypes = program.genTypes;
         pack = program.pack;
@@ -3640,7 +3645,7 @@ class Writer
                 var p = path[i];
                 result[i] = p.charAt(0).toLowerCase() + p.substr(1);
             }
-        } 
+        }
         if(hasClassName) {
             var f = result[result.length - 1];
             var o = "";
@@ -3657,9 +3662,9 @@ class Writer
     }
 
     public static function removeUnderscores(id : String):String {
-        return id.split("_").map( 
+        return id.split("_").map(
             function (v:String) return v.length > 0 ? v.charAt(0).toUpperCase() + v.substr(1) : ""
         ).array().join("");
     }
-    
+
 }
