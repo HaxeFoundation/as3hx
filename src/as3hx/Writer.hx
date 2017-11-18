@@ -1020,7 +1020,6 @@ class Writer
                 if(!isString) write("Std.string(");
                 writeExpr(index);
                 if(!isString) write(")");
-                if(oldInLVA) {
                 if(oldInLVA && !inEField) {
                     write(", ");
                     writeExpr(rvalue);
