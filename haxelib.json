@@ -7,6 +7,6 @@
   "version": "1.0.6",
   "classPath": "src",
   "releasenote": "Continued improvements",
-  "contributors": [ "singmajesty" ],
+  "contributors": [ "singmajesty", "mastef" ],
   "dependencies": {}
 }

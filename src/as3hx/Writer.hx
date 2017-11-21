@@ -34,6 +34,7 @@ class Writer
     var context : Map<String,String>;
     var contextStack : Array<Map<String,String>>;
     var inArrayAccess : Bool;
+    var inEField : Bool;
     var inE4XFilter : Bool;
     var inLvalAssign : Bool; // current expr is lvalue in assignment (expr = valOfSomeSort)
     var rvalue : Expr;
@@ -51,6 +52,7 @@ class Writer
         this.context = new Map();
         this.contextStack = new Array();
         this.inArrayAccess = false;
+        this.inEField = false;
         this.inE4XFilter = false;
         this.inLvalAssign = false;
         this.lineIsDirty = false;
@@ -1008,7 +1010,7 @@ class Writer
                 var isString = (itype == "String");
                 var oldInLVA = inLvalAssign;
                 inLvalAssign = false;
-                if(oldInLVA)
+                if(oldInLVA && !inEField)
                     write("Reflect.setField(");
                 else
                     write("Reflect.field(");
@@ -1018,7 +1020,7 @@ class Writer
                 if(!isString) write("Std.string(");
                 writeExpr(index);
                 if(!isString) write(")");
-                if(oldInLVA) {
+                if(oldInLVA && !inEField) {
                     write(", ");
                     writeExpr(rvalue);
                     rvalue = null;
@@ -1548,6 +1550,7 @@ class Writer
             write(".node");
             write("." + f + ".innerData");
         } else {
+            inEField = true;
             switch(e) {
                 case EField(e2, f2):
                     //write("/* -- " +e2+ " " +getExprType(e2)+" */");
@@ -1596,6 +1599,7 @@ class Writer
             writeExpr(e);
             write("." + f);
         }
+        inEField = false;
         inArrayAccess = old;
         return Semi;
     }
