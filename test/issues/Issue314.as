@@ -1,6 +1,6 @@
 package {
-    public class Issue303 {
-        public function Issue303() {}
+    public class Issue314 {
+        public function Issue314() {}
         public function hide1(param1:*) : *
         {
             this[param1] = false;
