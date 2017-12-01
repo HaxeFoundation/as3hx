@@ -101,7 +101,7 @@ class ProgramParser {
                         if (!outsidePackage) {
                             meta.push(EImport(impt));
                         }
-                        //coner case : import for AS3 private class, for those,
+                        //corner case : import for AS3 private class, for those,
                         //need to add them to regular import list or to first
                         //class metadata so that they
                         //get written at the top of file, as in Haxe all imports

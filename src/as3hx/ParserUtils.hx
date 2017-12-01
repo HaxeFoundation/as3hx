@@ -76,7 +76,7 @@ class ParserUtils {
 
     /**
      * Takes an expression e and adds the comment 'tk' to it
-     * as a trailing comment, iif tk is a TCommented, discarding
+     * as a trailing comment, if tk is a TCommented, discarding
      * whatever the comment target token is.
      */
     public static function tailComment(e:Expr, tk:Token) : Expr {
