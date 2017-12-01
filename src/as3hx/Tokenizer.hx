@@ -155,7 +155,7 @@ class Tokenizer {
                     }
                     pushBackChar(char);
                     return TConst(CInt(buf.toString()));
-                case 'e'.code:
+                case 'e'.code | "E".code:
                     if( buf.toString() == '.' ) {
                         pushBackChar(char);
                         return TDot;
