@@ -112,40 +112,41 @@ class ProgramParser {
                             //no class def available, put in general import list
                             if (defs.length == 0) {
                                 imports.push(impt);
-                            }
-                            //else check if can add to first class meta
-                            switch (defs[0]) {
-                                case CDef(c):
-                                    //also put the newline preceding the import
-                                    //in the first class meta
-                                    if (meta.length > 0) {
-                                        switch(meta[meta.length - 1]) {
-                                            case ENL(e):
-                                                if (e == null) {
-                                                    c.meta.push(meta.pop());
-                                                }
-                                            default:
+                            } else {
+                                //else check if can add to first class meta
+                                switch (defs[0]) {
+                                    case CDef(c):
+                                        //also put the newline preceding the import
+                                        //in the first class meta
+                                        if (meta.length > 0) {
+                                            switch(meta[meta.length - 1]) {
+                                                case ENL(e):
+                                                    if (e == null) {
+                                                        c.meta.push(meta.pop());
+                                                    }
+                                                default:
+                                            }
                                         }
-                                    }
 
-                                    //remove extra new line generated for before
-                                    //class generation if not first moved import
-                                    if (hasOustidePackageMetaImport) {
-                                        c.meta.pop();
-                                        c.meta.pop();
-                                    }
-                                    
-                                    //put the import in the first class meta
-                                    c.meta.push(EImport(impt));
+                                        //remove extra new line generated for before
+                                        //class generation if not first moved import
+                                        if (hasOustidePackageMetaImport) {
+                                            c.meta.pop();
+                                            c.meta.pop();
+                                        }
+                                        
+                                        //put the import in the first class meta
+                                        c.meta.push(EImport(impt));
 
-                                    //add new line before class definition
-                                    c.meta.push(ENL(null));
-                                    c.meta.push(ENL(null));
+                                        //add new line before class definition
+                                        c.meta.push(ENL(null));
+                                        c.meta.push(ENL(null));
 
-                                    hasOustidePackageMetaImport = true;
+                                        hasOustidePackageMetaImport = true;
 
-                                //put in regular import list
-                                default: imports.push(impt);
+                                    //put in regular import list
+                                    default: imports.push(impt);
+                                }
                             }
                         }
                     }
