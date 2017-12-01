@@ -200,7 +200,7 @@ class ParserUtils {
                 return null;
         }
         
-        //if the arary is empty, type can't be defined
+        //if the array is empty, type can't be defined
         if (arrayDecl.length == 0) {
             return null;
         }
