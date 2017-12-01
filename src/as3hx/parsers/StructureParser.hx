@@ -102,9 +102,10 @@ class StructureParser {
                 EFor(inits, conds, incrs, parseExpr(false));
             }
         case "break":
-            var label = switch( tokenizer.peek() ) {
-            case TId(n): tokenizer.token(); n;
-            default: null;
+            var t = tokenizer.token();
+            var label = switch(ParserUtils.uncomment(t)) {
+                case TId(n): n;
+                default: tokenizer.add(t); null;
             };
             EBreak(label);
         case "continue": EContinue;
