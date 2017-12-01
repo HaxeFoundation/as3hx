@@ -1452,14 +1452,38 @@ class Writer
                     }
                 }
 
+
                 write("#if " + kwd);
-                writeECondComp(e);
-                writeNL();
-                if (e2 != null) {
-                    writeIndent("#else");
-                    writeECondComp(e2);
+                if (e == null) {
                     writeNL();
+                } else {
+                    var oneLiner:Bool = isOneLiner(e, true);
+                    if (oneLiner) {
+                        write(" ");
+                    }
+                    writeECondComp(e);
+                    if (oneLiner) {
+                        write(" ");
+                    } else {
+                        writeNL(indent());
+                    }
+                    if (e2 != null) {
+                        write("#else");
+                        oneLiner = isOneLiner(e2, true);
+                        if (oneLiner) {
+                            write(" ");
+                        } else {
+                            writeNL(indent());
+                        }
+                        writeECondComp(e2);
+                        if (oneLiner) {
+                            write(" ");
+                        } else {
+                            writeNL(indent());
+                        }
+                    }
                 }
+
                 writeIndent("#end // " + kwd);
                 writeNL();
                 writeIndent();
@@ -3110,15 +3134,21 @@ class Writer
      * Return wether the expression contained in an
      * "if" statement is a one liner with no block bracket
      */
-    function isOneLiner(e : Expr) : Bool {
+    function isOneLiner(e : Expr, threatOneLineBlockAsOneLiner:Bool = false) : Bool {
         return switch (e) {
             case ENL(e): //ignore newline
-                return isOneLiner(e);
+                return isOneLiner(e, threatOneLineBlockAsOneLiner);
 
             case ECommented(s,b,t,e): //ignore comment
-                return isOneLiner(e);
+                return isOneLiner(e, threatOneLineBlockAsOneLiner);
 
             case EBlock(e): //it is a regular block
+                if (threatOneLineBlockAsOneLiner && e.length == 1) {
+                    switch(e[0]) {
+                        case ENL(ex)://skip
+                        default: return true;
+                    }
+                }
                 return false;
 
             default: //if it begins with anything but a block, one liner
