@@ -78,6 +78,8 @@ class ExprParser {
             if (op.charAt(0) == "/") {
                 return parseExprNext(parseERegexp(tokenizer, op), 0);
             }
+            if (op == "+") // not valid unop prefix in haxe
+                return parseExpr(false);
             for(x in tokenizer.unopsPrefix)
                 if(x == op)
                     return ParserUtils.makeUnop(op, parseExpr(false));
