@@ -34,21 +34,27 @@ class ObjectParser {
             }
             tokenizer.ensure(TColon);
             fl.push({ name : id, e : parseExpr(false) });
-            tk = tokenizer.token();
-            switch(tk) {
-            case TCommented(s,b,e):
-                var o = fl[fl.length-1];
-                o.e = ParserUtils.tailComment(o.e, tk);
-            default:
+
+            var parseNextField:Bool = false;
+            var finishObject:Bool = false;
+            while (!parseNextField && !finishObject) {
+                tk = tokenizer.token();
+                switch(tk) {
+                case TCommented(s,b,e):
+                    var o = fl[fl.length-1];
+                    o.e = ParserUtils.tailComment(o.e, tk);
+                    tokenizer.add(e);
+                case TNL(e):
+                    tokenizer.add(e);
+                case TBrClose:
+                    finishObject = true;
+                case TComma:
+                    parseNextField = true;
+                default:
+                    ParserUtils.unexpected(tk);
+                }
             }
-            switch( ParserUtils.uncomment(tk) ) {
-            case TBrClose:
-                break;
-            case TComma:
-                null;
-            default:
-                ParserUtils.unexpected(tk);
-            }
+            if (finishObject) break;
         }
         var rv = parseExprNext(EObject(fl), 0);
         Debug.closeDebug("parseObject() -> " + rv, tokenizer.line);
