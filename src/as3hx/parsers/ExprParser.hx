@@ -18,6 +18,8 @@ class ExprParser {
         var tk = tokenizer.token();
         Debug.dbgln("parseExpr(" + tk + ")", tokenizer.line);
         switch( tk ) {
+        case TSemicolon:
+            return parseExpr(funcStart);
         case TId(id):
             var e = parseStructure(id);
             if(e == null)
@@ -286,11 +288,11 @@ class ExprParser {
             switch (t) {
                 case TPClose:
                     addToken(tk);
-                    return e1;    
+                    return e1;
                 case TCommented(s,b,t):
-						addToken(t);
-                    return ECommented(s,b,true, parseExprNext(e1, ++pendingNewLines));
-                default:  
+                    addToken(t);
+                    return ECommented(s, b, true, parseExprNext(e1, ++pendingNewLines));
+                default:
                     tokenizer.add(t);
                     return parseExprNext(e1, ++pendingNewLines);
             }
