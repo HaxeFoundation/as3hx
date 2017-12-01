@@ -75,23 +75,8 @@ class ExprParser {
             }
             return EBlock(a);
         case TOp(op):
-            if(op.charAt(0) == "/") {
-                var str = op.substr(1);
-                var prevChar = 0;
-                var c = tokenizer.nextChar();
-                while(c != "/".code || prevChar == "\\".code) {
-                    prevChar = c;
-                    str += String.fromCharCode(c);
-                    c = tokenizer.nextChar();
-                }
-                c = tokenizer.nextChar();
-                var opts = "";
-                while( c >= "a".code && c <= "z".code ) {
-                    opts += String.fromCharCode(c);
-                    c = tokenizer.nextChar();
-                }
-                tokenizer.pushBackChar(c);
-                return parseExprNext(ERegexp(str, opts), 0);
+            if (op.charAt(0) == "/") {
+                return parseExprNext(parseERegexp(tokenizer, op), 0);
             }
             for(x in tokenizer.unopsPrefix)
                 if(x == op)
@@ -392,5 +377,24 @@ class ExprParser {
             }
         }
         return args.filter(function(e) return !e.match(ENL(null)));
+    }
+    
+    public static function parseERegexp(tokenizer:Tokenizer, op:String):Expr {
+        var str = op.substr(1);
+        var prevChar = 0;
+        var c = tokenizer.nextChar();
+        while(c != "/".code || prevChar == "\\".code) {
+            prevChar = c;
+            str += String.fromCharCode(c);
+            c = tokenizer.nextChar();
+        }
+        c = tokenizer.nextChar();
+        var opts = "";
+        while( c >= "a".code && c <= "z".code ) {
+            opts += String.fromCharCode(c);
+            c = tokenizer.nextChar();
+        }
+        tokenizer.pushBackChar(c);
+        return ERegexp(str, opts);
     }
 }
