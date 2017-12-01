@@ -3331,7 +3331,7 @@ class Writer
                     default         : fixCase ? properCase(c, true) : c;
                 }
             case TComplex(e): buffer(function() { writeExpr(e); });
-            case TDictionary(k, v): "haxe.ds.ObjectMap<" + tstring(k) + ", " + tstring(v) + ">";
+            case TDictionary(k, v): (cfg.dictionaryToHash ? "haxe.ds.ObjectMap" : "Dictionary") + "<" + tstring(k) + "," + tstring(v) + ">";
             case TFunction(p): p.map(function(it) return tstring(it)).join("->");
         }
     }
