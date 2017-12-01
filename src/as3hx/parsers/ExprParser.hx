@@ -37,7 +37,7 @@ class ExprParser {
             
             Debug.dbgln("parseExpr: " + tk, tokenizer.line);
             
-            switch(ParserUtils.removeNewLine(tk, false)) {
+            switch(ParserUtils.removeNewLine(tk)) {
             case TBrClose:
                 if(funcStart) return EBlock([]);
                 return parseExprNext(EObject([]), 0);
@@ -45,7 +45,7 @@ class ExprParser {
                 var tk2 = tokenizer.token();
                 tokenizer.add(tk2);
                 tokenizer.add(tk);
-                switch( tk2 ) {
+                switch( ParserUtils.removeNewLine(tk2) ) {
                 case TColon:
                     return parseExprNext(parseObject(), 0);
                 default:
