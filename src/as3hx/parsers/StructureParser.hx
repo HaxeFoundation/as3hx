@@ -162,9 +162,19 @@ class StructureParser {
             while( ParserUtils.opt(tokenizer, TId("catch")) ) {
                 tokenizer.ensure(TPOpen);
                 var name = tokenizer.id();
-                tokenizer.ensure(TColon);
-                var t = parseType();
-                tokenizer.ensure(TPClose);
+                var t:T = null;
+                
+                var next = tokenizer.token();
+                switch (ParserUtils.uncomment(ParserUtils.removeNewLine(next))) {
+                case TColon:
+                    t = parseType();
+                    tokenizer.ensure(TPClose);
+                case TPClose:
+                    t = TComplex(EIdent("Dynamic"));
+                default:
+                    ParserUtils.unexpected(next);
+                }
+                
                 var e = parseExpr(false);
                 catches.push( { name : name, t : t, e : e } );
             }
