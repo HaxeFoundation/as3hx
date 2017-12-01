@@ -383,9 +383,20 @@ class ExprParser {
         var str = op.substr(1);
         var prevChar = 0;
         var c = tokenizer.nextChar();
-        while(c != "/".code || prevChar == "\\".code) {
-            prevChar = c;
+        var escapedChar:Bool = false;
+        var depth:Int = 0;
+        var inSquareBrackets:Bool = false;
+        while (depth != 0 || inSquareBrackets || c != "/".code || escapedChar) {
             str += String.fromCharCode(c);
+            if (!escapedChar) {
+                if (c == "(".code) depth++;
+                if (c == ")".code) depth--;
+                if (c == "[".code && !inSquareBrackets) inSquareBrackets = true;
+                if (c == "]".code && inSquareBrackets) inSquareBrackets = false;
+                escapedChar = c == "\\".code;
+            } else {
+                escapedChar = false;
+            }
             c = tokenizer.nextChar();
         }
         c = tokenizer.nextChar();
