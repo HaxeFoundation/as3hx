@@ -10,6 +10,9 @@ class ParserUtils {
     public static inline function escapeName(name:String):String {
         return switch(name) {
             case "cast": "__DOLLAR__cast";
+            case "enum": "_enum";
+            case "_enum": "__enum";
+            case "__enum": "___enum";
             default: StringTools.replace(name, "$", "__DOLLAR__");
         }
     }
