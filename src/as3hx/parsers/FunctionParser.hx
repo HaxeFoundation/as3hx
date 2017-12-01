@@ -61,10 +61,12 @@ class FunctionParser {
                         }
 
                         f.args.push( { name : name, t : t, val : val, exprs:expressions } );
+
+                        if( ParserUtils.opt2(tokenizer, TPClose, expressions) ) // ")" end of arguments
+                            break;
+
                         expressions = []; // reset for next argument
 
-                        if( ParserUtils.opt(tokenizer, TPClose) ) // ")" end of arguments
-                            break;
                         tokenizer.ensure(TComma);
 
                     case TCommented(s,b,t): //comment in between arguments
