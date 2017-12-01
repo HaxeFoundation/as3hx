@@ -3,6 +3,7 @@ package as3hx.parsers;
 import as3hx.Tokenizer;
 import as3hx.As3;
 import as3hx.Parser;
+import neko.Lib;
 
 class TypeParser {
 
@@ -36,10 +37,49 @@ class TypeParser {
             types.seen.push(TVector(t));
             return TVector(t);
         } 
-        if(cfg.dictionaryToHash && t == "Dictionary") {
-            var k = TPath(["Object"]);
-            var v = TPath(["Object"]);
-            types.seen.push(TDictionary(k, v));
+        if (t == "Dictionary") {
+            var k:T = null;
+            var v:T = null;
+            if (cfg.useAngleBracketsNotationForDictionaryTyping) {
+                var t2 = tokenizer.token();
+                switch(t2) {
+                    case TDot:
+                        tokenizer.ensure(TOp("<"));
+                        k = parseType();
+                        tokenizer.ensure(TComma);
+                        v = parseType();
+                        tokenizer.ensure(TOp(">"));
+                    default:
+                        tokenizer.add(t2);
+                }
+            } else {
+                var t2 = tokenizer.token();
+                switch(t2) {
+                    case TCommented(s, true, t3):
+                        var args = s.substring(2, s.length - 2).split(",");
+                        if (args.length == 2) {
+                            k = TPath([args[0]]);
+                            v = TPath([args[1]]);
+                            types.seen.push(TPath(["Dictionary"]));
+                            tokenizer.add(t3);
+                        }
+                    default:
+                        tokenizer.add(t2);
+                }
+            }
+            if (!cfg.dictionaryToHash) {
+                types.seen.push(TPath(["Dictionary"]));
+            }
+            if (k == null) {
+                k = TPath(["Object"]);
+            } else {
+                types.seen.push(k);
+            }
+            if (v == null) {
+                v = TPath(["Object"]);
+            } else {
+                types.seen.push(v);
+            }
             return TDictionary(k, v);
         }
         if(!cfg.functionToDynamic && t == "Function") {

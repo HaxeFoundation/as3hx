@@ -191,16 +191,24 @@ class ExprParser {
                 if( ParserUtils.opt(tokenizer, TNs) )
                     field = field + "::" + tokenizer.id();
             case TOp(op):
-                if( op != "<" || switch(e1) { case EIdent(v): v != "Vector" && v != "Dictionary"; default: true; } ) ParserUtils.unexpected(tk);
-                var t = parseType();
-
-                var v = switch(e1) {
-                    case EIdent(v): v;
-                    default: null;
+                if ( op != "<" ) ParserUtils.unexpected(tk);
+                var parseDictionaryTypes:Bool = false;
+                var parseVectorType:Bool = false;
+                switch(e1) {
+                    case EIdent(v):
+                        parseVectorType = v == "Vector";
+                        parseDictionaryTypes = v == "Dictionary" && cfg.dictionaryToHash && cfg.useAngleBracketsNotationForDictionaryTyping;
+                        if (!parseVectorType && !parseDictionaryTypes) {
+                            ParserUtils.unexpected(tk);
+                        }
+                    default:
+                        ParserUtils.unexpected(tk);
                 }
                 
+                var t = parseType();
+                
                 //for Dictionary, expected syntax is "Dictionary.<Key, Value>"
-                if (v == "Dictionary" && cfg.dictionaryToHash) {
+                if (parseDictionaryTypes) {
                     tokenizer.ensure(TComma);
                     tokenizer.id();
                 }

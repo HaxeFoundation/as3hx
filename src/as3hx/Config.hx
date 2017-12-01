@@ -48,6 +48,8 @@ class Config {
     public var conditionalVars: List<String>;
     /** Transform Dictionary.<Key, Value> to Map **/
     public var dictionaryToHash : Bool;
+    /** if set to false `Dictionary\/*KeyType,ValueType*\/` notation will be used. By default Dictionary.<KeyType,ValueType> notation is used **/
+    public var useAngleBracketsNotationForDictionaryTyping : Bool;
     /** write inferred type information into output **/
     public var debugInferredType : Bool;
     /** convert flexunit metadata and calls to munit form */
@@ -329,6 +331,7 @@ class Config {
             case "excludeList":         setExcludeField(el, new List());
             case "conditionalCompilationList": setConditionalVars(el, new List());
             case "dictionaryToHash":    setBoolField(el, false);
+            case "useAngleBracketsNotationForDictionaryTyping": setBoolField(el, true);
             case "useFastXML":          setBoolField(el, true);
             case "useCompat":          setBoolField(el, true);
             case "importPaths":          setImportPaths(el, []);
@@ -434,6 +437,7 @@ class Config {
     <excludeList />
     <conditionalCompilationList />
     <dictionaryToHash value="false" />
+    <useAngleBracketsNotationForDictionaryTyping value="true" />
     <verifyGeneratedFiles value="false" />
     <useFastXML value="true" />
     <useCompat value="true" />
