@@ -13,7 +13,7 @@ class PackageNameParser {
             case TDot:
                 tk = tokenizer.token();
                 switch(tk) {
-                case TId(id): a.push(id);
+                case TId(id): a.push(ParserUtils.escapeName(id));
                 default: ParserUtils.unexpected(tk);
                 }
             default:

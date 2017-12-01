@@ -1,5 +1,6 @@
 using StringTools;
 
+import as3hx.ParserUtils;
 import as3hx.Writer;
 import as3hx.Error;
 import sys.FileSystem;
@@ -71,7 +72,7 @@ class Run {
             }
         }
         for (name in subDirList) {
-            loop((src.addTrailingSlash() + name), (dst.addTrailingSlash() + name), excludes);
+            loop((src.addTrailingSlash() + name), (dst.addTrailingSlash() + ParserUtils.escapeName(name)), excludes);
         }
     }
 

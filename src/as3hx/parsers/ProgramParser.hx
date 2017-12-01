@@ -149,6 +149,9 @@ class ProgramParser {
                                 }
                             }
                         }
+                        for (i in 0...impt.length) {
+                            impt[i] = ParserUtils.escapeName(impt[i]);
+                        }
                     }
                     tokenizer.end();
                     continue;
