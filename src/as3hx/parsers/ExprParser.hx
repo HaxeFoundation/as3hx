@@ -153,6 +153,9 @@ class ExprParser {
                             // this is a user supplied conditional compilation variable
                             Debug.openDebug("conditional compilation: " + i + "::" + id, tokenizer.line);
                             switch (tokenizer.peek()) {
+                                case TSemicolon:
+                                    Debug.closeDebug("end conditional compilation: " + i + "::" + id, tokenizer.line);
+                                    return ECondComp(i + "_" + id, null, null);
                                 case TPClose:
                                     Debug.closeDebug("end conditional compilation: " + i + "::" + id, tokenizer.line);
                                     //corner case, the conditional compilation is within an "if" statement
@@ -285,7 +288,7 @@ class ExprParser {
                     addToken(tk);
                     return e1;    
                 case TCommented(s,b,t):
-                    addToken(t);
+						addToken(t);
                     return ECommented(s,b,true, parseExprNext(e1, ++pendingNewLines));
                 default:  
                     tokenizer.add(t);
