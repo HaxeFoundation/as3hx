@@ -244,14 +244,6 @@ class Config {
         #else
         if (args.length == 0) return;
         #end
-        var last = new Path(args[args.length - 1]).toString();
-        if (((StringTools.endsWith(last, "/") && last != "/") || StringTools.endsWith(last, "\\")) && !StringTools.endsWith(last, ":\\")) {
-            last = last.substr(0, last.length - 1);
-        }
-        if (FileSystem.exists(last) && FileSystem.isDirectory(last)) {
-            Sys.setCwd(last);
-            args.pop();
-        }
         var arg = "";
         while(true) {
             arg = args.shift();
@@ -288,6 +280,13 @@ class Config {
         if(arg == null) {
             usage();
             Sys.exit(1);
+        }
+        var cwd = new Path(arg).toString();
+        if (((StringTools.endsWith(cwd, "/") && cwd != "/") || StringTools.endsWith(cwd, "\\")) && !StringTools.endsWith(cwd, ":\\")) {
+            cwd = cwd.substr(0, cwd.length - 1);
+        }
+        if (FileSystem.exists(cwd) && FileSystem.isDirectory(cwd)) {
+            Sys.setCwd(cwd);
         }
         src = Run.directory(arg);
         dst = Run.directory(args.shift(), "./out");
