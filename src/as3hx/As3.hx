@@ -47,6 +47,7 @@ enum Expr {
     EMeta( m : Metadata );
     ETypedExpr( e : Expr, t : Null<T> );
     EDelete( e : Expr );
+    ENamespaceAccess( e : Expr, f : String );
     ECondComp( v : String, e : Expr, e2 : Expr );
     ENL( e : Expr);
     EImport(v : Array<String>);

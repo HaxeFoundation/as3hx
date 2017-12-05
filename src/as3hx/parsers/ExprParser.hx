@@ -188,8 +188,9 @@ class ExprParser {
             switch(ParserUtils.uncomment(ParserUtils.removeNewLine(tk))) {
             case TId(id):
                 field = ParserUtils.escapeName(id);
-                if( ParserUtils.opt(tokenizer, TNs) )
-                    field = field + "::" + tokenizer.id();
+                if( ParserUtils.opt(tokenizer, TNs) ) {
+                    return parseExprNext(EField(ENamespaceAccess(e1, field), tokenizer.id()), 0);
+                }
             case TOp(op):
                 if ( op != "<" ) ParserUtils.unexpected(tk);
                 var parseDictionaryTypes:Bool = false;

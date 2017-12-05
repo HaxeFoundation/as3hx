@@ -1,6 +1,7 @@
 package as3hx;
 
 import as3hx.As3;
+import as3hx.RebuildUtils.RebuildResult;
 import haxe.io.Output;
 
 using Lambda;
@@ -508,6 +509,36 @@ class Writer
 
         writeMetaData(field.meta);
 
+        var namespaceMetadata:Array<String> = null;
+        var typer:Typer = new Typer(cfg);
+        typer.enterClass(c);
+        if (isFun) {
+            switch(field.kind) {
+                case FFun(f): typer.enterFunction(f);
+                default:
+            };
+        }
+        var lookUpForNamespaces = function(e:Expr):RebuildResult {
+            switch(e) {
+                case ENamespaceAccess(e, f):
+                    var type:String = typer.getExprType(e);
+                    if (type == null) return null;
+                    if (typeImportMap.exists(type)) {
+                        var typePath:String = typeImportMap.get(type);
+                        if (typePath != null) {
+                            type = typePath;
+                        }
+                    }
+                    if (namespaceMetadata == null) {
+                        namespaceMetadata = [type];
+                    } else if (namespaceMetadata.indexOf(type) == -1) {
+                        namespaceMetadata.push(type);
+                    }
+                default:
+            }
+            return null;
+        }
+        
         var start = function(name:String, isFlashNative:Bool=false, isConstructor=false) {
             if((isGet || isSet) && cfg.getterSetterStyle == "combined") {
                 writeNL(isFlashNative ? "#if flash" : "#else");
@@ -530,6 +561,9 @@ class Writer
             }
             if(isFinal(field.kwds))
                 write("@:final ");
+            if (namespaceMetadata != null)
+                for (m in namespaceMetadata)
+                    write("@:access(" + m + ") ");
             if((isConstructor && isInternal(c.kwds)) || (!isInterface && isInternal(field.kwds)))
                 writeAllow();
             if(isOverride(field.kwds))
@@ -600,6 +634,7 @@ class Writer
 
                 write(";");
             case FFun( f ):
+                RebuildUtils.rebuild(f.expr, lookUpForNamespaces);
                 if (field.name == c.name)
                 {
                     start("new", false, true);
@@ -668,6 +703,10 @@ class Writer
             else if (field == f) {
                 foundSelf = true;
             }
+        }
+        
+        if (isFun) {
+            typer.leaveFunction();
         }
 
         //close conditional compilation block
@@ -1248,6 +1287,7 @@ class Writer
                     writeIndent("}");
                 }
             case ERegexp(str, opts): write('new ${getExprType(expr)}(' + eregQuote(str) + ', "' + opts + '")');
+            case ENamespaceAccess(e, f): writeExpr(e);
             case ESwitch( e, cases, def):
                 var newCases : Array<CaseDef> = new Array();
                 var writeTestVar = false;
