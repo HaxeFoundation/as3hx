@@ -37,12 +37,12 @@ class Writer
     var inEField : Bool;
     var inE4XFilter : Bool;
     var inLvalAssign : Bool; // current expr is lvalue in assignment (expr = valOfSomeSort)
-    var rvalue : Expr;
     var typeImportMap : Map<String,String>;
     var lineIsDirty : Bool; // current line contains some non-whitespace/indent characters
     var genTypes : Array<GenType>; //typedef generated while parsing
     var imported : Array<String>; // store written imports to prevent duplicated
     var pack : Array<String>; // stores the haxe file package
+    var rvalue : Expr;
 
     public function new(config:Config)
     {
@@ -2226,7 +2226,7 @@ class Writer
                 lvl += 2;
 
             inLvalAssign = oldInLVA;
-            if(rvalue != null) {
+            if(rvalue != null || op != '=') {
                 //check wether newline was found just before
                 //op while parsing
                 if (newLineAfterOp) {
@@ -3564,6 +3564,7 @@ class Writer
         //list of imported types must be reseted for each file,
         //as only one instance of Writer write all the files
         imported = [];
+        rvalue = null;
 
         var defined:Array<String> = [];
 
