@@ -44,6 +44,7 @@ class Writer
     var genTypes : Array<GenType>; //typedef generated while parsing
     var imported : Array<String>; // store written imports to prevent duplicated
     var pack : Array<String>; // stores the haxe file package
+    var typer:Typer;
 
     public function new(config:Config)
     {
@@ -61,6 +62,7 @@ class Writer
         this.typeImportMap = new Map<String,String>();
         this.genTypes = [];
         this.imported = [];
+        this.typer = new Typer(config);
 
         var doNotImportClasses = [
             "Array", "Bool", "Boolean", "Class", "Date",
@@ -89,6 +91,17 @@ class Writer
 
         for(c in cfg.importTypes.keys()) {
             this.typeImportMap.set(c, cfg.importTypes.get(c));
+        }
+    }
+    
+    public function register(p:Program):Void {
+        for (d in p.defs) {
+            switch(d) {
+                case CDef(c): typer.addClass(p.pack.join(".") + "." + c.name, c);
+                case FDef(f):
+                case NDef(n):
+                default:
+            }
         }
     }
 
