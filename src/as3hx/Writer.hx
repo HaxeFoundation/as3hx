@@ -1505,11 +1505,16 @@ class Writer
                     }
                 }
 
-
-                write("#if " + kwd);
-                if (e == null) {
-                    writeNL();
-                } else {
+				if (e == null) {
+					// compile time constant
+					if (cfg.conditionalCompilationConstantsClass != null && cfg.conditionalCompilationConstantsClass.length > 0) {
+						writeExpr(EField(EIdent(cfg.conditionalCompilationConstantsClass), kwd));
+					} else {
+						write(kwd);
+					}
+				} else {
+					// conditional compilation block
+                    write("#if " + kwd);
                     var oneLiner:Bool = isOneLiner(e, true);
                     if (oneLiner) {
                         write(" ");
@@ -1535,11 +1540,8 @@ class Writer
                             writeNL(indent());
                         }
                     }
+                    writeIndent("#end // " + kwd);
                 }
-
-                writeIndent("#end // " + kwd);
-                writeNL();
-                writeIndent();
                 rv = Ret;
 
             case ENL(e):

@@ -46,6 +46,8 @@ class Config {
     public var testCase : Bool;
     /** conditional compilation variables **/
     public var conditionalVars: List<String>;
+    /** Compile time constants implementation class package path for CONFIG::VAR -> `compile.Time.Constants`.CONFIG_VAR**/
+    public var conditionalCompilationConstantsClass : String;
     /** Transform Dictionary.<Key, Value> to Map **/
     public var dictionaryToHash : Bool;
     /** if set to false `Dictionary\/*KeyType,ValueType*\/` notation will be used. By default Dictionary.<KeyType,ValueType> notation is used **/
@@ -329,6 +331,7 @@ class Config {
             case "verifyGeneratedFiles": setBoolField(el, false);
             case "excludeList":         setExcludeField(el, new List());
             case "conditionalCompilationList": setConditionalVars(el, new List());
+            case "conditionalCompilationConstantsClass":setCharField(el, "");
             case "dictionaryToHash":    setBoolField(el, false);
             case "useAngleBracketsNotationForDictionaryTyping": setBoolField(el, true);
             case "useFastXML":          setBoolField(el, true);
@@ -435,6 +438,7 @@ class Config {
     <testCase value="false" />
     <excludeList />
     <conditionalCompilationList />
+    <conditionalCompilationConstantsClass value="" />
     <dictionaryToHash value="false" />
     <useAngleBracketsNotationForDictionaryTyping value="true" />
     <verifyGeneratedFiles value="false" />
