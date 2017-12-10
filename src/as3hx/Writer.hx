@@ -1629,6 +1629,18 @@ class Writer
             write(".node");
             write("." + f + ".innerData");
         } else {
+			if (t2 == "Date") {
+				switch(f) {
+				case "fullYear"	: return writeExpr(ECall(EField(e, "getFullYear"), []));
+				case "month"	: return writeExpr(ECall(EField(e, "getMonth"), []));
+				case "day"		: return writeExpr(ECall(EField(e, "getDay"), []));
+				case "hours"	: return writeExpr(ECall(EField(e, "getHours"), []));
+				case "minutes"	: return writeExpr(ECall(EField(e, "getMinutes"), []));
+				case "seconds"	: return writeExpr(ECall(EField(e, "getSeconds"), []));
+				case "milliseconds": return writeExpr(EParent(EBinop("%", ECall(EField(e, "getTime"), []), EConst(CInt("1000")), false)));
+				default:
+				}
+			}
             inEField = true;
             switch(e) {
                 case EField(e2, f2):
