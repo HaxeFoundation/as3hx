@@ -1732,12 +1732,12 @@ class Writer
                     switch(rvalue) {
                         case ETypedExpr(e, t) if(needCastToInt(e)):
                             rvalue = switch(e) {
-                                case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiceOp(op)):
+                                case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiseOp(op)):
                                     if(needCastToInt(e1)) e1 = getCastToIntExpr(e1);
                                     if(needCastToInt(e2)) e2 = getCastToIntExpr(e2);
                                     EBinop(op, e1, e2, newLineAfterOp);
                                 case EUnop(op, prefix, ex):
-                                    if(isBitwiceOp(op) && needCastToInt(ex)) EUnop(op, prefix, getCastToIntExpr(ex));
+                                    if(isBitwiseOp(op) && needCastToInt(ex)) EUnop(op, prefix, getCastToIntExpr(ex));
                                     else e;
                                 default: getCastToIntExpr(e);
                             }
@@ -2395,7 +2395,7 @@ class Writer
     inline function needCastToInt(e:Expr):Bool {
         var isCompatParseInt:Expr->Bool = function(e) return e.match(ECall(EField(EIdent("as3hx.Compat"), "parseInt"), _));
         return switch(e) {
-            case EBinop(op,e1,_,_): !isCompatParseInt(e1) && (isBitwiceOp(op) || isNumericOp(op));
+            case EBinop(op,e1,_,_): !isCompatParseInt(e1) && (isBitwiseOp(op) || isNumericOp(op));
             case EUnop(op,_,e): op == "~" && !isCompatParseInt(e);
             case EIdent(_) | EConst(_): getExprType(e) == "Float";
             case EParent(e): needCastToInt(e);
@@ -2846,7 +2846,7 @@ class Writer
                     default: EBinop("!=", e, EIdent("null"), false);
                 }
             case EBinop(op, e2, e3, n):
-                if(isBitwiceOp(op)) return EBinop("!=", EParent(e), EConst(CInt("0")), false);
+                if(isBitwiseOp(op)) return EBinop("!=", EParent(e), EConst(CInt("0")), false);
                 if(isNumericConst(e2) || isNumericConst(e3)) return null;
                 if(op == "==" || op == "!=" || op == "!==" || op == "===") return null;
                 if(op == "is" || op == "in" || op == "as") return null;
@@ -3188,7 +3188,7 @@ class Writer
                 if(isIntExpr(lvalue)) {
                     if(needCastToInt(rvalue)) {
                         switch(rvalue) {
-                            case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiceOp(op)):  rvalue = getResultForNumerics(op, e1, e2);
+                            case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiseOp(op)):  rvalue = getResultForNumerics(op, e1, e2);
                             case EUnop(op, prefix, e) if(op == "~"):
                                 if(needCastToInt(e)) e = getCastToIntExpr(e);
                                 rvalue = EUnop(op, prefix, e);
@@ -3322,7 +3322,7 @@ class Writer
         default: false;
     }
 
-    inline function isBitwiceOp(s:String):Bool return switch(s) {
+    inline function isBitwiseOp(s:String):Bool return switch(s) {
         case "<<" | ">>" | ">>>" | "^" | "|" | "&" | "~": true;
         default: false;
     }
