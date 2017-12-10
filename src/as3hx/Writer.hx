@@ -1145,6 +1145,10 @@ class Writer
         switch(e) {
             case ETypedExpr(e2, t): return tstring(t);
             case EField(e2, f):
+                switch(e2) {
+                    case EIdent("this"): return contextStack[0].get(f);
+                    default:
+                }
                 var t2 = getExprType(e2);
                 //write("/* e2 " + e2 + "."+f+" type: "+t2+" */");
                 switch(t2) {
