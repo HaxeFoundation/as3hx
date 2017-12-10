@@ -1242,7 +1242,7 @@ class Writer
         if(expr == null) return None;
         var rv = Semi;
         switch(expr) {
-            case ETypedExpr(e, t): rv = writeExpr(e);
+            case ETypedExpr(e, t): rv = writeETypedExpr(e, t);
             case EConst(c): write(getConst(c));
             case EIdent(v): writeModifiedIdent(v);
             case EVars(vars): rv = writeEVars(vars);
@@ -2302,13 +2302,20 @@ class Writer
             if (eBinop != null) return writeExpr(eBinop);
 
             var oldInLVA = inLvalAssign;
-            switch(e1) {
-                case EArray(_, _): if(op.indexOf("=") != -1) rvalue = e2;
-                case ECall(_, _): rvalue = e1;
-                case _:
+            if (op.indexOf("=") != -1) {
+                if (op == "=") inLvalAssign = true;
+                rvalue = e2;
+                var t = getExprType(e1);
+                if (t != null) {
+                    e2 = ETypedExpr(e2, TPath([t]));
+                }
+            } else {
+                switch(e1) {
+                    case EArrayDecl(_): rvalue = e2;
+                    case ECall(_, _): rvalue = e1;
+                    case _:
+                }
             }
-            if(op.indexOf("=") != -1 || e1.match(EArrayDecl(_))) rvalue = e2;
-            if(op == "=") inLvalAssign = true;
 
             switch(e1) {
                 case EIdent(s): writeModifiedIdent(s);
@@ -2659,6 +2666,33 @@ class Writer
             result = writeExpr(e);
         }
         return result;
+    }
+
+    function writeETypedExpr(e:Expr, t:T):BlockEnd {
+        switch(e) {
+            case ENL(e2):
+                return writeExpr(ENL(ETypedExpr(e2, t)));
+            default:
+        }
+        // fix of such constructions var tail:Signal = s || p;
+        switch(tstring(t)) {
+            case "Bool":
+                e = rebuildIfExpr(e);
+            case "Int":
+                if (getExprType(e) != "Int") {
+                    e = getCastToIntExpr(e);
+                    //e = ECall(EField(EIdent("Std"), "int"), [ETypedExpr(e, null)]);
+                }
+            default:
+                switch (e) {
+                    case EBinop("||", e1, e2, nl):
+                        e = ETernary(EBinop("!=", e1, EIdent("null"), false), e1, e2);
+                    case EBinop("&&", e1, e2, nl):
+                        e = ETernary(EBinop("==", e1, EIdent("null"), false), e1, e2);
+                    default:
+                }
+        }
+        return writeExpr(e);
     }
 
     inline function writeEDelete(e:Expr) {
@@ -3280,6 +3314,8 @@ class Writer
     }
 
     inline function isIntType(s:String):Bool return s == "Int";
+
+    inline function isBoolType(s:String):Bool return s == "Bool";
 
     inline function isNumericOp(s:String):Bool return switch(s) {
         case "/" | "-" | "+" | "*" | "%" | "--" | "++": true;
