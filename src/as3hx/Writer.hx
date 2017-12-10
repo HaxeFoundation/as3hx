@@ -93,7 +93,7 @@ class Writer
             this.typeImportMap.set(c, cfg.importTypes.get(c));
         }
     }
-    
+
     public function register(p:Program):Void {
         for (d in p.defs) {
             switch(d) {
@@ -551,7 +551,7 @@ class Writer
             }
             return null;
         }
-        
+
         var start = function(name:String, isFlashNative:Bool=false, isConstructor=false) {
             if((isGet || isSet) && cfg.getterSetterStyle == "combined") {
                 writeNL(isFlashNative ? "#if flash" : "#else");
@@ -717,7 +717,7 @@ class Writer
                 foundSelf = true;
             }
         }
-        
+
         if (isFun) {
             typer.leaveFunction();
         }
@@ -1505,15 +1505,15 @@ class Writer
                     }
                 }
 
-				if (e == null) {
-					// compile time constant
-					if (cfg.conditionalCompilationConstantsClass != null && cfg.conditionalCompilationConstantsClass.length > 0) {
-						writeExpr(EField(EIdent(cfg.conditionalCompilationConstantsClass), kwd));
-					} else {
-						write(kwd);
-					}
-				} else {
-					// conditional compilation block
+                if (e == null) {
+                    // compile time constant
+                    if (cfg.conditionalCompilationConstantsClass != null && cfg.conditionalCompilationConstantsClass.length > 0) {
+                        writeExpr(EField(EIdent(cfg.conditionalCompilationConstantsClass), kwd));
+                    } else {
+                        write(kwd);
+                    }
+                } else {
+                    // conditional compilation block
                     write("#if " + kwd);
                     var oneLiner:Bool = isOneLiner(e, true);
                     if (oneLiner) {
