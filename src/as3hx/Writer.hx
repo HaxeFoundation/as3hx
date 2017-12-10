@@ -1151,6 +1151,9 @@ class Writer
                 }
                 var t2 = getExprType(e2);
                 //write("/* e2 " + e2 + "."+f+" type: "+t2+" */");
+                if (t2 != null && (t2.indexOf("Array<") == 0 || t2.indexOf("Vector<") == 0) && f == "length") {
+                    return "Int";
+                }
                 switch(t2) {
                     case "FastXML":
                         return switch(f) {
@@ -2833,8 +2836,8 @@ class Writer
         }
         switch(e) {
             case EArray(_,_): return EBinop("!=", e, EIdent("null"), false);
-            case EIdent(id):
-                if(id == "null") return null;
+            case EIdent("null"): return null;
+            case EIdent(_), EField(_, _):
                 var t = getExprType(e);
                 if(t == null || t == "Bool") return null;
                 return switch(t) {
@@ -2882,7 +2885,6 @@ class Writer
                 if(r2 == null) return null;
                 return EParent(r2);
             case ECall(e2, params): //These would require a full typer
-            case EField(e2, f): null;
             case ENL(e):
                 var expr = rebuildIfExpr(e);
                 if (expr == null) return null;
