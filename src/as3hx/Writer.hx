@@ -2680,7 +2680,10 @@ class Writer
         // fix of such constructions var tail:Signal = s || p;
         switch(tstring(t)) {
             case "Bool":
-                e = rebuildIfExpr(e);
+                var re:Expr = rebuildIfExpr(e);
+                if (re != null) {
+                    e = re;
+                }
             case "Int":
                 if (getExprType(e) != "Int") {
                     e = getCastToIntExpr(e);
@@ -2874,7 +2877,8 @@ class Writer
                         case EParent(e): f(e);
                         default: null;
                     }
-                    return f(r2);
+                    var r3 = f(r2);
+                    return r3 == null ? EUnop(op, prefix, r2) : r3;
                 }
                 var t = getExprType(e2);
                 if(t == null) return null;
@@ -3163,6 +3167,7 @@ class Writer
                         case "Bool": lvalue;
                         case "Int" | "UInt" | "Float" | _: rebuildIfExpr(lvalue);
                     }
+                    if (cond == null) cond = lvalue;
                     if(isDynamicType(type)) {
                         cond = switch(cond) {
                             case EBinop(op, e1, e2, false) if(op == "!="): EBinop("==", e1, e2, false);
