@@ -40,6 +40,8 @@ class Config {
     public var setterMethods : String;
     /** getter/setter output style **/
     public var getterSetterStyle : String;
+    /** top level package for classes defined in flash.* package in as3. 'flash' is default, but `openfl` or `nme` can be used for example **/
+    public var flashTopLevelPackage : String;
     /** list of paths to exclude from parsing **/
     public var excludePaths : List<String>;
     /** Used only for test cases for compiler to ignore Sprite imports and extends **/
@@ -77,13 +79,13 @@ class Config {
      * a list of absolute or relative directory paths.
      * Haxe files are found in this path and added to a map
      * of imported types used for implicit imports used
-     * in converted code 
+     * in converted code
      */
     public var importPaths : Array<String>;
 
     /**
      * A map where the key is the name fo a Haxe type
-     * and the value is its' fully qualified name, 
+     * and the value is its' fully qualified name,
      * as found in one of the provided importPaths
      */
     public var importTypes : StringMap<String>;
@@ -329,6 +331,7 @@ class Config {
             case "errorContinue":       setBoolField(el, true);
             case "testCase":            setBoolField(el, false);
             case "verifyGeneratedFiles": setBoolField(el, false);
+            case "flashTopLevelPackage":setCharField(el, "flash");
             case "excludeList":         setExcludeField(el, new List());
             case "conditionalCompilationList": setConditionalVars(el, new List());
             case "conditionalCompilationConstantsClass":setCharField(el, "");
@@ -436,6 +439,7 @@ class Config {
     <!-- Style of getter and setter output. haxe, flash or combined -->
     <getterSetterStyle value="haxe" />
     <testCase value="false" />
+    <flashTopLevelPackage value="flash"/>
     <excludeList />
     <conditionalCompilationList />
     <conditionalCompilationConstantsClass value="" />

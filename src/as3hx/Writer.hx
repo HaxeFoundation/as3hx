@@ -205,7 +205,13 @@ class Writer
 
     function writeImport(i : Array<String>)
     {
-        var type = properCaseA(i, true).join(".");
+        var type;
+        if (i[0] == "flash") {
+            i[0] = cfg.flashTopLevelPackage;
+            type = i.join(".");
+        } else {
+            type = properCaseA(i, true).join(".");
+        }
         if (!Lambda.has(this.imported, type)) { //prevent duplicate import
             write("import " + type + ";");
             imported.push(type);
