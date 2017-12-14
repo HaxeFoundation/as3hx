@@ -1,9 +1,16 @@
 package {
-    public class Issue103 {
-        public function Issue103() {
-            var string:String = "";
-            var boolean:Boolean = true;
-            var number:Number = 10.1;
+    public class Issue {
+        public function Issue() {
+            var a:Array = [1, 2, 3];
+            for(var i:int = 0; i < a.length; i++) {
+                trace(a.pop());
+            }
+            for(var i:int = 0; i < a.pop(); i++) {
+                trace(i);
+            }
+            for(var i:int = 0; i < a.pop() + 10; i++) {
+                trace(i);
+            }
         }
     }
 }
