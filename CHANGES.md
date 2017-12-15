@@ -6,7 +6,8 @@
  - Fixed conversion of `array[index]['key']`. fixes #261
  - Fixed conversion of `setTimeout(callback, (a + b) * 1000)`. fixes #293
  - Fixed conversion of `parseInt('0xFFFFFF', 16)`. fixes #265
- - Loops will be converted to `while` insted of `for` if the condition should be checked continuously, e.g. `i < a.length`. fixes #296
+ - Loops will be converted to `while` insted of `for` if the condition should be checked continuously, e.g. `for(var i = 5; i < a.length; a.pop())`. fixes #296
+ - Loops will be converted to `while` insted of `for` if the condition should be checked continuously, e.g. `for(var i = 0; some(i); i++)`. fixes #296
 
 ## 2017-10-24(1.0.6)
  - Fixed conversion of `default` keyword within `switch` statements. fixes #273
