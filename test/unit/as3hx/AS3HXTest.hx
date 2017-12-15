@@ -571,7 +571,7 @@ class AS3HXTest {
         generate("Issue27.as", "Issue27.hx");
     }
 
-    @Test("for(var i = 0; i < a.lenght; i++) -> while(i < a.length)")
+    @Test("for(var i = 5; i < a.length; a.pop()) -> while(i < a.length)")
     public function issue296() {
         generate("Issue296.as", "Issue296.hx");
     }
