@@ -882,7 +882,7 @@ class Writer
         var result = Semi;
         if(loopIncrements != null && loopIncrements.length > 0) {
             var exp = loopIncrements.slice(0);
-            exp.push(EIdent("continue"));
+            exp.push(ENL(EIdent("continue")));
             result = writeExpr(EBlock(exp));
         } else {
             write("continue");
@@ -1958,26 +1958,35 @@ class Writer
     inline function writeEFor(inits:Array<Expr>, conds:Array<Expr>, incrs:Array<Expr>, e:Expr):BlockEnd {
         //Sys.println('inits: ${inits}; conds: ${conds}; incrs: ${incrs}');
         openContext();
-        var useWhileLoop:Void->Bool = function() {
-            if (inits.empty() || conds.empty()) return true;
+        function useWhileLoop():Bool {
+            if(inits.empty() || conds.empty()) return true;
             switch(inits[0]) {
                 case EVars(vars) if(vars.length > 1): return true;
-                case EIdent(v): return true;
+                case EIdent(_): return true;
                 default:
             }
-            if (conds[0].match(EBinop("&&" | "||", _, _, _))) return true;
+            switch(conds[0]) {
+                case EBinop("&&" | "||", _, _, _): return true;
+                case EBinop(_, e1, e2, _):
+                    function f(e:Expr):Bool return switch(e) {
+                        case ECall(_, _) | EField(_, _) | EBinop(_, _, _, _): true;
+                        case _: false;
+                    }
+                    if(f(e1) || f(e2)) return true;
+                case _:
+            }
             //index must be incremented by 1
-            if (incrs.length == 1) {
+            if(incrs.length == 1) {
                 return switch(incrs[0]) {
                     case EUnop(op, _, _): op != "++";
-                    case EBinop(openb,_,_,_): true;
+                    case EBinop(_, _, _, _): true;
                     default: false;
                 }
             }
             return true;
         }
         var isWhileLoop = useWhileLoop();
-        if (!isWhileLoop) {
+        if(!isWhileLoop) {
             write("for (");
             switch(inits[0]) {
                 case EVars(v):
@@ -2028,7 +2037,7 @@ class Writer
             }
             if(!inits.empty()) writeIndent();
             write("while (");
-            if (conds.empty()) {
+            if(conds.empty()) {
                 write("true");
             } else {
                 for (i in 0...conds.length) {
@@ -2041,12 +2050,44 @@ class Writer
         }
         var es = formatBlockBody(e);
         //don't write increments for a "for" loop
-        if (isWhileLoop) {
-            for (incr in incrs) {
+        if(isWhileLoop) {
+            for(incr in incrs.copy()) {
+                if(es.length > 0) {
+                    function f(expr:Expr):Bool return switch(expr) {
+                        case ENL(e): f(e);
+                        case EBlock(e):
+                            for(i in 0...e.length) {
+                                if(e[i].match(EContinue)) {
+                                    e.insert(i, ENL(incr));
+                                    e[i + 1] = ENL(EContinue);
+                                    return true;
+                                }
+                            }
+                            false;
+                        case EIf(_, e1, e2): f(e1) || f(e2);
+                        case _: false;
+                    }
+                    var last = es[es.length - 1];
+                    if(f(last)) incrs.shift();
+                    else {
+                        function f(expr:Expr):Bool return switch(expr) {
+                            case ENL(e): f(e);
+                            case EContinue:
+                                es.insert(es.length - 1, ENL(incr));
+                                es[es.length - 1] = ENL(EContinue);
+                                true;
+                            case _: false;
+                        }
+                        if(f(last)) {
+                            incrs.shift();
+                            continue;
+                        }
+                    }
+                }
                 es.push(ENL(incr));
             }
         }
-        writeLoop(isWhileLoop ? incrs : [], function() { writeExpr(EBlock(es)); });
+        writeLoop(isWhileLoop ? incrs : [], writeExpr.bind(EBlock(es)));
         closeContext();
         return None;
     }
@@ -2291,7 +2332,7 @@ class Writer
     }
 
     inline function needCastToInt(e:Expr):Bool {
-        var isCompatParseInt:Expr->Bool = function(e) return e.match(ECall(EField(EIdent("as3hx.Compat"), "parseInt"), _));
+        function isCompatParseInt(e:Expr):Bool return e.match(ECall(EField(EIdent("as3hx.Compat"), "parseInt"), _));
         return switch(e) {
             case EBinop(op,e1,_,_): !isCompatParseInt(e1) && (isBitwiceOp(op) || isNumericOp(op));
             case EUnop(op,_,e): op == "~" && !isCompatParseInt(e);
@@ -2332,7 +2373,7 @@ class Writer
     }
 
     // translate FlexUnit to munit meta data, if present.
-    function writeMunitMetadata(m:Metadata) : Bool {
+    function writeMunitMetadata(m:Metadata):Bool {
         var rv : Bool = false;
         switch (m.name) {
             case "BeforeClass", "AfterClass":
@@ -3191,7 +3232,7 @@ class Writer
     }
 
     inline function isBooleanOp(s:String):Bool return switch(s) {
-        case "||" | "&&" | "!=" | "!==" | "==" | "===": true;
+        case "||" | "&&" | "!=" | "!==" | "==" | "===" | "<" | ">" | "!": true;
         case _: false;
     }
 
