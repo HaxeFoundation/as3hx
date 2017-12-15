@@ -2053,24 +2053,36 @@ class Writer
         if(isWhileLoop) {
             for(incr in incrs.copy()) {
                 if(es.length > 0) {
-                    function f(expr:Expr):Bool {
-                        return switch(expr) {
-                            case ENL(e): f(e);
-                            case EBlock(e):
-                                for(i in 0...e.length) {
-                                    if(e[i].match(EContinue)) {
-                                        e.insert(i, ENL(incr));
-                                        e[i + 1] = ENL(e[i + 1]);
-                                        return true;
-                                    }
+                    function f(expr:Expr):Bool return switch(expr) {
+                        case ENL(e): f(e);
+                        case EBlock(e):
+                            for(i in 0...e.length) {
+                                if(e[i].match(EContinue)) {
+                                    e.insert(i, ENL(incr));
+                                    e[i + 1] = ENL(EContinue);
+                                    return true;
                                 }
-                                e.push(ENL(incr));
+                            }
+                            false;
+                        case EIf(_, e1, e2): f(e1) || f(e2);
+                        case _: false;
+                    }
+                    var last = es[es.length - 1];
+                    if(f(last)) incrs.shift();
+                    else {
+                        function f(expr:Expr):Bool return switch(expr) {
+                            case ENL(e): f(e);
+                            case EContinue:
+                                es.insert(es.length - 1, ENL(incr));
+                                es[es.length - 1] = ENL(EContinue);
                                 true;
-                            case EIf(_, e, _): f(e); 
                             case _: false;
                         }
+                        if(f(last)) {
+                            incrs.shift();
+                            continue;
+                        }
                     }
-                    if(f(es[es.length - 1])) incrs.shift();
                 }
                 es.push(ENL(incr));
             }
