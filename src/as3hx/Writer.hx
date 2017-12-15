@@ -1973,6 +1973,7 @@ class Writer
                         case _: false;
                     }
                     if(f(e1) || f(e2)) return true;
+                case ECall(_, _): return true;
                 case _:
             }
             //index must be incremented by 1
