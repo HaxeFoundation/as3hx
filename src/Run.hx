@@ -1,5 +1,7 @@
 using StringTools;
 
+import as3hx.As3.Program;
+import as3hx.Config;
 import as3hx.ParserUtils;
 import as3hx.Writer;
 import as3hx.Error;
@@ -8,7 +10,20 @@ import sys.io.File;
 using haxe.io.Path;
 
 class Run {
-    
+
+    static function writeFile(name:String, program:Program, cfg:Config, f:String, src:String):Void {
+        Sys.println("target HX file: " + name);
+        var fw = File.write(name, false);
+        warnings.set(name, writer.process(program, fw));
+        fw.close();
+        if(cfg.postProcessor != "") {
+            postProcessor(cfg.postProcessor, name);
+        }
+        if(cfg.verifyGeneratedFiles) {
+            verifyGeneratedFile(f, src, name);
+        }
+    }
+
     static function errorString(e : Error) {
         return switch(e) {
             case EInvalidChar(c): "Invalid char '" + String.fromCharCode(c) + "' 0x" + StringTools.hex(c, 2);
@@ -18,7 +33,7 @@ class Run {
             case EUnterminatedXML: "Unterminated XML";
         }
     }
-    
+
     static function loop(src:String, dst:String, excludes:List<String>) {
         if (src == null) {
             Sys.println("source path cannot be null");
@@ -29,7 +44,9 @@ class Run {
         src = src.normalize();
         dst = dst.normalize();
         var subDirList = new Array<String>();
-        var writer = new Writer(cfg);
+        if (!cfg.useFullTyping) {
+            writer = new Writer(cfg);
+        }
         for(f in FileSystem.readDirectory(src)) {
             var srcChildAbsPath = src.addTrailingSlash() + f;
             var dstChildAbsPath = dst.addTrailingSlash() + f;
@@ -59,15 +76,11 @@ class Run {
                 var out = dst;
                 ensureDirectoryExists(out);
                 var name = out.addTrailingSlash() + Writer.properCase(f.substr(0, -3), true) + ".hx";
-                Sys.println("target HX file: " + name);
-                var fw = File.write(name, false);
-                warnings.set(name, writer.process(program, fw));
-                fw.close();
-                if(cfg.postProcessor != "") {
-                    postProcessor(cfg.postProcessor, name);
-                }
-                if(cfg.verifyGeneratedFiles) {
-                    verifyGeneratedFile(f, src, name);
+                if (cfg.useFullTyping) {
+                    writer.register(program);
+                    files.push(new FileEntry(program, name, f, src));
+                } else {
+                    writeFile(name, program, cfg, f, src);
                 }
             }
         }
@@ -105,10 +118,20 @@ class Run {
     static var errors : Array<String> = new Array();
     static var warnings : Map<String,Map<String,Bool>> = new Map();
     static var cfg : as3hx.Config;
-    
+    static var writer:Writer;
+    static var files:Array<FileEntry> = new Array<FileEntry>();
+
     public static function main() {
         cfg = new as3hx.Config();
+        if (cfg.useFullTyping) {
+            writer = new Writer(cfg);
+        }
         loop(cfg.src, cfg.dst, cfg.excludePaths);
+        if (cfg.useFullTyping) {
+            for (f in files) {
+                writeFile(f.name, f.program, cfg, f.f, f.src);
+            }
+        }
         Sys.println("");
         Writer.showWarnings(warnings);
         Sys.println("");
@@ -139,7 +162,7 @@ class Run {
             }
         }
     }
-    
+
     static var reabs = ~/^([a-z]:|\\\\|\/)/i;
     public static function directory(dir : String, alt = ".") {
         if (dir == null)
@@ -150,5 +173,18 @@ class Run {
             dir = Sys.getCwd() + dir;
         dir = StringTools.replace(dir, "\\", "/");
         return dir;
+    }
+}
+
+class FileEntry {
+    public var program(default, null):Program;
+    public var name(default, null):String;
+    public var f(default, null):String;
+    public var src(default, null):String;
+    public function new(program:Program, name:String, f:String, src:String):Void {
+        this.program = program;
+        this.name = name;
+        this.f = f;
+        this.src = src;
     }
 }

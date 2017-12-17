@@ -34,6 +34,8 @@ class Config {
     public var errorContinue : Bool;
     /** Write Dynamic for Function **/
     public var functionToDynamic : Bool;
+    /** Allow full typing of available classes. App will firstly parse all classes into memory and then try to apply type info while writing all classes in second phase **/
+    public var useFullTyping : Bool;
     /** getter function template **/
     public var getterMethods : String;
     /** setter function template **/
@@ -322,6 +324,7 @@ class Config {
             case "vectorToArray":       setBoolField(el, true);
             case "guessCasts":          setBoolField(el, true);
             case "functionToDynamic":   setBoolField(el, false);
+            case "useFullTyping":       setBoolField(el, false);
             case "getterMethods":       setCharField(el, "get_%I");
             case "setterMethods":       setCharField(el, "set_%I");
             case "getterSetterStyle":   setCharField(el, "haxe", ["haxe","flash","combined"]);
@@ -432,6 +435,7 @@ class Config {
     <vectorToArray value="true" />
     <guessCasts value="true" />
     <functionToDynamic value="false" />
+    <useFullTyping value="false" />
     <getterMethods value="get_%I" />
     <setterMethods value="set_%I" />
     <forcePrivateSetter value="true" />

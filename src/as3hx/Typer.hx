@@ -10,23 +10,30 @@ import neko.Lib;
 /**
  * AS3 typing allows multiple equal variable type declarations in one method and opens new variable context only inside function, not in any {} block
  */
-class Typer 
+class Typer
 {
     var cfg:Config;
     var classes : Map<String,Map<String,String>> = new Map<String,Map<String,String>>();
     var context : Map<String,String> = new Map<String,String>();
     var contextStack : Array<Map<String,String>> = [];
-    
+
     public function new(cfg:Config) {
         this.cfg = cfg;
     }
-    
+
     public function getExprType(e:Expr):Null<String> {
         switch(e) {
             case ETypedExpr(e2, t): return tstring(t);
             case EField(e2, f):
+                switch(e2) {
+                    case EIdent("this"): return contextStack[0].get(f);
+                    default:
+                }
                 var t2 = getExprType(e2);
                 //write("/* e2 " + e2 + "."+f+" type: "+t2+" */");
+                if (t2 != null && (t2.indexOf("Array<") == 0 || t2.indexOf("Vector<") == 0) && f == "length") {
+                    return "Int";
+                }
                 switch(t2) {
                     case "FastXML":
                         return switch(f) {
@@ -40,6 +47,12 @@ class Typer
                             case "length": return "Int";
                         }
                     default:
+                }
+                var ts:String = getExprType(e2);
+                if (ts != null && classes.exists(ts)) {
+                    return classes.get(ts).get(f);
+                } else {
+                    return null;
                 }
             case EIdent(s):
                 s = getModifiedIdent(s);
@@ -61,7 +74,7 @@ class Typer
         }
         return null;
     }
-    
+
     public function getModifiedIdent(s : String) : String {
         return switch(s) {
             case "int": "Int";
@@ -80,7 +93,7 @@ class Typer
             default: s;
         };
     }
-    
+
     public function tstring(t:T, isNativeGetSet:Bool = false, fixCase:Bool = true) : String {
         if(t == null) return null;
         return switch(t) {
@@ -108,17 +121,23 @@ class Typer
             case TFunction(p): p.map(function(it) return tstring(it)).join("->");
         }
     }
-    
+
     public function addClass(path:String, c:ClassDef):Void {
+        Lib.println(path);
         var classMap:Map<String,String> = new Map<String,String>();
         parseClassFields(c, classMap);
         classes[path] = classMap;
     }
-    
-    public function enterClass(c:ClassDef):Void {
-        parseClassFields(c, context);
+
+    public function enterClass(path, c:ClassDef):Void {
+        var classMap:Map<String,String> = classes.get(path);
+        if (classMap == null) {
+            classMap = new Map<String, String>();
+            parseClassFields(c, classMap);
+        }
+        context = classMap;
     }
-    
+
     public function enterFunction(f:Function):Void {
         openContext();
         for (arg in f.args) {
@@ -142,11 +161,11 @@ class Typer
         }
         RebuildUtils.rebuild(f.expr, lookUpForTyping);
     }
-    
+
     public function leaveFunction():Void {
         closeContext();
     }
-    
+
     function parseClassFields(c:ClassDef, map:Map<String,String>):Void {
         for (field in c.fields) {
             switch(field.kind) {
@@ -162,13 +181,13 @@ class Typer
             }
         }
     }
-    
+
     inline function getRegexpType():String return cfg.useCompat ? "as3hx.Compat.Regex" : "flash.utils.RegExp";
-    
+
     inline function isGetter(c:ClassField):Bool return Lambda.has(c.kwds, "get");
-    
+
     inline function isSetter(c:ClassField):Bool return Lambda.has(c.kwds, "set");
-    
+
 
     /**
      * Opens a new context for variable typing
@@ -187,7 +206,7 @@ class Typer
     function closeContext() {
         context = contextStack.pop();
     }
-    
+
     public static function getFunctionType(f:Function):T {
         var t = f.args.map(function(it) return it.t);
         if(f.varArgs != null) t.push(TPath(["Array<Dynamic>"]));
@@ -195,7 +214,7 @@ class Typer
         t.push(f.ret.t);
         return TFunction(t);
     }
-    
+
     public static function properCase(pkg:String, hasClassName:Bool):String {
         return Writer.properCase(pkg, hasClassName);
     }

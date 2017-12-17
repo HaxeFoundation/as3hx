@@ -97,7 +97,7 @@ class Writer
     public function register(p:Program):Void {
         for (d in p.defs) {
             switch(d) {
-                case CDef(c): typer.addClass(p.pack.join(".") + "." + c.name, c);
+                case CDef(c): typer.addClass((p.pack.length > 0 ? p.pack.join(".") + "." : "") + c.name, c);
                 case FDef(f):
                 case NDef(n):
                 default:
@@ -342,6 +342,9 @@ class Writer
         write(buf.toString());
         lvl++;
 
+        var path:String = (pack.length > 0 ? pack.join(".") + "." : "") + c.name;
+        typer.enterClass(path, c);
+
         // process properties
         writeProperties(c);
 
@@ -529,8 +532,6 @@ class Writer
         writeMetaData(field.meta);
 
         var namespaceMetadata:Array<String> = null;
-        var typer:Typer = new Typer(cfg);
-        typer.enterClass(c);
         if (isFun) {
             switch(field.kind) {
                 case FFun(f): typer.enterFunction(f);
@@ -949,6 +950,7 @@ class Writer
     }
 
     function writeFunction(f : Function, isGetter:Bool, isSetter:Bool, isNative:Bool, ?name : Null<String>, ?ret : FunctionRet) {
+        typer.enterFunction(f);
         write("function");
         if(name != null)
             write(" " + name);
@@ -996,6 +998,7 @@ class Writer
         }
         writeStartStatement();
         writeExpr(EBlock(es));
+        typer.leaveFunction();
     }
 
     /**
@@ -1147,6 +1150,7 @@ class Writer
     }
 
     function getExprType(e:Expr):Null<String> {
+        return typer.getExprType(e);
         /*EField(ECall(EField(EIdent(xml),descendants),[]),user)*/
         switch(e) {
             case ETypedExpr(e2, t): return tstring(t);
@@ -1174,6 +1178,7 @@ class Writer
                         }
                     default:
                 }
+                return typer.getExprType(e);
             case EIdent(s):
                 s = getModifiedIdent(s);
                 //if(context.get(s) == null)
