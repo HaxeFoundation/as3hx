@@ -123,7 +123,6 @@ class Typer
     }
 
     public function addClass(path:String, c:ClassDef):Void {
-        Lib.println(path);
         var classMap:Map<String,String> = new Map<String,String>();
         parseClassFields(c, classMap);
         classes[path] = classMap;

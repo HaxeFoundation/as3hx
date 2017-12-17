@@ -41,6 +41,7 @@ class Writer
     var rvalue : Expr;
     var typeImportMap : Map<String,String>;
     var lineIsDirty : Bool; // current line contains some non-whitespace/indent characters
+    var pendingTailComment : String; // one line comment that needs to be written at the end of line
     var genTypes : Array<GenType>; //typedef generated while parsing
     var imported : Array<String>; // store written imports to prevent duplicated
     var pack : Array<String>; // stores the haxe file package
@@ -58,6 +59,7 @@ class Writer
         this.inE4XFilter = false;
         this.inLvalAssign = false;
         this.lineIsDirty = false;
+        this.pendingTailComment = null;
 
         this.typeImportMap = new Map<String,String>();
         this.genTypes = [];
@@ -162,7 +164,7 @@ class Writer
         for(c in comments) {
             switch(c) {
             case ECommented(s,b,t,e):
-                writeComment(indent() + formatComment(s,b));
+                writeComment(indent() + formatComment(s,b), !b && t);
                 if (e != null) {
                     switch (e) {
                         case ECommented(_):
@@ -891,7 +893,7 @@ class Writer
                             pendingComma = false;
                             write(",");
                         }
-                        writeComment(s);
+                        writeComment(s, !b && t);
                     default:
 
                 }
@@ -1018,7 +1020,7 @@ class Writer
         for (expr in ret.exprs) {
             switch (expr) {
                 case ECommented(s,b,t,e):
-                    writeComment(s);
+                    writeComment(s, !b && t);
                 default:
             }
         }
@@ -2618,7 +2620,7 @@ class Writer
             result = writeExpr(e);
             writeDelimiter();
         }
-        writeComment(formatComment(s, isBlock));
+        writeComment(formatComment(s, isBlock), !isBlock && isTail);
         if(!isTail) {
             writeDelimiter();
             result = writeExpr(e);
@@ -3613,12 +3615,21 @@ class Writer
      * comment written on dirty line (not first text on line),
      * add extra whitespace before and after comment
      */
-    function writeComment(s : String)
+    function writeComment(s : String, tailOneLineComment : Bool)
     {
-        if (lineIsDirty)
-            s = "  " + s + "  ";
-
-        write(s);
+        if (lineIsDirty) {
+            if (tailOneLineComment) {
+                if (pendingTailComment == null) {
+                    pendingTailComment = s;
+                } else {
+                    pendingTailComment += " " + s;
+                }
+            } else {
+                write(" " + s + " ");
+            }
+        } else {
+            write(s);
+        }
     }
 
     function writeIndent(s = "")
@@ -3630,7 +3641,12 @@ class Writer
     {
         lineIsDirty = false;
 
-        write(indent() + s + cfg.newlineChars);
+		if (pendingTailComment != null) {
+			write(indent() + s + pendingTailComment + cfg.newlineChars);
+			pendingTailComment = null;
+		} else {
+			write(indent() + s + cfg.newlineChars);
+		}
     }
 
     function writeNL(s = "")
@@ -3638,6 +3654,10 @@ class Writer
         lineIsDirty = false; //reset line dirtyness
 
         write(s);
+		if (pendingTailComment != null) {
+			write(pendingTailComment);
+			pendingTailComment = null;
+		}
         write(cfg.newlineChars);
     }
 
