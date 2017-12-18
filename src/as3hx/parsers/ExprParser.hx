@@ -36,9 +36,9 @@ class ExprParser {
             return parseExprNext(EParent(e), 0);
         case TBrOpen:
             tk = tokenizer.token();
-            
+
             Debug.dbgln("parseExpr: " + tk, tokenizer.line);
-            
+
             switch(ParserUtils.removeNewLine(tk)) {
             case TBrClose:
                 if(funcStart) return EBlock([]);
@@ -58,7 +58,7 @@ class ExprParser {
             var a = new Array();
 
             //check for corner case, block contains only comments and
-            //newlines. In this case, get all comments and add them to 
+            //newlines. In this case, get all comments and add them to
             //content of block expression
             if (ParserUtils.uncomment(ParserUtils.removeNewLine(tk)) == TBrClose) {
                 var ta = ParserUtils.explodeComment(tk);
@@ -70,7 +70,7 @@ class ExprParser {
                     }
                 }
             }
-            
+
             while(!ParserUtils.opt(tokenizer, TBrClose)) {
                 var e = parseFullExpr();
                 a.push(e);
@@ -146,7 +146,7 @@ class ExprParser {
                 switch(i) {
                     case "public":
                         return parseExprNext(ECommented("/* AS3HX WARNING namespace modifier " + i + ":: */", true, false, null), 0);
-                    default: 
+                    default:
                 }
                 tk = tokenizer.token();
                 switch(tk) {
@@ -164,7 +164,7 @@ class ExprParser {
                                     //example if(CONFIG::MY_CONFIG) { //code block }
                                     //normal "if" statement parsing will take care of it
                                     return ECondComp(i + "_" + id, null, null);
-                                default:    
+                                default:
                                     var e = parseExpr(false);
                                     Debug.closeDebug("end conditional compilation: " + i + "::" + id, tokenizer.line);
                                     return ECondComp(i + "_" + id, e, null);
@@ -205,9 +205,9 @@ class ExprParser {
                     default:
                         ParserUtils.unexpected(tk);
                 }
-                
+
                 var t = parseType();
-                
+
                 //for Dictionary, expected syntax is "Dictionary.<Key, Value>"
                 if (parseDictionaryTypes) {
                     tokenizer.ensure(TComma);
@@ -290,7 +290,7 @@ class ExprParser {
             var addToken : Token->Void = function(tk) {
                 if (pendingNewLines != 0)
                     tokenizer.add(TNL(tk));
-                else 
+                else
                     tokenizer.add(tk);
             }
 
@@ -298,9 +298,16 @@ class ExprParser {
                 case TPClose:
                     addToken(tk);
                     return e1;
-                case TCommented(s,b,t):
-                    addToken(t);
-                    return ECommented(s, b, true, parseExprNext(e1, ++pendingNewLines));
+                case TCommented(s,b,t1):
+                    addToken(t1);
+					var next = parseExprNext(e1, ++pendingNewLines);
+					if (next != e1) {
+						return ECommented(s,b,true,next);
+					} else {
+                        tokenizer.token();
+						addToken(t);
+						return e1;
+					}
                 default:
                     tokenizer.add(t);
                     return parseExprNext(e1, ++pendingNewLines);
@@ -309,7 +316,7 @@ class ExprParser {
         case TCommented(s,b,t):
             tokenizer.add(t);
             return ECommented(s,b,true, parseExprNext(e1, 0));
-           
+
         default:
             Debug.dbgln("parseExprNext stopped at " + tk, tokenizer.line);
             tokenizer.add(tk);
@@ -394,7 +401,7 @@ class ExprParser {
         }
         return args.filter(function(e) return !e.match(ENL(null)));
     }
-    
+
     public static function parseERegexp(tokenizer:Tokenizer, op:String):Expr {
         var str = op.substr(1);
         var prevChar = 0;
