@@ -113,7 +113,7 @@ class Run {
     }
 
     static function isExcludeFile(excludes: List<String>, file: String)
-        return Lambda.filter(excludes, function (path) return as3hx.Config.toPath(file).indexOf(path.replace(".", "/")) > -1).length > 0;
+        return Lambda.filter(excludes, function (path) return as3hx.Config.toPath(file).indexOf(path.replace(".", "\\")) > -1).length > 0;
 
     static var errors : Array<String> = new Array();
     static var warnings : Map<String,Map<String,Bool>> = new Map();
