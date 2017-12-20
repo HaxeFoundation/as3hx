@@ -50,7 +50,7 @@ class FunctionParser {
                         var t = null, val = null;
                         expressions.push(EIdent(name));
 
-                        if( ParserUtils.opt(tokenizer, TColon) ) { // ":" 
+                        if( ParserUtils.opt(tokenizer, TColon) ) { // ":"
                             t = parseType(); //arguments type
                             expressions.push(ETypedExpr(null, t));
                         }
@@ -77,7 +77,7 @@ class FunctionParser {
                         tokenizer.add(t);
                         expressions.push(ENL(null));
 
-                    default: 
+                    default:
 
                 }
             }
@@ -88,20 +88,20 @@ class FunctionParser {
         //newlines
         var retExpressions:Array<Expr> = [];
 
-        //parse return type 
+        //parse return type
         if( ParserUtils.opt(tokenizer, TColon) ) {
             var t = parseType();
             retExpressions.push(ETypedExpr(null, t));
             f.ret.t = t;
         }
-        
-        //parse until '{' or ';' (for interface method)   
+
+        //parse until '{' or ';' (for interface method)
         while (true) {
             var tk = tokenizer.token();
             switch (tk) {
                 case TNL(t): //parse new line before '{' or ';'
                     tokenizer.add(t);
-                    
+
                     //corner case, in AS3 interface method don't
                     //have to end with a ";". So If we encounter a
                     //newline after the return definition, we assume
@@ -116,9 +116,9 @@ class FunctionParser {
 
                  case TCommented(s,b,t): //comment before '{' or ';'
                    tokenizer.add(t);
-                   retExpressions.push(ParserUtils.makeECommented(tk, null));    
+                   retExpressions.push(ParserUtils.makeECommented(tk, null));
 
-                case TBrOpen, TSemicolon: //end of method return 
+                case TBrOpen, TSemicolon: //end of method return
                     tokenizer.add(tk);
                     f.ret.exprs = retExpressions;
                     break;
@@ -159,7 +159,7 @@ class FunctionParser {
             f : f
         };
     }
-    
+
     inline static function rebuildLocalFunctions(f:Function) {
         switch(f.expr) {
             case EBlock(e):
