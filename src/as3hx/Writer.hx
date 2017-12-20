@@ -1019,7 +1019,10 @@ class Writer
         //write comments after return type
         for (expr in ret.exprs) {
             switch (expr) {
-                case ECommented(s,b,t,e):
+                case ECommented(s, b, t, e):
+                    // any expression here is just about to be placed before opening bracket `{` so one line comments should
+                    // be moved to the end of line to not to comment it out
+                    if (!b) t = true;
                     writeComment(s, !b && t);
                 default:
             }
@@ -3583,14 +3586,25 @@ class Writer
 
     function openb() : String
     {
-        if (cfg.bracesOnNewline)
-            return cfg.newlineChars + indent() + "{";
-        else
+        if (cfg.bracesOnNewline) {
+            var s:String = cfg.newlineChars + indent() + "{";
+            if (pendingTailComment != null) {
+                s = pendingTailComment + s;
+                pendingTailComment = null;
+            }
+            return s;
+        } else {
             return " {";
+        }
     }
 
-    inline function closeb() : String {
-        return cfg.newlineChars + indent() + "}";
+    function closeb() : String {
+        var s:String = cfg.newlineChars + indent() + "}";
+		if (pendingTailComment != null) {
+            s = pendingTailComment + s;
+			pendingTailComment = null;
+		}
+        return s;
     }
 
     function write(s : String)
