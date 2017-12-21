@@ -483,23 +483,79 @@ class Writer
 
     function writeFields(c : ClassDef)
     {
-        for (field in c.fields)
-            writeField(field, c);
-        if(c.isInterface)
-            return;
-
-        if(!Lambda.exists(c.fields,
-            function(field:ClassField) {
-                switch(field.kind) {
-                    case FFun( f ):
-                        if (field.name == c.name)
-                            return true;
-                    default:
-                }
-                return false;
+        if (c.isInterface) {
+            for (field in c.fields) {
+                writeField(field, c);
             }
-        ))
-        {
+            return;
+        }
+
+        var constructor:Function = null;
+        var constructorFieldInits:Array<Expr> = new Array<Expr>();
+        var hasConstructor:Bool = false;
+        var needConstructor:Bool = false;
+
+        for (field in c.fields) {
+            switch(field.kind) {
+                case FFun ( f ):
+                    if (field.name == c.name) {
+                        constructor = f;
+                        hasConstructor = true;
+                        break;
+                    }
+                case FVar(t, val):
+                    if (val != null) {
+                        var usingInstanceFields:Bool = false;
+                        var rval = RebuildUtils.rebuild(val, function(e) {
+                            switch(e) {
+                                case EIdent(s):
+                                    if (s == "this") {
+                                        usingInstanceFields = true;
+                                    } else {
+                                        for (field in c.fields) {
+                                            if (s == field.name) {
+                                                if (!field.kwds.has("static")) {
+                                                    usingInstanceFields = true;
+                                                    return RebuildResult.RReplace(EField(EIdent("this"), s));
+                                                }
+                                                break;
+                                            }
+                                        }
+                                    }
+                                default:
+                            }
+                            return RebuildResult.RNull;
+                        });
+                        if (usingInstanceFields) {
+                            if (rval == null) rval = val;
+                            constructorFieldInits.push(ENL(EBinop("=", EField(EIdent("this"), field.name), rval, false)));
+                            field.kind = FVar(t, null);
+                        }
+                    }
+                default:
+            }
+            if (!needConstructor && !field.kwds.has("static")) {
+                needConstructor = true;
+                if (hasConstructor) break;
+            }
+        }
+
+        if (hasConstructor && constructorFieldInits.length > 0) {
+            switch(constructor.expr) {
+                case EBlock(e):
+                    constructorFieldInits = constructorFieldInits.concat(e);
+                default:
+                    constructorFieldInits.push(constructor.expr);
+            }
+            constructor.expr = EBlock(constructorFieldInits);
+        }
+
+
+        for (field in c.fields) {
+            writeField(field, c);
+        }
+
+        if (needConstructor && !hasConstructor) {
             addWarning("Required constructor was added for member var initialization");
             writeNL();
             writeNL();
@@ -511,11 +567,14 @@ class Writer
             else {
                 write("public ");
             }
+            if (c.extend != null) {
+                constructorFieldInits.push(ENL(ECall(EIdent("super"), [])));
+            }
             writeConstructor({
                 args : [],
                 varArgs : null,
                 ret : null,
-                expr : EBlock(((null != c.extend) ? [ENL(ECall(EIdent("super"),[]))] : []))
+                expr : EBlock(constructorFieldInits)
             }, c.extend != null);
         }
     }
@@ -3600,10 +3659,10 @@ class Writer
 
     function closeb() : String {
         var s:String = cfg.newlineChars + indent() + "}";
-		if (pendingTailComment != null) {
+        if (pendingTailComment != null) {
             s = pendingTailComment + s;
-			pendingTailComment = null;
-		}
+            pendingTailComment = null;
+        }
         return s;
     }
 
@@ -3655,12 +3714,12 @@ class Writer
     {
         lineIsDirty = false;
 
-		if (pendingTailComment != null) {
-			write(indent() + s + pendingTailComment + cfg.newlineChars);
-			pendingTailComment = null;
-		} else {
-			write(indent() + s + cfg.newlineChars);
-		}
+        if (pendingTailComment != null) {
+            write(indent() + s + pendingTailComment + cfg.newlineChars);
+            pendingTailComment = null;
+        } else {
+            write(indent() + s + cfg.newlineChars);
+        }
     }
 
     function writeNL(s = "")
@@ -3668,10 +3727,10 @@ class Writer
         lineIsDirty = false; //reset line dirtyness
 
         write(s);
-		if (pendingTailComment != null) {
-			write(pendingTailComment);
-			pendingTailComment = null;
-		}
+        if (pendingTailComment != null) {
+            write(pendingTailComment);
+            pendingTailComment = null;
+        }
         write(cfg.newlineChars);
     }
 

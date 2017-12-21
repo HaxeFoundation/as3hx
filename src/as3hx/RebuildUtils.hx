@@ -16,7 +16,7 @@ enum RebuildResult {
 /*
  * RebuildUtils methods can iterate all through provided Expr and it's parameters and somehow process all Exprs by provideed method
  */
-class RebuildUtils 
+class RebuildUtils
 {
     public static function rebuildArray(es:Array<Expr>, rebuildMethod:Expr->RebuildResult):Array<Expr> {
 		var needRebuild:Bool = false;
@@ -55,7 +55,7 @@ class RebuildUtils
 			return null;
 		}
 	}
-    
+
 	public static function rebuild(e:Expr, rebuildMethod:Expr->RebuildResult):Expr {
 		if (e == null) return null;
 		var r:RebuildResult = rebuildMethod(e);
@@ -67,7 +67,7 @@ class RebuildUtils
         }
         return rebuildExprParams(e, rebuildMethod);
 	}
-    
+
     private static function rebuildExprParams(e:Expr, rebuildMethod:Expr->RebuildResult):Expr {
 		switch(e) {
 			case EFunction(f, name):
@@ -216,6 +216,10 @@ class RebuildUtils
 				var re:Expr = rebuild(e, rebuildMethod);
 				if (re == null) return null;
 				return EUnop(op, prefix, re);
+			case EParent(e):
+				var re:Expr = rebuild(e, rebuildMethod);
+				if (re == null) return null;
+				return EParent(re);
 			case EBinop(op, e1, e2, newLineAfterOp):
 				var re1:Expr = rebuild(e1, rebuildMethod);
 				var re2:Expr = rebuild(e2, rebuildMethod);
@@ -226,19 +230,19 @@ class RebuildUtils
 				} else {
 					return null;
 				}
-			case ENL(e): 
+			case ENL(e):
 				e = rebuild(e, rebuildMethod);
 				if (e == null) return null;
 				return ENL(e);
 			case ECommented(a, b, c, e):
-				e = rebuild(e, rebuildMethod); 
+				e = rebuild(e, rebuildMethod);
 				if (e == null) return null;
 				return ECommented(a, b, c, e);
 			default:
 		}
 		return null;
     }
-    
+
     private static function rebuildSwitchDefault(def:SwitchDefault, rebuildMethod:Expr->RebuildResult):SwitchDefault {
         var el:Array<Expr> = rebuildArray(def.el, rebuildMethod);
         var meta:Array<Expr> = rebuildArray(def.meta, rebuildMethod);
@@ -272,7 +276,7 @@ class RebuildUtils
             return null;
         }
     }
-    
+
     private static function rebuildSwitchCase(c:SwitchCase, rebuildMethod:Expr->RebuildResult):SwitchCase {
         var rval:Expr = rebuild(c.val, rebuildMethod);
         var rel:Array<Expr> = rebuildArray(c.el, rebuildMethod);
