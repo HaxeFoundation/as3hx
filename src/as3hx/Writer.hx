@@ -556,7 +556,6 @@ class Writer
         }
 
         if (needConstructor && !hasConstructor) {
-            addWarning("Required constructor was added for member var initialization");
             writeNL();
             writeNL();
             writeIndent();
