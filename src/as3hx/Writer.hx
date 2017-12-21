@@ -2065,7 +2065,7 @@ class Writer
                                 }
                             }
                             false;
-                        case EIf(_, e1, e2): f(e1) || f(e2);
+                        case EIf(_, e1, e2): f(e1) || (e2 != null && f(e2));
                         case _: false;
                     }
                     var last = es[es.length - 1];
