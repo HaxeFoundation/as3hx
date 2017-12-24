@@ -144,11 +144,6 @@ class Writer
                         if (i == 0) f(ex[0]);
                         else result.push(ex[i]);
                     }
-                case ECommented(s,b,t,e):
-                    // catch comments before else blocks
-                    writeNL();
-                    writeIndent(s);
-                    result.push(ENL(e));
                 case ENL(ex): f(ex);
                 case EObject(fl) if(fl.empty()):
                 default: result.push(ENL(e));
@@ -164,7 +159,7 @@ class Writer
         for(c in comments) {
             switch(c) {
             case ECommented(s,b,t,e):
-                writeComment(indent() + formatComment(s,b), !b && t);
+                writeComment(indent() + formatComment(s,b), b);
                 if (e != null) {
                     switch (e) {
                         case ECommented(_):
@@ -951,7 +946,7 @@ class Writer
                             pendingComma = false;
                             write(",");
                         }
-                        writeComment(s, !b && t);
+                        writeComment(s, b);
                     default:
 
                 }
@@ -1078,10 +1073,7 @@ class Writer
         for (expr in ret.exprs) {
             switch (expr) {
                 case ECommented(s, b, t, e):
-                    // any expression here is just about to be placed before opening bracket `{` so one line comments should
-                    // be moved to the end of line to not to comment it out
-                    if (!b) t = true;
-                    writeComment(s, !b && t);
+                    writeComment(s, b);
                 default:
             }
         }
@@ -1865,14 +1857,6 @@ class Writer
                     expr = e2;
                     params = params2;
                 case EArray(_,_): return writeExpr(eCall);
-                case ECommented(s, b, t, e2):
-                    //This is a hack for the AS3 unit test to
-                    //Haxe unit test conversion. In some cases,
-                    //the first param of the test if converted
-                    //to an end-of-line comment
-                    writeExpr(e2);
-                    write(";");
-                    write("  // "+ s);
                     return None;
                 default:
             }
@@ -2035,25 +2019,7 @@ class Writer
         e1 = EBlock(formatBlockBody(e1));
         writeExpr(e1);
         if (e2 != null) {
-            //corner case : comment located
-            //before the "else" keyword in the
-            //source file.
-            //As to be called recursively, in
-            //case of multiple one-line comment
-            //before the "else"
-            var f:Expr->Expr = null;
-            f = function(e2) {
-                return switch (e2) {
-                    case ECommented(s,b,t,e):
-                        writeNL();
-                        writeIndent(s);
-                        f(e); //skip the comment
-                    default: e2;
-                }
-            }
-            e2 = f(e2);
             e2 = EBlock(formatBlockBody(e2));
-            writeNL();
             var elseif:Expr = null;
             // if we find an EBlock([ENL(EIf(...))])
             // after an `else` then we have an
@@ -2061,21 +2027,20 @@ class Writer
             switch(e2) {
                 case EBlock(e3):
                     if (e3 != null && e3.length == 1) {
-                        switch(e3[0]) {
-                            case ENL(e4):
-                                switch(e4) {
-                                    case EIf(_, _, _):
-                                        // found single if statement after an else
-                                        // replace parent `block` + `new line` with
-                                        // the `if` statement instead so we stay on
-                                        // the same line as the `else` -> `else if`
-                                        elseif = e4;
-                                    case EBlock(_):
-                                        // catch double-nested blocks and replace
-                                        // outer block with inner block
-                                        e2 = e4;
-                                    default:
-                                }
+                        var e4 = ParserUtils.removeNewLineExpr(e3[0]);
+                        var extraExpr:Expr = extractComments(e3[0]);
+                        writeExpr(extraExpr);
+                        switch(e4) {
+                            case EIf(_, _, _):
+                                // found single if statement after an else
+                                // replace parent `block` + `new line` with
+                                // the `if` statement instead so we stay on
+                                // the same line as the `else` -> `else if`
+                                elseif = e4;
+                            case EBlock(_):
+                                // catch double-nested blocks and replace
+                                // outer block with inner block
+                                e2 = e4;
                             default:
                         }
                     }
@@ -2083,6 +2048,7 @@ class Writer
                     elseif = e2;
                 default:
             }
+            writeNL();
             if (elseif != null) {
                 writeIndent("else ");
                 result = writeExpr(elseif);
@@ -2681,7 +2647,7 @@ class Writer
             result = writeExpr(e);
             writeDelimiter();
         }
-        writeComment(formatComment(s, isBlock), !isBlock && isTail);
+        writeComment(formatComment(s, isBlock), isBlock);
         if(!isTail) {
             writeDelimiter();
             result = writeExpr(e);
@@ -3687,20 +3653,16 @@ class Writer
      * comment written on dirty line (not first text on line),
      * add extra whitespace before and after comment
      */
-    function writeComment(s : String, tailOneLineComment : Bool)
+    function writeComment(s : String, blockComment : Bool)
     {
-        if (lineIsDirty) {
-            if (tailOneLineComment) {
-                if (pendingTailComment == null) {
-                    pendingTailComment = s;
-                } else {
-                    pendingTailComment += " " + s;
-                }
-            } else {
-                write(" " + s + " ");
-            }
+        if (blockComment) {
+            write(" " + s + " ");
         } else {
-            write(s);
+            if (pendingTailComment == null) {
+                pendingTailComment = s;
+            } else {
+                pendingTailComment += " " + s;
+            }
         }
     }
 
@@ -3782,6 +3744,22 @@ class Writer
     function containsOnlyWhiteSpace(s : String) : Bool
     {
         return StringTools.trim(s) == "";
+    }
+
+    function extractComments(expr:Expr) : Expr {
+        return switch(expr) {
+            case ENL(e2):
+                var re:Expr = extractComments(e2);
+                if (re != null) {
+                    return ENL(re);
+                }
+                return null;
+            case ECommented(s,b,t,e2):
+                var re:Expr = extractComments(e2);
+                if (re != null) return ENL(re);
+                return ECommented(s,b,t,null);
+            default: null;
+        }
     }
 
     /**
