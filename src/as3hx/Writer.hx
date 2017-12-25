@@ -45,6 +45,7 @@ class Writer
     var genTypes : Array<GenType>; //typedef generated while parsing
     var imported : Array<String>; // store written imports to prevent duplicated
     var pack : Array<String>; // stores the haxe file package
+	var validVariableNameEReg:EReg;
     var typer:Typer;
 
     public function new(config:Config)
@@ -65,6 +66,8 @@ class Writer
         this.genTypes = [];
         this.imported = [];
         this.typer = new Typer(config);
+
+        this.validVariableNameEReg = new EReg("^[a-zA-Z_$][0-9a-zA-Z_$]*$", "");
 
         var doNotImportClasses = [
             "Array", "Bool", "Boolean", "Class", "Date",
@@ -1364,9 +1367,10 @@ class Writer
                     var length = fl.length;
                     for (i in 0...length) {
                         var field = fl[i];
-                        writeIndent(field.name + (cfg.spacesOnTypeColon ? " : " : ": "));
+                        if (i > 0) writeNL(",");
+                        var field = fl[i];
+						writeIndent(prepareObjectFieldName(field.name) + (cfg.spacesOnTypeColon ? " : " : ": "));
                         writeExpr(field.e);
-                        if(i < length - 1) writeNL(i > 0 || fl.length > 1 ? "," : "");
                     }
                     lvl--;
                     writeNL();
@@ -3328,6 +3332,14 @@ class Writer
         //empty switch case
         return false;
     }
+
+	function prepareObjectFieldName(name:String):String {
+		if (validVariableNameEReg.match(name)) {
+			return name;
+		} else {
+			return '"' + name + '"';
+		}
+	}
 
     /**
      * Checks if 'e' represents a numerical constant value
