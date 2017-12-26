@@ -721,7 +721,7 @@ class Writer
                 if(val != null) {
                     write(" = ");
                     lvl++; //extra indenting if init is on multiple lines
-                    writeExpr(val);
+                    writeExpr(ETypedExpr(val, t));
                     lvl--;
                 }
 
@@ -2749,6 +2749,16 @@ class Writer
         switch(e) {
             case ENL(e2):
                 return writeExpr(ENL(ETypedExpr(e2, t)));
+            case ENew(t2, params):
+                switch (t2) {
+                    case TDictionary(k, v):
+                        switch (t) {
+                            case TDictionary(k, v):
+                                return writeExpr(ENew(t, params));
+                            default:
+                        }
+                    default:
+                }
             default:
         }
         // fix of such constructions var tail:Signal = s || p;
