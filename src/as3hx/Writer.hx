@@ -76,12 +76,19 @@ class Writer
             "Lambda", "List", "Math", "Number", "Reflect",
             "RegExp", "Std", "String", "StringBuf",
             "StringTools", "Sys", "Type", "Void",
-            "Function", "Object", "XML", "XMLList"
+            "Function", "XML", "XMLList"
         ];
+        if (!cfg.useOpenFlTypes) {
+            doNotImportClasses.push("Object");
+        }
         for(c in doNotImportClasses) {
             this.typeImportMap.set(c, null);
         }
-        if(!cfg.functionToDynamic) typeImportMap.set("Function", "haxe.Constraints.Function");
+        if (!cfg.functionToDynamic) typeImportMap.set("Function", "haxe.Constraints.Function");
+        if (cfg.useOpenFlTypes) {
+            typeImportMap.set("Vector", "openfl.Vector");
+            typeImportMap.set("Object", "openfl.utils.Object");
+        }
 
         var topLevelErrorClasses = [
             "ArgumentError", "DefinitionError", "Error",
@@ -1122,7 +1129,7 @@ class Writer
             write(")");
         } else {
             //write("/*!!!" + etype + "!!!*/");
-            if(isDynamicType(etype) || ((isArrayType(etype) || e.match(EIdent(_))) && itype != null && itype != "Int" && itype != "UInt")) {
+            if(isDynamicType(etype) || ((isArrayType(etype) || e.match(EIdent(_))) && itype != null && itype != "Int" && itype != "UInt" && !isOpenFlDictionaryType(etype))) {
                 if(cfg.debugInferredType) {
                     write("/* etype: " + etype + " itype: " + itype + " */");
                 }
@@ -1289,7 +1296,7 @@ class Writer
             case "Number": "Float";
             case "Boolean": "Bool";
             case "Function": cfg.functionToDynamic ? "Dynamic" : s;
-            case "Object": "Dynamic";
+            case "Object": cfg.useOpenFlTypes ? "Object" : "Dynamic";
             case "undefined": "null";
             //case "Error": cfg.mapFlClasses ? "flash.errors.Error" : s;
             case "XML": "FastXML";
@@ -1490,8 +1497,14 @@ class Writer
                 // Vector.<T> call
                 // _buffers = Vector.<MyType>([inst1,inst2]);
                 // t is TPath([inst1,inst2]), which should have been handled in ECall
-                write("Array/*Vector.<T> call?*/");
-                addWarning("Vector.<T>", true);
+                if (cfg.useOpenFlTypes && !cfg.vectorToArray) {
+                    write("Vector<");
+                    write(tstring(t, false, false));
+                    write(">");
+                } else {
+                    write("Array/*Vector.<T> call?*/");
+                    addWarning("Vector.<T>", true);
+                }
             case EE4XAttr( e1, e2 ):
                 // e1.@e2
                 writeExpr(e1);
@@ -2338,12 +2351,20 @@ class Writer
                 default: writeExpr(e2);
             }
             write(")");
-        } else if(op == "in") {
-            write("Lambda.has(");
-            writeExpr(e2);
-            write(", ");
-            writeExpr(e1);
-            write(")");
+        } else if (op == "in") {
+            var type2:String = getExprType(e2);
+            if (isOpenFlDictionaryType(type2)) {
+                writeExpr(e2);
+                write(".has(");
+                writeExpr(e1);
+                write(")");
+            } else {
+                write("Lambda.has(");
+                writeExpr(e2);
+                write(", ");
+                writeExpr(e1);
+                write(")");
+            }
         } else { // op e1 e2
             var eBinop = rebuildBinopExpr(op, e1, e2);
             if (eBinop != null) return writeExpr(eBinop);
@@ -2750,7 +2771,7 @@ class Writer
             case EArray(a, i):
                 var atype = getExprType(a);
                 if (atype != null) {
-                    if (isMapType(atype)) {
+                    if (isMapType(atype) || isOpenFlDictionaryType(atype)) {
                         writeExpr(a);
                         write(".remove(");
                         writeExpr(i);
@@ -3361,8 +3382,12 @@ class Writer
 
     static inline function isDynamicType(s:String):Bool return s == "Dynamic";
 
-    static inline function isMapType(s:String):Bool {
+    inline function isMapType(s:String):Bool {
         return s != null && (s.startsWith("Map") || s.startsWith("haxe.ds.ObjectMap"));
+    }
+
+    inline function isOpenFlDictionaryType(s:String):Bool {
+        return s != null && s.startsWith("Dictionary") && cfg.useOpenFlTypes;
     }
 
     inline function isFunctionExpr(e:Expr):Bool return getExprType(e) == "Function";
@@ -3470,6 +3495,7 @@ class Writer
                     case "int" | "uint" | "void": return null;
                     default: return fixCase ? properCase(c, true) : c;
                 }
+            case TVector(t) if (cfg.useOpenFlTypes): return "Vector";
             default: null;
         }
     }
@@ -3490,7 +3516,7 @@ class Writer
                     case "uint"     : cfg.uintToInt ? "Int" : "UInt";
                     case "void"     : "Void";
                     case "Function" : cfg.functionToDynamic ? "Dynamic" : c;
-                    case "Object"   : isNativeGetSet ? "{}" : "Dynamic";
+                    case "Object"   : isNativeGetSet ? "{}" : (cfg.useOpenFlTypes ? "Object" : "Dynamic");
                     case "XML"      : cfg.useFastXML ? "FastXML" : "Xml";
                     case "XMLList"  : cfg.useFastXML ? "FastXMLList" : "Iterator<Xml>";
                     case "RegExp"   : cfg.useCompat ? "as3hx.Compat.Regex" : "flash.utils.RegExp";

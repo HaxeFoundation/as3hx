@@ -1,3 +1,4 @@
+
 package as3hx;
 
 import haxe.xml.Fast;
@@ -48,6 +49,8 @@ class Config {
     public var excludePaths : List<String>;
     /** Used only for test cases for compiler to ignore Sprite imports and extends **/
     public var testCase : Bool;
+    /** Try to use openfl.Vector openfl.utils.Dictionary and openfl.utils.Object types **/
+    public var useOpenFlTypes : Bool;
     /** conditional compilation variables **/
     public var conditionalVars: List<String>;
     /** Compile time constants implementation class package path for CONFIG::VAR -> `compile.Time.Constants`.CONFIG_VAR**/
@@ -319,7 +322,7 @@ class Config {
             case "indentChars":         setCharField(el, "    ");
             case "newlineChars":        setCharField(el, "\n");
             case "bracesOnNewline":     setBoolField(el, true);
-            case "spacesOnTypeColon":        setBoolField(el, true);
+            case "spacesOnTypeColon":   setBoolField(el, true);
             case "uintToInt":           setBoolField(el, true);
             case "vectorToArray":       setBoolField(el, true);
             case "guessCasts":          setBoolField(el, true);
@@ -333,7 +336,8 @@ class Config {
             case "forcePrivateSetter":  setBoolField(el, true);
             case "errorContinue":       setBoolField(el, true);
             case "testCase":            setBoolField(el, false);
-            case "verifyGeneratedFiles": setBoolField(el, false);
+            case "useOpenFlTypes":      setBoolField(el, false);
+            case "verifyGeneratedFiles":setBoolField(el, false);
             case "flashTopLevelPackage":setCharField(el, "flash");
             case "excludeList":         setExcludeField(el, new List());
             case "conditionalCompilationList": setConditionalVars(el, new List());
@@ -341,8 +345,8 @@ class Config {
             case "dictionaryToHash":    setBoolField(el, false);
             case "useAngleBracketsNotationForDictionaryTyping": setBoolField(el, true);
             case "useFastXML":          setBoolField(el, true);
-            case "useCompat":          setBoolField(el, true);
-            case "importPaths":          setImportPaths(el, []);
+            case "useCompat":           setBoolField(el, true);
+            case "importPaths":         setImportPaths(el, []);
             default:
                 Sys.println("Unrecognized config var " + el.name);
             }
@@ -443,6 +447,7 @@ class Config {
     <!-- Style of getter and setter output. haxe, flash or combined -->
     <getterSetterStyle value="haxe" />
     <testCase value="false" />
+    <useOpenFlTypes value="false" />
     <flashTopLevelPackage value="flash"/>
     <excludeList />
     <conditionalCompilationList />
