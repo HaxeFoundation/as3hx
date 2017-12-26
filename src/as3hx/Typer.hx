@@ -134,7 +134,7 @@ class Typer
             classMap = new Map<String, String>();
             parseClassFields(c, classMap);
         }
-        context = classMap;
+        contextStack[contextStack.length - 1] = context = classMap;
     }
 
     public function enterFunction(f:Function):Void {

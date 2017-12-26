@@ -760,6 +760,10 @@ class Writer
                 null;
         }
 
+        if (isFun) {
+            typer.leaveFunction();
+        }
+
         //if this field is not wrapped in conditional compilation,
         //do nothing
         if (field.condVars.length == 0)
@@ -788,10 +792,6 @@ class Writer
             else if (field == f) {
                 foundSelf = true;
             }
-        }
-
-        if (isFun) {
-            typer.leaveFunction();
         }
 
         //close conditional compilation block
@@ -1015,7 +1015,6 @@ class Writer
     }
 
     function writeFunction(f : Function, isGetter:Bool, isSetter:Bool, isNative:Bool, ?name : Null<String>, ?ret : FunctionRet) {
-        typer.enterFunction(f);
         write("function");
         if(name != null)
             write(" " + name);
@@ -1063,7 +1062,6 @@ class Writer
         }
         writeStartStatement();
         writeExpr(EBlock(es));
-        typer.leaveFunction();
     }
 
     /**
@@ -1339,7 +1337,10 @@ class Writer
             case EForIn(ev, e, block): rv = writeEForIn(ev, e, block);
             case EBreak(label): write("break");
             case EContinue: rv = writeEContinue();
-            case EFunction(f, name): writeFunction(f, false, false, false, name);
+            case EFunction(f, name): 
+                typer.enterFunction(f);
+                writeFunction(f, false, false, false, name);
+                typer.leaveFunction();
             case EReturn(e): writeEReturn(e);
             case EArray(e, index): writeEArray(e, index);
             case EArrayDecl(e):
