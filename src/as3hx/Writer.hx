@@ -106,6 +106,14 @@ class Writer
         }
     }
 
+    public function refineTypes(p:Program):Void {
+        typer.refineTypes(p);
+    }
+    
+    public function applyRefinedTypes(p:Program):Void {
+        typer.applyRefinedTypes(p);
+    }
+    
     public function register(p:Program):Void {
         for (d in p.defs) {
             switch(d) {
@@ -697,7 +705,7 @@ class Writer
             case FVar(t, val):
                 start(field.name, false);
                 write("var " + getModifiedIdent(field.name));
-                if(!isStatic(field.kwds) && isConst(field.kwds)) write("(default, never)");
+                if (!isStatic(field.kwds) && isConst(field.kwds)) write("(default, never)");
                 var type = tstring(t); //check wether a specific type was defined for this array
                 if(isArrayType(type)) {
                     for (genType in this.genTypes) {
@@ -2715,7 +2723,7 @@ class Writer
                 case TDictionary(_,_): !cfg.dictionaryToHash;
                 default: true;
             }
-            if(out) writeParams();
+            if (out) writeParams();
             if(!isObject) write(")");
         }
     }

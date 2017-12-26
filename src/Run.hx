@@ -128,6 +128,14 @@ class Run {
         }
         loop(cfg.src, cfg.dst, cfg.excludePaths);
         if (cfg.useFullTyping) {
+            if (cfg.useOpenFlTypes) {
+                for (f in files) {
+                    writer.refineTypes(f.program);
+                }
+                for (f in files) {
+                    writer.applyRefinedTypes(f.program);
+                }
+            }
             for (f in files) {
                 writeFile(f.name, f.program, cfg, f.f, f.src);
             }

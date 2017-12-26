@@ -3,9 +3,15 @@ import as3hx.As3.ClassDef;
 import as3hx.As3.ClassField;
 import as3hx.As3.Expr;
 import as3hx.As3.Function;
+import as3hx.As3.Program;
 import as3hx.As3.T;
 import as3hx.RebuildUtils.RebuildResult;
 import neko.Lib;
+
+typedef DictionaryTypes = {
+    key:Array<String>,
+    value:Array<String>
+}
 
 /**
  * AS3 typing allows multiple equal variable type declarations in one method and opens new variable context only inside function, not in any {} block
@@ -14,8 +20,10 @@ class Typer
 {
     var cfg:Config;
     var classes : Map<String,Map<String,String>> = new Map<String,Map<String,String>>();
+    var classFieldDictionaryTypes : Map<String,Map<String,DictionaryTypes>> = new Map<String,Map<String,DictionaryTypes>>();
     var context : Map<String,String> = new Map<String,String>();
     var contextStack : Array<Map<String,String>> = [];
+    var currentPath:String = null;
 
     public function new(cfg:Config) {
         this.cfg = cfg;
@@ -129,6 +137,7 @@ class Typer
     }
 
     public function enterClass(path, c:ClassDef):Void {
+        currentPath = path;
         var classMap:Map<String,String> = classes.get(path);
         if (classMap == null) {
             classMap = new Map<String, String>();
@@ -178,6 +187,149 @@ class Typer
                     }
                 default:
             }
+        }
+    }
+    
+    public function applyRefinedTypes(program:Program):Void {
+        var pack:String = (program.pack.length > 0 ? program.pack.join(".") + "." : "");
+        for (d in program.defs) {
+            switch (d) {
+                case CDef(c):
+                    enterClass(pack + c.name, c);
+                    for (f in c.fields) {
+                        var t:T = getDictionaryType(f.name);
+                        var d:String = tstring(t);
+                        if (t != null) {
+                            switch(f.kind) {
+                                case FVar(t1, val):
+                                    f.kind = FVar(t, val);
+                                default:
+                            }
+                            context[f.name] = d;
+                            Lib.println("    Refined type in " + pack + c.name + "::" + f.name + ":  " + d);
+                        }
+                    }
+                default:
+            }
+        }
+    }
+    
+    public function refineTypes(program:Program):Void {
+        var currentClass:String = null;
+        var pack:String = (program.pack.length > 0 ? program.pack.join(".") + "." : "");
+        
+        function refineArrayAccess(e1:Expr, index:Expr, value:Expr):Void {
+            var type1:String = getExprType(e1);
+            if (type1 != null && StringTools.startsWith(type1, "Dictionary")) {
+                var baseType:String = null;
+                var field:String = null;
+                switch(e1) {
+                    case EField(e2, f):
+                        baseType = getExprType(e2);
+                        field = f;
+                    case EIdent(s):
+                        baseType = pack + currentClass;
+                        field = s;
+                    default:
+                }
+                if (field != null) {
+                    if (classes.exists(baseType)) {
+                        if (!classFieldDictionaryTypes.exists(baseType)) {
+                            classFieldDictionaryTypes.set(baseType, new Map<String, DictionaryTypes>());
+                        }
+                        var map:Map<String, DictionaryTypes> = classFieldDictionaryTypes.get(baseType);
+                        if (!map.exists(field)) {
+                            map.set(field, {
+                                key:new Array<String>(),
+                                value:new Array<String>()
+                            });
+                        }
+                        var d:DictionaryTypes = map.get(field);
+                        refineStringType(d.key, getExprType(index));
+                        if (value != null) {
+                            refineStringType(d.value, getExprType(value));
+                        }
+                    }
+                }
+            }
+        }
+        
+        function rebuild(expr:Expr):RebuildResult {
+            switch(expr) {
+                case EFunction(f, name):
+                    enterFunction(f);
+                    var re:Expr = RebuildUtils.rebuild(f.expr, rebuild);
+                    leaveFunction();
+                    if (re != null) {
+                        return RebuildResult.RReplace(re);
+                    } else {
+                        return RebuildResult.RSkip;
+                    }
+                case EBinop("=", e1, e2, _):
+                    switch(e1) {
+                        case EArray(e1, index):
+                            refineArrayAccess(e1, index, e2);
+                        default:
+                    }
+                case EArray(e1, index):
+                    refineArrayAccess(e1, index, null);
+                default:
+            }
+            return null;
+        }
+        
+        for (d in program.defs) {
+            switch (d) {
+                case CDef(c):
+                    enterClass(pack + c.name, c);
+                    currentClass = c.name;
+                    for (field in c.fields) {
+                        switch(field.kind) {
+                            case FFun(f):
+                                enterFunction(f);
+                                RebuildUtils.rebuild(f.expr, rebuild);
+                                leaveFunction();
+                            default:
+                        }
+                    }
+                case FDef(f):
+                    RebuildUtils.rebuild(f.f.expr, rebuild);
+                default:
+            }
+        }
+    }
+    
+    public function getDictionaryType(field:String):T {
+        var m:Map<String,DictionaryTypes> = classFieldDictionaryTypes.get(currentPath);
+        if (m != null) {
+            var d:DictionaryTypes = m.get(field);
+            if (d != null) {
+                var keyT:String = null;
+                var valueT:String = null;
+                for (t in d.key) keyT = foldDictionaryType(keyT, t);
+                for (t in d.value) valueT = foldDictionaryType(valueT, t);
+                return TDictionary(TPath([keyT]), TPath([valueT]));
+                //return "Dictionary<" + d.key[0] + "," + d.value[0] + ">";
+            }
+        }
+        if (contextStack.length < 1) return null;
+        var t:String = contextStack[0].get(field);
+        return TPath([t]);
+    }
+    
+    function foldDictionaryType(a:String, b:String):String {
+        if (a == b) return a;
+        if (a == "Dynamic" || a == null) return b;
+        if (b == "Dynamic" || b == null) return a;
+        if (a == "String") return a;
+        if (b == "String") return b;
+        return "Dynamic";
+    }
+    
+    /** it could be better if we would refine single value on occurance but not to collect all types */
+    function refineStringType(types:Array<String>, type:String):Void {
+        if (type != null) {
+            types.push(type);
         }
     }
 
