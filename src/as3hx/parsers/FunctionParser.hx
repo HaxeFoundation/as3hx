@@ -143,7 +143,9 @@ class FunctionParser {
             }
         }
         Debug.closeDebug("end parseFun()", tokenizer.line);
-        rebuildLocalFunctions(f);
+        if (cfg.rebuildLocalFunctions) {
+            rebuildLocalFunctions(f);
+        }
         return f;
     }
 

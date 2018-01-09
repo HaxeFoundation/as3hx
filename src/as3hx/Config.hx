@@ -61,6 +61,8 @@ class Config {
     public var useAngleBracketsNotationForDictionaryTyping : Bool;
     /** write inferred type information into output **/
     public var debugInferredType : Bool;
+    /** replace local function declarations with variable definitions **/
+    public var rebuildLocalFunctions : Bool;
     /** convert flexunit metadata and calls to munit form */
     public var convertFlexunit : Bool;
     /** make all generated setter private */
@@ -343,6 +345,7 @@ class Config {
             case "conditionalCompilationList": setConditionalVars(el, new List());
             case "conditionalCompilationConstantsClass":setCharField(el, "");
             case "dictionaryToHash":    setBoolField(el, false);
+            case "rebuildLocalFunctions": setBoolField(el, true);
             case "useAngleBracketsNotationForDictionaryTyping": setBoolField(el, true);
             case "useFastXML":          setBoolField(el, true);
             case "useCompat":           setBoolField(el, true);
@@ -453,6 +456,7 @@ class Config {
     <conditionalCompilationList />
     <conditionalCompilationConstantsClass value="" />
     <dictionaryToHash value="false" />
+    <rebuildLocalFunctions value="true" />
     <useAngleBracketsNotationForDictionaryTyping value="true" />
     <verifyGeneratedFiles value="false" />
     <useFastXML value="true" />
