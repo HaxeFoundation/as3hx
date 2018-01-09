@@ -988,6 +988,9 @@ class Writer
         writeCloseStatement();
         var es = formatBlockBody(f.expr);
         es = WriterUtils.moveFunctionDeclarationsToTheTop(es);
+        if (cfg.fixLocalVariableDeclarations) {
+            es = new VarExprFix(cfg).apply(es, typer);
+        }
         writeExpr(EBlock(es));
     }
 
@@ -1070,6 +1073,9 @@ class Writer
             es.push(ENL(EReturn(result)));
         }
         es = WriterUtils.moveFunctionDeclarationsToTheTop(es);
+        if (cfg.fixLocalVariableDeclarations) {
+            es = new VarExprFix(cfg).apply(es, typer);
+        }
         writeStartStatement();
         writeExpr(EBlock(es));
     }

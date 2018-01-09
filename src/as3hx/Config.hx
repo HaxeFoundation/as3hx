@@ -55,6 +55,8 @@ class Config {
     public var conditionalVars: List<String>;
     /** Compile time constants implementation class package path for CONFIG::VAR -> `compile.Time.Constants`.CONFIG_VAR**/
     public var conditionalCompilationConstantsClass : String;
+    /** Try fix local variable declarations. In haxe variable should be declared only once and before first usage. **/
+    public var fixLocalVariableDeclarations : Bool;
     /** Transform Dictionary.<Key, Value> to Map **/
     public var dictionaryToHash : Bool;
     /** if set to false `Dictionary\/*KeyType,ValueType*\/` notation will be used. By default Dictionary.<KeyType,ValueType> notation is used **/
@@ -344,6 +346,7 @@ class Config {
             case "excludeList":         setExcludeField(el, new List());
             case "conditionalCompilationList": setConditionalVars(el, new List());
             case "conditionalCompilationConstantsClass":setCharField(el, "");
+            case "fixLocalVariableDeclarations":setBoolField(el, true);
             case "dictionaryToHash":    setBoolField(el, false);
             case "rebuildLocalFunctions": setBoolField(el, true);
             case "useAngleBracketsNotationForDictionaryTyping": setBoolField(el, true);
@@ -455,6 +458,7 @@ class Config {
     <excludeList />
     <conditionalCompilationList />
     <conditionalCompilationConstantsClass value="" />
+    <fixLocalVariableDeclarations value="true" />
     <dictionaryToHash value="false" />
     <rebuildLocalFunctions value="true" />
     <useAngleBracketsNotationForDictionaryTyping value="true" />
