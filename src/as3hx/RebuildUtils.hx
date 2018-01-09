@@ -19,127 +19,143 @@ enum RebuildResult {
 class RebuildUtils
 {
     public static function rebuildArray(es:Array<Expr>, rebuildMethod:Expr->RebuildResult):Array<Expr> {
-		var needRebuild:Bool = false;
-		var rs:Array<Expr> = new Array<Expr>();
-		for (i in 0...es.length) {
-            var e:Expr = es[i];
-            var r:RebuildResult = rebuildMethod(e);
-            switch(r) {
-                case RReplace(expr):
-                    rs.push(expr);
-                    needRebuild = true;
-                case RReplaceArray(es):
-                    for (e in es) {
-                        rs.push(e);
-                    }
-                    needRebuild = true;
-                case REmpty:
-                    needRebuild = true;
-                case null, RNull:
-                    var expr:Expr = rebuildExprParams(e, rebuildMethod);
-                    if (expr != null) {
-                        rs.push(expr);
-                        needRebuild = true;
-                    } else {
-                        rs.push(e);
-                    }
-                case RSkip:
-                    rs.push(e);
-                default:
-                    rs.push(e);
+        var needRebuild:Bool = false;
+        var rs:Array<Expr> = new Array<Expr>();
+        for (i in 0...es.length) {
+            if (rebuildToArray(es[i], rebuildMethod, rs)) {
+                needRebuild = true;
             }
-		}
-		if (needRebuild) {
-			return rs;
-		} else {
-			return null;
-		}
-	}
+        }
+        if (needRebuild) {
+            return rs;
+        } else {
+            return null;
+        }
+    }
 
-	public static function rebuild(e:Expr, rebuildMethod:Expr->RebuildResult):Expr {
-		if (e == null) return null;
-		var r:RebuildResult = rebuildMethod(e);
+    public static function rebuild(e:Expr, rebuildMethod:Expr->RebuildResult):Expr {
+        if (e == null) return null;
+        var r:RebuildResult = rebuildMethod(e);
         switch(r) {
             case RReplace(expr): return expr;
             case RSkip: return null;
             case null, RNull:
             default:
         }
-        return rebuildExprParams(e, rebuildMethod);
-	}
+        switch(e) {
+            case ENL(e1):
+                var re = rebuild(e1, rebuildMethod);
+                if (re == null) {
+                    return e;
+                } else {
+                    return ENL(re);
+                }
+            default:
+                return rebuildExprParams(e, rebuildMethod);
+        }
+    }
+    
+    private static function rebuildToArray(e:Expr, rebuildMethod:Expr->RebuildResult, output:Array<Expr>):Bool {
+        var r:RebuildResult = rebuildMethod(e);
+        switch(r) {
+            case RReplace(expr):
+                output.push(expr);
+                return true;
+            case RReplaceArray(es):
+                for (expr in es) {
+                    output.push(expr);
+                }
+                return true;
+            case REmpty:
+                return true;
+            case null, RNull:
+                switch(e) {
+                    case ENL(e1) :
+                        if (e1 != null) {
+                            var l:Int = output.length;
+                            var needRebuild = rebuildToArray(e1, rebuildMethod, output);
+                            var i:Int = output.length;
+                            while (i-- > l) {
+                                output[i] = ENL(output[i]);
+                            }
+                            return needRebuild;
+                        }
+                    default:
+                        var expr:Expr = rebuildExprParams(e, rebuildMethod);
+                        if (expr != null) {
+                            output.push(expr);
+                            return true;
+                        }
+                }
+            case RSkip:
+            default:
+        }
+        output.push(e);
+        return false;
+    }
 
     private static function rebuildExprParams(e:Expr, rebuildMethod:Expr->RebuildResult):Expr {
-		switch(e) {
-			case EFunction(f, name):
-				var rexpr = rebuild(f.expr, rebuildMethod);
-				if (rexpr == null) return null;
-				return EFunction({args:f.args, varArgs:f.varArgs, ret:f.ret, expr:rexpr}, name);
-			case EBlock(es):
-				var needRebuild:Bool = false;
-				var r:Array<Expr> = [];
-				for (e in es) {
-					var er:Expr = rebuild(e, rebuildMethod);
-					if (er != null) {
-						needRebuild = true;
-						r.push(er);
-					} else {
-						r.push(e);
-					}
-				}
-				if (needRebuild) {
-					return EBlock(r);
-				} else {
-					return null;
-				}
-			case EForEach(e1, e2, e3):
-				var re1:Expr = rebuild(e1, rebuildMethod);
-				var re2:Expr = rebuild(e2, rebuildMethod);
-				var re3:Expr = rebuild(e3, rebuildMethod);
-				if (re1 != null || re2 != null || re3 != null) {
-					if (re1 == null) re1 = e1;
-					if (re2 == null) re2 = e2;
-					if (re3 == null) re3 = e3;
-					return EForEach(re1, re2, re3);
-				} else {
-					return null;
-				}
-			case EWhile(e1, e2, e3):
-				var re1:Expr = rebuild(e1, rebuildMethod);
-				var re2:Expr = rebuild(e2, rebuildMethod);
-				if (re1 != null || re2 != null) {
-					if (re1 == null) re1 = e1;
-					if (re2 == null) re2 = e2;
-					return EWhile(re1, re2, e3);
-				} else {
-					return null;
-				}
-			case EIf(e1, e2, e3):
-				var re1:Expr = rebuild(e1, rebuildMethod);
-				var re2:Expr = rebuild(e2, rebuildMethod);
-				var re3:Expr = rebuild(e3, rebuildMethod);
-				if (re1 != null || re2 != null || re3 != null) {
-					if (re1 == null) re1 = e1;
-					if (re2 == null) re2 = e2;
-					if (re3 == null) re3 = e3;
-					return EIf(re1, re2, re3);
-				} else {
-					return null;
-				}
-			case EFor(e1, e2, e3, e4):
-				var re1:Array<Expr> = rebuildArray(e1, rebuildMethod);
-				var re2:Array<Expr> = rebuildArray(e2, rebuildMethod);
-				var re3:Array<Expr> = rebuildArray(e3, rebuildMethod);
-				var re4:Expr = rebuild(e4, rebuildMethod);
-				if (re1 != null || re2 != null || re3 != null || re4 != null) {
-					if (re1 == null) re1 = e1;
-					if (re2 == null) re2 = e2;
-					if (re3 == null) re3 = e3;
-					if (re4 == null) re4 = e4;
-					return EFor(re1, re2, re3, re4);
-				} else {
-					return null;
-				}
-			case ETry(e, catches): //ETry( e : Expr, catches : Array<{ name : String, t : Null<T>, e : Expr }> )
+        switch(e) {
+            case EFunction(f, name):
+                var rexpr = rebuild(f.expr, rebuildMethod);
+                if (rexpr == null) return null;
+                return EFunction({args:f.args, varArgs:f.varArgs, ret:f.ret, expr:rexpr}, name);
+            case EBlock(es):
+                var r:Array<Expr> = rebuildArray(es, rebuildMethod);
+                if (r == null) {
+                    return null;
+                } else {
+                    return EBlock(r);
+                }
+            case EForEach(e1, e2, e3):
+                var re1:Expr = rebuild(e1, rebuildMethod);
+                var re2:Expr = rebuild(e2, rebuildMethod);
+                var re3:Expr = rebuild(e3, rebuildMethod);
+                if (re1 != null || re2 != null || re3 != null) {
+                    if (re1 == null) re1 = e1;
+                    if (re2 == null) re2 = e2;
+                    if (re3 == null) re3 = e3;
+                    return EForEach(re1, re2, re3);
+                } else {
+                    return null;
+                }
+            case EWhile(e1, e2, e3):
+                var re1:Expr = rebuild(e1, rebuildMethod);
+                var re2:Expr = rebuild(e2, rebuildMethod);
+                if (re1 != null || re2 != null) {
+                    if (re1 == null) re1 = e1;
+                    if (re2 == null) re2 = e2;
+                    return EWhile(re1, re2, e3);
+                } else {
+                    return null;
+                }
+            case EIf(e1, e2, e3):
+                var re1:Expr = rebuild(e1, rebuildMethod);
+                var re2:Expr = rebuild(e2, rebuildMethod);
+                var re3:Expr = rebuild(e3, rebuildMethod);
+                if (re1 != null || re2 != null || re3 != null) {
+                    if (re1 == null) re1 = e1;
+                    if (re2 == null) re2 = e2;
+                    if (re3 == null) re3 = e3;
+                    return EIf(re1, re2, re3);
+                } else {
+                    return null;
+                }
+            case EFor(e1, e2, e3, e4):
+                var re1:Array<Expr> = rebuildArray(e1, rebuildMethod);
+                var re2:Array<Expr> = rebuildArray(e2, rebuildMethod);
+                var re3:Array<Expr> = rebuildArray(e3, rebuildMethod);
+                var re4:Expr = rebuild(e4, rebuildMethod);
+                if (re1 != null || re2 != null || re3 != null || re4 != null) {
+                    if (re1 == null) re1 = e1;
+                    if (re2 == null) re2 = e2;
+                    if (re3 == null) re3 = e3;
+                    if (re4 == null) re4 = e4;
+                    return EFor(re1, re2, re3, re4);
+                } else {
+                    return null;
+                }
+            case ETry(e, catches): //ETry( e : Expr, catches : Array<{ name : String, t : Null<T>, e : Expr }> )
                 var re:Expr = rebuild(e, rebuildMethod);
                 var needRebuild = false;
                 var rcatches:Array<{ name : String, t : Null<T>, e : Expr }> = [];
@@ -186,61 +202,57 @@ class RebuildUtils
                 } else {
                     return null;
                 }
-			case ENew(t, params):
-				var rparams:Array<Expr> = rebuildArray(params, rebuildMethod);
-				if (rparams != null) {
-					if (rparams == null) rparams = params;
-					return ENew(t, rparams);
-				} else {
-					return null;
-				}
-			case ENamespaceAccess(e, f):
-				var re:Expr = rebuild(e, rebuildMethod);
-				if (re == null) return null;
-				return ENamespaceAccess(re, f);
-			case EField(e, f):
-				var re:Expr = rebuild(e, rebuildMethod);
-				if (re == null) return null;
-				return EField(re, f);
-			case ECall(e, params):
-				var re:Expr = rebuild(e, rebuildMethod);
-				var rparams:Array<Expr> = rebuildArray(params, rebuildMethod);
-				if (re != null || rparams != null) {
-					if (re == null) re = e;
-					if (rparams == null) rparams = params;
-					return ECall(re, rparams);
-				} else {
-					return null;
-				}
-			case EUnop(op, prefix, e):
-				var re:Expr = rebuild(e, rebuildMethod);
-				if (re == null) return null;
-				return EUnop(op, prefix, re);
-			case EParent(e):
-				var re:Expr = rebuild(e, rebuildMethod);
-				if (re == null) return null;
-				return EParent(re);
-			case EBinop(op, e1, e2, newLineAfterOp):
-				var re1:Expr = rebuild(e1, rebuildMethod);
-				var re2:Expr = rebuild(e2, rebuildMethod);
-				if (re1 != null || re2 != null) {
-					if (re1 == null) re1 = e1;
-					if (re2 == null) re2 = e2;
-					return EBinop(op, re1, re2, newLineAfterOp);
-				} else {
-					return null;
-				}
-			case ENL(e):
-				e = rebuild(e, rebuildMethod);
-				if (e == null) return null;
-				return ENL(e);
-			case ECommented(a, b, c, e):
-				e = rebuild(e, rebuildMethod);
-				if (e == null) return null;
-				return ECommented(a, b, c, e);
-			default:
-		}
-		return null;
+            case ENew(t, params):
+                var rparams:Array<Expr> = rebuildArray(params, rebuildMethod);
+                if (rparams != null) {
+                    if (rparams == null) rparams = params;
+                    return ENew(t, rparams);
+                } else {
+                    return null;
+                }
+            case ENamespaceAccess(e, f):
+                var re:Expr = rebuild(e, rebuildMethod);
+                if (re == null) return null;
+                return ENamespaceAccess(re, f);
+            case EField(e, f):
+                var re:Expr = rebuild(e, rebuildMethod);
+                if (re == null) return null;
+                return EField(re, f);
+            case ECall(e, params):
+                var re:Expr = rebuild(e, rebuildMethod);
+                var rparams:Array<Expr> = rebuildArray(params, rebuildMethod);
+                if (re != null || rparams != null) {
+                    if (re == null) re = e;
+                    if (rparams == null) rparams = params;
+                    return ECall(re, rparams);
+                } else {
+                    return null;
+                }
+            case EUnop(op, prefix, e):
+                var re:Expr = rebuild(e, rebuildMethod);
+                if (re == null) return null;
+                return EUnop(op, prefix, re);
+            case EParent(e):
+                var re:Expr = rebuild(e, rebuildMethod);
+                if (re == null) return null;
+                return EParent(re);
+            case EBinop(op, e1, e2, newLineAfterOp):
+                var re1:Expr = rebuild(e1, rebuildMethod);
+                var re2:Expr = rebuild(e2, rebuildMethod);
+                if (re1 != null || re2 != null) {
+                    if (re1 == null) re1 = e1;
+                    if (re2 == null) re2 = e2;
+                    return EBinop(op, re1, re2, newLineAfterOp);
+                } else {
+                    return null;
+                }
+            case ECommented(a, b, c, e):
+                e = rebuild(e, rebuildMethod);
+                if (e == null) return null;
+                return ECommented(a, b, c, e);
+            default:
+        }
+        return null;
     }
 
     private static function rebuildSwitchDefault(def:SwitchDefault, rebuildMethod:Expr->RebuildResult):SwitchDefault {
