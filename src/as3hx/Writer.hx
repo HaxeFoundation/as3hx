@@ -987,6 +987,7 @@ class Writer
         writeArgs(f.args, f.varArgs);
         writeCloseStatement();
         var es = formatBlockBody(f.expr);
+        es = WriterUtils.moveFunctionDeclarationsToTheTop(es);
         writeExpr(EBlock(es));
     }
 
@@ -1068,6 +1069,7 @@ class Writer
             formatBlock(es, function(e) return result);
             es.push(ENL(EReturn(result)));
         }
+        es = WriterUtils.moveFunctionDeclarationsToTheTop(es);
         writeStartStatement();
         writeExpr(EBlock(es));
     }
@@ -3276,7 +3278,7 @@ class Writer
                         default:
                     }
                 }
-                if(isIntExpr(lvalue)) {
+                if (isIntExpr(lvalue)) {
                     if(needCastToInt(rvalue)) {
                         switch(rvalue) {
                             case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiseOp(op)):  rvalue = getResultForNumerics(op, e1, e2);
