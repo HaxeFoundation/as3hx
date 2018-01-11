@@ -359,6 +359,7 @@ class Writer
 
         var path:String = (pack.length > 0 ? pack.join(".") + "." : "") + c.name;
         typer.enterClass(path, c);
+        typer.setImports(typeImportMap);
 
         // process properties
         writeProperties(c);
@@ -2920,7 +2921,7 @@ class Writer
                     default: EBinop("!=", e, EIdent("null"), false);
                 }
             case EBinop(op, e2, e3, n):
-                if(isBitwiseOp(op)) return EBinop("!=", EParent(e), EConst(CInt("0")), false);
+                if(isBitwiseOp(op) || isNumericOp(op)) return EBinop("!=", EParent(e), EConst(CInt("0")), false);
                 if(isNumericConst(e2) || isNumericConst(e3)) return null;
                 if(op == "==" || op == "!=" || op == "!==" || op == "===") return null;
                 if(op == "is" || op == "in" || op == "as") return null;

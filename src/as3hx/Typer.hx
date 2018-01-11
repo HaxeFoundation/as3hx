@@ -24,6 +24,7 @@ class Typer
     var context : Map<String,String> = new Map<String,String>();
     var contextStack : Array<Map<String,String>> = [];
     var currentPath:String = null;
+    var importsMap : Map<String,String>;
 
     public function new(cfg:Config) {
         this.cfg = cfg;
@@ -71,11 +72,19 @@ class Typer
                     default:
                 }
                 var ts:String = getExprType(e2);
-                if (ts != null && classes.exists(ts)) {
-                    return classes.get(ts).get(f);
-                } else {
-                    return null;
+                if (ts != null) {
+                    if (context.exists(ts)) {
+                        ts = context.get(ts);
+                    }
+                    if (classes.exists(ts)) {
+                        return classes.get(ts).get(f);
+                    } else if (importsMap != null && importsMap.exists(ts)) {
+                        if (classes.exists(ts)) {
+                            return classes.get(importsMap.get(ts)).get(f);
+                        }
+                    }
                 }
+                return null;
             case EIdent(s):
                 s = getModifiedIdent(s);
                 return context.get(s);
@@ -146,7 +155,7 @@ class Typer
 
     public function addClass(path:String, c:ClassDef):Void {
         var classMap:Map<String,String> = new Map<String,String>();
-        parseClassFields(c, classMap);
+        parseClassFields(path, c, classMap);
         classes[path] = classMap;
     }
 
@@ -155,9 +164,13 @@ class Typer
         var classMap:Map<String,String> = classes.get(path);
         if (classMap == null) {
             classMap = new Map<String, String>();
-            parseClassFields(c, classMap);
+            parseClassFields(path, c, classMap);
         }
         contextStack[contextStack.length - 1] = context = classMap;
+    }
+    
+    public function setImports(importsMap:Map<String,String>):Void {
+        this.importsMap = importsMap;
     }
 
     public function enterFunction(f:Function):Void {
@@ -188,7 +201,7 @@ class Typer
         closeContext();
     }
 
-    function parseClassFields(c:ClassDef, map:Map<String,String>):Void {
+    function parseClassFields(path:String, c:ClassDef, map:Map<String,String>):Void {
         for (field in c.fields) {
             switch(field.kind) {
                 case FVar(t, val):
@@ -202,6 +215,7 @@ class Typer
                 default:
             }
         }
+        map.set(c.name, path);
     }
     
     public function applyRefinedTypes(program:Program):Void {
