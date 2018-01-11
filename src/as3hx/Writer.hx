@@ -2734,6 +2734,8 @@ class Writer
                 switch (t2) {
                     case TDictionary(k, v):
                         switch (t) {
+                            case TPath(p) if (p.length == 1) :
+                                return writeExpr(ENew(t, params));
                             case TDictionary(k, v):
                                 return writeExpr(ENew(t, params));
                             default:
