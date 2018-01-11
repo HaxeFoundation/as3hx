@@ -28,13 +28,27 @@ class Typer
     public function new(cfg:Config) {
         this.cfg = cfg;
     }
+    
+    public function getContextClone(relativeLevel:Int = 0):Map<String,String> {
+        var context:Map<String,String>;
+        if (relativeLevel < 0 && -relativeLevel <= contextStack.length) {
+            context = contextStack[contextStack.length + relativeLevel];
+        } else {
+            context = this.context;
+        }
+        var clone:Map<String,String> = new Map<String,String>();
+        for (v in context.keys()) {
+            clone.set(v, context.get(v));
+        }
+        return clone;
+    }
 
     public function getExprType(e:Expr):Null<String> {
         switch(e) {
             case ETypedExpr(e2, t): return tstring(t);
             case EField(e2, f):
                 switch(e2) {
-                    case EIdent("this"): return contextStack[0].get(f);
+                    case EIdent("this"): return contextStack.length > 0 ? contextStack[0].get(f) : context.get(f);
                     default:
                 }
                 var t2 = getExprType(e2);
@@ -232,7 +246,7 @@ class Typer
                         field = s;
                     default:
                 }
-                if (field != null) {
+                if (field != null && baseType != null) {
                     if (classes.exists(baseType)) {
                         if (!classFieldDictionaryTypes.exists(baseType)) {
                             classFieldDictionaryTypes.set(baseType, new Map<String, DictionaryTypes>());
@@ -301,13 +315,17 @@ class Typer
     
     public function getDictionaryType(field:String):T {
         var m:Map<String,DictionaryTypes> = classFieldDictionaryTypes.get(currentPath);
-        if (m != null) {
+        if (m != null && field != null) {
             var d:DictionaryTypes = m.get(field);
             if (d != null) {
                 var keyT:String = null;
                 var valueT:String = null;
                 for (t in d.key) keyT = foldDictionaryType(keyT, t);
                 for (t in d.value) valueT = foldDictionaryType(valueT, t);
+                if (cfg.useOpenFlTypes) {
+                    if (keyT == null || keyT == "Dynamic") keyT = "Object";
+                    if (valueT == null || valueT == "Dynamic") valueT = "Object";
+                }
                 return TDictionary(TPath([keyT]), TPath([valueT]));
                 //return "Dictionary<" + d.key[0] + "," + d.value[0] + ">";
             }
