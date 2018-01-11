@@ -43,4 +43,8 @@ class WriterUtils
         }
         return localFunctionDeclarations.concat(expressionsWithoutFunctions);
     }
+    
+    public static function replaceForLoopsWithWhile(expressions:Array<Expr>):Array<Expr> {
+        return new ForLoopRebuild().replaceForLoopsWithWhile(expressions);
+    }
 }

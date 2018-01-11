@@ -989,7 +989,7 @@ class Writer
         var es = formatBlockBody(f.expr);
         es = WriterUtils.moveFunctionDeclarationsToTheTop(es);
         if (cfg.fixLocalVariableDeclarations) {
-            es = new VarExprFix(cfg).apply(es, typer);
+            es = new VarExprFix(cfg).apply(f, es, typer);
         }
         writeExpr(EBlock(es));
     }
@@ -1073,8 +1073,9 @@ class Writer
             es.push(ENL(EReturn(result)));
         }
         es = WriterUtils.moveFunctionDeclarationsToTheTop(es);
+        es = WriterUtils.replaceForLoopsWithWhile(es);
         if (cfg.fixLocalVariableDeclarations) {
-            es = new VarExprFix(cfg).apply(es, typer);
+            es = new VarExprFix(cfg).apply(f, es, typer);
         }
         writeStartStatement();
         writeExpr(EBlock(es));
@@ -1323,8 +1324,8 @@ class Writer
     }
 
     function writeModifiedIdent(s : String) {
-        write(getModifiedIdent(s));
-    }
+            write(getModifiedIdent(s));
+        }
 
     /**
      * Write an expression
@@ -2130,95 +2131,64 @@ class Writer
     inline function writeEFor(inits:Array<Expr>, conds:Array<Expr>, incrs:Array<Expr>, e:Expr):BlockEnd {
         //Sys.println('inits: ${inits}; conds: ${conds}; incrs: ${incrs}');
         openContext();
-        var useWhileLoop:Void->Bool = function() {
-            if (inits.empty() || conds.empty()) return true;
-            switch(inits[0]) {
-                case EVars(vars) if(vars.length > 1): return true;
-                case EIdent(v): return true;
-                default:
-            }
-            if (conds[0].match(EBinop("&&" | "||", _, _, _))) return true;
-            //index must be incremented by 1
-            if (incrs.length == 1) {
-                return switch(incrs[0]) {
-                    case EUnop(op, _, _): op != "++";
-                    case EBinop(openb,_,_,_): true;
-                    default: false;
-                }
-            }
-            return true;
+        for (i in 0...inits.length - 1) {
+            var e:Expr = inits[i];
+            writeExpr(ENL(e));
         }
-        var isWhileLoop = useWhileLoop();
-        if (!isWhileLoop) {
-            write("for (");
-            switch(inits[0]) {
-                case EVars(v):
-                    write(v[0].name);
+        write("for (");
+        if (inits.length == 0) {
+            neko.Lib.println(inits + ";" + conds + ";" + incrs + "   :   " + e);
+        }
+        switch(inits[inits.length - 1]) {
+            case EVars(v):
+                write(v[0].name);
+                write(" in ");
+                writeExpr(v[0].val);
+                write("...");
+            // var i:int = 0;
+            // for (i = 0; i < size; i++)
+            case EBinop(op, e1, e2, newLineAfterOp):
+                if (op == "=") {
+                    switch (e1) {
+                        case EIdent(v): write(v);
+                        default:
+                    }
                     write(" in ");
-                    writeExpr(v[0].val);
+                    writeExpr(e2);
                     write("...");
-                // var i:int = 0;
-                // for (i = 0; i < size; i++)
-                case EBinop(op, e1, e2, newLineAfterOp):
-                    if (op == "=") {
-                        switch (e1) {
-                            case EIdent(v): write(v);
-                            default:
-                        }
-                        write(" in ");
-                        writeExpr(e2);
-                        write("...");
-                    }
-                default:
-            }
-            switch(conds[0]) {
-                case EBinop(op, e1, e2, nl):
-                    switch(op) {
-                        //corne case, for "<=" binop, limit value should be incremented
-                        case "<=":
-                            switch(e2) {
-                                case EConst(CInt(v)):
-                                    //increment int constants
-                                    var e = EConst(CInt(Std.string(Std.parseInt(v) + 1)));
-                                    writeExpr(e2);
-                                case _:
-                                    //when var used (like <= array.length), no choice but
-                                    //to append "+1"
-                                    writeExpr(e2);
-                                    write(" + 1");
-                            }
-                        case _: writeExpr(e2);
-                    }
-                    writeCloseStatement();
-                default:
-            }
-        } else {
-            inits = inits.filter(function(it) return !it.match(EIdent(_)));
-            for(init in inits) {
-                writeExpr(init);
-                writeNL(";");
-            }
-            if(!inits.empty()) writeIndent();
-            write("while (");
-            if (conds.empty()) {
-                write("true");
-            } else {
-                for (i in 0...conds.length) {
-                    if (i > 0)
-                        write(" && ");
-                    writeExpr(conds[i]);
                 }
-            }
-            writeCloseStatement();
+            default:
+        }
+        switch(conds[0]) {
+            case EBinop(op, e1, e2, nl):
+                switch(op) {
+                    case ">", ">=":
+                        var t:Expr = e1;
+                        e1 = e2;
+                        e2 = t;
+                    default:
+                }
+                switch(op) {
+                    //corner case, for "<=" binop, limit value should be incremented
+                    case "<=", ">=":
+                        switch(e2) {
+                            case EConst(CInt(v)):
+                                //increment int constants
+                                var e = EConst(CInt(Std.string(Std.parseInt(v) + 1)));
+                                writeExpr(e2);
+                            case _:
+                                //when var used (like <= array.length), no choice but
+                                //to append "+1"
+                                writeExpr(e2);
+                                write(" + 1");
+                        }
+                    case _: writeExpr(e2);
+                }
+                writeCloseStatement();
+            default:
         }
         var es = formatBlockBody(e);
-        //don't write increments for a "for" loop
-        if (isWhileLoop) {
-            for (incr in incrs) {
-                es.push(ENL(incr));
-            }
-        }
-        writeLoop(isWhileLoop ? incrs : [], function() { writeExpr(EBlock(es)); });
+        writeLoop([], function() { writeExpr(EBlock(es)); });
         closeContext();
         return None;
     }
