@@ -721,7 +721,7 @@ class Writer
                 if(val != null) {
                     write(" = ");
                     lvl++; //extra indenting if init is on multiple lines
-                    writeExpr(ETypedExpr(val, t));
+                    writeETypedExpr(val, t);
                     lvl--;
                 }
 
@@ -1705,7 +1705,8 @@ class Writer
             write("{");
             lvl++;
             for (ex in e) {
-                writeFinish(writeExpr(ex));
+                
+                writeFinish(writeETypedExpr(ex, TPath([null])));
             }
             lvl--;
             write(closeb());
@@ -2727,6 +2728,8 @@ class Writer
         switch(e) {
             case ENL(e2):
                 return writeExpr(ENL(ETypedExpr(e2, t)));
+            case ECommented(s, isBlock, isTail, e2):
+                return writeECommented(s, isBlock, isTail, ETypedExpr(e2, t));
             case ENew(t2, params):
                 switch (t2) {
                     case TDictionary(k, v):
@@ -2746,8 +2749,9 @@ class Writer
                 if (re != null) {
                     e = re;
                 }
-            case "Int":
-                if (getExprType(e) != "Int") {
+            case "Int", "Uint":
+                var et:String = getExprType(e);
+                if (et != "Int" && et != "UInt") {
                     e = getCastToIntExpr(e);
                     //e = ECall(EField(EIdent("Std"), "int"), [ETypedExpr(e, null)]);
                 }
