@@ -39,6 +39,7 @@ class Writer
     var inE4XFilter : Bool;
     var inLvalAssign : Bool; // current expr is lvalue in assignment (expr = valOfSomeSort)
     var rvalue : Expr;
+    var functionReturnType : T;
     var typeImportMap : Map<String,String>;
     var lineIsDirty : Bool; // current line contains some non-whitespace/indent characters
     var pendingTailComment : String; // one line comment that needs to be written at the end of line
@@ -1028,6 +1029,9 @@ class Writer
     }
 
     function writeFunction(f : Function, isGetter:Bool, isSetter:Bool, isNative:Bool, ?name : Null<String>, ?ret : FunctionRet) {
+        var oldFunctionReturnType:T = functionReturnType;
+        functionReturnType = f.ret.t;
+        
         write("function");
         if(name != null)
             write(" " + name);
@@ -1080,6 +1084,7 @@ class Writer
         }
         writeStartStatement();
         writeExpr(EBlock(es));
+        functionReturnType = oldFunctionReturnType;
     }
 
     /**
@@ -1109,7 +1114,7 @@ class Writer
         write("return");
         if(e == null) return;
         write(" ");
-        writeExpr(e);
+        writeETypedExpr(e, functionReturnType);
     }
 
     function writeEArray(e:Expr, index:Expr) {
