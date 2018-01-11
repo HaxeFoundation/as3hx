@@ -1,5 +1,6 @@
 package as3hx;
 import as3hx.As3.Expr;
+import as3hx.As3.Function;
 import as3hx.RebuildUtils.RebuildResult;
 import neko.Lib;
 
@@ -15,18 +16,24 @@ class VarExprFix
         this.cfg = cfg;
     }
     
-    public function apply(es:Array<Expr>, typer:Typer):Array<Expr> {
-        var map:Map<String,String> = typer.getContextClone();
+    public function apply(f:Function, es:Array<Expr>, typer:Typer):Array<Expr> {
+        var map:Map<String,String> = typer.getContextClone(-1);
         var firstUse:Map<String,Int> = new Map<String,Int>();
         var firstUseLine:Map<Int,Array<String>> = new Map<Int,Array<String>>();
-        for (v in map) {
+        for (v in map.keys()) {
             firstUse.set(v, -1);
+        }
+        for (arg in f.args) {
+            firstUse.set(arg.name, -1);
+        }
+        if (f.varArgs != null) {
+            firstUse.set(f.varArgs, -1);
         }
         var line:Int = 0;
         function rebuildMethodLookForVars(e:Expr):RebuildResult {
             switch(e) {
                 case EIdent(v):
-                    if (!firstUse.exists(v)) {
+                    if (v != null && !firstUse.exists(v)) {
                         firstUse.set(v, line);
                         if (firstUseLine.exists(line)) {
                             firstUseLine.get(line).push(v);
@@ -35,7 +42,9 @@ class VarExprFix
                         }
                     }
                 case EFunction(f, v):
-                    map.set(v, "Function");
+                    if (v != null) {
+                        map.set(v, "Function");
+                    }
                 case EVars(vars/*Array<{ name : String, t : Null<T>, val : Null<Expr> }>*/):
                     var newVars:Array<Expr> = [];
                     var hasChange:Bool = false;
