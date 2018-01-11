@@ -21,15 +21,18 @@ class WriterUtils
                     if (op == "=") {
                         switch(e2) {
                             case EFunction(f, name):
-                                localFunctionDeclarations.push(ENL(e2));
-                                return RebuildResult.RReplace(EBinop("=", e1, EIdent(name), newLineAfterOp));
+                                return RebuildResult.RSkip;
                             default:
                         }
                     }
                     return RebuildResult.RSkip;
                 case EFunction(f, name):
-                    localFunctionDeclarations.push(ENL(e));
-                    return RebuildResult.REmpty;
+                    if (name != null) {
+                        localFunctionDeclarations.push(ENL(e));
+                        return RebuildResult.REmpty;
+                    } else {
+                        return RebuildResult.RSkip;
+                    }
                 default:
             }
             return null;
