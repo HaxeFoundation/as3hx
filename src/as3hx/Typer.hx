@@ -285,6 +285,11 @@ class Typer
                             refineArrayAccess(e1, index, e2);
                         default:
                     }
+                    switch(e2) {
+                        case EArray(e2, index):
+                            refineArrayAccess(e2, index, e1);
+                        default:
+                    }
                 case EArray(e1, index):
                     refineArrayAccess(e1, index, null);
                 default:
