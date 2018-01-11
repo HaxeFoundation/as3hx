@@ -43,6 +43,13 @@ class RebuildUtils
             default:
         }
         switch(e) {
+            case ECommented(s, isBlock, isTail, e1):
+                var re = rebuild(e1, rebuildMethod);
+                if (re == null) {
+                    return e;
+                } else {
+                    return ECommented(s, isBlock, isTail, re);
+                }
             case ENL(e1):
                 var re = rebuild(e1, rebuildMethod);
                 if (re == null) {
@@ -70,6 +77,17 @@ class RebuildUtils
                 return true;
             case null, RNull:
                 switch(e) {
+                    case ECommented(s, isBlock, isTail, e1):
+                        if (e1 != null) {
+                            var l:Int = output.length;
+                            var needRebuild = rebuildToArray(e1, rebuildMethod, output);
+                            var i:Int = output.length;
+                            while (i-- > l + 1) {
+                                output[i] = output[i];
+                            }
+                            output[i] = ECommented(s, isBlock, isTail, output[i]);
+                            return needRebuild;
+                        }
                     case ENL(e1) :
                         if (e1 != null) {
                             var l:Int = output.length;
