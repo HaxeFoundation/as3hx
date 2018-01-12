@@ -2124,7 +2124,7 @@ class Writer
             writeExpr(EBlock(formatBlockBody(e)));
             writeStartStatement();
             write("while (");
-            result = writeExpr(cond);
+            result = writeExpr(rebuildIfExpr(cond));
             write(")");
         } else {
             write("while (");
