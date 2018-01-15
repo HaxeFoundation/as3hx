@@ -226,6 +226,13 @@ class Typer
                     enterClass(pack + c.name, c);
                     for (f in c.fields) {
                         var t:T = getDictionaryType(f.name);
+                        switch (t)  {
+                            case TDictionary(k, v):
+                                addImport(program, k);
+                                addImport(program, v);
+                            case null:
+                            default:
+                        }
                         var d:String = tstring(t);
                         if (t != null) {
                             switch(f.kind) {
@@ -393,6 +400,10 @@ class Typer
      */
     function closeContext() {
         context = contextStack.pop();
+    }
+    
+    function addImport(program:Program, t:T):Void {
+        program.typesSeen.push(t);
     }
 
     public static function getFunctionType(f:Function):T {
