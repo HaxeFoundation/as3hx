@@ -85,6 +85,7 @@ class Typer
                 }
                 return null;
             case EIdent(s):
+                if (s == "true" || s == "false") return "Bool";
                 s = getModifiedIdent(s);
                 return context.get(s);
             case EVars(vars) if(vars.length == 1): return tstring(vars[0].t);
