@@ -2748,8 +2748,8 @@ class Writer
                         }
                     default:
                 }
-            default:
-        }
+                            default:
+                        }
         // fix of such constructions var tail:Signal = s || p;
         switch(tstring(t)) {
             case "Bool":
@@ -2775,37 +2775,43 @@ class Writer
         return writeExpr(e);
     }
 
-    inline function writeEDelete(e:Expr) {
-        switch(e) {
-            case EArray(a, i):
-                var atype = getExprType(a);
-                if (atype != null) {
-                    if (isMapType(atype) || isOpenFlDictionaryType(atype)) {
-                        writeExpr(a);
-                        write(".remove(");
-                        writeExpr(i);
-                        write(")");
-                    } else if (atype == "Dynamic") {
-                        switch(i) {
-                            case EConst(c):
-                                switch(c) {
-                                    case CInt(v) | CFloat(v): i = EConst(CString(v));
-                                    default:
-                                }
-                            case EIdent(_):
-                                var type = getExprType(i);
-                                if (type == null || type != "String") {
-                                    i = getToStringExpr(i);
-                                }
+    private function writeDelete(object:Expr, index:Expr):Void {
+        var atype = getExprType(object);
+        if (atype != null) {
+            if (isMapType(atype) || isOpenFlDictionaryType(atype)) {
+                writeExpr(object);
+                write(".remove(");
+                writeExpr(index);
+                write(")");
+            } else if (atype == "Dynamic") {
+                switch(index) {
+                    case EConst(c):
+                        switch(c) {
+                            case CInt(v) | CFloat(v): index = EConst(CString(v));
                             default:
                         }
-                        writeExpr(ECall(EField(EIdent("Reflect"), "deleteField"), [a, i]));
-                    } else if(atype == "Dictionary") {
-                        addWarning("EDelete");
-                        writeNL("This is an intentional compilation error. See the README for handling the delete keyword");
-                        writeIndent('delete ${getIdentString(a)}[${getIdentString(i)}]');
-                    }
+                    case EIdent(_):
+                        var type = getExprType(index);
+                        if (type == null || type != "String") {
+                            index = getToStringExpr(index);
+                        }
+                    default:
                 }
+                writeExpr(ECall(EField(EIdent("Reflect"), "deleteField"), [object, index]));
+            } else if(atype == "Dictionary") {
+                addWarning("EDelete");
+                writeNL("This is an intentional compilation error. See the README for handling the delete keyword");
+                writeIndent('delete ${getIdentString(object)}[${getIdentString(index)}]');
+            }
+        }
+    }
+
+    inline function writeEDelete(e:Expr) {
+        switch(e) {
+            case EField(e, f):
+                writeDelete(e, EConst(CString(f)));
+            case EArray(a, i):
+                writeDelete(a, i);
             default:
                 addWarning("EDelete");
                 writeNL("This is an intentional compilation error. See the README for handling the delete keyword");
