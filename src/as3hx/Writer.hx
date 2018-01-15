@@ -210,7 +210,6 @@ class Writer
     {
         if (imports.length > 0)
         {
-            var imported = []; //holds already written types to prevent duplicates
             for(i in imports) {
                 writeImport(i);
                 writeNL();
@@ -975,9 +974,9 @@ class Writer
 
         if (cfg.replaceVarArgsWithOptionalArguments) {
             // Adding workaround for (...params:Array)
-            var varArgsNum:Int = 4;
-            var argNum:Int = args.length;
             if (varArgs != null) {
+                var varArgsNum:Int = 4;
+                var argNum:Int = args.length;
                 for (i in 1...varArgsNum + 1) {
                     if (argNum++ > 0) write(", ");
                         write('$varArgs$i:Dynamic = null');
@@ -1017,6 +1016,7 @@ class Writer
         writeArgs(f.args, f.varArgs, es);
         writeCloseStatement();
         es = WriterUtils.moveFunctionDeclarationsToTheTop(es);
+        es = WriterUtils.replaceForLoopsWithWhile(es);
         if (cfg.fixLocalVariableDeclarations) {
             es = new VarExprFix(cfg).apply(f, es, typer);
         }
@@ -2171,9 +2171,6 @@ class Writer
             writeExpr(ENL(e));
         }
         write("for (");
-        if (inits.length == 0) {
-            neko.Lib.println(inits + ";" + conds + ";" + incrs + "   :   " + e);
-        }
         switch(inits[inits.length - 1]) {
             case EVars(v):
                 write(v[0].name);
