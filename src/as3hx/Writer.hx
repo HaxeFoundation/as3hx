@@ -2302,7 +2302,7 @@ class Writer
                         case "Array":
                             write("try cast(");
                             writeExpr(e1);
-                            write(", Array</*AS3HX WARNING no type*/>) catch(e:Dynamic) null");
+                            write(", Array<Dynamic>) catch(e:Dynamic) null");
                             addWarning("as array", true);
                         case "Class":
                             addWarning("as Class",true);
