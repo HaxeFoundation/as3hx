@@ -53,7 +53,6 @@ class Typer
                     default:
                 }
                 var t2 = getExprType(e2);
-                //write("/* e2 " + e2 + "."+f+" type: "+t2+" */");
                 if (t2 != null && (t2.indexOf("Array<") == 0 || t2.indexOf("Vector<") == 0) && f == "length") {
                     return "Int";
                 }
@@ -177,6 +176,9 @@ class Typer
         openContext();
         for (arg in f.args) {
             context.set(arg.name, tstring(arg.t));
+        }
+        if (f.varArgs != null) {
+            context.set(f.varArgs, "Array<Dynamic>");
         }
         function lookUpForTyping(expr:Expr):RebuildResult {
             switch(expr) {
