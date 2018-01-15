@@ -2445,9 +2445,22 @@ class Writer
         return Semi;
     }
 
-    inline function writeEUnop(op:String, prefix:Bool, e:Expr):BlockEnd {
+    function writeEUnop(op:String, prefix:Bool, e:Expr):BlockEnd {
         var result = Semi;
         var type = getExprType(e);
+        switch(e) {
+            case EField(a, "length") if (op == "++" || op == "--"):
+                var type = getExprType(a);
+                if (type != null && type.startsWith("Vector<")) {
+                    if (op == "++") {
+                        writeExpr(EBinop("+=", e, EConst(CInt("1")), false));
+                    } else {
+                        writeExpr(EBinop("-=", e, EConst(CInt("1")), false));
+                    }
+                    return result;
+                }
+            default:
+        }
         if((isIntType(type) || type == "UInt") && op == "!") {
             writeExpr(EBinop("!=", e, EConst(CInt("0")), false));
             result = None;
