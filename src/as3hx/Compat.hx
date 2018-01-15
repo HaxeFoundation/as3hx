@@ -79,6 +79,34 @@ class Compat {
         }
     }
 
+    public static function makeArgs(a1:Dynamic, a2:Dynamic, a3:Dynamic, a4:Dynamic, a5:Dynamic = null, a6:Dynamic = null):Array<Dynamic> {
+        if (a6 == null) {
+            if (a5 == null) {
+                if (a4 == null) {
+                    if (a3 == null) {
+                        if (a2 == null) {
+                            if (a1 == null) {
+                                return [];
+                            } else {
+                                return [a1];
+                            }
+                        } else {
+                            return [a1, a2];
+                        }
+                    } else {
+                        return [a1, a2, a3];
+                    }
+                } else {
+                    return [a1, a2, a3, a4];
+                }
+            } else {
+                return [a1, a2, a3, a4, a5];
+            }
+        } else {
+            return [a1, a2, a3, a4, a5, a6];
+        }
+    }
+
     macro public static function getFunctionLength(f) {
         switch(Context.follow(Context.typeof(f))) {
             case TFun(args, _): return @:pos(Context.currentPos()) macro $v{args.length};

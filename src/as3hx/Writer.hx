@@ -881,9 +881,9 @@ class Writer
         }
     }
 
-    function writeArgs(args : Array<{ name : String, t : Null<T>, val : Null<Expr>, exprs : Array<Expr> }>, ?varArgs:String)
+    function writeArgs(args : Array<{ name : String, t : Null<T>, val : Null<Expr>, exprs : Array<Expr> }>, varArgs:String = null, functionExpressions:Array<Expr>)
     {
-        if(varArgs != null) {
+        if(varArgs != null && !cfg.replaceVarArgsWithOptionalArguments) {
             var varArg = {
                 name:varArgs,
                 t:TPath(["Array"]),
@@ -972,6 +972,33 @@ class Writer
                 }
             }
         }
+
+        if (cfg.replaceVarArgsWithOptionalArguments) {
+            // Adding workaround for (...params:Array)
+            var varArgsNum:Int = 4;
+            var argNum:Int = args.length;
+            if (varArgs != null) {
+                for (i in 1...varArgsNum + 1) {
+                    if (argNum++ > 0) write(", ");
+                        write('$varArgs$i:Dynamic = null');
+                }
+
+                if (functionExpressions.length > 0) {
+                    functionExpressions[0] = ENL(functionExpressions[0]);
+                }
+
+                var callArgs:Array<Expr> = [];
+                for (i in 1...varArgsNum + 1) {
+                    callArgs.push(EIdent(varArgs + i));
+                }
+                functionExpressions.unshift(ENL(EVars([{
+                    name:varArgs,
+                    t:TPath(["Array<Dynamic>"]),
+                    val:ECall(EIdent("as3hx.Compat.makeArgs"), callArgs)
+                }])));
+            }
+        }
+
         lvl -= 2;
         return fst;
     }
@@ -986,9 +1013,9 @@ class Writer
             }
         }
         write("function new(");
-        writeArgs(f.args, f.varArgs);
-        writeCloseStatement();
         var es = formatBlockBody(f.expr);
+        writeArgs(f.args, f.varArgs, es);
+        writeCloseStatement();
         es = WriterUtils.moveFunctionDeclarationsToTheTop(es);
         if (cfg.fixLocalVariableDeclarations) {
             es = new VarExprFix(cfg).apply(f, es, typer);
@@ -1032,18 +1059,19 @@ class Writer
         var oldFunctionReturnType:T = functionReturnType;
         functionReturnType = f.ret.t;
         
+        // ensure the function body is in a block
+        var es = f.expr != null ? formatBlockBody(f.expr) : [];
+        
         write("function");
         if(name != null)
             write(" " + name);
         write("(");
-        writeArgs(f.args, f.varArgs);
+        writeArgs(f.args, f.varArgs, es);
         write(")");
         // return type
         if (ret == null)
             ret = f.ret;
         writeFunctionReturn(ret, isGetter, isSetter, isNative);
-        // ensure the function body is in a block
-        var es = f.expr != null ? formatBlockBody(f.expr) : [];
         var formatExpr:Expr->(Expr->Expr)->Expr = null;
         var formatBlock:Array<Expr>->(Expr->Expr)->Array<Expr> = function(exprs, getResult) {
             for(i in 0...exprs.length) {

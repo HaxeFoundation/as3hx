@@ -51,6 +51,8 @@ class Config {
     public var testCase : Bool;
     /** Try to use openfl.Vector openfl.utils.Dictionary and openfl.utils.Object types **/
     public var useOpenFlTypes : Bool;
+    /** Replace varArgs with set of optional arguments converted to an Array<Dynamic> **/
+    public var replaceVarArgsWithOptionalArguments : Bool;
     /** conditional compilation variables **/
     public var conditionalVars: List<String>;
     /** Compile time constants implementation class package path for CONFIG::VAR -> `compile.Time.Constants`.CONFIG_VAR**/
@@ -341,6 +343,7 @@ class Config {
             case "errorContinue":       setBoolField(el, true);
             case "testCase":            setBoolField(el, false);
             case "useOpenFlTypes":      setBoolField(el, false);
+            case "replaceVarArgsWithOptionalArguments": setBoolField(el, false);
             case "verifyGeneratedFiles":setBoolField(el, false);
             case "flashTopLevelPackage":setCharField(el, "flash");
             case "excludeList":         setExcludeField(el, new List());
@@ -454,6 +457,7 @@ class Config {
     <getterSetterStyle value="haxe" />
     <testCase value="false" />
     <useOpenFlTypes value="false" />
+    <replaceVarArgsWithOptionalArguments value="false" />
     <flashTopLevelPackage value="flash"/>
     <excludeList />
     <conditionalCompilationList />
