@@ -2748,8 +2748,8 @@ class Writer
                         }
                     default:
                 }
-                            default:
-                        }
+            default:
+        }
         // fix of such constructions var tail:Signal = s || p;
         switch(tstring(t)) {
             case "Bool":
