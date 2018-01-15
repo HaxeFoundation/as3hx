@@ -26,7 +26,7 @@ class VarExprFix
         for (arg in f.args) {
             firstUse.set(arg.name, -1);
         }
-        if (f.varArgs != null) {
+        if (f.varArgs != null && !cfg.replaceVarArgsWithOptionalArguments) {
             firstUse.set(f.varArgs, -1);
         }
         var line:Int = 0;
