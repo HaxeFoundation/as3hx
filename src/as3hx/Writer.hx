@@ -3097,6 +3097,14 @@ class Writer
                         }
                     }
                 }
+                else if(f == "match") {
+                    var type = getExprType(e);
+                    if(type != null) {
+                        if (type == "String") {
+                            result = ECall(EField(EIdent("as3hx.Compat"), "match"), [e, params[0]]);
+                        }
+                    }
+                }
                 else if(f == "search") {
                     var type = getExprType(e);
                     if(type != null) {

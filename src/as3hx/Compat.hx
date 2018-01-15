@@ -79,6 +79,15 @@ class Compat {
         }
     }
 
+    public static function match(s:String, ereg:EReg, parenthesesBlockIndex:Int = 0):Array<String> {
+        var matches:Array<String> = [];
+        while (ereg.match(s)) {
+            matches.push(ereg.matched(parenthesesBlockIndex)); 
+            s = ereg.matchedRight();
+        }
+        return matches;
+    }
+
     public static function makeArgs(a1:Dynamic, a2:Dynamic, a3:Dynamic, a4:Dynamic, a5:Dynamic = null, a6:Dynamic = null):Array<Dynamic> {
         if (a6 == null) {
             if (a5 == null) {
