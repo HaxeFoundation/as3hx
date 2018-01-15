@@ -3056,6 +3056,19 @@ class Writer
                         }
                     }
                 }
+                else if(f == "search") {
+                    var type = getExprType(e);
+                    if(type != null) {
+                        if (type == "String") {
+                            var param0Type:String = getExprType(params[0]);
+                            if (param0Type == "as3hx.Compat.Regex" || param0Type == "EReg") {
+                                result = ECall(EField(EIdent("as3hx.Compat"), "search"), [e, params[0]]);
+                            } else {
+                                result = ECall(EField(e, "indexOf"), [params[0]]);
+                            }
+                        }
+                    }
+                }
                 else if(f == "indexOf") {
                     //in AS3, indexOf is a method in Array while it is not in Haxe
                     //Replace it by the Labda.indexOf method

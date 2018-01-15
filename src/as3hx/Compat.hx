@@ -70,7 +70,15 @@ class Compat {
         }
         return result;
     }
-    
+
+    public static function search(s:String, ereg:EReg):Int {
+        if (ereg.match(s)) {
+            return ereg.matchedPos().pos;
+        } else {
+            return -1;
+        }
+    }
+
     macro public static function getFunctionLength(f) {
         switch(Context.follow(Context.typeof(f))) {
             case TFun(args, _): return @:pos(Context.currentPos()) macro $v{args.length};
