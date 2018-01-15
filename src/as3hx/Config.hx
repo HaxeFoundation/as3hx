@@ -95,6 +95,11 @@ class Config {
     public var importPaths : Array<String>;
 
     /**
+     * list of as3 import paths that should not be included in haxe files but should be looked up through existing codebase
+     */
+    public var importExclude : Array<String>;
+
+    /**
      * A map where the key is the name fo a Haxe type
      * and the value is its' fully qualified name,
      * as found in one of the provided importPaths
@@ -356,6 +361,7 @@ class Config {
             case "useFastXML":          setBoolField(el, true);
             case "useCompat":           setBoolField(el, true);
             case "importPaths":         setImportPaths(el, []);
+            case "importExclude":       setImportExclude(el, []);
             default:
                 Sys.println("Unrecognized config var " + el.name);
             }
@@ -406,6 +412,15 @@ class Config {
         for (importPath in f.nodes.variable) {
             if (importPath.has.value) {
                 importPaths.push(importPath.att.value);
+            }
+        }
+    }
+    
+    function setImportExclude(f:Fast, defaultVars:Array<String>) {
+        importExclude = defaultVars;
+        for (importPath in f.nodes.variable) {
+            if (importPath.has.value) {
+                importExclude.push(importPath.att.value);
             }
         }
     }
@@ -471,6 +486,7 @@ class Config {
     <useCompat value="true" />
     <postProcessor value="" />
     <importPaths></importPaths>
+    <importExclude></importExclude>
 </as3hx>';
     }
 }

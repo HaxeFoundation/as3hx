@@ -227,6 +227,9 @@ class Writer
         } else {
             type = properCaseA(i, true).join(".");
         }
+        if (cfg.importExclude != null && cfg.importExclude.indexOf(type) != -1) {
+            return;
+        }
         if (!Lambda.has(this.imported, type)) { //prevent duplicate import
             write("import " + type + ";");
             imported.push(type);
