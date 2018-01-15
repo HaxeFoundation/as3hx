@@ -240,17 +240,18 @@ class ForLoopRebuild
         if (inits.length == 0 || conds.length != 1 || incrs.length != 1) return false;
         var loopVariable:String = getForLoopVariable(incrs);
         var loopIdent:Expr = EIdent(loopVariable);
-        
         // if variable is not set up before loop, no FOR
         switch(inits[inits.length - 1]) {
             case EBinop("=", e1, e2, _):
                 if (!e1.equals(loopIdent)) {
                     return false;
                 }
-            case EVars(vars) if(vars.length > 1): return false;
+            case EVars(vars):
+                if (vars.length > 1) {
+                    return false;
+                }
             default: return false;
         }
-        
         // if comparison is not `variable less then value`, no FOR
         switch(conds[0]) {
             case EBinop(op, e1, e2, _):
@@ -334,6 +335,15 @@ class ForLoopRebuild
                         wasUsed = true;
                         return RebuildResult.RSkip;
                     }
+                case EVars(vars):
+                    for (v in vars) {
+                        if (v.name == ident) {
+                            if (v.val != null) {
+                                RebuildUtils.rebuild(v.val, rebuild);
+                            }
+                            return RebuildResult.RSkip;
+                        }
+                    }
                 case EBinop(op, e1, e2, _):
                     if (op == "=" && isIdent(e1, ident)) {
                         RebuildUtils.rebuild(e2, rebuild);
@@ -362,6 +372,13 @@ class ForLoopRebuild
                             result = true;
                         }
                         return RebuildResult.RSkip;
+                    }
+                case EVars(vars):
+                    for (v in vars) {
+                        if (v.name == ident) {
+                            result = true;
+                            return RebuildResult.RSkip;
+                        }
                     }
                 case EBinop(op, e1, _, _):
                     if (op.indexOf("=") != -1 && isIdent(e1, ident)) {
