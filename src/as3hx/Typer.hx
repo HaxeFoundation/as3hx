@@ -104,8 +104,10 @@ class Typer
             case EArray(n, _): return getExprType(n);
             case EArrayDecl(_): return "Array<Dynamic>";
             case EUnop(_, _, e2): return getExprType(e2);
+            case EBinop(_ => "as", _, type, _): return getExprType(type);
             case EBinop(_ => "/", _, _, _): return "Float";
-            case EBinop(_, e1, e2, _) if(getExprType(e1) != "Float" && getExprType(e2) != "Float"): return "Int";
+            case EBinop(_, e1, e2, _) if (getExprType(e1) != "Float" && getExprType(e2) != "Float"): return "Int";
+            case ENew(t, params): return tstring(t);
             case EConst(c):
                 return switch(c) {
                     case CInt(_): "Int";
