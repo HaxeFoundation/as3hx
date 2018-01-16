@@ -70,16 +70,15 @@ class Typer
                         }
                     default:
                 }
-                var ts:String = getExprType(e2);
-                if (ts != null) {
-                    if (context.exists(ts)) {
-                        ts = context.get(ts);
+                if (t2 != null) {
+                    if (context.exists(t2)) {
+                        t2 = context.get(t2);
                     }
-                    if (classes.exists(ts)) {
-                        return classes.get(ts).get(f);
-                    } else if (importsMap != null && importsMap.exists(ts)) {
-                        if (classes.exists(ts)) {
-                            return classes.get(importsMap.get(ts)).get(f);
+                    if (classes.exists(t2)) {
+                        return classes.get(t2).get(f);
+                    } else if (importsMap != null && importsMap.exists(t2)) {
+                        if (classes.exists(importsMap.get(t2))) {
+                            return classes.get(importsMap.get(t2)).get(f);
                         }
                     }
                 }
@@ -187,8 +186,17 @@ class Typer
         contextStack[contextStack.length - 1] = context = classMap;
     }
     
-    public function setImports(importsMap:Map<String,String>):Void {
-        this.importsMap = importsMap;
+    public function setImports(importsMap:Map<String,String>, imported:Array<String>):Void {
+        this.importsMap = new Map<String,String>();
+        for (key in importsMap.keys()) {
+            if (importsMap.get(key) != null) {
+                this.importsMap.set(key, importsMap.get(key));
+            }
+        }
+        for (key in imported) {
+            var i:Int = key.lastIndexOf(".");
+            this.importsMap.set(key.substr(i + 1), key);
+        }
     }
 
     public function enterFunction(f:Function):Void {

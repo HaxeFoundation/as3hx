@@ -118,7 +118,7 @@ class Writer
     public function register(p:Program):Void {
         for (d in p.defs) {
             switch(d) {
-                case CDef(c): typer.addClass((p.pack.length > 0 ? p.pack.join(".") + "." : "") + c.name, c);
+                case CDef(c): typer.addClass((p.pack.length > 0 ? getImportString(p.pack) + "." : "") + c.name, c);
                 case FDef(f):
                 case NDef(n):
                 default:
@@ -220,13 +220,7 @@ class Writer
 
     function writeImport(i : Array<String>)
     {
-        var type;
-        if (i[0] == "flash") {
-            i[0] = cfg.flashTopLevelPackage;
-            type = i.join(".");
-        } else {
-            type = properCaseA(i, true).join(".");
-        }
+        var type = getImportString(i);
         if (cfg.importExclude != null && cfg.importExclude.indexOf(type) != -1) {
             return;
         }
@@ -236,6 +230,15 @@ class Writer
             // do not add an implicit import for
             // this type since it has an explicit one.
             typeImportMap.set(i[i.length - 1], null);
+        }
+    }
+    
+    function getImportString(i : Array<String>) {
+        if (i[0] == "flash") {
+            i[0] = cfg.flashTopLevelPackage;
+            return i.join(".");
+        } else {
+            return properCaseA(i, true).join(".");
         }
     }
 
@@ -362,7 +365,7 @@ class Writer
 
         var path:String = (pack.length > 0 ? pack.join(".") + "." : "") + c.name;
         typer.enterClass(path, c);
-        typer.setImports(typeImportMap);
+        typer.setImports(typeImportMap, imported);
 
         // process properties
         writeProperties(c);
@@ -1268,55 +1271,6 @@ class Writer
 
     function getExprType(e:Expr):Null<String> {
         return typer.getExprType(e);
-        /*EField(ECall(EField(EIdent(xml),descendants),[]),user)*/
-        switch(e) {
-            case ETypedExpr(e2, t): return tstring(t);
-            case EField(e2, f):
-                switch(e2) {
-                    case EIdent("this"): return contextStack[0].get(f);
-                    default:
-                }
-                var t2 = getExprType(e2);
-                //write("/* e2 " + e2 + "."+f+" type: "+t2+" */");
-                if (t2 != null && (t2.indexOf("Array<") == 0 || t2.indexOf("Vector<") == 0) && f == "length") {
-                    return "Int";
-                }
-                switch(t2) {
-                    case "FastXML":
-                        return switch(f) {
-                            case "descendants", "nodes": "FastXMLList";
-                            case "node": "FastXML";
-                            case "length": "Int";
-                            case _: "FastXMLList";
-                        }
-                    case "FastXMLList":
-                        switch(f) {
-                            case "length": return "Int";
-                        }
-                    default:
-                }
-                return typer.getExprType(e);
-            case EIdent(s):
-                s = typer.getModifiedIdent(s);
-                //if(context.get(s) == null)
-                //  write("/* AS3HX WARNING var " + s + " is not in scope */");
-                return context.get(s);
-            case EVars(vars) if(vars.length == 1): return tstring(vars[0].t);
-            case EArray(n, _): return getExprType(n);
-            case EArrayDecl(_): return "Array<Dynamic>";
-            case EUnop(_, _, e2): return getExprType(e2);
-            case EBinop(_ => "/", _, _, _): return "Float";
-            case EBinop(_, e1, e2, _) if(getExprType(e1) != "Float" && getExprType(e2) != "Float"): return "Int";
-            case EConst(c):
-                return switch(c) {
-                    case CInt(_): "Int";
-                    case CFloat(_): "Float";
-                    case CString(_): "String";
-                }
-            case ERegexp(_, _): return getRegexpType();
-            default:
-        }
-        return null;
     }
 
     inline function getRegexpType():String return cfg.useCompat ? "as3hx.Compat.Regex" : "flash.utils.RegExp";
@@ -2130,13 +2084,17 @@ class Writer
 
     inline function writeEWhile(cond:Expr, e:Expr, doWhile:Bool):BlockEnd {
         var result:BlockEnd;
+        var rcond:Expr = rebuildIfExpr(cond);
+        if (rcond != null) {
+            cond = rcond;
+        }
         if (doWhile) {
             write("do");
             writeStartStatement();
             writeExpr(EBlock(formatBlockBody(e)));
             writeStartStatement();
             write("while (");
-            result = writeExpr(rebuildIfExpr(cond));
+            result = writeExpr(cond);
             write(")");
         } else {
             write("while (");
@@ -2824,6 +2782,8 @@ class Writer
                 addWarning("EDelete");
                 writeNL("This is an intentional compilation error. See the README for handling the delete keyword");
                 writeIndent('delete ${getIdentString(object)}[${getIdentString(index)}]');
+            } else if (atype.startsWith("Array")) {
+                writeExpr(EBinop("=", EArray(object, index), EIdent("null"), false));
             }
         }
     }
@@ -2946,7 +2906,8 @@ class Writer
                 var t = getExprType(e);
                 if(t == null || t == "Bool") return null;
                 return switch(t) {
-                    case "Int" | "UInt": EBinop("!=", e, EConst(CInt("0")), false);
+                    case "Int" | "UInt": 
+                        EBinop("!=", e, EConst(CInt("0")), false);
                     case "Float":
                         var lvalue = EBinop("!=", e, EConst(CInt("0")), false);
                         var rvalue = EUnop("!", true, ECall(EField(EIdent("Math"), "isNaN"), [e]));
