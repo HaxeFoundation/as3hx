@@ -85,7 +85,11 @@ class Typer
                 }
                 return null;
             case EIdent(s):
-                if (s == "true" || s == "false") return "Bool";
+                switch(s) {
+                    case "true", "false": return "Bool";
+                    case "encodeURI", "decodeURI", "escape", "unescape": return "String->String";
+                    default:
+                }
                 s = getModifiedIdent(s);
                 return context.get(s);
             case EVars(vars) if(vars.length == 1): return tstring(vars[0].t);
@@ -113,13 +117,17 @@ class Typer
             case "Number": "Float";
             case "Boolean": "Bool";
             case "Function": cfg.functionToDynamic ? "Dynamic" : s;
-            case "Object": "Dynamic";
+            case "Object": cfg.useOpenFlTypes ? "Object" : "Dynamic";
             case "undefined": "null";
             //case "Error": cfg.mapFlClasses ? "flash.errors.Error" : s;
             case "XML": "FastXML";
             case "XMLList": "FastXMLList";
             case "NaN":"Math.NaN";
             case "Dictionary": cfg.dictionaryToHash ? "haxe.ds.ObjectMap" : s;
+            case "decodeURI": "StringTools.decodeURI";
+            case "encodeURI": "StringTools.encodeURI";
+            case "escape": "StringTools.htmlEscape";
+            case "unescape": "StringTools.htmlUnescape";
             //case "QName": cfg.mapFlClasses ? "flash.utils.QName" : s;
             default: s;
         };
