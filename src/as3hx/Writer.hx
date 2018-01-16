@@ -3038,14 +3038,8 @@ class Writer
                             params[0] = e;
                             result = ECall(EField(param0, f), params);
                         } else {
-                            var isString = switch(param0) {
-                                case ECall(e,_): getIdentString(e) == "String";
-                                default: param0Type == "String";
-                            }
-                            if(isString) {
-                                params.insert(0, e);
-                                result = ECall(EField(EIdent("StringTools"), f), params);
-                            }
+                            params.insert(0, e);
+                            result = ECall(EField(EIdent("StringTools"), f), params);
                         }
                     }
                 }
