@@ -18,16 +18,20 @@ class VarExprFix
     
     public function apply(f:Function, es:Array<Expr>, typer:Typer):Array<Expr> {
         var map:Map<String,String> = typer.getContextClone(-1);
+        var localVar:Map<String,Bool> = new Map<String,Bool>();
         var firstUse:Map<String,Int> = new Map<String,Int>();
         var firstUseLine:Map<Int,Array<String>> = new Map<Int,Array<String>>();
         for (v in map.keys()) {
             firstUse.set(v, -1);
+            localVar.set(v, false);
         }
         for (arg in f.args) {
             firstUse.set(arg.name, -1);
+            localVar.set(arg.name, true);
         }
         if (f.varArgs != null && !cfg.replaceVarArgsWithOptionalArguments) {
             firstUse.set(f.varArgs, -1);
+            localVar.set(f.varArgs, true);
         }
         var line:Int = 0;
         function rebuildMethodLookForVars(e:Expr):RebuildResult {
@@ -50,15 +54,16 @@ class VarExprFix
                     var hasChange:Bool = false;
                     for (vr in vars) {
                         var v:String = vr.name;
-                        if (!firstUse.exists(v)) {
-                            firstUse.set(v, -1);
-                            newVars.push(EVars([vr]));
-                        } else {
+                        if (firstUse.exists(v) && localVar.get(v) == true) {
                             hasChange = true;
                             if (vr.val != null) {
                                 newVars.push(EBinop("=", EIdent(v), vr.val, false));
                             }
+                        } else {
+                            firstUse.set(v, -2);
+                            newVars.push(EVars([vr]));
                         }
+                        localVar.set(v, true);
                         map.set(v, typer.tstring(vr.t));
                     }
                     if (hasChange) {
