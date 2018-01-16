@@ -13,6 +13,8 @@ class ParserUtils {
             case "enum": "_enum";
             case "_enum": "__enum";
             case "__enum": "___enum";
+            case "static": "_static";
+            case "_static": "__static";
             default: StringTools.replace(name, "$", "__DOLLAR__");
         }
     }
