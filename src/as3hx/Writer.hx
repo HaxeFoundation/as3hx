@@ -708,7 +708,7 @@ class Writer
         switch(field.kind) {
             case FVar(t, val):
                 start(field.name, false);
-                write("var " + getModifiedIdent(field.name));
+                write("var " + typer.getModifiedIdent(field.name));
                 if (!isStatic(field.kwds) && isConst(field.kwds)) write("(default, never)");
                 var type = tstring(t); //check wether a specific type was defined for this array
                 if(isArrayType(type)) {
@@ -744,7 +744,7 @@ class Writer
                         ret.t = f.args[0].t;
                         cfg.makeSetterName(field.name); //"set" + ucfirst(field.name);
                     } else {
-                        getModifiedIdent(field.name);
+                        typer.getModifiedIdent(field.name);
                     }
                     if(isGetter(field.kwds) || isSetter(field.kwds)) {
                         // write flash native
@@ -1297,7 +1297,7 @@ class Writer
                 }
                 return typer.getExprType(e);
             case EIdent(s):
-                s = getModifiedIdent(s);
+                s = typer.getModifiedIdent(s);
                 //if(context.get(s) == null)
                 //  write("/* AS3HX WARNING var " + s + " is not in scope */");
                 return context.get(s);
@@ -1341,27 +1341,8 @@ class Writer
         }
     }
 
-    function getModifiedIdent(s : String) : String {
-        return switch(s) {
-            case "int": "Int";
-            case "uint": cfg.uintToInt ? "Int" : "UInt";
-            case "Number": "Float";
-            case "Boolean": "Bool";
-            case "Function": cfg.functionToDynamic ? "Dynamic" : s;
-            case "Object": cfg.useOpenFlTypes ? "Object" : "Dynamic";
-            case "undefined": "null";
-            //case "Error": cfg.mapFlClasses ? "flash.errors.Error" : s;
-            case "XML": "FastXML";
-            case "XMLList": "FastXMLList";
-            case "NaN":"Math.NaN";
-            case "Dictionary": cfg.dictionaryToHash ? "haxe.ds.ObjectMap" : s;
-            //case "QName": cfg.mapFlClasses ? "flash.utils.QName" : s;
-            default: s;
-        };
-    }
-
     function writeModifiedIdent(s : String) {
-            write(getModifiedIdent(s));
+            write(typer.getModifiedIdent(s));
         }
 
     /**
@@ -1794,7 +1775,7 @@ class Writer
                     if(getExprType(e2) == "FastXML")
                         inArrayAccess = true;
                 case EIdent(v):
-                    switch(getModifiedIdent(v)) {
+                    switch(typer.getModifiedIdent(v)) {
                         case "Int":
                             if(f == "MAX_VALUE") {
                                 writeExpr(getCompatFieldExpr("INT_MAX"));
@@ -1866,7 +1847,7 @@ class Writer
             }
             var type = tstring(v.t);
             context.set(v.name, type);
-            write("var " + getModifiedIdent(v.name));
+            write("var " + typer.getModifiedIdent(v.name));
             writeVarType(v.t);
             if(rvalue != null) {
                 write(" = ");
