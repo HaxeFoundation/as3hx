@@ -84,6 +84,14 @@ class Typer
                     }
                 }
                 return null;
+            case ECall(e, params):
+                var t:String = getExprType(e);
+                if (t != null) {
+                    var li:Int = t.lastIndexOf("->");
+                    if (li != -1) {
+                        return t.substr(li + 2);
+                    }
+                }
             case EIdent(s):
                 switch(s) {
                     case "true", "false": return "Bool";
