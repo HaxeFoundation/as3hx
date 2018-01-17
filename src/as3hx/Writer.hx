@@ -118,7 +118,7 @@ class Writer
     public function register(p:Program):Void {
         for (d in p.defs) {
             switch(d) {
-                case CDef(c): typer.addClass((p.pack.length > 0 ? getImportString(p.pack) + "." : "") + c.name, c);
+                case CDef(c): typer.addClass((p.pack.length > 0 ? getImportString(p.pack, false) + "." : "") + c.name, c);
                 case FDef(f):
                 case NDef(n):
                 default:
@@ -220,7 +220,7 @@ class Writer
 
     function writeImport(i : Array<String>)
     {
-        var type = getImportString(i);
+        var type = getImportString(i, true);
         if (cfg.importExclude != null && cfg.importExclude.indexOf(type) != -1) {
             return;
         }
@@ -233,12 +233,12 @@ class Writer
         }
     }
     
-    function getImportString(i : Array<String>) {
+    function getImportString(i : Array<String>, hasClassName:Bool) {
         if (i[0] == "flash") {
             i[0] = cfg.flashTopLevelPackage;
             return i.join(".");
         } else {
-            return properCaseA(i, true).join(".");
+            return properCaseA(i, hasClassName).join(".");
         }
     }
 
@@ -247,7 +247,7 @@ class Writer
         // We don't want to import any type that is defined within
         // this file, so add each of those to the type import map
         // first.
-        for(d in definedTypes) {
+        for (d in definedTypes) {
             typeImportMap.set(d, null);
         }
 
