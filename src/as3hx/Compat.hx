@@ -71,7 +71,7 @@ class Compat {
         return result;
     }
 
-    public static function search(s:String, ereg:EReg):Int {
+    public static function search(s:String, ereg:FlashRegExpAdapter):Int {
         if (ereg.match(s)) {
             return ereg.matchedPos().pos;
         } else {
@@ -79,7 +79,24 @@ class Compat {
         }
     }
 
-    public static function match(s:String, ereg:EReg, parenthesesBlockIndex:Int = 0):Array<String> {
+    public static function searchEReg(s:String, ereg:EReg):Int {
+        if (ereg.match(s)) {
+            return ereg.matchedPos().pos;
+        } else {
+            return -1;
+        }
+    }
+
+    public static function match(s:String, ereg:FlashRegExpAdapter, parenthesesBlockIndex:Int = 0):Array<String> {
+        var matches:Array<String> = [];
+        while (ereg.match(s)) {
+            matches.push(ereg.matched(parenthesesBlockIndex)); 
+            s = ereg.matchedRight();
+        }
+        return matches;
+    }
+
+    public static function matchEReg(s:String, ereg:EReg, parenthesesBlockIndex:Int = 0):Array<String> {
         var matches:Array<String> = [];
         while (ereg.match(s)) {
             matches.push(ereg.matched(parenthesesBlockIndex)); 
@@ -477,11 +494,28 @@ class FlashRegExpAdapter {
         _global = opt.indexOf("g") != -1;
     }
     
+    public var lastIndex(get, set):Int;
+    
     var _ereg:EReg;
     var _global:Bool;
     var _lastTestedString : String;
     var _restOfLastTestedString : String;
-    var _lastTestedStringProcessedSize = 0;
+    var _lastIndex:Int = 0;
+    
+    private function get_lastIndex():Int {
+        return _lastIndex;
+    }
+    
+    private function set_lastIndex(value:Int):Int {
+        if (_lastIndex != value) {
+            if (_lastTestedString != null) {
+                _restOfLastTestedString = _lastTestedString.substr(value);
+            }
+            return _lastIndex = value;
+        } else {
+            return value;
+        }
+    }
     
     /**
      * Performs a search for the regular expression on the given string str.
@@ -503,7 +537,13 @@ class FlashRegExpAdapter {
      *   the stringinput  The string (str)
      */
     public function exec(str:String):Null<Array<String>> {
-        var testStr = _lastTestedString == str ? _restOfLastTestedString : str;
+        var testStr;
+        if (_lastTestedString == str) {
+            if (lastIndex
+            testStr = _restOfLastTestedString;
+        } else {
+            testStr = str;
+        }
         var matched = _ereg.match(testStr);
         var index = 0;
         if (_global) {
@@ -512,10 +552,10 @@ class FlashRegExpAdapter {
                 var matchedLeftLength = _ereg.matchedLeft().length;
                 index = _lastTestedStringProcessedSize + matchedLeftLength;
                 _restOfLastTestedString = _ereg.matchedRight();
-                _lastTestedStringProcessedSize += matchedLeftLength + _ereg.matched(0).length;
+                _lastIndex += matchedLeftLength + _ereg.matched(0).length;
             } else {
                 _restOfLastTestedString = null;
-                _lastTestedStringProcessedSize = 0;
+                _lastIndex = lastIndex;
             }
         }
         return matched ? new FlashRegExpExecResult(str, _ereg, index).matches : null;
