@@ -533,7 +533,7 @@ class Writer
                                         usingInstanceFields = true;
                                     } else {
                                         for (field in c.fields) {
-                                            if (s == field.name) {
+                                            if (s == field.name && s != c.name) {
                                                 if (!field.kwds.has("static")) {
                                                     usingInstanceFields = true;
                                                     return RebuildResult.RReplace(EField(EIdent("this"), s));
