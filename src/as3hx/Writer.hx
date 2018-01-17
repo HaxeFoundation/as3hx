@@ -3850,7 +3850,11 @@ class Writer
             case CDef(c):
                 for (meta in c.meta) {
                     switch (meta) {
-                        case EImport(v): defined.push(v[v.length - 1]);
+                        case EImport(v):
+                            if (cfg.importExclude != null && cfg.importExclude.indexOf(v.join(".")) != -1) {
+                                continue;
+                            }
+                            defined.push(v[v.length - 1]);
                         default:
                     }
                 }
