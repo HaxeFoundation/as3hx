@@ -3410,7 +3410,7 @@ class Writer
 
     inline function isFunctionExpr(e:Expr):Bool {
         var type:String = getExprType(e);
-        return type == "Function" || type.indexOf("->") != -1;
+        return type == "Function" || type != null && type.indexOf("->") != -1;
     }
 
     inline function isIntExpr(e:Expr):Bool {
@@ -3958,5 +3958,4 @@ class Writer
             function (v:String) return v.length > 0 ? v.charAt(0).toUpperCase() + v.substr(1) : ""
         ).array().join("");
     }
-
 }
