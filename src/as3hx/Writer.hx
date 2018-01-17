@@ -2220,7 +2220,12 @@ class Writer
     inline function writeEForIn(ev:Expr, e:Expr, block:Expr):BlockEnd {
         openContext();
         var etype = getExprType(e);
-        var regexp:EReg = ~/^Map<([^,]*)?,?.*>$/;
+        var regexp:EReg;
+        if (isOpenFlDictionaryType(etype)) {
+            regexp = ~/^Dictionary<([^,]*)?,?.*>$/;
+        } else {
+            regexp = ~/^Map<([^,]*)?,?.*>$/;
+        }
         var isMap:Bool = etype != null && regexp.match(etype);
         write("for (");
         switch(ev) {
