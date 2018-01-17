@@ -3408,7 +3408,10 @@ class Writer
         return s != null && s.startsWith("Dictionary") && cfg.useOpenFlTypes;
     }
 
-    inline function isFunctionExpr(e:Expr):Bool return getExprType(e) == "Function";
+    inline function isFunctionExpr(e:Expr):Bool {
+        var type:String = getExprType(e);
+        return type == "Function" || type.indexOf("->") != -1;
+    }
 
     inline function isIntExpr(e:Expr):Bool {
         var type = getExprType(e);
