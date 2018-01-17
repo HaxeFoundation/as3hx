@@ -23,6 +23,7 @@ class Typer
     var classFieldDictionaryTypes : Map<String,Map<String,DictionaryTypes>> = new Map<String,Map<String,DictionaryTypes>>();
     var context : Map<String,String> = new Map<String,String>();
     var contextStack : Array<Map<String,String>> = [];
+    var pack:String = null;
     var currentPath:String = null;
     var importsMap : Map<String,String>;
 
@@ -80,6 +81,8 @@ class Typer
                         if (classes.exists(importsMap.get(t2))) {
                             return classes.get(importsMap.get(t2)).get(f);
                         }
+                    } else if (currentPath.length > 0 && classes.exists(pack + "." + t2)) {
+                        return classes.get(pack + "." + t2).get(f);
                     }
                 }
                 return null;
@@ -178,6 +181,7 @@ class Typer
 
     public function enterClass(path, c:ClassDef):Void {
         currentPath = path;
+        pack = currentPath.substr(0, currentPath.lastIndexOf("."));
         var classMap:Map<String,String> = classes.get(path);
         if (classMap == null) {
             classMap = new Map<String, String>();
