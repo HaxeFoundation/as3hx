@@ -539,7 +539,6 @@ class FlashRegExpAdapter {
     public function exec(str:String):Null<Array<String>> {
         var testStr;
         if (_lastTestedString == str) {
-            if (lastIndex
             testStr = _restOfLastTestedString;
         } else {
             testStr = str;
@@ -550,7 +549,7 @@ class FlashRegExpAdapter {
             _lastTestedString = str;
             if (matched) {
                 var matchedLeftLength = _ereg.matchedLeft().length;
-                index = _lastTestedStringProcessedSize + matchedLeftLength;
+                index = _lastIndex + matchedLeftLength;
                 _restOfLastTestedString = _ereg.matchedRight();
                 _lastIndex += matchedLeftLength + _ereg.matched(0).length;
             } else {
