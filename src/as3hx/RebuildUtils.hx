@@ -125,6 +125,18 @@ class RebuildUtils
                 } else {
                     return EBlock(r);
                 }
+            case EForIn(e1, e2, e3):
+                var re1:Expr = rebuild(e1, rebuildMethod);
+                var re2:Expr = rebuild(e2, rebuildMethod);
+                var re3:Expr = rebuild(e3, rebuildMethod);
+                if (re1 != null || re2 != null || re3 != null) {
+                    if (re1 == null) re1 = e1;
+                    if (re2 == null) re2 = e2;
+                    if (re3 == null) re3 = e3;
+                    return EForIn(re1, re2, re3);
+                } else {
+                    return null;
+                }
             case EForEach(e1, e2, e3):
                 var re1:Expr = rebuild(e1, rebuildMethod);
                 var re2:Expr = rebuild(e2, rebuildMethod);
@@ -264,6 +276,7 @@ class RebuildUtils
                 } else {
                     return null;
                 }
+            //case EVars(vars): not implemented
             case ECommented(a, b, c, e):
                 e = rebuild(e, rebuildMethod);
                 if (e == null) return null;
