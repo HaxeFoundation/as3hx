@@ -1,9 +1,10 @@
 package as3hx;
 import as3hx.As3.Expr;
+import as3hx.As3.Function;
+import as3hx.As3.Program;
 import as3hx.As3.SwitchCase;
 import as3hx.As3.SwitchDefault;
 import as3hx.As3.T;
-import neko.Lib;
 
 enum RebuildResult {
     RReplace( expr : Expr ); // replace current expression with provided expr
@@ -18,6 +19,50 @@ enum RebuildResult {
  */
 class RebuildUtils
 {
+    public static function rebuildProgram(program:Program, cfg:Config, typer:Typer, rebuild:Expr->RebuildResult):Void {
+        for (d in program.defs) {
+            switch (d) {
+                case CDef(c):
+                    var path:String = typer.getPackageString(program.pack) + c.name;
+                    typer.setPackage(typer.getImportString(program.pack, false));
+                    typer.setImports(WriterImports.getImports(program, cfg, c), null);
+                    typer.enterClass(path, c);
+                    for (field in c.fields) {
+                        switch(field.kind) {
+                            case FFun(f):
+                                typer.enterFunction(f, field.name, c);
+                                var expr:Expr = RebuildUtils.rebuild(f.expr, rebuild);
+                                if (expr != null) {
+                                    f.expr = expr;
+                                }
+                                rebuildArgs(f, rebuild);
+                                typer.leaveFunction();
+                            case FVar(t, val):
+                                var expr:Expr = RebuildUtils.rebuild(EBinop("=", EIdent(field.name), val, false), rebuild);
+                                if (expr != null) {
+                                    // type could be changed while rebuilding
+                                    t = field.kind.getParameters()[0];
+                                    switch(expr) {
+                                        case EBinop(_, _, val, _):
+                                            field.kind = FVar(t, val);
+                                            typer.overrideFieldType(path, field.name, typer.expandType(t));
+                                        default:
+                                    }
+                                }
+                            default:
+                        }
+                    }
+                case FDef(f):
+                    var expr:Expr = RebuildUtils.rebuild(f.f.expr, rebuild);
+                    if (expr != null) {
+                        f.f.expr = expr;
+                    }
+                    rebuildArgs(f.f, rebuild);
+                default:
+            }
+        }
+    }
+
     public static function rebuildArray(es:Array<Expr>, rebuildMethod:Expr->RebuildResult):Array<Expr> {
         var needRebuild:Bool = false;
         var rs:Array<Expr> = new Array<Expr>();
@@ -61,8 +106,8 @@ class RebuildUtils
                 return rebuildExprParams(e, rebuildMethod);
         }
     }
-    
-    private static function rebuildToArray(e:Expr, rebuildMethod:Expr->RebuildResult, output:Array<Expr>):Bool {
+
+    public static function rebuildToArray(e:Expr, rebuildMethod:Expr->RebuildResult, output:Array<Expr>):Bool {
         var r:RebuildResult = rebuildMethod(e);
         switch(r) {
             case RReplace(expr):
@@ -117,6 +162,7 @@ class RebuildUtils
             case EFunction(f, name):
                 var rexpr = rebuild(f.expr, rebuildMethod);
                 if (rexpr == null) return null;
+                rebuildArgs(f, rebuildMethod);
                 return EFunction({args:f.args, varArgs:f.varArgs, ret:f.ret, expr:rexpr}, name);
             case EBlock(es):
                 var r:Array<Expr> = rebuildArray(es, rebuildMethod);
@@ -124,6 +170,13 @@ class RebuildUtils
                     return null;
                 } else {
                     return EBlock(r);
+                }
+            case EArrayDecl(es):
+                var r:Array<Expr> = rebuildArray(es, rebuildMethod);
+                if (r == null) {
+                    return null;
+                } else {
+                    return EArrayDecl(r);
                 }
             case EForIn(e1, e2, e3):
                 var re1:Expr = rebuild(e1, rebuildMethod);
@@ -244,6 +297,13 @@ class RebuildUtils
                 var re:Expr = rebuild(e, rebuildMethod);
                 if (re == null) return null;
                 return ENamespaceAccess(re, f);
+            case EArray(e, index):
+                var re:Expr = rebuild(e, rebuildMethod);
+                var rindex:Expr = rebuild(index, rebuildMethod);
+                if (re == null && index == null) return null;
+                if (re == null) re = e;
+                if (rindex == null) rindex = index;
+                return EArray(re, rindex);
             case EField(e, f):
                 var re:Expr = rebuild(e, rebuildMethod);
                 if (re == null) return null;
@@ -262,10 +322,26 @@ class RebuildUtils
                 var re:Expr = rebuild(e, rebuildMethod);
                 if (re == null) return null;
                 return EUnop(op, prefix, re);
+            case EReturn(e):
+                var re:Expr = rebuild(e, rebuildMethod);
+                if (re == null) return null;
+                return EReturn(re);
             case EParent(e):
                 var re:Expr = rebuild(e, rebuildMethod);
                 if (re == null) return null;
                 return EParent(re);
+            case ETernary(cond, e1, e2):
+                var rcond:Expr = rebuild(cond, rebuildMethod);
+                var re1:Expr = rebuild(e1, rebuildMethod);
+                var re2:Expr = rebuild(e2, rebuildMethod);
+                if (rcond != null || re1 != null || re2 != null) {
+                    if (rcond == null) rcond = cond;
+                    if (re1 == null) re1 = e1;
+                    if (re2 == null) re2 = e2;
+                    return ETernary(rcond, re1, re2);
+                } else {
+                    return null;
+                }
             case EBinop(op, e1, e2, newLineAfterOp):
                 var re1:Expr = rebuild(e1, rebuildMethod);
                 var re2:Expr = rebuild(e2, rebuildMethod);
@@ -276,7 +352,34 @@ class RebuildUtils
                 } else {
                     return null;
                 }
-            //case EVars(vars): not implemented
+            case ETypedExpr(e, t):
+                var re:Expr = rebuild(e, rebuildMethod);
+                if (re == null) return null;
+                return ETypedExpr(re, t);
+            case EVars(vars):
+                if (vars.length == 1) {
+                    var v = vars[0];
+                    if (v.val != null) {
+                        var rval:Expr = rebuild(v.val, rebuildMethod);
+                        if (rval == null) return null;
+                        return EVars([{name:v.name, t:v.t, val:rval}]);
+                    }
+                }
+            case EObject(fields):
+                var needRebuild:Bool = false;
+                var resultFields:Array<{ name : String, e : Expr }> = [];
+                for (i in 0...fields.length) {
+                    var re:Expr = rebuild(fields[i].e, rebuildMethod);
+                    if (re != null) {
+                        resultFields.push({name:fields[i].name, e:re});
+                        needRebuild = true;
+                    } else {
+                        resultFields.push(fields[i]);
+                    }
+                }
+                if (needRebuild) {
+                    return EObject(resultFields);
+                }
             case ECommented(a, b, c, e):
                 e = rebuild(e, rebuildMethod);
                 if (e == null) return null;
@@ -335,6 +438,22 @@ class RebuildUtils
             }
         } else {
             return null;
+        }
+    }
+
+    private static function rebuildArgs(f:Function, rebuildMethod:Expr->RebuildResult):Void {
+        //Array<{ name : String, t : Null<T>, val : Null<Expr>, exprs:Array<Expr> }>
+        for (v in f.args) {
+            switch(v.val) {
+                case null:
+                case EConst(_):
+                case EIdent("null"):
+                default:
+                    var rv:Expr = rebuild(v.val, rebuildMethod);
+                    if (rv != null) {
+                        v.val = rv;
+                    }
+            }
         }
     }
 }
