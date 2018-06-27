@@ -34,8 +34,8 @@ class StructureParser {
             if(elseExpr != null) elseExpr = f(elseExpr);
             switch(cond) {
                 case ECondComp(v, e, e2):
-                    //corner case, the condition is an AS3 preprocessor 
-                    //directive, it must contain the block to wrap it 
+                    //corner case, the condition is an AS3 preprocessor
+                    //directive, it must contain the block to wrap it
                     //in Haxe #if #end preprocessor directive
                     ECondComp(v, e1, elseExpr);
                 default:
@@ -132,17 +132,121 @@ class StructureParser {
                 tokenizer.ensure(TOp(">"));
                 if(tokenizer.peek() != TBkOpen)
                     ParserUtils.unexpected(tokenizer.peek());
+                types.seen.push(TVector(t));
                 ECall(EVector(t), [parseExpr(false)]);
             } else {
+                var peek:Token = tokenizer.peek();
+                var call:Expr =  parseExpr(false);
+                var firstCall:Expr;
+                function extractFirstCall(e:Expr):Expr {
+                    switch(e) {
+                        case ECall(e, params):
+                            var re:Expr = extractFirstCall(e);
+                            if (re == null) {
+                                var type;
+                                switch(e) {
+                                    case EIdent(v):
+                                        type = TPath([v]);
+                                        types.seen.push(type);
+                                    case EVector(t):
+                                        type = TVector(t);
+                                        types.seen.push(type);
+                                    default:
+                                        type = TComplex(e);
+                                }
+                                return firstCall = ENew(type, params);
+                            } else {
+                                return ECall(re, params);
+                            }
+                        case EIdent(v): return null;
+                        case EVector(t): return null;
+                        case ECommented(s, isBlock, isTail, e):
+                            var re:Expr = extractFirstCall(e);
+                            if (re == null) {
+                                return null;
+                            } else if (isBlock && isTail) {
+                                switch(re) {
+                                    case ENew(t, params):
+                                        var base:T = OverrideTypeComment.extractType(Typer.tstringStatic(t), s, types);
+                                        if (base != null) {
+                                            return ENew(base, params);
+                                        }
+
+                                        var k:T = null;
+                                        var v:T = null;
+                                        if (s.indexOf(",") != -1) {
+                                            s = s.substring(2, s.length - 2);
+                                            var commaIndex:Int = s.indexOf(",");
+                                            if (commaIndex != -1) {
+                                                k = TPath([Typer.getMapParam(s, 0)]);
+                                                v = TPath([Typer.getMapParam(s, 1)]);
+                                            }
+                                        }
+                                        if (k != null && v != null) {
+                                            switch(t) {
+                                                case TPath(p) if (p.length == 1 && p[0] == "Dictionary"):
+                                                    types.seen.push(TDictionary(k, v));
+                                                    return ENew(TDictionary(k, v), params);
+                                                case TDictionary(k,v):
+                                                    types.seen.push(TDictionary(k, v));
+                                                    return ENew(TDictionary(k, v), params);
+                                                default:
+                                            }
+                                        }
+                                    default:
+                                }
+                            }
+                            return ECommented(s, isBlock, isTail, re);
+                        case EArray(e, index):
+                            var re:Expr = extractFirstCall(e);
+                            if (re == null) {
+                                return null;
+                            } else {
+                                return EArray(re, index);
+                            }
+                        case EBinop(op, e1, e2, newLineAfterOp):
+                            var re1:Expr = extractFirstCall(e1);
+                            if (re1 == null) {
+                                return null;
+                            } else {
+                                return EBinop(op, re1, e2, newLineAfterOp);
+                            }
+                        case EField(e, f):
+                            var re:Expr = extractFirstCall(e);
+                            if (re == null) {
+                                return null;
+                            } else {
+                                return EField(re, f);
+                            }
+                        default: return null;
+                    }
+                }
+                switch(call) {
+                    case EIdent(v):
+                        var type = TPath([v]);
+                        types.seen.push(type);
+                        return ENew(type, []);
+                    case EVector(t):
+                        var type = TVector(t);
+                        types.seen.push(type);
+                        return ENew(type, []);
+                    default:
+                        var result:Expr = extractFirstCall(call);
+                        if (firstCall != null) {
+                            return result;
+                        } else {
+                            ParserUtils.unexpected(peek);
+                        }
+                }
                 var t = parseType();
                 // o = new (iconOrLabel as Class)() as DisplayObject
                 var cc = switch(t) {
                     case TComplex(e1) :
                         switch (e1) {
-                            case EBinop(op, e2, e3, n): 
+                            case EBinop(op, e2, e3, n):
                                 if (op == "as") {
                                     switch (e2) {
-                                        case ECall(e4, a): 
+                                        case ECall(e4, a):
                                             EBinop(op, ECall(EField(EIdent("Type"), "createInstance"), [e4, EArrayDecl(a)]), e3, n);
                                         default:  null;
                                     }
@@ -163,7 +267,7 @@ class StructureParser {
                 tokenizer.ensure(TPOpen);
                 var name = tokenizer.id();
                 var t:T = null;
-                
+
                 var next = tokenizer.token();
                 switch (ParserUtils.uncomment(ParserUtils.removeNewLine(next))) {
                 case TColon:
@@ -174,7 +278,7 @@ class StructureParser {
                 default:
                     ParserUtils.unexpected(next);
                 }
-                
+
                 var e = parseExpr(false);
                 catches.push( { name : name, t : t, e : e } );
             }
@@ -230,7 +334,7 @@ class StructureParser {
                                 }
                                 cl.push(caseObj);
                             }
-                            
+
                             //reset for next case or default
                             meta = [];
                         }
@@ -248,7 +352,7 @@ class StructureParser {
                         ParserUtils.unexpected(tk);
                 }
             }
-            
+
             ESwitch(e, cl, def);
         case "do":
             var e = parseExpr(false);
@@ -271,20 +375,6 @@ class StructureParser {
             var e = parseExpr(false);
             tokenizer.end();
             EDelete(e);
-        case "getQualifiedClassName":
-            tokenizer.ensure(TPOpen);
-            var e = parseExpr(false);
-            e = switch(e) {
-                case EIdent(v) if(v == "this"): ECall(EField(EIdent("Type"), "getClass"), [e]);
-                default: e;
-            }
-            tokenizer.ensure(TPClose);
-            ECall(EField(EIdent("Type"), "getClassName"), [e]);
-        case "getQualifiedSuperclassName":
-            tokenizer.ensure(TPOpen);
-            var e = parseExpr(false);
-            tokenizer.ensure(TPClose);
-            ECall(EField(EIdent("Type"), "getClassName"), [ECall(EField(EIdent("Type"), "getSuperClass"), [e])]);
         case "getDefinitionByName":
             tokenizer.ensure(TPOpen);
             var e = parseExpr(false);
@@ -321,7 +411,7 @@ class StructureParser {
         default: null;
         }
     }
-    
+
     static function getParams(tokenizer:Tokenizer, parseExpr) {
         return switch(tokenizer.token()) {
             case TPOpen:

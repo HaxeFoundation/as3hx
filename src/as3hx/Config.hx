@@ -88,6 +88,12 @@ class Config {
 
     /**
      * a list of absolute or relative directory paths.
+     * as3 files from this paths are parsed as a source for type info
+     */
+    public var libPaths : Array<String>;
+
+    /**
+     * a list of absolute or relative directory paths.
      * Haxe files are found in this path and added to a map
      * of imported types used for implicit imports used
      * in converted code
@@ -293,6 +299,8 @@ class Config {
                     convertFlexunit = true;
                 case "-dict2hash":
                     dictionaryToHash = true;
+                case "-libPath", "--libPath":
+                    libPaths.push(args.shift());
                 default:
                     break;
             }
@@ -352,6 +360,7 @@ class Config {
             case "verifyGeneratedFiles":setBoolField(el, false);
             case "flashTopLevelPackage":setCharField(el, "flash");
             case "excludeList":         setExcludeField(el, new List());
+            case "libPaths":            setLibPaths(el, new Array<String>());
             case "conditionalCompilationList": setConditionalVars(el, new List());
             case "conditionalCompilationConstantsClass":setCharField(el, "");
             case "fixLocalVariableDeclarations":setBoolField(el, true);
@@ -398,6 +407,15 @@ class Config {
         }
     }
 
+    function setLibPaths(f:Fast, defaultLibPaths:Array<String>) {
+        libPaths = defaultLibPaths;
+        for (dir in f.nodes.path) {
+            if (dir.has.value) {
+                libPaths.push(dir.att.value);
+            }
+        }
+    }
+
     function setConditionalVars(f:Fast, defaultVars:List<String>) {
         conditionalVars = defaultVars;
         for (conditionalVar in f.nodes.variable) {
@@ -415,7 +433,7 @@ class Config {
             }
         }
     }
-    
+
     function setImportExclude(f:Fast, defaultVars:Array<String>) {
         importExclude = defaultVars;
         for (importPath in f.nodes.variable) {
@@ -485,6 +503,7 @@ class Config {
     <useFastXML value="true" />
     <useCompat value="true" />
     <postProcessor value="" />
+    <libPaths></libPaths>
     <importPaths></importPaths>
     <importExclude></importExclude>
 </as3hx>';

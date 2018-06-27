@@ -23,6 +23,7 @@ class TypeParser {
 
         // for _i = new (obj as Class)() as DisplayObject;
         switch(tokenizer.peek()) {
+			//case TId("this"): return TComplex(parseExpr(false));
             case TPOpen: return TComplex(parseExpr(false));
             default:
         }
@@ -36,7 +37,36 @@ class TypeParser {
             tokenizer.ensure(TOp(">"));
             types.seen.push(TVector(t));
             return TVector(t);
-        } 
+        }
+        var t2 = tokenizer.token();
+        switch(t2) {
+            case TCommented(s, true, t3):
+                var typeFromComment:T = OverrideTypeComment.extractType(t, s, types);
+                if (typeFromComment != null) {
+                    tokenizer.add(t3);
+                    return typeFromComment;
+                } else {
+                    tokenizer.add(t2);
+                }
+            default:
+                tokenizer.add(t2);
+        }
+        if (t == "Array") {
+            var k:T = null;
+            var t2 = tokenizer.token();
+            switch(t2) {
+                case TCommented(s, true, t3):
+                    var arg = s.substring(2, s.length - 2);
+                    if (~/\w+/g.match(arg)) {
+                        t = t + "<" + arg + ">";
+                        types.seen.push(TPath([arg]));
+                        tokenizer.add(t3);
+                    }
+                default:
+                    tokenizer.add(t2);
+            }
+            return TPath([t]);
+        }
         if (t == "Dictionary") {
             var k:T = null;
             var v:T = null;
@@ -56,10 +86,11 @@ class TypeParser {
                 var t2 = tokenizer.token();
                 switch(t2) {
                     case TCommented(s, true, t3):
-                        var args = s.substring(2, s.length - 2).split(",");
-                        if (args.length == 2) {
-                            k = TPath([args[0]]);
-                            v = TPath([args[1]]);
+                        s = s.substring(2, s.length - 2);
+                        var commaIndex:Int = s.indexOf(",");
+                        if (commaIndex != -1) {
+                            k = TPath(s.substr(0, commaIndex).split("."));
+                            v = TPath(s.substr(commaIndex + 1).split("."));
                             types.seen.push(TPath(["Dictionary"]));
                             tokenizer.add(t3);
                         }
@@ -72,14 +103,12 @@ class TypeParser {
             }
             if (k == null) {
                 k = TPath(["Object"]);
-            } else {
-                types.seen.push(k);
             }
             if (v == null) {
                 v = TPath(["Object"]);
-            } else {
-                types.seen.push(v);
             }
+			types.seen.push(k);
+			types.seen.push(v);
             return TDictionary(k, v);
         }
         if(!cfg.functionToDynamic && t == "Function") {
@@ -120,7 +149,7 @@ class TypeParser {
         for(it in types.seen) {
             switch(it) {
                 case TPath(p):
-                    if(Lambda.foreach(a, function(it) return p.indexOf(it) != -1)) {
+                    if(Lambda.foreach(a, function(it) return p.indexOf(it) != -1)) {//this condition can fail on classes com.a.b.Class && com.b.a.Class
                         return result;
                     }
                 default:
@@ -129,7 +158,7 @@ class TypeParser {
         types.seen.push(result);
         return result;
     }
-    
+
     private static function splitEndTemplateOps(tokenizer:Tokenizer) {
         switch( tokenizer.peek() ) {
             case TOp(s):

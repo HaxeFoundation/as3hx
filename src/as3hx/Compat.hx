@@ -1,13 +1,14 @@
 package as3hx;
 
 import Type;
+import haxe.ds.Vector;
 import haxe.macro.Expr;
 import haxe.macro.Context;
 
 using StringTools;
 
 /**
- * Collection of functions that just have no real way to be compatible in Haxe 
+ * Collection of functions that just have no real way to be compatible in Haxe
  */
 class Compat {
 
@@ -44,7 +45,7 @@ class Compat {
         if (a.length > length) a.splice(length, a.length - length);
         else a[length - 1] = null;
     }
-    
+
     /**
      * Adds elements to and removes elements from an array. This method modifies the array without making a copy.
      * @param startIndex An integer that specifies the index of the element in the array where the insertion or
@@ -64,7 +65,7 @@ class Compat {
     public static inline function arraySplice<T>(a:Array<T>, startIndex:Int, deleteCount:Int, ?values:Array<T>):Array<T> {
         var result = a.splice(startIndex, deleteCount);
         if(values != null) {
-            for(i in 0...values.length) {
+            for (i in 0...values.length) {
                 a.insert(startIndex + i, values[i]);
             }
         }
@@ -90,7 +91,7 @@ class Compat {
     public static function match(s:String, ereg:FlashRegExpAdapter, parenthesesBlockIndex:Int = 0):Array<String> {
         var matches:Array<String> = [];
         while (ereg.match(s)) {
-            matches.push(ereg.matched(parenthesesBlockIndex)); 
+            matches.push(ereg.matched(parenthesesBlockIndex));
             s = ereg.matchedRight();
         }
         return matches;
@@ -99,38 +100,59 @@ class Compat {
     public static function matchEReg(s:String, ereg:EReg, parenthesesBlockIndex:Int = 0):Array<String> {
         var matches:Array<String> = [];
         while (ereg.match(s)) {
-            matches.push(ereg.matched(parenthesesBlockIndex)); 
+            matches.push(ereg.matched(parenthesesBlockIndex));
             s = ereg.matchedRight();
         }
         return matches;
     }
 
-    public static function makeArgs(a1:Dynamic, a2:Dynamic, a3:Dynamic, a4:Dynamic, a5:Dynamic = null, a6:Dynamic = null):Array<Dynamic> {
-        if (a6 == null) {
-            if (a5 == null) {
-                if (a4 == null) {
-                    if (a3 == null) {
-                        if (a2 == null) {
-                            if (a1 == null) {
-                                return [];
+    public static function makeArgs(a1:Dynamic, a2:Dynamic, a3:Dynamic, a4:Dynamic, a5:Dynamic = null, a6:Dynamic = null, a7:Dynamic = null):Array<Dynamic> {
+        if (a7 == null) {
+            if (a6 == null) {
+                if (a5 == null) {
+                    if (a4 == null) {
+                        if (a3 == null) {
+                            if (a2 == null) {
+                                if (a1 == null) {
+                                    return [];
+                                } else {
+                                    return [a1];
+                                }
                             } else {
-                                return [a1];
+                                return [a1, a2];
                             }
                         } else {
-                            return [a1, a2];
+                            return [a1, a2, a3];
                         }
                     } else {
-                        return [a1, a2, a3];
+                        return [a1, a2, a3, a4];
                     }
                 } else {
-                    return [a1, a2, a3, a4];
+                    return [a1, a2, a3, a4, a5];
                 }
             } else {
-                return [a1, a2, a3, a4, a5];
+                return [a1, a2, a3, a4, a5, a6];
             }
         } else {
-            return [a1, a2, a3, a4, a5, a6];
+            return [a1, a2, a3, a4, a5, a6, a7];
         }
+    }
+
+    private static var _weights:Array<Float>;
+    public static function sortIndexedArray(weights:Array<Float>):Array<Int> {
+        var indices:Array<Int> = new Array<Int>();
+        for (i in 0...weights.length) {
+            indices[i] = i;
+        }
+        _weights = weights;
+        indices.sort(sortWeights);
+        _weights = null;
+        return indices;
+    }
+
+    private static function sortWeights(a:Int, b:Int):Int {
+        var d:Float = _weights[b] - _weights[a];
+        return d > 0 ? 1 : (d < 0 ? -1 : 0);
     }
 
     macro public static function getFunctionLength(f) {
@@ -139,7 +161,105 @@ class Compat {
             default: throw new Error("not a function", f.pos);
         }
     }
-    
+
+    #if openfl
+    public static inline function newByteArray():openfl.utils.ByteArray {
+        var ba:openfl.utils.ByteArray = new openfl.utils.ByteArray();
+        ba.endian = openfl.utils.Endian.BIG_ENDIAN;
+        return ba;
+    }
+
+    public static function castVector<T>(p:Dynamic):openfl.Vector<T> {
+        if (p == null) return null;
+        var c:Class<Dynamic> = Type.getClass(p);
+        if (c == null) return null;
+        if (Type.getClassName(c) != "openfl._Vector.AbstractVector") return null;
+        //var type:String = Type.getClassName(Type.getClass(p.data));
+        //} else if (TType == Function && type == "openfl._Vector.FunctionVector") {
+        return cast p;
+    }
+
+    /** T==null is Vector.<*>, otherwise T could be Abstract of Class<Dynamic> */
+    public static function isVector(p:Dynamic, T:Dynamic = null):Bool {
+        if (p == null) return null;
+        var c:Class<Dynamic> = Type.getClass(p);
+        if (c == null) return null;
+        if (Type.getClassName(c) != "openfl._Vector.AbstractVector") return null;
+        var v:openfl.Vector<Dynamic> = cast p;
+        if (v.length > 0 && T != null && v[0] != null && !Std.is(v[0], T)) {
+            return false;
+        }
+        return true;
+    }
+
+    public static inline function each(obj:openfl.utils.Object):Iterator<Dynamic> {
+        return new ObjectIterator(obj);
+    }
+
+    public static function filter<T>(v:openfl.Vector<T>, filterMethod:T->Int->openfl.Vector<T>->Bool):openfl.Vector<T> {
+        var r:openfl.Vector<T> = new openfl.Vector<T>();
+        for (i in 0...v.length) {
+            if (filterMethod(v[i], i, v)) {
+                r.push(v[i]);
+            }
+        }
+        return r;
+    }
+
+    public static inline function vectorSplice<T>(a:openfl.Vector<T>, startIndex:Int, deleteCount:Int, ?values:Array<T>):openfl.Vector<T> {
+        var result = a.splice(startIndex, deleteCount);
+        if(values != null) {
+            for (i in 0...values.length) {
+                a.insertAt(startIndex + i, values[i]);
+            }
+        }
+        return result;
+    }
+    #end
+
+    public static inline function castClass(c:Dynamic):Class<Dynamic> {
+        return switch(Type.typeof(c)) {
+            case TClass(c): c;
+            default: null;
+        }
+    }
+
+    public static inline function getQualifiedClassName(o:Dynamic):String {
+        if (o == null) {
+            return null;
+        } else if (untyped o.__name__) {
+            return o.__name__;
+        } else {
+            var c:Class<Dynamic> = Type.getClass(o);
+            if (c != null) {
+                return Type.getClassName(c);
+            } else {
+                return null;
+            }
+        }
+        //var c:Class<Dynamic> = Type.getClass(o);
+        //if (c == null) {
+            //c = castClass(o);
+        //}
+        //if (c != null) {
+            //return Type.getClassName(c);
+        //} else {
+            //return null;
+        //}
+    }
+
+    public static inline function getQualifiedSuperclassName(o:Dynamic):String {
+        var c:Class<Dynamic> = Type.getClass(o);
+        if (c == null) {
+            c = castClass(o);
+        }
+        if (c != null) {
+            return Type.getClassName(Type.getSuperClass(c));
+        } else {
+            return null;
+        }
+    }
+
     /**
      * Converts a typed expression into a Float.
      */
@@ -169,10 +289,11 @@ class Compat {
             case "Int": macro ${e};
             case "Float": macro Std.int(${e});
             case "String": macro @:privateAccess as3hx.Compat._parseInt(${e}, ${base});
+            case "Bool": macro ${e} ? 1 : 0;
             case _: macro Std.parseInt(Std.string(${e}));
         }
     }
-    
+
     static function _parseInt(s:String, ?base:Int):Null<Int> {
         #if js
         if(base == null) base = s.indexOf("0x") == 0 ? 16 : 10;
@@ -216,7 +337,7 @@ class Compat {
 
     /**
      * Runs a function at a specified interval (in milliseconds).
-     * 
+     *
      *   Instead of using the setInterval() method, consider
      * creating a Timer object, with the specified interval, using 0 as the repeatCount
      * parameter (which sets the timer to repeat indefinitely).If you intend to use the clearInterval() method to cancel the
@@ -246,7 +367,7 @@ class Compat {
         return -1;
         #end
     }
-    
+
     /**
      * Cancels a specified setInterval() call.
      * @param id The ID of the setInterval() call, which you set to a variable, as in the following:
@@ -263,10 +384,10 @@ class Compat {
         throw "Supported by version 3.3 or higher";
         #end
     }
-    
+
     /**
      * Runs a specified function after a specified delay (in milliseconds).
-     * 
+     *
      *   Instead of using this method, consider
      * creating a Timer object, with the specified interval, using 1 as the repeatCount
      * parameter (which sets the timer to run only once).If you intend to use the clearTimeout() method to cancel the
@@ -296,7 +417,7 @@ class Compat {
         return -1;
         #end
     }
-    
+
     /**
      * Cancels a specified setTimeout() call.
      * @param id The ID of the setTimeout() call, which you set to a variable, as in the following:
@@ -313,7 +434,7 @@ class Compat {
         throw "Supported by version 3.3 or higher";
         #end
     }
-    
+
     /**
      * Runtime value of FLOAT_MAX depends on target platform
      */
@@ -335,7 +456,7 @@ class Compat {
         return 1.79e+308;
         #end
     }
-    
+
     /**
      * Runtime value of FLOAT_MIN depends on target platform
      */
@@ -357,7 +478,7 @@ class Compat {
         return -1.79E+308;
         #end
     }
-    
+
     /**
      * Runtime value of INT_MAX depends on target platform
      */
@@ -381,7 +502,7 @@ class Compat {
         return 2^31-1;
         #end
     }
-    
+
     /**
      * Runtime value of INT_MIN depends on target platform
      */
@@ -405,7 +526,7 @@ class Compat {
         return -2^31;
         #end
     }
-    
+
     /**
      * Returns a string representation of the number in fixed-point notation.
      * Fixed-point notation means that the string will contain a specific number of digits
@@ -437,13 +558,51 @@ class Compat {
             return s;
         #end
     }
+
+    public static function toPrecision(n:Float, prec:Int):String {
+        n = Math.round(n * Math.pow(10, prec));
+        var str = '' + n;
+        var len = str.length;
+        if(len <= prec){
+            while(len < prec){
+                str = '0' + str;
+                len++;
+            }
+            return '0.' + str;
+        } else{
+            return str.substr(0, len - prec) + '.' + str.substr(len - prec);
+        }
+    }
+
+    /** returns timezone offset in minutes */
+    public static function getTimezoneOffset():Int {
+        #if flash
+        return untyped new flash.Date().getTimezoneOffset();
+        #elseif js
+        return untyped __js__("new Date().getTimezoneOffset()");
+        #else
+        var now = Date.now();
+        now = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+        return 24 * 60 * Math.round(now.getTime() / 24 / 3600 / 1000) - Std.int(now.getTime() / 1000 / 60);
+        /*
+        //https://github.com/HaxeFoundation/haxe/issues/3268
+        var a = DateTools.format(Date.fromTime(0), '%H:%M').split(':');
+        var offset = -Std.parseInt(a[0]) * 60 + Std.parseInt(a[1]); // will care about DST (daylight saving time), but can fail with < UTC-1200 and > UTC+1200
+        trace(offset);
+
+        //https://github.com/waneck/geotools/issues/2
+        trace ( (new Date(1970, 0, 1, 0, 0, 0).getTime() / 1000 / 60)) ); // may not work in Neko, do not care about DST (daylight saving time)
+        trace ( ((new Date(1970, 1, 1, 0, 0, 0).getTime() - 31 * 24 * 60 * 60 * 1000) / 1000 / 60) ); //should work in Neko too
+        */
+        #end
+    }
 }
 
 #if (!flash && !js && (haxe_ver >= "3.3"))
 private class FlashTimerAdapter {
-    
+
     public static var timers:Array<haxe.Timer> = [];
-    
+
     public static function setInterval(callback:Dynamic, milliseconds:Int, rest:Array<Dynamic>):Int {
         var timer = new haxe.Timer(milliseconds);
         timers.push(timer);
@@ -451,9 +610,9 @@ private class FlashTimerAdapter {
         timer.run = function() Reflect.callMethod(null, callback, rest);
         return id;
     }
-    
+
     public static function clearInterval(id:Int) stopTimer(id);
-    
+
     public static function setTimeout(callback:Dynamic, milliseconds:Int, rest:Array<Dynamic>):Int {
         var timer = new haxe.Timer(milliseconds);
         timers.push(timer);
@@ -464,15 +623,15 @@ private class FlashTimerAdapter {
         }
         return id;
     }
-    
+
     public static function clearTimeout(id:Int) stopTimer(id);
-    
+
     static function stopTimer(id:Int) {
         timers[id].stop();
         timers[id] = null;
     }
-}
-#end
+    }
+    #end
 
 #if python
 @:pythonImport("sys")
@@ -488,24 +647,24 @@ typedef Regex = flash.utils.RegExp;
 typedef Regex = FlashRegExpAdapter;
 
 class FlashRegExpAdapter {
-    
-    public function new(r:String, opt:String) {
+
+    public function new(r:String, opt:String = '') {
         _ereg = new EReg(r, opt);
         _global = opt.indexOf("g") != -1;
     }
-    
+
     public var lastIndex(get, set):Int;
-    
+
     var _ereg:EReg;
     var _global:Bool;
     var _lastTestedString : String;
     var _restOfLastTestedString : String;
     var _lastIndex:Int = 0;
-    
+
     private function get_lastIndex():Int {
         return _lastIndex;
     }
-    
+
     private function set_lastIndex(value:Int):Int {
         if (_lastIndex != value) {
             if (_lastTestedString != null) {
@@ -516,10 +675,10 @@ class FlashRegExpAdapter {
             return value;
         }
     }
-    
+
     /**
      * Performs a search for the regular expression on the given string str.
-     * 
+     *
      *   If the g (global) flag is not set for the regular
      * expression, then the search starts
      * at the beginning of the string (at index position 0); the search ignores
@@ -530,7 +689,7 @@ class FlashRegExpAdapter {
      * of the end of the match.
      * @param str The string to search.
      * @return If there is no match, null; otherwise, an object with the following properties:
-     *   
+     *
      *     An array, in which element 0 contains the complete matching substring, and
      *   other elements of the array (1 through n) contain substrings that match parenthetical groups
      *   in the regular expression index  The character position of the matched substring within
@@ -559,10 +718,10 @@ class FlashRegExpAdapter {
         }
         return matched ? new FlashRegExpExecResult(str, _ereg, index).matches : null;
     }
-    
+
     /**
      * Tests for the match of the regular expression in the given string str.
-     * 
+     *
      *   If the g (global) flag is not set for the regular expression,
      * then the search starts at the beginning of the string (at index position 0); the search ignores
      * the lastIndex property of the regular expression.If the g (global) flag is set for the regular expression, then the search starts
@@ -573,23 +732,23 @@ class FlashRegExpAdapter {
      * @return If there is a match, true; otherwise, false.
      */
     public function test(str:String):Bool return match(str);
-    
+
     public function map(s:String, f:EReg-> String):String return _ereg.map(s, f);
-    
+
     public function match(s:String):Bool return _ereg.match(s);
-    
+
     public function matched(n:Int):String return _ereg.matched(n);
-    
+
     public function matchedLeft():String return _ereg.matchedLeft();
-    
+
     public function matchedPos():{pos:Int, len:Int} return _ereg.matchedPos();
-    
+
     public function matchedRight():String return _ereg.matchedRight();
-    
+
     public function matchSub(s:String, pos:Int, len:Int = -1):Bool return _ereg.matchSub(s, pos, len);
-    
+
     public function replace(s:String, by:String):String return _ereg.replace(s, by);
-    
+
     public function split(s:String):Array<String> return _ereg.split(s);
 }
 
@@ -599,11 +758,11 @@ private class FlashRegExpExecResult {
         this.index = index;
         populateMatches(ereg);
     }
-    
+
     public var index(default,null) : Int = 0;
     public var input(default,null) : String;
     public var matches(default,null) : Array<String>;
-    
+
     function populateMatches(ereg:EReg) {
         matches = [];
         try {
@@ -615,5 +774,26 @@ private class FlashRegExpExecResult {
         } catch (ignored:Dynamic) {
         }
     }
+}
+#end
+
+#if openfl
+class ObjectIterator {
+	private var object:openfl.utils.Object;
+	private var fields:Array<String>;
+	private var i:Int;
+	private var l:Int;
+	public inline function new(object:openfl.utils.Object) {
+		this.fields = Reflect.fields(object);
+		this.object = object;
+		this.i = 0;
+		this.l = fields.length;
+	}
+	public inline function next():Dynamic {
+		return object[fields[i++]];
+	}
+	public inline function hasNext():Bool {
+		return i < l;
+	}
 }
 #end

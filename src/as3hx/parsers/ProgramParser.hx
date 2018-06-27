@@ -134,7 +134,7 @@ class ProgramParser {
                                             c.meta.pop();
                                             c.meta.pop();
                                         }
-                                        
+
                                         //put the import in the first class meta
                                         c.meta.push(EImport(impt));
 

@@ -83,16 +83,20 @@ typedef ClassField = {
     var condVars : Array<String>;
 }
 
-typedef ClassDef = {
-    var meta : Array<Expr>;
-    var kwds : Array<String>;
-    var imports : Array<Array<String>>;
-    var isInterface : Bool;
-    var name : String;
-    var fields : Array<ClassField>;
-    var implement : Array<T>;
-    var extend : Null<T>;
-    var inits : Array<Expr>;
+class ClassDef {
+    public function new():Void {
+
+    }
+    public var meta : Array<Expr>;
+    public var kwds : Array<String>;
+    public var imports : Array<Array<String>>;
+    public var isInterface : Bool;
+    public var name : String;
+    public var typeParams : String;
+    public var fields : Array<ClassField>;
+    public var implement : Array<T>;
+    public var extend : Null<T>;
+    public var inits : Array<Expr>;
 }
 
 typedef FunctionDef = {

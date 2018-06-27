@@ -18,6 +18,32 @@ class ClassParser {
         var parseImport = ImportParser.parse.bind(tokenizer, cfg);
 
         var cname = tokenizer.id();
+        var typeParams = null;
+
+        var next = tokenizer.token();
+        switch (next) {
+            case TCommented(s, isBlock, t):
+                var type:T = OverrideTypeComment.extractType(cname, s, types);
+                if (type == null) {
+                    tokenizer.add(next);
+                } else {
+                    switch(type) {
+                        case TPath(p):
+                            cname = p.join(".");
+                            var i:Int = cname.indexOf("<");
+                            if (i != -1) {
+                                typeParams = cname.substr(i);
+                                cname = cname.substr(0, i);
+                            }
+                            tokenizer.add(t);
+                        default:
+                            tokenizer.add(next);
+                    }
+                }
+            default:
+                tokenizer.add(next);
+        }
+
         var classMeta = meta;
         var imports = [];
         meta = [];
@@ -182,19 +208,19 @@ class ClassParser {
                                             pf(false, true);
 
                                         case TCommented(s,b,t):
-                                            f(t);   
+                                            f(t);
 
                                         case TNL(t):
                                             meta.push(ENL(null));
-                                            f(t);    
+                                            f(t);
 
                                         default:
                                             tokenizer.add(t);
                                             pf(false, false);
-                                        } 
+                                        }
                                 }
                                 f(t);
-                              
+
                                 condVars.pop();
                                 Debug.closeDebug("end conditional compilation: " + ns + "::" + id, tokenizer.line);
                                 break;
@@ -243,17 +269,18 @@ class ClassParser {
             }
         }
         Debug.closeDebug("parseClass(" + cname+") finished", tokenizer.line);
-        return {
-            meta : classMeta,
-            kwds : kwds,
-            imports : imports,
-            isInterface : isInterface,
-            name : cname,
-            fields : fields,
-            implement : impl,
-            extend : extend,
-            inits : inits
-        };
+        var result:ClassDef = new ClassDef();
+        result.meta = classMeta;
+        result.kwds = kwds;
+        result.imports = imports;
+        result.isInterface = isInterface;
+        result.name = cname;
+        result.typeParams = typeParams;
+        result.fields = fields;
+        result.implement = impl;
+        result.extend = extend;
+        result.inits = inits;
+        return result;
     }
 
     public static function parseVar(tokenizer, types:Types, cfg:Config, kwds, meta, condVars:Array<String>) : ClassField {
@@ -276,7 +303,7 @@ class ClassParser {
             kind : FVar(t, val),
             condVars : condVars
         };
-        
+
         var genType = ParserUtils.generateTypeIfNeeded(rv);
         if (genType != null)
             types.gen.push(genType);
@@ -285,7 +312,7 @@ class ClassParser {
         return rv;
     }
 
-    public static function parseFun(tokenizer, types:Types, cfg, kwds:Array<String>,meta,condVars:Array<String>, isInterface:Bool) : ClassField {
+    public static function parseFun(tokenizer, types:Types, cfg, kwds:Array<String>, meta:Array<Expr>, condVars:Array<String>, isInterface:Bool) : ClassField {
         var parseFunction = FunctionParser.parse.bind(tokenizer, types, cfg);
 
         Debug.openDebug("parseClassFun(", tokenizer.line);
@@ -301,6 +328,13 @@ class ClassParser {
                     name = tokenizer.id();
             }
         }
+        var t = tokenizer.token();
+        switch (t) {
+            case TCommented(s, isBlock, t):
+                meta.push(ECommented(s, isBlock, true, null));
+            default:
+        }
+        tokenizer.add(t);
         Debug.dbgln(Std.string(kwds) + " " + name + ")", tokenizer.line, false);
         var f = parseFunction(isInterface);
         tokenizer.end();

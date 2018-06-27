@@ -2,9 +2,9 @@ using StringTools;
 
 import as3hx.As3.Program;
 import as3hx.Config;
+import as3hx.Error;
 import as3hx.ParserUtils;
 import as3hx.Writer;
-import as3hx.Error;
 import sys.FileSystem;
 import sys.io.File;
 using haxe.io.Path;
@@ -33,6 +33,45 @@ class Run {
             case EUnterminatedXML: "Unterminated XML";
         }
     }
+
+	static function loopImports(src:String, excludes:List<String>) {
+        if (src == null) {
+            Sys.println("source path cannot be null");
+        }
+        src = src.normalize();
+        var subDirList = new Array<String>();
+        for(f in FileSystem.readDirectory(src)) {
+            var srcChildAbsPath = src.addTrailingSlash() + f;
+            if (FileSystem.isDirectory(srcChildAbsPath)) {
+                subDirList.push(f);
+            } else if(f.endsWith(".as") && !isExcludeFile(excludes, srcChildAbsPath)) {
+                var file = srcChildAbsPath;
+                Sys.println("import AS3 file: " + file);
+                var p = new as3hx.Parser(cfg);
+                var content = File.getContent(file);
+                var program = try p.parseString(content, src, f) catch(e : Error) {
+                    #if macro
+                    File.stderr().writeString(file + ":" + p.tokenizer.line + ": " + errorString(e) + "\n");
+                    #end
+                    if(cfg.errorContinue) {
+                        errors.push("In " + file + "(" + p.tokenizer.line + ") : " + errorString(e));
+                        continue;
+                    } else {
+                        #if neko
+                            neko.Lib.rethrow("In " + file + "(" + p.tokenizer.line + ") : " + errorString(e));
+                        #elseif cpp
+                            cpp.Lib.rethrow("In " + file + "(" + p.tokenizer.line + ") : " + errorString(e));
+                            null;
+                        #end
+                    }
+                }
+                writer.register(program);
+            }
+        }
+        for (name in subDirList) {
+            loopImports((src.addTrailingSlash() + name), excludes);
+        }
+	}
 
     static function loop(src:String, dst:String, excludes:List<String>) {
         if (src == null) {
@@ -126,8 +165,14 @@ class Run {
         if (cfg.useFullTyping) {
             writer = new Writer(cfg);
         }
+        for (libPath in cfg.libPaths) {
+            loopImports(libPath, cfg.excludePaths);
+        }
+
+
         loop(cfg.src, cfg.dst, cfg.excludePaths);
         if (cfg.useFullTyping) {
+            writer.prepareTyping();
             if (cfg.useOpenFlTypes) {
                 for (f in files) {
                     writer.refineTypes(f.program);
@@ -136,6 +181,7 @@ class Run {
                     writer.applyRefinedTypes(f.program);
                 }
             }
+            writer.finishTyping();
             for (f in files) {
                 writeFile(f.name, f.program, cfg, f.f, f.src);
             }
