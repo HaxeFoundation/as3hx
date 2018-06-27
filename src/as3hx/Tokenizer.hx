@@ -251,6 +251,7 @@ class Tokenizer {
                             var old = line;
                             var contents : String = "/*";
                             try {
+                                char = null;
                                 while( true ) {
                                     while( char != "*".code ) {
                                         if( char == "\n".code ) {
