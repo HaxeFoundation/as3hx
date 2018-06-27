@@ -269,7 +269,11 @@ class ExprParser {
                 return switch(e2) {
                     case ETernary(cond, te1, te2):
                         ETernary(ParserUtils.makeBinop(tokenizer, s, e1, cond, pendingNewLines != 0), te1, te2);
-                    default: ParserUtils.makeBinop(tokenizer, s, e1, e2, pendingNewLines != 0);
+                    case EIdent(v) if (s != "in"):
+                        types.seen.push(TPath([v]));
+                        ParserUtils.makeBinop(tokenizer, s, e1, e2, pendingNewLines != 0);
+                    default:
+                        ParserUtils.makeBinop(tokenizer, s, e1, e2, pendingNewLines != 0);
                 }
             default:
                 if (pendingNewLines != 0) {
