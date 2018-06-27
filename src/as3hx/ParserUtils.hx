@@ -18,7 +18,7 @@ class ParserUtils {
             default: StringTools.replace(name, "$", "__DOLLAR__");
         }
     }
-    
+
     /**
      * Takes a token that may be a comment and returns
      * an array of tokens that will have the comments
@@ -137,7 +137,7 @@ class ParserUtils {
                     return t;
                 }
             default:
-                return t;    
+                return t;
         }
     }
 
@@ -163,7 +163,7 @@ class ParserUtils {
     }
 
     /**
-     * In certain cases, a typedef will be generated 
+     * In certain cases, a typedef will be generated
      * for a class attribute, for better type safety
      */
     public static function generateTypeIfNeeded(classVar : ClassField)
@@ -204,12 +204,12 @@ class ParserUtils {
             default:
                 return null;
         }
-        
+
         //if the array is empty, type can't be defined
         if (arrayDecl.length == 0) {
             return null;
         }
-        
+
         //return the type of an object field
         var getType:Expr->String = function(e) {
             switch (e) {
@@ -220,12 +220,12 @@ class ParserUtils {
                         case CFloat(v):
                             return "Float";
                         case CString(v):
-                            return "String";      
+                            return "String";
                     }
                 case EIdent(id):
                     if (id == "true" || id == "false") {
                         return "Bool";
-                    }    
+                    }
                     return "Dynamic";
                 default:
                     return "Dynamic";
@@ -233,7 +233,7 @@ class ParserUtils {
         }
 
         //Type declaration is only created for array of objects,.
-        //Type is retrieved from the first object fields, then 
+        //Type is retrieved from the first object fields, then
         //all remaining objects in the array are check against this
         //type. If the type is different, then it is a mixed type
         //array and no type declaration should be created
@@ -338,6 +338,7 @@ class ParserUtils {
 
     public static function makeUnop(op:String, e:Expr):Expr {
         return switch(e) {
+            case ETernary(cond, e1, e2): ETernary(EUnop(op, true, cond), e1, e2);
             case EBinop(bop, e1, e2, n): EBinop(bop, makeUnop(op, e1), e2, n);
             default: EUnop(op, true, e);
         }
