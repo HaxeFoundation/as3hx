@@ -1,3 +1,4 @@
+import haxe.xml.Fast;
 private class NodeAccess implements Dynamic<FastXML> {
 
     var __x : Xml;
@@ -30,7 +31,7 @@ private class AttribAccess implements Dynamic<String> {
             throw "Cannot access document attribute "+name;
         var v = __x.get(name);
         if( v == null )
-            throw __x.nodeName+" is missing attribute "+name;
+            return "";
         return v;
     }
 
@@ -76,7 +77,7 @@ private class NodeListAccess implements Dynamic<FastXMLList> {
 
     public function resolve( name : String ) : FastXMLList {
         var l = new Array();
-        for( x in __x.elementsNamed(name) ) 
+        for( x in __x.elementsNamed(name) )
             l.push(new FastXML(x));
         return new FastXMLList(l);
     }
@@ -191,7 +192,7 @@ class FastXML {
             throw "Cannot access document attribute "+name;
         x.set(name,value);
     }
-    
+
     public function toString() : String {
         return x.toString();
     }
@@ -200,6 +201,19 @@ class FastXML {
         var x = Xml.parse(s);
         return new FastXML(x.firstChild());
     }
+
+    #if openfl
+    public static function parseByteArray(s:openfl.utils.ByteArray) : FastXML {
+        s.position = 0;
+        var ss:String = s.readMultiByte(s.length, null);
+        var x = Xml.parse(ss);
+        var lastNode:Xml = null;
+        for (e in x) {
+            lastNode = e;
+        }
+        return new FastXML(lastNode);
+    }
+    #end
 
     public static function filterNodes(a : FastXMLList, f : FastXML -> Bool) : FastXMLList {
         var rv = new Array();

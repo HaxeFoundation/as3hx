@@ -38,7 +38,7 @@ class FastXMLList {
     public function iterator() : Iterator<FastXML> {
         return l.iterator();
     }
-    
+
     public function length() : Int {
         return l.length;
     }
