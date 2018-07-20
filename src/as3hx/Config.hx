@@ -114,9 +114,9 @@ class Config {
 
 
     /** source directory **/
-    public var src : String;
+    public var src : Array<String>;
     /** output directory **/
-    public var dst : String;
+    public var dst : Array<String>;
 
     var cfgFile : String;
 
@@ -150,6 +150,9 @@ class Config {
         else return;
 
         cfgFile = toPath(home+"/.as3hx_config.xml");
+
+        src = [];
+        dst = [];
     }
 
     /**
@@ -316,8 +319,24 @@ class Config {
         if (FileSystem.exists(cwd) && FileSystem.isDirectory(cwd)) {
             Sys.setCwd(cwd);
         }
-        src = Run.directory(arg);
-        dst = Run.directory(args.shift(), "./out");
+        src.push(directory(arg));
+        dst.push(directory(args.shift(), "./out"));
+        while (args.length > 1) {
+            src.push(directory(args.shift()));
+            dst.push(directory(args.shift(), "./out"));
+        }
+    }
+
+    static var reabs = ~/^([a-z]:|\\\\|\/)/i;
+    static function directory(dir : String, alt = ".") {
+        if (dir == null)
+            dir = alt;
+        if(dir.endsWith("/") || dir.endsWith("\\"))
+            dir = dir.substr(0, -1);
+        if(!reabs.match(dir))
+            dir = Sys.getCwd() + dir;
+        dir = StringTools.replace(dir, "\\", "/");
+        return dir;
     }
 
     /*

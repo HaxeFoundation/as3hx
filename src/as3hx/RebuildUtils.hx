@@ -257,7 +257,7 @@ class RebuildUtils
                 }
                 if (re != null || needRebuild) {
                     if (re == null) re = e;
-                    return ETry(e, rcatches);
+                    return ETry(re, rcatches);
                 } else {
                     return null;
                 }
