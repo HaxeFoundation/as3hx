@@ -208,6 +208,12 @@ class Typer
                             case "setTimeout": return "Dynamic->Int->Int";
                             case "getQualifiedClassName": return "Dynamic->String";
                         }
+                    case "AS3":
+                        switch(f) {
+                            case "int": return "Dynamic->Int";
+                            case "parseInt": return "Dynamic->Int";
+                            case "hasOwnProperty": return "Dynamic->String->Bool";
+                        }
                     case "Date":
                         switch(f) {
                             case "getTime": return "Void->Float";
@@ -310,6 +316,7 @@ class Typer
             case ECall(e, params):
                 /* handling of as3 typing calls */
                 switch(e) {
+                    case EIdent("Object"): return getExprType(params[0]);
                     case EIdent("Number"): return "Float";
                     case EIdent("String"): return "String";
                     case EIdent("int"): return "Int";
@@ -423,7 +430,7 @@ class Typer
                         var t1:String = getExprType(e1);
                         var t2:String = getExprType(e2);
                         if (op == "+" && t1 == "String" || t2 == "String") return "String";
-                        if (t1 != "Float" && t2 != "Float") return "Int";
+                        if (t1 != "Float" && t1 != "Dynamic" && t2 != "Float" && t2 != "Dynamic") return "Int";
                         return "Float";
                 }
             case ENew(t, params):
@@ -594,7 +601,7 @@ class Typer
     public function addClass(p:Program, pack:String, path:String, c:ClassDef):Void {
         var classMap:Map<String,String> = new Map<String,String>();
         if (!cfg.useFullTyping) {
-            parseClassFields(p, pack, c, classMap);
+            parseClassFields(p, pack, path, c, classMap);
         }
         classes[path] = classMap;
         classDefs[path] = c;
@@ -604,7 +611,7 @@ class Typer
     public function parseParentClasses():Void {
         for (path in classes.keys()) {
             var c:ClassDef = classDefs[path];
-            parseClassFields(classPrograms[c], classPacks[c], c, classes[path]);
+            parseClassFields(classPrograms[c], classPacks[c], path, c, classes[path]);
         }
         for (path in classes.keys()) {
             parseParentClass(path);
@@ -872,6 +879,8 @@ class Typer
             case null:
                 if (c != null) trace("null T for class ", c.name);
                 return null;
+            case TVector(t):
+                return TVector(expandType(t, c));
             case TFunction(p):
                 var pr:Array<T> = [];
                 for (pi in p) {
@@ -1215,7 +1224,6 @@ class Typer
                 //classMap.remove(key);
             //}
         //}
-        //parseClassFields(path, c, classMap);
         context = classMap;
         if (contextStack.length > 0) {
             contextStack[contextStack.length - 1] = context;
@@ -1345,6 +1353,7 @@ class Typer
                     var etype:String = getExprType(e);
                     var isMap:Bool = etype != null && (etype.indexOf("Map") == 0 || etype.indexOf("Dictionary") == 0 || etype.indexOf("openfl.utils.Dictionary") == 0);
                     var isVector:Bool = etype != null && (etype.indexOf("Array") == 0 || etype.indexOf("Vector") == 0 || etype.indexOf("openfl.Vector") == 0);
+                    var isXml:Bool = etype == "FastXML" || etype == "FastXMLList";
                     switch(ev) {
                         case EVars(vars):
                             if(vars.length == 1 && vars[0].val == null) {
@@ -1356,8 +1365,10 @@ class Typer
                                     }
                                 } else if (isVector) {
                                     type = getVectorParam(etype);
+                                } else if (isXml) {
+                                    type = etype;
                                 } else {
-                                    type = "String";
+                                    type = "Dynamic";
                                 }
                                 context.set(vars[0].name, type);
                                 var re2:Expr = RebuildUtils.rebuild(e, lookUpForTyping);
@@ -1450,33 +1461,31 @@ class Typer
         }
     }
 
-    function parseClassFields(p:Program, pack:String, c:ClassDef, map:Map<String,String>):Void {
+    function parseClassFields(p:Program, pack:String, path:String, c:ClassDef, map:Map<String,String>):Void {
         var imports:Map<String,String> = WriterImports.getImports(p, cfg, c);
+        this.pack = pack;
+        this.currentPath = path;
+        setImports(imports, null);
         for (field in c.fields) {
-            var type:String = null;
+            var type:T = null;
             switch(field.kind) {
                 case FVar(t, val):
-                   type = tstring(t);
+                    type = t;
                 case FFun(f):
                     if (isSetter(field)) {
-                        type = tstring(f.args[0].t);
+                        type = f.args[0].t;
                     } else if (isGetter(field)) {
-                        type = tstring(f.ret.t);
+                        type = f.ret.t;
                     } else {
                         var constructorReturnType:T = field.name == c.name ? TPath([pack.length > 0 ? pack + "." + c.name : c.name]) : null;
-                        type = tstring(getFunctionType(f, constructorReturnType));
+                        type = getFunctionType(f, constructorReturnType);
                     }
                 default:
             }
             if (type != null) {
-                var t:String = WriterImports.getImportWithMap(type, cfg, classes, imports, pack);
-                if (t != null) {
-                    type = t;
-                }
-                map.set(field.name, type);
+                map.set(field.name, tstring(expandType(type, c)));
             }
         }
-        //map.set(c.name, path);
     }
 
     inline function getRegexpType():String return cfg.useCompat ? "as3hx.Compat.Regex" : "flash.utils.RegExp";

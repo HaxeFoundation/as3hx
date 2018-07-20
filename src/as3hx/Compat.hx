@@ -42,8 +42,16 @@ class Compat {
     }
 
     public static inline function setArrayLength<T>(a:Array<Null<T>>, length:Int) {
+        #if js
+        untyped a.length = length;
+        #else
         if (a.length > length) a.splice(length, a.length - length);
-        else a[length - 1] = null;
+        else {
+            for (i in a.length...length) {
+                a.push(null);
+            }
+        }
+        #end
     }
 
     /**
@@ -158,7 +166,7 @@ class Compat {
     macro public static function getFunctionLength(f) {
         switch(Context.follow(Context.typeof(f))) {
             case TFun(args, _): return @:pos(Context.currentPos()) macro $v{args.length};
-            default: throw new Error("not a function", f.pos);
+            default: return macro 0;// throw new Error("not a function", f.pos);
         }
     }
 
@@ -183,8 +191,8 @@ class Compat {
     public static function isVector(p:Dynamic, T:Dynamic = null):Bool {
         if (p == null) return null;
         var c:Class<Dynamic> = Type.getClass(p);
-        if (c == null) return null;
-        if (Type.getClassName(c) != "openfl._Vector.AbstractVector") return null;
+        if (c == null) return false;
+        if (Type.getClassName(c) != "openfl._Vector.AbstractVector") return false;
         var v:openfl.Vector<Dynamic> = cast p;
         if (v.length > 0 && T != null && v[0] != null && !Std.is(v[0], T)) {
             return false;
@@ -217,11 +225,12 @@ class Compat {
     }
     #end
 
+    public static inline function isClass(c:Dynamic):Bool {
+        return c != null && c.__name__ != null;
+    }
+
     public static inline function castClass(c:Dynamic):Class<Dynamic> {
-        return switch(Type.typeof(c)) {
-            case TClass(c): c;
-            default: null;
-        }
+        return isClass(c) ? untyped c : null;
     }
 
     public static inline function getQualifiedClassName(o:Dynamic):String {
@@ -260,41 +269,7 @@ class Compat {
         }
     }
 
-    /**
-     * Converts a typed expression into a Float.
-     */
-    macro public static function parseFloat<T>(e:ExprOf<T>):ExprOf<T> {
-        var type = switch(Context.typeof(e)) {
-            case TAbstract(t, _) if(t.get().pack.length == 0): t.get().name;
-            case TInst(t, _) if(t.get().pack.length == 0): t.get().name;
-            case _: null;
-        }
-        return switch(type) {
-            case "Float" | "Int": macro ${e};
-            case "String": macro Std.parseFloat(${e});
-            case _: macro Std.parseFloat(Std.string(${e}));
-        }
-    }
-
-    /**
-     * Converts a typed expression into an Int.
-     */
-    macro public static function parseInt<T>(e:ExprOf<T>, ?base:ExprOf<Int>):ExprOf<T> {
-        var type = switch(Context.typeof(e)) {
-            case TAbstract(t, _) if(t.get().pack.length == 0): t.get().name;
-            case TInst(t, _) if(t.get().pack.length == 0): t.get().name;
-            case _: null;
-        }
-        return switch(type) {
-            case "Int": macro ${e};
-            case "Float": macro Std.int(${e});
-            case "String": macro @:privateAccess as3hx.Compat._parseInt(${e}, ${base});
-            case "Bool": macro ${e} ? 1 : 0;
-            case _: macro Std.parseInt(Std.string(${e}));
-        }
-    }
-
-    static function _parseInt(s:String, ?base:Int):Null<Int> {
+    public static function parseInt(s:String, ?base:Int):Null<Int> {
         #if js
         if(base == null) base = s.indexOf("0x") == 0 ? 16 : 10;
         var v:Int = untyped __js__("parseInt")(s, base);
@@ -307,18 +282,18 @@ class Compat {
         var BASE = "0123456789abcdefghijklmnopqrstuvwxyz";
         if(base != null && (base < 2 || base > BASE.length))
             return throw 'invalid base ${base}, it must be between 2 and ${BASE.length}';
-        s = s.trim().toLowerCase();
-        var sign = if(s.startsWith("+")) {
+        s = StringTools.trim(s).toLowerCase();
+        var sign = if(StringTools.startsWith(s, "+")) {
             s = s.substring(1);
             1;
-        } else if(s.startsWith("-")) {
+        } else if(StringTools.startsWith(s, "-")) {
             s = s.substring(1);
             -1;
         } else {
             1;
         };
         if(s.length == 0) return null;
-        if(s.startsWith('0x')) {
+        if(StringTools.startsWith(s, '0x')) {
             if(base != null && base != 16) return null; // attempting at converting a hex using a different base
             base = 16;
             s = s.substring(2);
@@ -333,6 +308,22 @@ class Compat {
         }) catch(e:Dynamic) {};
         return acc * sign;
         #end
+    }
+
+    /**
+     * Converts a typed expression into a Float.
+     */
+    macro public static function parseFloat<T>(e:ExprOf<T>):ExprOf<T> {
+        var type = switch(Context.typeof(e)) {
+            case TAbstract(t, _) if(t.get().pack.length == 0): t.get().name;
+            case TInst(t, _) if(t.get().pack.length == 0): t.get().name;
+            case _: null;
+        }
+        return switch(type) {
+            case "Float" | "Int": macro ${e};
+            case "String": macro Std.parseFloat(${e});
+            case _: macro Std.parseFloat(Std.string(${e}));
+        }
     }
 
     /**
@@ -487,7 +478,8 @@ class Compat {
         #if flash
         return untyped __global__['int'].MAX_VALUE;
         #elseif js
-        return untyped __js__('Number.MAX_SAFE_INTEGER');
+        //return untyped __js__('Number.MAX_SAFE_INTEGER');
+        return 2147483647;
         #elseif cs
         return untyped __cs__('int.MaxValue');
         #elseif java
@@ -511,7 +503,8 @@ class Compat {
         #if flash
         return untyped __global__['int'].MIN_VALUE;
         #elseif js
-        return untyped __js__('Number.MIN_SAFE_INTEGER');
+        //return untyped __js__('Number.MIN_SAFE_INTEGER');
+        return -2147483648;
         #elseif cs
         return untyped __cs__('int.MinValue');
         #elseif java
@@ -572,6 +565,21 @@ class Compat {
         } else{
             return str.substr(0, len - prec) + '.' + str.substr(len - prec);
         }
+    }
+
+    public static function toString(value:Int, base:Int = 10):String {
+        var BASE:String = "0123456789abcdefghijklmnopqrstuvwxyz";
+        if(base < 2 || base > BASE.length)
+            throw 'invalid base $base, it must be between 2 and ${BASE.length}';
+        if(base == 10 || value == 0)
+            return Std.string(value);
+        var buf:String = "";
+        var abs:Int = value > 0 ? value : -value;
+        while(abs > 0) {
+            buf = BASE.charAt(abs % base) + buf;
+            abs = Std.int(abs / base);
+        }
+        return buf;
     }
 
     /** returns timezone offset in minutes */

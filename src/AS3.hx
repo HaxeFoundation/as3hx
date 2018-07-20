@@ -22,9 +22,11 @@ class AS3 {
         return Std.is(e, haxe.Constraints.IMap) ? untyped e : null;
     }
 
+    #if openfl
     public static inline function asObject(e:Dynamic):openfl.utils.Object {
         return untyped e;
     }
+    #end
 
     public static inline function asClass<T>(e:Dynamic, t:Class<T>):T {
         return Std.is(e, t) ? untyped e : null;
@@ -48,7 +50,9 @@ class AS3 {
         switch(type.expr) {
             //case EConst(CIdent("Dictionary")): return macro Std.is($e, haxe.Constraints.IMap) ? $e : null;
             case EConst(CIdent("Dictionary")): return macro AS3.asDictionary($e);
+            #if openfl
             case EConst(CIdent("Object")): return macro AS3.asObject($e);
+            #end
             case EConst(CIdent("Float")): return macro AS3.asFloat($e);
             case EConst(CIdent("Bool")): return macro AS3.asBool($e);
 
@@ -95,8 +99,39 @@ class AS3 {
             }
         }
         #else
-        return false;
+        if (o == null) {
+            return false;
+        } else {
+            return Type.getInstanceFields(Type.getClass(o)).indexOf(field) != -1;
+        }
         #end
     }
 
+
+
+
+
+    /**
+     * Converts a typed expression into an Int.
+     */
+    //#if js
+    macro public static function int<T>(e:ExprOf<T>, ?base:ExprOf<Int>):ExprOf<T> {
+        return macro untyped ~~${e};
+    }
+    //#else
+    //macro public static function int<T>(e:ExprOf<T>, ?base:ExprOf<Int>):ExprOf<T> {
+        //var type = switch(Context.typeof(e)) {
+            //case TAbstract(t, _) if(t.get().pack.length == 0): t.get().name;
+            //case TInst(t, _) if(t.get().pack.length == 0): t.get().name;
+            //case _: null;
+        //}
+        //return switch(type) {
+            //case "Int": macro ${e};
+            //case "Float": macro Std.int(${e});
+            //case "String": macro as3hx.Compat.parseInt(${e}, ${base});
+            //case "Bool": macro ${e} ? 1 : 0;
+            //case _: return macro as3hx.Compat.parseInt(Std.string(${e}), ${base});
+        //}
+    //}
+    //#end
 }

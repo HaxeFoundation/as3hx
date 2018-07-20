@@ -32,8 +32,6 @@ class Writer
     var loopIncrements : Array<Expr>;
     var varCount : Int; // vars added for ESwitch or EFor initialization
     var isInterface : Bool; // set if current class is an interface
-    var context : Map<String,String>;
-    var contextStack : Array<Map<String,String>>;
     var inArrayAccess : Bool;
     var inEField : Bool;
     var inE4XFilter : Bool;
@@ -56,8 +54,6 @@ class Writer
         this.lvl = 0;
         this.cfg = config;
         this.varCount = 0;
-        this.context = new Map();
-        this.contextStack = new Array();
         this.inArrayAccess = false;
         this.inEField = false;
         this.inE4XFilter = false;
@@ -65,52 +61,12 @@ class Writer
         this.lineIsDirty = false;
         this.pendingTailComment = null;
 
-        //this.typeImportMap = new Map<String,String>();
         this.genTypes = [];
         this.imported = [];
         this.typer = new Typer(config);
         this.dictionaries = new DictionaryRebuild(typer, config);
 
         this.validVariableNameEReg = new EReg("^[a-zA-Z_$][0-9a-zA-Z_$]*$", "");
-
-        //var doNotImportClasses = [
-            //"Array", "Bool", "Boolean", "Class", "Date",
-            //"Dynamic", "EReg", "Enum", "EnumValue",
-            //"Float", "Map", "Int", "IntIter",
-            //"Lambda", "List", "Math", "Number", "Reflect",
-            //"RegExp", "Std", "String", "StringBuf",
-            //"StringTools", "Sys", "Type", "Void",
-            //"Function", "XML", "XMLList"
-        //];
-        //if (!cfg.useOpenFlTypes) {
-            //doNotImportClasses.push("Object");
-        //}
-        //for(c in doNotImportClasses) {
-            //this.typeImportMap.set(c, c);
-        //}
-        //if (!cfg.functionToDynamic) typeImportMap.set("Function", "haxe.Constraints.Function");
-        //if (cfg.useOpenFlTypes) {
-            //typeImportMap.set("Vector", "openfl.Vector");
-            //typeImportMap.set("Object", "openfl.utils.Object");
-        //}
-//
-        //var topLevelErrorClasses = [
-            //"ArgumentError", "DefinitionError", "Error",
-            //"EvalError", "RangeError", "ReferenceError",
-            //"SecurityError", "SyntaxError", "TypeError",
-            //"URIError", "VerifyError"
-        //];
-//
-        //for(c in topLevelErrorClasses) {
-            //this.typeImportMap.set(c, "flash.errors." + c);
-        //}
-//
-        //for(c in cfg.importTypes.keys()) {
-            //this.typeImportMap.set(c, cfg.importTypes.get(c));
-        //}
-        //typeImportMap.set("MD5", "MD5");
-        //typeImportMap.set("Signal", "org.osflash.signals.Signal");
-        //typeImportMap.set("AGALMiniAssembler", "openfl.utils.AGALMiniAssembler");
     }
 
     public function prepareTyping():Void {
@@ -135,24 +91,6 @@ class Writer
 
     public function register(p:Program):Void {
         typer.addProgram(p);
-    }
-
-    /**
-     * Opens a new context for variable typing
-     */
-    function openContext() {
-        var c = new Map();
-        for(k in context.keys())
-            c.set(k, context.get(k));
-        contextStack.push(context);
-        context = c;
-    }
-
-    /**
-     * Closes the current variable typing copntext
-     */
-    function closeContext() {
-        context = contextStack.pop();
     }
 
     function formatComment(s:String, isBlock:Bool):String {
@@ -438,7 +376,6 @@ class Writer
                 };
                 p.push(property);
                 h.set(name, property);
-                context.set(name, tstring(t, true));
             }
             return property;
         }
@@ -527,8 +464,6 @@ class Writer
                         writeNL(";");
                     }
                 }
-
-                context.set(property.name, tstring(property.ret));
             }
         }
         if (c.isInterface) {
@@ -766,7 +701,6 @@ class Writer
                     }
                 }
                 writeVarType(t);
-                context.set(field.name, tstring(t));
 
                 if (val == null) {
                     if (type == "Int") val = EConst(CInt("0"));
@@ -998,7 +932,6 @@ class Writer
                         }
                     case ETypedExpr(_, t):
                         writeVarType(arg.t);
-                        context.set(arg.name, tstring(arg.t));
                         if(arg.val != null) {
                             write(" = ");
                             switch(tstring(t)) {
@@ -1225,6 +1158,10 @@ class Writer
         writeETypedExpr(e, functionReturnType);
     }
 
+    function isArrayAccessable(etype:String):Bool {
+        return isArrayType(etype) || isVectorType(etype) || isOpenFlDictionaryType(etype) || isMapType(etype) || isByteArrayType(etype);
+    }
+
     function writeEArray(e:Expr, index:Expr) {
         //write("/* EArray ("+Std.string(e)+","+Std.string(index)+") " + Std.string(getExprType(e, true)) + "  */ ");
         var old = inArrayAccess;
@@ -1260,6 +1197,7 @@ class Writer
             //write("/*!!!" + e + ":" + etype + "!!!*/");
             var oldInLVA = inLvalAssign;
             inLvalAssign = false;
+            //oldInLVA = false;
             if (isArrayType(etype) || isVectorType(etype) || isOpenFlDictionaryType(etype) || isMapType(etype) || isByteArrayType(etype)/* || etype == "PropertyProxy"*/) {
                 writeExpr(e);
                 inArrayAccess = old;
@@ -1272,8 +1210,6 @@ class Writer
                 write("]");
             } else {
                 var isAnonymouse:Bool = isDynamicType(etype);
-
-                //if(isObject || ((isArray || e.match(EIdent(_))) && itype != null && itype != "Int" && itype != "UInt" && !isOpenFlDictionaryType(etype))) {
                 if(cfg.debugInferredType) {
                     write("/* etype: " + etype + " itype: " + itype + " */");
                 }
@@ -1295,6 +1231,7 @@ class Writer
                 }
                 write(")");
             }
+            //inLvalAssign = false;
             inLvalAssign = oldInLVA;
         }
     }
@@ -1773,7 +1710,6 @@ class Writer
     function writeEBlock(e:Array<Expr>):BlockEnd {
         var result = Semi;
         if(!isInterface) {
-            openContext();
             write("{");
             lvl++;
             for (ex in e) {
@@ -1782,7 +1718,6 @@ class Writer
             }
             lvl--;
             write(closeb());
-            closeContext();
             result = None;
         } else {
             write(";");
@@ -1910,27 +1845,10 @@ class Writer
                 }
             }
             var type = tstring(v.t);
-            context.set(v.name, type);
             write("var " + typer.getModifiedIdent(v.name));
             writeVarType(v.t);
             if(rvalue != null) {
                 write(" = ");
-                if(isIntType(type)) {
-                    switch(rvalue) {
-                        case ETypedExpr(e, t) if(needCastToInt(e)):
-                            rvalue = switch(e) {
-                                case EBinop(op, e1, e2, newLineAfterOp) if(isBitwiseOp(op)):
-                                    if(needCastToInt(e1)) e1 = getCastToIntExpr(e1);
-                                    if(needCastToInt(e2)) e2 = getCastToIntExpr(e2);
-                                    EBinop(op, e1, e2, newLineAfterOp);
-                                case EUnop(op, prefix, ex):
-                                    if(isBitwiseOp(op) && needCastToInt(ex)) EUnop(op, prefix, getCastToIntExpr(ex));
-                                    else e;
-                                default: getCastToIntExpr(e);
-                            }
-                        default:
-                    }
-                }
                 writeExpr(rvalue);
                 if(i == vars.length - 1) {
                     switch(rvalue) {
@@ -1950,7 +1868,6 @@ class Writer
                 write("(");
                 writeExpr(e);
                 write(")");
-                //write("/*TYPE " + getExprType(e) + " " + e + "*/");
         }
     }
 
@@ -2002,13 +1919,18 @@ class Writer
                     if(n.indexOf(".") == -1 && (c>=65 && c<=90) || c == 103) {
                         handled = true;
                         switch(n) {
+                            case "Object": writeExpr(params[0]);
                             case "Number": writeCastToFloat(params[0]);
                             case "String": writeToString(params[0]);
                             case "Boolean":
-                                write("AS3.as(");
-                                writeExpr(params[0]);
-                                write(", ");
-                                write("Bool)");
+                                if (getExprType(params[0]) == "Bool") {
+                                    writeEParent(params[0]);
+                                } else {
+                                    write("AS3.as(");
+                                    writeExpr(params[0]);
+                                    write(", ");
+                                    write("Bool)");
+                                }
                             case "XML":
                                 var type = tstring(TPath(["XML"]));
                                 var ts:String = getExprType(params[0]);
@@ -2021,7 +1943,7 @@ class Writer
                                 write(")");
                             case "getQualifiedClassName":
                                 var t:String = getExprType(params[0]);
-                                if (t == "Class" || t == "Class<Dynamic>") {
+                                if (isClassType(t)) {
                                     writeExpr(ECall(EField(EIdent("Type"), "getClassName"), params));
                                 } else if (t == "Dynamic" || t == null) {
                                     writeExpr(ECall(EField(EIdent("as3hx.Compat"), "getQualifiedClassName"), params));
@@ -2032,7 +1954,7 @@ class Writer
 
                             case "getQualifiedSuperclassName":
                                 var t:String = getExprType(params[0]);
-                                if (t == "Class" || t == "Class<Dynamic>") {
+                                if (isClassType(t)) {
                                     writeExpr(ECall(EField(EIdent("Type"), "getClassName"), [ECall(EField(EIdent("Type"), "getSuperClass"), params)]));
                                 } else if (t == "Dynamic" || t == null) {
                                     writeExpr(ECall(EField(EIdent("as3hx.Compat"), "getQualifiedSuperclassName"), params));
@@ -2061,7 +1983,12 @@ class Writer
                             write(")");
                             handled = true;
                         case "int" | "uint":
-                            writeExpr(getCastToIntExpr(params[0]));
+                            var t:String = getExprType(params[0]);
+                            if (t == "Int" || t == "UInt") {
+                                writeEParent(params[0]);
+                            } else {
+                                writeExpr(getCastToIntExpr(params[0]));
+                            }
                             //writeCastToInt(params[0]);
                             handled = true;
                     }
@@ -2241,6 +2168,14 @@ class Writer
         return writeExpr(e2);
     }
 
+    function getVarName(e:Expr):String {
+        switch(e) {
+            case EIdent(v): return v;
+            case EVars(vars) if (vars.length > 0): return vars[0].name;
+            default: return null;
+        }
+    }
+
     inline function writeEWhile(cond:Expr, e:Expr, doWhile:Bool):BlockEnd {
         var result:BlockEnd;
         var rcond:Expr = rebuildIfExpr(cond);
@@ -2266,7 +2201,6 @@ class Writer
 
     inline function writeEFor(inits:Array<Expr>, conds:Array<Expr>, incrs:Array<Expr>, e:Expr):BlockEnd {
         //Sys.println('inits: ${inits}; conds: ${conds}; incrs: ${incrs}');
-        openContext();
         for (i in 0...inits.length - 1) {
             var e:Expr = inits[i];
             writeExpr(ENL(e));
@@ -2274,7 +2208,6 @@ class Writer
         write("for (");
         switch(inits[inits.length - 1]) {
             case EVars(v):
-                context.set(v[0].name, "Int");
                 write(v[0].name);
                 write(" in ");
                 writeExpr(v[0].val);
@@ -2286,7 +2219,6 @@ class Writer
                     switch (e1) {
                         case EIdent(v):
                             write(v);
-                            context.set(v, "Int");
                         default:
                     }
                     write(" in ");
@@ -2311,7 +2243,7 @@ class Writer
                             case EConst(CInt(v)):
                                 //increment int constants
                                 var e = EConst(CInt(Std.string(Std.parseInt(v) + 1)));
-                                writeExpr(e2);
+                                writeExpr(e);
                             case _:
                                 //when var used (like <= array.length), no choice but
                                 //to append "+1"
@@ -2325,73 +2257,51 @@ class Writer
         }
         var es = formatBlockBody(e);
         writeLoop([], function() { writeExpr(EBlock(es)); });
-        closeContext();
         return None;
     }
 
-    inline function writeEForEach(ev:Expr, e:Expr, block:Expr):BlockEnd {
-        openContext();
-        var varName = null;
-        write("for (");
-        switch(ev) {
-            case EVars(vars):
-                if(vars.length == 1 && vars[0].val == null) {
-                    write(vars[0].name);
-                    varName = vars[0].name;
-                } else {
-                    writeExpr(ev);
-                }
-            case EIdent(i):
-                varName = i;
-                writeExpr(ev);
-            default:
-                write("/* AS3HX ERROR unhandled " + ev + " */");
-                writeExpr(ev);
-        }
-        var t = getExprType(e);
-        var regexpMap:EReg = ~/^Map<([^,]*, *)?(.*)>$/;
-        var regexpArray:EReg = ~/^Array<(.*)>$/;
-        var regexpVector:EReg = ~/^Vector<(.*)>$/;
-        var regexpDictionary:EReg = ~/^Dictionary<([^,]*, *)?(.*)>$/;
-        var regexpDictionaryOpenfl:EReg = ~/^openfl.utils.Dictionary<([^,]*, *)?(.*)>$/;
-        var isDictionary:Bool = false;
-        var isObject:Bool = false;
-        if(varName == null) {
-            write("/* AS3HX ERROR varName is null in expression " + e);
-        } else if(t == "FastXML" || t == "FastXMLList") {
-            context.set(varName, t);
-        } else if (t != null && regexpMap.match(t)) {
-            if (cfg.debugInferredType) {
-                write("/* inferred type: " + regexpMap.matched(1) + " */" );
+    function getForEachType(type:String):String {
+        //var isObject:Bool = type == "Object" || type == "openfl.utils.Object" || t == null;
+        if (isArrayType(type) || isVectorType(type)) {
+            return Typer.getVectorParam(type);
+        } else if (type == "FastXML" || type == "FastXMLList") {
+            return type;
+        } else if (isMapType(type) || isOpenFlDictionaryType(type)) {
+            type = Typer.getMapParam(type, 1);
+            if (type == null) {
+                return "Dynamic";
+            } else {
+                return type;
             }
-            context.set(varName, regexpMap.matched(1));
-        } else if (t != null && regexpArray.match(t)) {
-            if (cfg.debugInferredType) {
-                write("/* inferred type: " + regexpArray.matched(1) + " */" );
-            }
-            context.set(varName, regexpArray.matched(1));
-        } else if (t != null && regexpVector.match(t)) {
-            if (cfg.debugInferredType) {
-                write("/* inferred type: " + regexpVector.matched(1) + " */" );
-            }
-            context.set(varName, regexpVector.matched(1));
-        } else if (t != null && regexpDictionary.match(t)) {
-            if (cfg.debugInferredType) {
-                write("/* inferred type: " + regexpDictionary.matched(1) + " */" );
-            }
-            isDictionary = true;
-            context.set(varName, regexpDictionary.matched(1));
-        }  else if (t != null && regexpDictionaryOpenfl.match(t)) {
-            if (cfg.debugInferredType) {
-                write("/* inferred type: " + regexpDictionaryOpenfl.matched(1) + " */" );
-            }
-            isDictionary = true;
-            context.set(varName, regexpDictionaryOpenfl.matched(1));
-        } else if (t == "Object" || t == "openfl.utils.Object") {
-            isObject = true;
         } else {
-            write("/* AS3HX WARNING could not determine type for var: " + varName + " exp: " + e + " type: " + t + " */");
-            isObject = true;
+            return "String";
+        }
+    }
+
+    inline function writeEForEach(ev:Expr, e:Expr, block:Expr):BlockEnd {
+        var t = getExprType(e);
+
+        var isMap:Bool = isMapType(t);
+        //var isArray:Bool = isArrayType(t) || isVectorType(t);
+        //var isXml:Bool = t == "FastXML" || t == "FastXMLList";
+        var isDictionary:Bool = isOpenFlDictionaryType(t);
+        var isObject:Bool = t == "Object" || t == "openfl.utils.Object" || t == null || t == "Dynamic";
+        var eValueType:String = getForEachType(t);
+
+        write("for (");
+        var castLoopVariableType:String = null;
+        var varName:String = getVarName(ev);
+        if (varName != null) {
+            write(varName);
+            var varType:String = getExprType(ev);
+            if (varType != eValueType && (eValueType == "Dynamic" || typer.doImplements(varType, eValueType))) {
+                // as we are supposing that this was a valid as3 code, we are trying to cast values to as3-defined type
+                castLoopVariableType = varType;
+                write("_");
+            }
+        } else {
+            write("/* AS3HX ERROR unhandled " + e + " */");
+            writeExpr(e);
         }
         write(" in ");
         var old = inArrayAccess;
@@ -2407,45 +2317,42 @@ class Writer
         }
         inArrayAccess = old;
         writeCloseStatement();
-        var result = writeExpr(EBlock(formatBlockBody(block)));
-        closeContext();
-        return result;
+        var es:Array<Expr> = formatBlockBody(block);
+        if (castLoopVariableType != null) {
+            es.unshift(ENL(EVars([{
+                name:varName,
+                t:TPath([castLoopVariableType]),
+                //val:EBinop("as", EIdent(varName + "_"), EIdent(castLoopVariableType), false)
+                val:EIdent("cast " + varName + "_")
+            }])));
+        }
+        return writeExpr(EBlock(es));
     }
 
     function writeEForIn(ev:Expr, e:Expr, block:Expr):BlockEnd {
-        openContext();
         var etype = getExprType(e);
-        var regexp:EReg;
-        var canBeDictionary:Bool = false;
-        if (isOpenFlDictionaryType(etype)) {
-            regexp = ~/^openfl.utils.Dictionary<([^,]*)?,?.*>$/;
-            canBeDictionary = true;
-        } else {
-            regexp = ~/^Map<([^,]*)?,?.*>$/;
-        }
-        var isMap:Bool = etype != null && regexp.match(etype);
+        var canBeDictionary:Bool = isOpenFlDictionaryType(etype);
+        var isMap:Bool = canBeDictionary || isMapType(etype);
+        var castLoopVariableType:String = null;
         write("for (");
-        switch(ev) {
-            case EVars(vars):
-                if(vars.length == 1 && vars[0].val == null) {
-                    write(vars[0].name);
-                    var type:String;
-                    if (!isMap || regexp.matched(1) == null) {
-                        type = "String";
-                    } else if (isIntType(regexp.matched(1))) {
-                        type = "Int";
-                    } else {
-                        type = regexp.matched(1);
-                    }
-                    context.set(vars[0].name, type);
-                    if (cfg.debugInferredType) {
-                        write("/* inferred type: " + type + " */" );
-                    }
-                } else {
-                    writeExpr(ev);
-                }
-            default:
-                writeExpr(ev);
+        var varName:String = getVarName(ev);
+        if (varName != null) {
+            write(varName);
+            var varType:String = getExprType(ev);
+            var mapKeyType:String;
+            if (isMap) {
+                mapKeyType = Typer.getMapParam(etype, 1);
+            } else {
+                mapKeyType = "String";
+            }
+            if (varType != mapKeyType && typer.doImplements(varType, mapKeyType)) {
+                // as we are supposing that this was a valid as3 code, we are trying to cast values to as3-defined type
+                castLoopVariableType = varType;
+                write("_");
+            }
+        } else {
+            write("/* AS3HX ERROR unhandled " + e + " */");
+            writeExpr(e);
         }
         write(" in ");
         if (isMap) {
@@ -2463,9 +2370,15 @@ class Writer
             write(")");
         }
         writeCloseStatement();
-        var result = writeExpr(EBlock(formatBlockBody(block)));
-        closeContext();
-        return result;
+        var es:Array<Expr> = formatBlockBody(block);
+        if (castLoopVariableType != null) {
+            es.unshift(EVars([{
+                name:varName,
+                t:TPath([castLoopVariableType]),
+                val:EIdent(varName + "_")
+            }]));
+        }
+        return writeExpr(EBlock(es));
     }
 
     function writeEBinop(op:String, e1:Expr, e2:Expr, newLineAfterOp:Bool):BlockEnd {
@@ -2526,17 +2439,10 @@ class Writer
                 default: throw "Unexpected " + Std.string(e2);
             }
             if (defaultCast) {
-                var e1t:String = typer.getExprType(e1);
                 var e2t:String = typer.getExprType(e2, true);
                 if (e2t == "Object" || e2t == "openfl.utils.Object" || e2t == "Dynamic") {
                     write("(cast ");
                     writeExpr(e1);
-                    write(")");
-                } else if (typer.getIsInterface(e1) || typer.getIsInterface(e2) || e1t == "Object" || e1t == "openfl.utils.Object") {
-                    write("AS3.as(");
-                    writeExpr(e1);
-                    write(", ");
-                    writeExpr(e2);
                     write(")");
                 } else {
                     write("AS3.as(");
@@ -2582,6 +2488,26 @@ class Writer
         } else { // op e1 e2
             var eBinop = rebuildBinopExpr(op, e1, e2);
             if (eBinop != null) return writeExpr(eBinop);
+
+            //if (op == "=") {
+                //switch(e1) {
+                    //case EArray(e, index):
+                        //var etype:String = getExprType(e);
+                        //if (!isArrayAccessable(etype)) {
+                            //if (isDynamicType(etype)) {
+                                //write("Reflect.setField(");
+                            //} else {
+                                //write("Reflect.setProperty(");
+                            //}
+                            //writeExpr(e);
+                            //write(", ");
+                            //writeETypedExpr(index, TPath(["String"]));
+                            //write(")");
+                        //}
+                        //return Semi;
+                    //default:
+                //}
+            //}
 
             var lookForRValue:Bool = true;
             var oldInLVA = inLvalAssign;
@@ -2689,7 +2615,7 @@ class Writer
     }
 
     inline function needCastToInt(e:Expr):Bool {
-        var isCompatParseInt:Expr->Bool = function(e) return e.match(ECall(EField(EIdent("as3hx.Compat"), "parseInt"), _));
+        var isCompatParseInt:Expr->Bool = function(e) return e.match(ECall(EField(EIdent("AS3"), "int"), _));
         return switch(e) {
             case EBinop(op,e1,_,_): !isCompatParseInt(e1) && (isBitwiseOp(op) || isNumericOp(op));
             case EUnop(op,_,e): op == "~" && !isCompatParseInt(e);
@@ -2701,7 +2627,7 @@ class Writer
 
     function getCastToIntExpr(e:Expr):Expr {
         if(cfg.useCompat) {
-            return getCompatCallExpr("parseInt", [e]);
+            return ECall(EField(EIdent("AS3"), "int"), [e]);
         }
         return ECall(EField(EIdent("Std"), "parseInt"), [getToStringExpr(e)]);
     }
@@ -2864,8 +2790,6 @@ class Writer
         write("FastXML.filterNodes(");
         //write("/*"+Std.string(e1)+"*/");
         var n = getBaseVar(e1);    // make sure it's set to FastXML in the
-        if(n != null)
-            context.set(n, "FastXML"); // current context
         var old = inArrayAccess;
         inArrayAccess = true; // ensure 'nodes' vs. 'node'
         writeExpr(e1);
@@ -3108,7 +3032,6 @@ class Writer
                 var et:String = getExprType(e);
                 if (et != "Int" && et != "UInt") {
                     e = getCastToIntExpr(e);
-                    //e = ECall(EField(EIdent("Std"), "int"), [ETypedExpr(e, null)]);
                 }
             default:
                 switch (e) {
@@ -3366,6 +3289,8 @@ class Writer
 							e1 = getToStringExpr(e1);
 						}
                         result = ECall(EField(EIdent("Reflect"), "hasField"), [e, e1]);
+                    } else if (isClassType(type)) {
+                        result = EParent(EBinop("!=", ECall(EField(ECall(EField(EIdent("Type"), "getClassFields"), [e]), "indexOf"), params), EConst(CInt("-1")), false));
                     } else {
                         //(Type.getInstanceFields(Type.getClass(e)).indexOf(params[0]) != -1)
                         result = EParent(EBinop("!=", ECall(EField(ECall(EField(EIdent("Type"), "getInstanceFields"), [ECall(EField(EIdent("Type"), "getClass"), [e])]), "indexOf"), params), EConst(CInt("-1")), false));
@@ -3504,6 +3429,19 @@ class Writer
                         result = ECall(EField(EIdent("as3hx.Compat"), "filter"), [e, params[0]]);
                     }
                 }
+                else if (f == "sort") {
+                    if (isArrayExpr(e)) {
+                        switch(params[0]) {
+                            case EField(e1, "RETURNINDEXEDARRAY"):
+                                switch(e1) {
+                                    case EIdent("Array"):
+                                        result = getCompatCallExpr("sortIndexedArray", [e]);
+                                    default:
+                                }
+                            default:
+                        }
+                    }
+                }
                 else if((f == "min" || f == "max") && params.length > 2) {
                     if(getIdentString(e) == "Math") {
                         result = ECall(EField(e, f), params.slice(0, 2));
@@ -3517,8 +3455,20 @@ class Writer
                         result = getCompatCallExpr(f, [e].concat(params));
                     }
                 }
-                else if(f == "toString") {
-                    result = getToStringExpr(e);
+                else if (f == "toString") {
+                    if (params.length == 1) {
+                        var type:String = getExprType(e);
+                        if (type == "Int" || type == "UInt" || type == "Float") {
+                            if (type == "Float") {
+                                e = getCastToIntExpr(e);
+                            }
+                            result = getCompatCallExpr(f, [e].concat(params));
+                        } else {
+                            result = getToStringExpr(e);
+                        }
+                    } else {
+                        result = getToStringExpr(e);
+                    }
                 }
                 else if(f == "concat" && params.empty()) {
                     if(isArrayExpr(e)) {
@@ -3558,6 +3508,20 @@ class Writer
                 else if(f == "trim") {
                     if(getIdentString(e) == "StringUtil") {
                         result = ECall(EField(EIdent("StringTools"), f), params);
+                    }
+                }
+                else if (f == "resolveClass") {
+                    if (getIdentString(e) == "Type") {
+                        if (params.length == 1) {
+                            switch(params[0]) {
+                                case ECall(EIdent("getQualifiedSuperClassName"), params2):
+                                    result = ECall(EField(EIdent("Type"), "getSuperClass"), [ECall(EField(EIdent("Type"), "getClass"), params2)]);
+
+                                case ECall(EIdent("getQualifiedClassName"), params2):
+                                    result = ECall(EField(EIdent("Type"), "getClass"), params2);
+                                default:
+                            }
+                        }
                     }
                 }
                 else if(f == "isWhitespace") {
@@ -3862,6 +3826,8 @@ class Writer
     inline function isIntType(s:String):Bool return s == "Int";
 
     inline function isBoolType(s:String):Bool return s == "Bool";
+
+    inline function isClassType(s:String):Bool return s == "Class" || s == "Class<Dynamic>";
 
     inline function isNumericOp(s:String):Bool return switch(s) {
         case "/" | "-" | "+" | "*" | "%" | "--" | "++": true;

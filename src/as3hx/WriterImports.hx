@@ -8,7 +8,7 @@ import as3hx.As3.Program;
  */
 class WriterImports
 {
-    public static function getImportWithMap(ident:String, cfg:Config, allClasses:Map<String,Dynamic>, imports:Map<String,String>, currentPackage:String = null):String {
+    public static function getImportWithMap(ident:String, allClasses:Map<String,Dynamic>, imports:Map<String,String>, currentPackage:String = null):String {
         if (imports.exists(ident)) return imports.get(ident);
         if (currentPackage != null) {
             var currentPackageIdent:String = currentPackage + "." + ident;
