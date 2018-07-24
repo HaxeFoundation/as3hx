@@ -5,3 +5,5 @@ test/issues/generated/
 run.n
 *.hxproj
 out/
+*.iml
+.idea
