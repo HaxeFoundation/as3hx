@@ -38,7 +38,16 @@ class AS3 {
     }
 
     public static inline function asBool(e:Dynamic):Bool {
+        #if (js || flash)
+        return untyped e ? __js__("true") : __js__("false");
+        #else
         return e != false && e != null && e != 0 && !(Std.is(e, String) && e.length == 0);
+        #end
+    }
+
+
+    public static inline function asArray(e:Dynamic):Array<Dynamic> {
+        return Std.is(e, Array) ? untyped e : null;
     }
 
     public static function AS(e:Dynamic, type:Dynamic):Dynamic {
@@ -92,11 +101,21 @@ class AS3 {
             var tmp1;
             if(untyped o.__properties__ && o.__properties__["get_" + field]) {
                 return true;
-            } else if (untyped o.prototype) {
-                return untyped o.prototype.hasOwnProperty(field);
+            } else if (Reflect.hasField(o, field)) {
+                return true;
+            } else if (untyped o.prototype && untyped o.prototype.hasOwnProperty(field)) {
+                return true;
+            } else if (untyped o.__proto__ && untyped o.__proto__.hasOwnProperty(field)) {
+                return true;
             } else {
-                return Reflect.hasField(o, field);
+                return false;
             }
+        }
+        #elseif flash
+        if (o == null) {
+            return null;
+        } else {
+            return untyped o.hasOwnProperty(field);
         }
         #else
         if (o == null) {
@@ -107,9 +126,62 @@ class AS3 {
         #end
     }
 
-
-
-
+    /* AS3.string(null) == null but Std.string(null) == "null" */
+    public static function string(o:Dynamic):String {
+        #if js
+		untyped {
+			if( o == null )
+			    return null;//not "null"! this is for another purposes
+			var t = __js__("typeof(o)");
+			if( t == "function" && (js.Boot.isClass(o) || js.Boot.isEnum(o)) )
+				t = "object";
+			switch( t ) {
+			case "object":
+				if( __js__("o instanceof Array") ) {
+					if( o.__enum__ ) {
+						if( o.length == 2 )
+							return o[0];
+						var str = o[0]+"(";
+						for( i in 2...o.length ) {
+							if( i != 2 )
+								str += "," + js.Boot.__string_rec(o[i],"\t");
+							else
+								str += js.Boot.__string_rec(o[i],"\t");
+						}
+						return str + ")";
+					}
+					var l = o.length;
+					var i;
+					var str = "[";
+					for( i in 0...l )
+						str += (if (i > 0) "," else "") + js.Boot.__string_rec(o[i],"\t");
+					str += "]";
+					return str;
+				}
+				var tostr;
+				try {
+					tostr = untyped o.toString;
+				} catch( e : Dynamic ) {
+					// strange error on IE
+					return "???";
+				}
+				if( tostr != null && tostr != __js__("Object.toString") && __typeof__(tostr) == "function" ) {
+					var s2 = o.toString();
+					//if( s2 != "[object Object]")
+					return s2;
+				}
+                var t:Class<Dynamic> = Type.getClass(o);
+                return t == null ? Std.string(o) : "[object " + Type.getClassName(t) + "]";
+			case "function":
+				return "<function>";
+			default:
+				return String(o);
+			}
+		}
+        #else
+        return o == null ? null : Std.string(o);
+        #end
+    }
 
     /**
      * Converts a typed expression into an Int.

@@ -29,14 +29,37 @@ class TypeParser {
         }
 
         var t = tokenizer.id();
-        if(t == "Vector") {
+        var vectorType = null;
+        if (t == "Vector") {
+            function u() {
+                var t = tokenizer.token();
+                tokenizer.add(t);
+                return t;
+            }
+            var typeFromComment:T = null;
+            var t2 = tokenizer.token();
+            switch(t2) {
+                case TCommented(s, true, t3):
+                    typeFromComment = OverrideTypeComment.extractType(t, s, types);
+                    if (typeFromComment != null) {
+                        tokenizer.add(t3);
+                    } else {
+                        tokenizer.add(t2);
+                    }
+                default:
+                    tokenizer.add(t2);
+            }
             tokenizer.ensure(TDot);
             tokenizer.ensure(TOp("<"));
             var t = parseType();
             splitEndTemplateOps(tokenizer);
             tokenizer.ensure(TOp(">"));
             types.seen.push(TVector(t));
-            return TVector(t);
+            if (typeFromComment == null) {
+                vectorType = TVector(t);
+            } else {
+                vectorType = typeFromComment;
+            }
         }
         var t2 = tokenizer.token();
         switch(t2) {
@@ -50,6 +73,9 @@ class TypeParser {
                 }
             default:
                 tokenizer.add(t2);
+        }
+        if (vectorType != null) {
+            return vectorType;
         }
         if (t == "Array") {
             var k:T = null;

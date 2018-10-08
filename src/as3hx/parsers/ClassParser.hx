@@ -87,7 +87,10 @@ class ClassParser {
         pf = function(included:Bool,inCondBlock:Bool) {
         while( true ) {
             // check for end of class
-            if( ParserUtils.opt2(tokenizer, TBrClose, meta) ) break;
+
+            if ( ParserUtils.opt2(tokenizer, TBrClose, meta) ) {
+                break;
+            }
             var kwds = [];
             // parse all comments and metadata before next field
             while( true ) {
@@ -252,16 +255,19 @@ class ClassParser {
         for(m in meta) {
             switch(m) {
             case ECommented(s,b,t,e):
-                if(ParserUtils.uncommentExpr(m) != null)
+                if(ParserUtils.removeNewLineExpr(m) != null)
                     throw "Assert error: " + m;
                 var a = ParserUtils.explodeCommentExpr(m);
                 for(i in a) {
-                    switch(i) {
-                        case ECommented(s,b,t,e):
-                            fields.push({name:null, meta:[ECommented(s,b,false,null)], kwds:[], kind:FComment, condVars:[]});
-                        default:
-                            throw "Assert error: " + i;
-                    }
+                    fields.push({name:null, meta:[i], kwds:[], kind:FComment, condVars:[]});
+                    //switch(i) {
+                        //case ENL(null):
+                            //fields.push({name:null, meta:[i], kwds:[], kind:FComment, condVars:[]});
+                        //case ECommented(s,b,t,e):
+                            //fields.push({name:null, meta:[i], kwds:[], kind:FComment, condVars:[]});
+                        //default:
+                            //throw "Assert error: " + i;
+                    //}
                 }
             case ENL(_):
             default:
@@ -293,6 +299,7 @@ class ClassParser {
         var t = null, val = null;
         if( ParserUtils.opt(tokenizer, TColon) )
             t = parseType();
+
         if( ParserUtils.opt(tokenizer, TOp("=")) )
             val = parseExpr(false);
 
@@ -337,7 +344,6 @@ class ClassParser {
         tokenizer.add(t);
         Debug.dbgln(Std.string(kwds) + " " + name + ")", tokenizer.line, false);
         var f = parseFunction(isInterface);
-        tokenizer.end();
         Debug.closeDebug("end parseClassFun()", tokenizer.line);
         return {
             meta : meta,

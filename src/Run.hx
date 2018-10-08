@@ -99,7 +99,10 @@ class Run {
     static function parseFile(fileLocation:String, fileName:String, file:String):Program {
         var p = new as3hx.Parser(cfg);
         var content = File.getContent(file);
-        var program = try p.parseString(content, fileLocation, fileName) catch(e : Error) {
+        var program = p.parseString(content, fileLocation, fileName);
+        /*/try {
+            p.parseString(content, fileLocation, fileName);
+        } catch (e : Error) {
             #if macro
             File.stderr().writeString(file + ":" + p.tokenizer.line + ": " + errorString(e) + "\n");
             #end
@@ -114,7 +117,7 @@ class Run {
                     null;
                 #end
             }
-        }
+        }//*/
         return program;
     }
 

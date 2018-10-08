@@ -39,7 +39,7 @@ class ExprParser {
 
             Debug.dbgln("parseExpr: " + tk, tokenizer.line);
 
-            switch(ParserUtils.removeNewLine(tk)) {
+            switch(ParserUtils.removeNewLine(tk, false)) {
             case TBrClose:
                 if(funcStart) return EBlock([]);
                 return parseExprNext(EObject([]), 0);
@@ -57,23 +57,19 @@ class ExprParser {
             }
             var a = new Array();
 
-            //check for corner case, block contains only comments and
-            //newlines. In this case, get all comments and add them to
-            //content of block expression
-            if (ParserUtils.uncomment(ParserUtils.removeNewLine(tk)) == TBrClose) {
-                var ta = ParserUtils.explodeComment(tk);
-                for (t in ta) {
-                    switch (t) {
-                        case TCommented(s,b,t): a.push(ECommented(s,b,false, null));
-                        case TNL(t): a.push(ENL(null));
-                        default:
-                    }
-                }
+            while(tokenizer.peek() != TBrClose) {
+                a.push(parseFullExpr());
             }
 
-            while(!ParserUtils.opt(tokenizer, TBrClose)) {
-                var e = parseFullExpr();
-                a.push(e);
+            var ta = ParserUtils.explodeComment(tokenizer.token());
+            for (i in 0...ta.length) {
+                var t = ta[i];
+                switch (t) {
+                    case TCommented(s,b,t): a.push(ECommented(s,b,false, null));
+                    case TNL(t) if (i != ta.length - 2): //last TNL in block is redundant, previous should be kept
+                        a.push(ENL(null));
+                    default:
+                }
             }
             return EBlock(a);
         case TOp(op):

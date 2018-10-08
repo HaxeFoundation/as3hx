@@ -146,6 +146,7 @@ class ParserUtils {
      */
     public static function removeNewLineExpr(e : Expr, removeComments : Bool = true) : Expr {
         return switch(e) {
+            case null: null;
             case ENL(e2): removeNewLineExpr(e2, removeComments);
             case ECommented(s,b,t,e2):
                 if (removeComments) {
@@ -321,19 +322,31 @@ class ParserUtils {
      */
     public static function opt2(tokenizer:Tokenizer, tk:Token, cmntOut:Array<Expr>) : Bool {
         var t = tokenizer.token();
-        var tu = ParserUtils.uncomment(t);
-        var trnl = ParserUtils.removeNewLine(tu);
+        var tu = ParserUtils.removeNewLine(t);
         Debug.dbgln(Std.string(t) + " to " + Std.string(tu) + " ?= " + Std.string(tk));
-        if( ! Type.enumEq(trnl, tk) ) {
+        if( ! Type.enumEq(tu, tk) ) {
             tokenizer.add(t);
             return false;
         }
         switch(t) {
-            case TCommented(_,_,_):
-                cmntOut.push(ParserUtils.makeECommented(t, null));
+            case TCommented(_, _, _):
+                cmntOut.push(ParserUtils.makeEmptyECommentedRecursive(t));
             default:
         }
         return true;
+    }
+
+    private static function makeEmptyECommentedRecursive(ctk:Token) : Expr {
+        return switch(ctk) {
+            case TCommented(s, b, t):
+                ECommented(s,b,false,makeEmptyECommentedRecursive(t));
+            case TNL(t):
+                var r = makeEmptyECommentedRecursive(t);
+                // remove trailing new lines
+                r == null ? null : ENL(r);
+            default:
+                null;
+        }
     }
 
     public static function makeUnop(op:String, e:Expr):Expr {

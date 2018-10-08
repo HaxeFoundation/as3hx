@@ -209,7 +209,9 @@ class FastXML {
         var x = Xml.parse(ss);
         var lastNode:Xml = null;
         for (e in x) {
-            lastNode = e;
+            if (e.nodeType == Xml.XmlType.Element) {
+                lastNode = e;
+            }
         }
         return new FastXML(lastNode);
     }

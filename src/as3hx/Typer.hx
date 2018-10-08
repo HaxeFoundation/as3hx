@@ -169,7 +169,8 @@ class Typer
     }
 
     public function isVariable(ident:String):Bool {
-        return context.exists(ident) || staticContext.exists(ident);
+        var isConstructor:Bool = classDefs[currentPath] != null && classDefs[currentPath].name == ident;
+        return !isConstructor && (context.exists(ident) || staticContext.exists(ident));
     }
 
     public function getExprType(e:Expr, isFieldAccess:Bool = false):Null<String> {
@@ -177,13 +178,25 @@ class Typer
             case null: return null;
             case ETypedExpr(e2, t): return tstring(t);
             case EField(e2, f):
+                var t2 = null;
                 switch(e2) {
+                    case EIdent("super"):
+                        var c:ClassDef = classDefs[currentPath];
+                        if (c != null && c.extend != null) {
+                            var classPackage:String = classPacks.get(c);
+                            var parentPath:String = getPathByType(c.extend, c, null, classPackage);
+                            if (parentPath != null && classDefs[parentPath] != null) {
+                                t2 = parentPath;
+                            }
+                        }
                     case EIdent("this"):
                         return contextStack.length > 0 ? contextStack[0].get(f) : context.get(f);
                     default:
                 }
-                var t2 = getExprType(e2, true);
-                if (t2 != null && (t2.indexOf("Array<") == 0 || t2.indexOf("Vector<") == 0)) {
+                if (t2 == null) {
+                    t2 = getExprType(e2, true);
+                }
+                if (t2 != null && (t2.indexOf("Array<") == 0 || t2.indexOf("Vector<") == 0 || t2.indexOf("openfl.Vector<") == 0)) {
                     switch(f) {
                         case "length": return "Int";
                         case "sort" : return "Function->Void";
@@ -210,6 +223,7 @@ class Typer
                         }
                     case "AS3":
                         switch(f) {
+                            case "string": return "Dynamic->String";
                             case "int": return "Dynamic->Int";
                             case "parseInt": return "Dynamic->Int";
                             case "hasOwnProperty": return "Dynamic->String->Bool";
@@ -293,6 +307,12 @@ class Typer
                         }
                 }
                 if (t2 != null) {
+                    var index:Int = t2.indexOf("<");
+                    var typeParam:String = null;
+                    if (index != -1) {
+                        typeParam = t2.substring(index + 1, t2.length - 1);
+                        t2 = t2.substr(0, index);
+                    }
                     var cl:String = resolveClassIdent(t2);
                     if (context.exists(t2)) {
                         t2 = context.get(t2);
@@ -308,8 +328,17 @@ class Typer
                         t2 = getImportString(t2Array, true);
                     }
                     if (classes.exists(t2)) {
-                        t2 = classes.get(t2).get(f);
-                        return t2;
+                        var t:String = classes.get(t2).get(f);
+                        if (t != null) {
+                            var index:Int = t.indexOf("<");
+                            if (index != -1) {
+                                var resultTypeParam = t.substring(index, t.length);
+                                if (resultTypeParam == classDefs[t2].typeParams) {
+                                    t = t.substring(0, index + 1) + typeParam + ">";
+                                }
+                            }
+                            return t;
+                        }
                     }
                 }
                 return null;
@@ -322,6 +351,7 @@ class Typer
                     case EIdent("int"): return "Int";
                     case EIdent("uint"): return "Int";
                     case EIdent("getQualifiedClassName"): return "String";
+                    case EVector(t): return "Vector<" + tstring(t) + ">";
                     case EField(e, "instance"):
                         switch(e) {
                             case EIdent("Std"):
@@ -392,6 +422,8 @@ class Typer
                         return tn.substring(6, tn.lastIndexOf(">"));
                     } else if (StringTools.startsWith(tn, "Vector")) {
                         return expandStringType(tn.substring(7, tn.lastIndexOf(">")));
+                    } else if (StringTools.startsWith(tn, "openfl.Vector")) {
+                        return expandStringType(tn.substring(14, tn.lastIndexOf(">")));
                     } else if (StringTools.startsWith(tn, "Dictionary") || StringTools.startsWith(tn, "openfl.utils.Dictionary")) {
                         var bothTypes:String = tn.substring(tn.indexOf("<") + 1, tn.lastIndexOf(">"));
                         var commaPosition:Int = -1;
@@ -1386,6 +1418,7 @@ class Typer
                 case EForIn(ev, e, block):
                     var etype:String = getExprType(e);
                     var isMap:Bool = etype != null && (etype.indexOf("Map") == 0 || etype.indexOf("Dictionary") == 0 || etype.indexOf("openfl.utils.Dictionary") == 0);
+                    var isArray:Bool = etype != null && (etype.indexOf("Array<") == 0 || etype.indexOf("Vector<") == 0 || etype.indexOf("openfl.Vector<") == 0);
                     switch(ev) {
                         case EVars(vars):
                             if(vars.length == 1 && vars[0].val == null) {
@@ -1395,6 +1428,8 @@ class Typer
                                     if (type == null) {
                                         type = "Dynamic";
                                     }
+                                } else if (isArray) {
+                                    type = "Int";
                                 } else {
                                     type = "String";
                                 }

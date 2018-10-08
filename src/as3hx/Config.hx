@@ -14,6 +14,8 @@ using StringTools;
  * @author Russell Weir
  */
 class Config {
+    public var verbouseConditionalCompilationEnd:Bool = false;
+
     /** Indent character(s) **/
     public var indentChars : String;
     /** newline character **/

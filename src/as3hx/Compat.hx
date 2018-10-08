@@ -170,7 +170,7 @@ class Compat {
         }
     }
 
-    #if openfl
+    #if (openfl && !macro)
     public static inline function newByteArray():openfl.utils.ByteArray {
         var ba:openfl.utils.ByteArray = new openfl.utils.ByteArray();
         ba.endian = openfl.utils.Endian.BIG_ENDIAN;
@@ -181,7 +181,7 @@ class Compat {
         if (p == null) return null;
         var c:Class<Dynamic> = Type.getClass(p);
         if (c == null) return null;
-        if (Type.getClassName(c) != "openfl._Vector.AbstractVector") return null;
+        if (Type.getClassName(c).indexOf("openfl._Vector.") != 0) return null;
         //var type:String = Type.getClassName(Type.getClass(p.data));
         //} else if (TType == Function && type == "openfl._Vector.FunctionVector") {
         return cast p;
@@ -192,7 +192,8 @@ class Compat {
         if (p == null) return null;
         var c:Class<Dynamic> = Type.getClass(p);
         if (c == null) return false;
-        if (Type.getClassName(c) != "openfl._Vector.AbstractVector") return false;
+        //if (Type.getClassName(c) != "openfl._Vector.AbstractVector") return false;
+        if (Type.getClassName(c).indexOf("openfl._Vector.") != 0) return null;
         var v:openfl.Vector<Dynamic> = cast p;
         if (v.length > 0 && T != null && v[0] != null && !Std.is(v[0], T)) {
             return false;
@@ -772,6 +773,9 @@ private class FlashRegExpExecResult {
     public var matches(default,null) : Array<String>;
 
     function populateMatches(ereg:EReg) {
+        #if js
+        matches = untyped ereg.r.m.slice(0);
+        #else
         matches = [];
         try {
             var group = 0;
@@ -781,6 +785,7 @@ private class FlashRegExpExecResult {
             }
         } catch (ignored:Dynamic) {
         }
+        #end
     }
 }
 #end

@@ -114,12 +114,16 @@ class FunctionParser {
                         retExpressions.push(ENL(null));
                     }
 
-                 case TCommented(s,b,t): //comment before '{' or ';'
+                case TCommented(s,b,t): //comment before '{' or ';'
                    tokenizer.add(t);
                    retExpressions.push(ParserUtils.makeECommented(tk, null));
 
-                case TBrOpen, TSemicolon: //end of method return
+                case TBrOpen: //end of method return
                     tokenizer.add(tk);
+                    f.ret.exprs = retExpressions;
+                    break;
+
+                case TSemicolon: //end of method return
                     f.ret.exprs = retExpressions;
                     break;
 
@@ -142,6 +146,7 @@ class FunctionParser {
                 throw "unexpected " + Std.string(f.expr);
             }
         }
+        tokenizer.end();
         Debug.closeDebug("end parseFun()", tokenizer.line);
         if (cfg.rebuildLocalFunctions) {
             rebuildLocalFunctions(f);

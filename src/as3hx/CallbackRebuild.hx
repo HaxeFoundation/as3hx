@@ -34,8 +34,10 @@ class CallbackRebuild {
                             var t:String = typer.tstring(a);
                             if (t != null && t.indexOf("->") != -1) {
                                 var ps:Array<String> = t.split("->");
-                                var pt:Array<T> = ps.map(function(s:String):T { return TPath([typer.expandStringType(s)]); });
-                                typer.overrideExprType(params[i], TFunction(pt));
+                                if (ps[0] != "T") {
+                                    var pt:Array<T> = ps.map(function(s:String):T { return TPath([typer.expandStringType(s)]); });
+                                    typer.overrideExprType(params[i], TFunction(pt));
+                                }
                             }
                         }
                     }
