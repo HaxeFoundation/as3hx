@@ -196,7 +196,7 @@ class Typer
                 if (t2 == null) {
                     t2 = getExprType(e2, true);
                 }
-                if (t2 != null && (t2.indexOf("Array<") == 0 || t2.indexOf("Vector<") == 0 || t2.indexOf("openfl.Vector<") == 0)) {
+                if (t2 != null && (t2.indexOf("Array<") == 0 || t2.indexOf("Vector<") == 0 || t2.indexOf(cfg.arrayTypePath + "<") == 0)) {
                     switch(f) {
                         case "length": return "Int";
                         case "sort" : return "Function->Void";
@@ -208,6 +208,7 @@ class Typer
                             case "hasField": return "Dynamic->String->Bool";
                             case "field": return "Dynamic->String->Dynamic";
                             case "setField": return "Dynamic->String->Dynamic->Void";
+                            case "compareMethods": return "Dynamic->Dynamic->Bool";
                         }
                     case "Signal","signals.Signal":
                         switch(f) {
@@ -420,10 +421,10 @@ class Typer
                 if (tn != null) {
                     if (StringTools.startsWith(tn, "Array")) {
                         return tn.substring(6, tn.lastIndexOf(">"));
+                    } else if (StringTools.startsWith(tn, cfg.arrayTypePath)) {
+                        return expandStringType(tn.substring(cfg.arrayTypePath.length + 1, tn.lastIndexOf(">")));
                     } else if (StringTools.startsWith(tn, "Vector")) {
                         return expandStringType(tn.substring(7, tn.lastIndexOf(">")));
-                    } else if (StringTools.startsWith(tn, "openfl.Vector")) {
-                        return expandStringType(tn.substring(14, tn.lastIndexOf(">")));
                     } else if (StringTools.startsWith(tn, "Dictionary") || StringTools.startsWith(tn, "openfl.utils.Dictionary")) {
                         var bothTypes:String = tn.substring(tn.indexOf("<") + 1, tn.lastIndexOf(">"));
                         var commaPosition:Int = -1;
@@ -1384,7 +1385,7 @@ class Typer
                 case EForEach(ev, e, block):
                     var etype:String = getExprType(e);
                     var isMap:Bool = etype != null && (etype.indexOf("Map") == 0 || etype.indexOf("Dictionary") == 0 || etype.indexOf("openfl.utils.Dictionary") == 0);
-                    var isVector:Bool = etype != null && (etype.indexOf("Array") == 0 || etype.indexOf("Vector") == 0 || etype.indexOf("openfl.Vector") == 0);
+                    var isVector:Bool = etype != null && (etype.indexOf("Array") == 0 || etype.indexOf("Vector") == 0 || etype.indexOf(cfg.arrayTypePath) == 0);
                     var isXml:Bool = etype == "FastXML" || etype == "FastXMLList";
                     switch(ev) {
                         case EVars(vars):
@@ -1418,7 +1419,7 @@ class Typer
                 case EForIn(ev, e, block):
                     var etype:String = getExprType(e);
                     var isMap:Bool = etype != null && (etype.indexOf("Map") == 0 || etype.indexOf("Dictionary") == 0 || etype.indexOf("openfl.utils.Dictionary") == 0);
-                    var isArray:Bool = etype != null && (etype.indexOf("Array<") == 0 || etype.indexOf("Vector<") == 0 || etype.indexOf("openfl.Vector<") == 0);
+                    var isArray:Bool = etype != null && (etype.indexOf("Array<") == 0 || etype.indexOf("Vector<") == 0 || etype.indexOf(cfg.arrayTypePath + "<") == 0);
                     switch(ev) {
                         case EVars(vars):
                             if(vars.length == 1 && vars[0].val == null) {

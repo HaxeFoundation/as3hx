@@ -88,6 +88,8 @@ class Config {
      */
     public var postProcessor : String = "";
 
+    public var arrayTypePath : String = "Vector";
+
     /**
      * a list of absolute or relative directory paths.
      * as3 files from this paths are parsed as a source for type info

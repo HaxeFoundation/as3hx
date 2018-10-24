@@ -1431,21 +1431,44 @@ class Writer
                 }
                 switch (e) {
                     case ENew(t, params):
-                        var c = params.copy();
-                        c.unshift(EConst(CString(tstring(t) + ": ")));
-                        writeExpr(joinToString(c));
+                        //var c = params.copy();
+                        //c.unshift(EConst(CString(tstring(t) + ": ")));
+                        var args:Array<Expr> = [EConst(CString(tstring(t)))];
+                        if (params.length > 0) {
+                            args.push(joinToString(params));
+                        }
+                        writeExpr(ENew(TPath(["XError"]), args));
                     case ECall(e1, params):
                         switch(e1) {
                             case EIdent(s):
-                                var c = params.copy();
-                                c.unshift(EConst(CString(s + ": ")));
-                                writeExpr(joinToString(c));
+                                var args:Array<Expr> = [EConst(CString(s))];
+                                if (params.length > 0) {
+                                    args.push(joinToString(params));
+                                }
+                                writeExpr(ENew(TPath(["XError"]), args));
                             default:
                                 writeExpr(e);
                         }
                     default:
                         writeExpr(e);
                 }
+                //switch (e) {
+                    //case ENew(t, params):
+                        //var c = params.copy();
+                        //c.unshift(EConst(CString(tstring(t) + ": ")));
+                        //writeExpr(joinToString(c));
+                    //case ECall(e1, params):
+                        //switch(e1) {
+                            //case EIdent(s):
+                                //var c = params.copy();
+                                //c.unshift(EConst(CString(s + ": ")));
+                                //writeExpr(joinToString(c));
+                            //default:
+                                //writeExpr(e);
+                        //}
+                    //default:
+                        //writeExpr(e);
+                //}
             case ETry(e, catches): rv = writeETry(e, catches);
             case EObject(fl):
                 if (fl.empty()) {
@@ -2096,7 +2119,7 @@ class Writer
                             default:
                         }
                         if (needCast) {
-                            write("openfl.Vector.ofArray(");
+                            write(cfg.arrayTypePath + ".ofArray(");
                             writeExpr(params[0]);
                             write(")");
                         }
@@ -2241,10 +2264,12 @@ class Writer
             }
             //writeNL();
             if (elseif != null) {
-                writeIndent(" else ");
+                //writeIndent(" else ");
+                write(" else ");
                 result = writeExpr(elseif);
             } else {
-                writeIndent(" else");
+                //writeIndent(" else");
+                write(" else");
                 writeStartStatement();
                 result = writeExpr(e2);
             }
@@ -2366,7 +2391,6 @@ class Writer
     }
 
     function getForEachType(type:String):String {
-        //var isObject:Bool = type == "Object" || type == "openfl.utils.Object" || t == null;
         if (isArrayType(type) || isVectorType(type)) {
             return Typer.getVectorParam(type);
         } else if (type == "FastXML" || type == "FastXMLList") {
@@ -2516,7 +2540,7 @@ class Writer
                                 write("AS3.as(");
                                 writeExpr(e1);
                                 write(", " + s + ")");
-                            } else if (s == "ByteArray" || s == "Bitmap" || s.indexOf("Vector") == 0 || s.indexOf("openfl.Vector") == 0 || s == "Dictionary") {
+                            } else if (s == "ByteArray" || s == "Bitmap" || isVectorType(s) || s == "Dictionary") {
                                 write("(try cast(");
                                 writeExpr(e1);
                                 write(", ");
@@ -3483,7 +3507,7 @@ class Writer
                             //replace AS3 slice by Haxe substr
                             var rebuiltExpr = EField(e, "substring");
                             result = ECall(rebuiltExpr, params);
-                        } else if(isArrayType(type) && params.empty()) {
+                        } else if((isArrayType(type) || isVectorExpr(e)) && params.empty()) {
                             var rebuiltExpr = EField(e, "copy");
                             result = ECall(rebuiltExpr, params);
                         }
@@ -3497,10 +3521,17 @@ class Writer
                                 params.push(EField(e, "length"));
                                 result = ECall(EField(e, f), params);
                             default:
-                                if(cfg.useCompat) {
-                                    var p = [e].concat(params.slice(0, 2));
-                                    p.push(EArrayDecl(params.slice(2, params.length)));
-                                    result = getCompatCallExpr("arraySplice", p);
+                                if (cfg.useCompat) {
+                                    switch (params[1]) {
+                                        case EConst(CInt("1")) if (params.length == 3):
+                                            result = EBinop("=", EArray(e, params[0]), params[2], false);
+                                        case EConst(CInt("0")) if (params.length == 3):
+                                            result = ECall(EField(e, "insert"), [params[0], params[2]]);
+                                        default:
+                                            var p = [e].concat(params.slice(0, 2));
+                                            p.push(EArrayDecl(params.slice(2, params.length)));
+                                            result = getCompatCallExpr("arraySplice", p);
+                                    }
                                 }
                         }
                     }
@@ -3622,7 +3653,7 @@ class Writer
                     }
                 }
                 else if(f == "concat" && params.empty()) {
-                    if(isArrayExpr(e)) {
+                    if(isArrayExpr(e) || isVectorExpr(e)) {
                         var rebuildExpr = EField(e, "copy");
                         result = ECall(rebuildExpr, params);
                     }
@@ -3806,6 +3837,8 @@ class Writer
                 if(type == "Bool") {
                     return EBinop("=", lvalue, EBinop("&&", lvalue, rvalue, false), false);
                 }
+            case "==" if (isFunctionExpr(lvalue) || isFunctionExpr(rvalue)):
+                return ECall(EField(EIdent("Reflect"), "compareMethods"), [lvalue, rvalue]);
             case "=" | "+=" | "-=" | "*=" | "/=":
                 if(cfg.useCompat) {
                     switch(lvalue) {
@@ -3947,8 +3980,8 @@ class Writer
         return s != null && ((s.indexOf("Array<") == 0) || s == "Array");
     }
 
-    static inline function isVectorType(s:String):Bool {
-        return s != null && (s.indexOf("Vector<") == 0 || s.indexOf("openfl.Vector<") == 0);
+    inline function isVectorType(s:String):Bool {
+        return s != null && (s.indexOf("Vector<") == 0 || s.indexOf("openfl.Vector<") == 0 || s.indexOf(cfg.arrayTypePath + "<") == 0);
     }
 
     static inline function isDynamicType(s:String):Bool return s == "Dynamic" || s == "Object" || s == "openfl.utils.Object";
@@ -4235,8 +4268,9 @@ class Writer
     {
         //set line as dirty if string contains something other
         //than whitespace/indent
-        if (!containsOnlyWhiteSpace(s) && s != cfg.indentChars)
+        if (!containsOnlyWhiteSpace(s) && s != cfg.indentChars) {
             lineIsDirty = true;
+        }
 
         o.writeString(s);
     }

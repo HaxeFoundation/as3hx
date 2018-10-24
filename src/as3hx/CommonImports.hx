@@ -43,7 +43,7 @@ class CommonImports
         }
 
         if (cfg.useOpenFlTypes) {
-            map.set("Vector", "openfl.Vector");
+            //map.set("Vector", "openfl.Vector");
             map.set("Object", "openfl.utils.Object");
         }
 

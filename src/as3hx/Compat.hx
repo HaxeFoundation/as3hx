@@ -1,7 +1,6 @@
 package as3hx;
 
 import Type;
-import haxe.ds.Vector;
 import haxe.macro.Expr;
 import haxe.macro.Context;
 
@@ -170,6 +169,24 @@ class Compat {
         }
     }
 
+    public static function castVector<T>(p:Dynamic):Vector<T> {
+        if (p == null || !Std.is(p, Array)) {
+            return null;
+        }
+        return cast p;
+    }
+
+    public static function filter<T>(v:Vector<T>, filterMethod:T->Int->Vector<T>->Bool):Vector<T> {
+        var r:Vector<T> = new Vector<T>();
+        for (i in 0...v.length) {
+            if (filterMethod(v[i], i, v)) {
+                r.push(v[i]);
+            }
+        }
+        return r;
+    }
+
+
     #if (openfl && !macro)
     public static inline function newByteArray():openfl.utils.ByteArray {
         var ba:openfl.utils.ByteArray = new openfl.utils.ByteArray();
@@ -177,15 +194,15 @@ class Compat {
         return ba;
     }
 
-    public static function castVector<T>(p:Dynamic):openfl.Vector<T> {
+    /*public static function castVector<T>(p:Dynamic):openfl.Vector<T> {
         if (p == null) return null;
         var c:Class<Dynamic> = Type.getClass(p);
         if (c == null) return null;
         if (Type.getClassName(c).indexOf("openfl._Vector.") != 0) return null;
-        //var type:String = Type.getClassName(Type.getClass(p.data));
+        //var type:String = Type.getClassName(Type.getClass(p.data)); //oldopenfl
         //} else if (TType == Function && type == "openfl._Vector.FunctionVector") {
         return cast p;
-    }
+    }*/
 
     /** T==null is Vector.<*>, otherwise T could be Abstract of Class<Dynamic> */
     public static function isVector(p:Dynamic, T:Dynamic = null):Bool {
@@ -204,16 +221,15 @@ class Compat {
     public static inline function each(obj:openfl.utils.Object):Iterator<Dynamic> {
         return new ObjectIterator(obj);
     }
-
-    public static function filter<T>(v:openfl.Vector<T>, filterMethod:T->Int->openfl.Vector<T>->Bool):openfl.Vector<T> {
-        var r:openfl.Vector<T> = new openfl.Vector<T>();
-        for (i in 0...v.length) {
-            if (filterMethod(v[i], i, v)) {
-                r.push(v[i]);
-            }
-        }
-        return r;
-    }
+    //public static function filter<T>(v:openfl.Vector<T>, filterMethod:T->Int->openfl.Vector<T>->Bool):openfl.Vector<T> {
+        //var r:openfl.Vector<T> = new openfl.Vector<T>();
+        //for (i in 0...v.length) {
+            //if (filterMethod(v[i], i, v)) {
+                //r.push(v[i]);
+            //}
+        //}
+        //return r;
+    //}
 
     public static inline function vectorSplice<T>(a:openfl.Vector<T>, startIndex:Int, deleteCount:Int, ?values:Array<T>):openfl.Vector<T> {
         var result = a.splice(startIndex, deleteCount);
