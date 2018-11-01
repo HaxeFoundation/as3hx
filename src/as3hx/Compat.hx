@@ -207,11 +207,13 @@ class Compat {
     /** T==null is Vector.<*>, otherwise T could be Abstract of Class<Dynamic> */
     public static function isVector(p:Dynamic, T:Dynamic = null):Bool {
         if (p == null) return null;
-        var c:Class<Dynamic> = Type.getClass(p);
-        if (c == null) return false;
+        //var c:Class<Dynamic> = Type.getClass(p);
+        //if (c == null) return false;
         //if (Type.getClassName(c) != "openfl._Vector.AbstractVector") return false;
-        if (Type.getClassName(c).indexOf("openfl._Vector.") != 0) return null;
-        var v:openfl.Vector<Dynamic> = cast p;
+        //if (Type.getClassName(c).indexOf("openfl._Vector.") != 0) return null;
+        if (!Std.is(p, Array)) return null;
+        //var v:openfl.Vector<Dynamic> = cast p;
+        var v:Vector<Dynamic> = cast p;
         if (v.length > 0 && T != null && v[0] != null && !Std.is(v[0], T)) {
             return false;
         }
@@ -231,7 +233,17 @@ class Compat {
         //return r;
     //}
 
-    public static inline function vectorSplice<T>(a:openfl.Vector<T>, startIndex:Int, deleteCount:Int, ?values:Array<T>):openfl.Vector<T> {
+    //public static inline function vectorSplice<T>(a:openfl.Vector<T>, startIndex:Int, deleteCount:Int, ?values:Array<T>):openfl.Vector<T> {
+        //var result = a.splice(startIndex, deleteCount);
+        //if(values != null) {
+            //for (i in 0...values.length) {
+                //a.insertAt(startIndex + i, values[i]);
+            //}
+        //}
+        //return result;
+    //}
+    #end
+    public static inline function vectorSplice<T>(a:Vector<T>, startIndex:Int, deleteCount:Int, ?values:Array<T>):Vector<T> {
         var result = a.splice(startIndex, deleteCount);
         if(values != null) {
             for (i in 0...values.length) {
@@ -240,7 +252,6 @@ class Compat {
         }
         return result;
     }
-    #end
 
     public static inline function isClass(c:Dynamic):Bool {
         return c != null && c.__name__ != null;
