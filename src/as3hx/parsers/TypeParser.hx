@@ -16,8 +16,26 @@ class TypeParser {
         var tmp = tokenizer.opPriority.get("*=");
         tokenizer.opPriority.remove("*=");
         if(ParserUtils.opt(tokenizer, TOp("*"))) {
-            tokenizer.opPriority.set("*=",tmp);
-            return TStar;
+            tokenizer.opPriority.set("*=", tmp);
+
+            var typeFromComment:T = null;
+            var t2 = tokenizer.token();
+            switch(t2) {
+                case TCommented(s, true, t3):
+                    typeFromComment = OverrideTypeComment.extractType("*", s, types);
+                    if (typeFromComment != null) {
+                        tokenizer.add(t3);
+                    } else {
+                        tokenizer.add(t2);
+                    }
+                default:
+                    tokenizer.add(t2);
+            }
+            if (typeFromComment != null) {
+                return typeFromComment;
+            } else {
+                return TStar;
+            }
         }
         tokenizer.opPriority.set("*=",tmp);
 
