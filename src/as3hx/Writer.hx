@@ -1250,11 +1250,14 @@ class Writer
             var oldInLVA = inLvalAssign;
             inLvalAssign = false;
             //oldInLVA = false;
-            if (isArrayType(etype) || isVectorType(etype) || isOpenFlDictionaryType(etype) || isMapType(etype) || isByteArrayType(etype)/* || etype == "PropertyProxy"*/) {
+            var isProxy:Bool = etype == "PropertyProxy" || etype == "feathers.core.PropertyProxy";
+            if (isArrayType(etype) || isVectorType(etype) || isOpenFlDictionaryType(etype) || isMapType(etype) || isByteArrayType(etype) || isProxy) {
                 writeExpr(e);
                 inArrayAccess = old;
                 write("[");
-                if (isOpenFlDictionaryType(etype) || isMapType(etype)) {
+                if (isProxy) {
+                    writeExpr(index);
+                } else if (isOpenFlDictionaryType(etype) || isMapType(etype)) {
                     writeETypedExpr(index, TPath([typer.getMapIndexType(etype)]));
                 } else {
                     writeETypedExpr(index, TPath(["Int"]));
