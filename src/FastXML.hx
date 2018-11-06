@@ -187,10 +187,10 @@ class FastXML {
         return 1;
     }
 
-    public function setAttribute(name:String, value:String) : Void {
+    public function setAttribute(name:String, value:Dynamic) : Void {
         if( x.nodeType == Xml.Document )
             throw "Cannot access document attribute "+name;
-        x.set(name,value);
+        x.set(name,Std.string(value));
     }
 
     public function toString() : String {
