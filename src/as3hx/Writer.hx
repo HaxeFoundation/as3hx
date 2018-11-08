@@ -1499,8 +1499,7 @@ class Writer
                 var testVar = switch(e) {
                 case EParent(ex):
                     switch(ex) {
-                        case EIdent(i): ex;
-                        case ECall(_): ex;
+                        case EIdent(_), ECall(_), EField(_): ex;
                         default: null;
                     }
                 default:
@@ -1546,12 +1545,10 @@ class Writer
                     writeExpr(testVar);
                     write(" = ");
                     writeFinish(writeExpr(e));
-                    writeIndent("");
                 }
 
                 //start the switch on a new line
                 if (lineIsDirty) {
-                    writeNL();
                     writeNL();
                     writeIndent();
                 }
@@ -2036,7 +2033,12 @@ class Writer
                         switch(n) {
                             case "Object": writeExpr(params[0]);
                             case "Number": writeCastToFloat(params[0]);
-                            case "String": writeToString(params[0]);
+                            case "String":
+                                if (getExprType(params[0]) == "String") {
+                                    writeEParent(params[0]);
+                                } else {
+                                    writeExpr(getToStringExpr(params[0]));
+                                }
                             case "Boolean":
                                 if (getExprType(params[0]) == "Bool") {
                                     writeEParent(params[0]);
@@ -2522,7 +2524,12 @@ class Writer
             switch(e2) {
                 case EIdent(s):
                     switch(s) {
-                        case "String": writeToString(e1);
+                        case "String":
+                            if (getExprType(e1) == "String") {
+                                writeExpr(e1);
+                            } else {
+                                writeExpr(getToStringExpr(e1));
+                            }
                         case "int", "Int", "uint", "UInt": writeCastToInt(e1);
                         case "Number": writeCastToFloat(e1);
                         case "Array":
@@ -2734,14 +2741,6 @@ class Writer
             write(op);
         }
         return result;
-    }
-
-    function writeToString(e:Expr) {
-        var type = getExprType(e);
-        if (type != "String") {
-            e = getToStringExpr(e);
-        }
-        writeExpr(e);
     }
 
     inline function getToStringExpr(e:Expr):Expr return ECall(EField(EIdent("Std"), "string"), [e]);
