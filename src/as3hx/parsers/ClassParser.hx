@@ -32,7 +32,7 @@ class ClassParser {
                             cname = p.join(".");
                             var i:Int = cname.indexOf("<");
                             if (i != -1) {
-                                typeParams = cname.substr(i);
+                                typeParams = cname.substring(i + 1, cname.length - 1);
                                 cname = cname.substr(0, i);
                             }
                             tokenizer.add(t);

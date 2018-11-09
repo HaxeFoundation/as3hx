@@ -203,6 +203,10 @@ class Typer
                     }
                 }
                 switch(t2) {
+                    case "Object", "Dynamic":
+                        switch(f) {
+                            case "hasOwnProperty": return "String->Bool";
+                        }
                     case "Reflect":
                         switch(f) {
                             case "hasField": return "Dynamic->String->Bool";
@@ -331,11 +335,26 @@ class Typer
                     if (classes.exists(t2)) {
                         var t:String = classes.get(t2).get(f);
                         if (t != null) {
+                            var typeParams:String = classDefs[t2].typeParams;
                             var index:Int = t.indexOf("<");
                             if (index != -1) {
-                                var resultTypeParam = t.substring(index, t.length);
-                                if (resultTypeParam == classDefs[t2].typeParams) {
+                                var resultTypeParam = t.substring(index + 1, t.length - 1);
+                                if (resultTypeParam == typeParams) {
                                     t = t.substring(0, index + 1) + typeParam + ">";
+                                }
+                            } else if (t.indexOf(typeParams) != -1) {
+                                var delimiters:Array<String> = [];
+                                var instanceTypeParams:Array<Array<String>> = getTypeParams(t, delimiters);
+                                var hasChange:Bool = false;
+                                for (tt in instanceTypeParams) {
+                                    if (tt.length == 1 && tt[0] == typeParams) {
+                                        tt[0] = typeParam;
+                                        hasChange = true;
+                                    }
+                                }
+                                if (hasChange) {
+                                    t = reuniteTypeParams(instanceTypeParams, delimiters);
+                                    trace(t, t2);
                                 }
                             }
                             return t;
@@ -862,6 +881,17 @@ class Typer
                 overrideFieldType(childPath, name, t, false);
             }
         }
+    }
+
+    public static function reuniteTypeParams(t:Array<Array<String>>, delimiters:Array<String>):String {
+        var s:String = t[0].join(".");
+        for (i in 1...t.length) {
+            s += delimiters[i - 1] + t[i].join(".");
+        }
+        if (delimiters.length == t.length) {
+            s += delimiters[delimiters.length - 1];
+        }
+        return s;
     }
 
     public static function getTypeParams(type:String, delimiters:Array<String> = null):Array<Array<String>> {

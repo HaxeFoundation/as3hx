@@ -372,7 +372,7 @@ class Writer
 
         buf.add(properCase(c.name, true));
         if (c.typeParams != null) {
-            buf.add(c.typeParams);
+            buf.add("<" + c.typeParams + ">");
         }
 
         var parents = [];
