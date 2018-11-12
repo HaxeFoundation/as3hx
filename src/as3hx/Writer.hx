@@ -1499,7 +1499,7 @@ class Writer
                 var testVar = switch(e) {
                 case EParent(ex):
                     switch(ex) {
-                        case EIdent(_), ECall(_), EField(_): ex;
+                        case EIdent(_), ECall(_), EField(_), EArray(_, _): ex;
                         default: null;
                     }
                 default:
