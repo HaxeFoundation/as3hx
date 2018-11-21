@@ -3672,14 +3672,16 @@ class Writer
                     }
                 }
                 else if (f == "apply") {
-                    if(isFunctionExpr(e)) {
-                        params = [EIdent("null"), e].concat(params.slice(1));
+                    if (isFunctionExpr(e)) {
+                        var thisArg = params.length == 0 ? EIdent("null") : params.shift();
+                        params = [thisArg, e].concat(params);
                         result = ECall(EField(EIdent("Reflect"), "callMethod"), params);
                     }
                 }
                 else if(f == "call") {
                     if(isFunctionExpr(e)) {
-                        params = [EIdent("null"), e].concat([EArrayDecl(params.slice(1))]);
+                        var thisArg = params.length == 0 ? EIdent("null") : params.shift();
+                        params = [thisArg, e, EArrayDecl(params)];
                         result = ECall(EField(EIdent("Reflect"), "callMethod"), params);
                     }
                 }
