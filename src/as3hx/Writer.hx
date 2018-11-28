@@ -1163,7 +1163,12 @@ class Writer
         // haxe setters must return the provided type
         if(isSetter && !isNative && f.args.length == 1) {
             var result = EIdent(f.args[0].name);
-            formatBlock(es, function(e) return result);
+            formatBlock(es, function(e) {
+                if (e != null) {
+                    throw "Unexpected return value: " + e + " in as3 setter";
+                }
+                return result;
+            });
             es.push(ENL(EReturn(result)));
         }
         es = WriterUtils.moveFunctionDeclarationsToTheTop(es);
