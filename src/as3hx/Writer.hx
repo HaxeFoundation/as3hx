@@ -3373,15 +3373,18 @@ class Writer
             return (s == "Float" || isIntType(s) || s == "UInt");
         }
         switch(e) {
-            case EArray(_,_): return EBinop("!=", e, EIdent("null"), false);
+            case EArray(_,_):
+                var t = getExprType(e);
+                if (t == "Bool") return null;
+                return EBinop("!=", e, EIdent("null"), false);
             case EIdent("null"): return null;
             case EIdent(_), EField(_, _), ECall(_, _):
                 var t = getExprType(e);
-                if (t == "Bool") return null;
-                if (t == null) {
-                    return ECall(EField(EIdent("AS3"), "as"), [e, EIdent("Bool")]);
-                }
                 return switch(t) {
+                    case "Bool":
+                        null;
+                    case null:
+                        ECall(EField(EIdent("AS3"), "as"), [e, EIdent("Bool")]);
                     case "Int" | "UInt":
                         EBinop("!=", e, EConst(CInt("0")), false);
                     case "Float":
