@@ -65,8 +65,11 @@ class SignalRebuild
                                 var p:Array<T> = [];
                                 var types:String = s.substring(s.indexOf("<") + 1, s.length - 1);
                                 if (types == "T" || types == "Type" || types == "T->Void" || types == "Type->Void") return null;
-                                if (types == "Void") types = "Void->Void";
-                                for (s in types.split("->")) {
+                                var split:Array<String> = types.split("->");
+                                if (split.length == 1) {
+                                    split.push("Void");
+                                }
+                                for (s in split) {
                                     p.push(typer.expandType(TPath([s])));
                                 }
                                 typer.overrideExprType(params[0], TFunction(p));
