@@ -199,6 +199,7 @@ class Typer
                 if (t2 != null && (t2.indexOf("Array<") == 0 || t2.indexOf("Vector<") == 0 || t2.indexOf(cfg.arrayTypePath + "<") == 0)) {
                     switch(f) {
                         case "length": return "Int";
+                        case "join": return "String->String";
                         case "sort" : return "Function->Void";
                     }
                 }
@@ -354,7 +355,6 @@ class Typer
                                 }
                                 if (hasChange) {
                                     t = reuniteTypeParams(instanceTypeParams, delimiters);
-                                    trace(t, t2);
                                 }
                             }
                             return t;
