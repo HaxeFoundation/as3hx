@@ -409,33 +409,87 @@ class Writer
         writeECondCompEnd(getCondComp(c.meta));
     }
 
-    function writeProperties(c : ClassDef)
+    var propertyMap = new Map();
+    function tryAddProperty(field:ClassField, f:Function):Void
     {
-        var p = [];
-        var h = new Map();
-        var getOrCreateProperty = function(name, t, stat, internal)
+        var isGetter:Bool = this.isGetter(field.kwds);
+        var isSetter:Bool = !isGetter && this.isSetter(field.kwds);
+        if (isGetter || isSetter)
         {
-            var property = h.get(name);
+            var property = propertyMap.get(field.name);
             if (property == null)
             {
                 property = {
-                    name : name,
+                    name : field.name,
                     get : "never",
                     set : "never",
-                    ret : t,
-                    sta : stat,
-                    internal : internal,
-                    pub : false,
+                    ret : isGetter ? f.ret.t : f.args[0].t,
+                    sta : isStatic(field.kwds),
+                    internal : isInternal(field.kwds),
+                    pub : isPublic(field.kwds),
                     getMeta : null,
                     setMeta : null
                 };
-                p.push(property);
-                h.set(name, property);
+                propertyMap.set(field.name, property);
             }
-            return property;
+            if (isGetter)
+            {
+                property.get = "get";
+                property.setMeta = field.meta;
+            }
+            if (isSetter)
+            {
+                property.set = "set";
+                property.setMeta = field.meta;
+            }
+        }
+    }
+    function tryWritePropertyVar(field:ClassField, c:ClassDef):Void
+    {
+        if (!propertyMap.exists(field.name))
+            return;
+
+        var property = propertyMap.get(field.name);
+        propertyMap.remove(field.name);
+
+        //for insterface, func prototype will be removed,
+        //so write meta on top of properties instead
+        if (c.isInterface) {
+            writeMetaData(property.setMeta);
+            writeMetaData(property.getMeta);
         }
 
+        if (property.internal)
+            writeAllow();
+        if(cfg.getterSetterStyle == "combined")
+            write("#if !flash ");
+        if (property.pub) {
+            write("public ");
+        }
+        else {
+            if (! isInterface) {
+                write("private ");
+            }
+        }
+        if (property.sta)
+            write("static ");
+        write("var " + property.name + "(" + property.get + ", " + property.set + ")");
+        writeVarType(property.ret);
+        if(cfg.getterSetterStyle == "combined")
+            writeNL("; #end");
+        else {
+            if (c.isInterface) { //if interface, newline handled be metadata
+                write(";");
+            }
+            else {
+                writeNL(";");
+                writeIndent();
+            }
+        }
+    }
 
+    function writeProperties(c : ClassDef)
+    {
         for (field in c.fields)
         {
             switch(field.kind)
@@ -443,88 +497,60 @@ class Writer
                 case FFun( f ):
                     if (isOverride(field.kwds))
                         continue;
-                    if (isGetter(field.kwds))
-                    {
-                        var getterDirective : String = "get"; // haxe 3
-                                                              // haxe 2: cfg.makeGetterName(field.name);
-
-                        var property = getOrCreateProperty(field.name, f.ret.t, isStatic(field.kwds), isInternal(field.kwds));
-                        property.getMeta = field.meta;
-                        if (isPublic(field.kwds))
-                        {
-                            property.get = getterDirective;
-                            property.pub = true;
-                        } else {
-                            property.get = getterDirective;
-                        }
-                    }
-                    else if (isSetter(field.kwds))
-                    {
-                        var setterDirective : String = "set"; // haxe 3
-                                                              // haxe 2: cfg.makeSetterName(field.name);
-
-                        var property = getOrCreateProperty(field.name, f.args[0].t, isStatic(field.kwds), isInternal(field.kwds));
-                        property.setMeta = field.meta;
-                        if (isPublic(field.kwds))
-                        {
-                            property.set = setterDirective;
-                            property.pub = true;
-                        } else {
-                            property.set = setterDirective;
-                        }
-                    }
+                    tryAddProperty(field, f);
                 default:
                     continue;
             }
         }
-
-        if (p.length > 0) {
-            writeNL();
-        }
-
-        if(cfg.getterSetterStyle == "haxe" || cfg.getterSetterStyle == "combined") {
-            for (property in p)
-            {
-                writeIndent();
-                //for insterface, func prototype will be removed,
-                //so write meta on top of properties instead
-                if (c.isInterface) {
-                    writeMetaData(property.setMeta);
-                    writeMetaData(property.getMeta);
-                }
-
-                if (property.internal)
-                    writeAllow();
-                if(cfg.getterSetterStyle == "combined")
-                    write("#if !flash ");
-                if (property.pub) {
-                    write("public ");
-                }
-                else {
-                    if (! isInterface) {
-                        write("private ");
-                    }
-                }
-                if (property.sta)
-                    write("static ");
-                write("var " + property.name + "(" + property.get + ", " + property.set + ")");
-                writeVarType(property.ret);
-                if(cfg.getterSetterStyle == "combined")
-                    writeNL("; #end");
-                else {
-                    if (c.isInterface) { //if interface, newline handled be metadata
-                        write(";");
-                    }
-                    else {
-                        writeNL(";");
-                    }
-                }
-            }
-        }
-        if (c.isInterface) {
-            writeNL();
-        }
     }
+
+        //if (p.length > 0) {
+            //writeNL();
+        //}
+//
+        //if(cfg.getterSetterStyle == "haxe" || cfg.getterSetterStyle == "combined") {
+            //for (property in p)
+            //{
+                //writeIndent();
+                ////for insterface, func prototype will be removed,
+                ////so write meta on top of properties instead
+                //if (c.isInterface) {
+                    //writeMetaData(property.setMeta);
+                    //writeMetaData(property.getMeta);
+                //}
+//
+                //if (property.internal)
+                    //writeAllow();
+                //if(cfg.getterSetterStyle == "combined")
+                    //write("#if !flash ");
+                //if (property.pub) {
+                    //write("public ");
+                //}
+                //else {
+                    //if (! isInterface) {
+                        //write("private ");
+                    //}
+                //}
+                //if (property.sta)
+                    //write("static ");
+                //write("var " + property.name + "(" + property.get + ", " + property.set + ")");
+                //writeVarType(property.ret);
+                //if(cfg.getterSetterStyle == "combined")
+                    //writeNL("; #end");
+                //else {
+                    //if (c.isInterface) { //if interface, newline handled be metadata
+                        //write(";");
+                    //}
+                    //else {
+                        //writeNL(";");
+                    //}
+                //}
+            //}
+        //}
+        //if (c.isInterface) {
+            //writeNL();
+        //}
+    //}
 
     function writeFields(c : ClassDef)
     {
@@ -632,8 +658,10 @@ class Writer
 
         //if writing an Interface, get/set field will be added
         //as a property instead of func
-        if ((isGet || isSet) && c.isInterface)
+        if ((isGet || isSet) && c.isInterface) {
+            tryWritePropertyVar(field, c);
             return;
+        }
 
         var namespaceMetadata:Array<String> = null;
         if (isFun) {
@@ -664,23 +692,24 @@ class Writer
         }
 
         var start = function(name:String, isFlashNative:Bool=false, isConstructor=false):Bool {
-            if((isGet || isSet) && cfg.getterSetterStyle == "combined") {
-                writeNL(isFlashNative ? "#if flash" : "#else");
-                //writeNL("");
-            }
-
-            if(isFlashNative) {
-                if(isGet) {
-                    write("@:getter(");
-                    write(name);
-                    write(") ");
-                } else if(isSet) {
-                    write("@:setter(");
-                    write(name);
-                    write(") ");
+            if (isGet || isSet) {
+                tryWritePropertyVar(field, c);
+                if (cfg.getterSetterStyle == "combined") {
+                    writeNL(isFlashNative ? "#if flash" : "#else");
                 }
-                if((isGet || isSet) && isProtected(field.kwds)) {
-                    write("@:protected ");
+                if (isFlashNative) {
+                    if(isGet) {
+                        write("@:getter(");
+                        write(name);
+                        write(") ");
+                    } else if(isSet) {
+                        write("@:setter(");
+                        write(name);
+                        write(") ");
+                    }
+                    if (isProtected(field.kwds)) {
+                        write("@:protected ");
+                    }
                 }
             }
             if(isFinal(field.kwds))
