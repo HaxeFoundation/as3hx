@@ -24,6 +24,7 @@ class VarExprFix
         var blockVars:Array<String> = new Array<String>();
         var restrictedVars:Array<String> = new Array<String>();
         var varsToIgnore:Array<String> = new Array<String>();
+        var localFunctionVars:Map<String,Bool>;
         var hasVarsToInsert:Bool = false;
         var inLocalFunction:Bool = false;
         var line:Int = 0;
@@ -65,9 +66,22 @@ class VarExprFix
                     if (hasChange) {
                         return RebuildResult.RReplaceArray(newVars);
                     }
+                case EFunction(f, name):
+                    return RebuildResult.RSkip;
                 default:
             }
             return null;
+        }
+        function rebuildMethodGetLocalFunctionVars(e:Expr):RebuildResult {
+            switch (e) {
+                case EFunction(f, name): return RebuildResult.RSkip;
+                case EVars(vars):
+                    for (vr in vars) {
+                        localFunctionVars.set(vr.name, true);
+                    }
+                    return RebuildResult.RSkip;
+                default: return null;
+            }
         }
         function rebuildMethodLookForVars(e:Expr):RebuildResult {
             switch(e) {
@@ -120,6 +134,9 @@ class VarExprFix
                     }
                 case EIdent(v):
                     if (v != null) {
+                        if (inLocalFunction && localFunctionVars.exists(v)) {
+                            return RebuildResult.RSkip;
+                        }
                         if (!localVar.exists(v)) {
                             if (!inLocalFunction && v == "arguments") {
                                 var arguments:Array<Expr> = [];
@@ -149,12 +166,16 @@ class VarExprFix
                     }
                     var oldInLocalFunction = inLocalFunction;
                     inLocalFunction = true;
+                    localFunctionVars = new Map<String, Bool>();
+                    RebuildUtils.rebuild(f.expr, rebuildMethodGetLocalFunctionVars);
                     var rexpr = RebuildUtils.rebuild(f.expr, rebuildMethodLookForVars);
                     inLocalFunction = oldInLocalFunction;
-                    if (rexpr == null) return null;
+                    if (rexpr == null) return RebuildResult.RSkip;
                     return RebuildResult.RReplace(EFunction({args:f.args, varArgs:f.varArgs, ret:f.ret, expr:rexpr}, name));
                 case EVars(vars/*Array<{ name : String, t : Null<T>, val : Null<Expr> }>*/):
-                    if (inLocalFunction) return null;
+                    if (inLocalFunction) {
+                        return RebuildResult.RSkip;
+                    }
                     var newVars:Array<Expr> = [];
                     var hasChange:Bool = false;
                     for (vr in vars) {
