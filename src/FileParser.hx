@@ -37,8 +37,24 @@ class FileParser {
 
 
     static function isExcludeFile(excludes: List<String>, file: String) {
+        var filePath:String = as3hx.Config.toPath(file);
         return Lambda.filter(excludes, function (path) {
-            return as3hx.Config.toPath(file).indexOf(StringTools.replace(path, ".", "\\")) > -1;
+            var excludePath:String = StringTools.replace(path, ".", "\\");
+            var excludeIndex:Int = filePath.indexOf(excludePath);
+            var excludeEndIndex:Int = excludeIndex + excludePath.length;
+            if (excludeIndex > -1) {
+                if (excludeEndIndex < filePath.length) {
+                    var nextCharCode:Int = filePath.charCodeAt(excludeEndIndex);
+                    if (nextCharCode == ".".code || nextCharCode == "\\".code) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return true;
+                }
+            }
+            return false;
         }).length > 0;
     }
 
