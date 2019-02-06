@@ -6,6 +6,9 @@ package as3hx;
  */
 class CommonImports
 {
+    public static inline var ObjectImport:String = "openfl.utils.Object";
+    public static inline var ObjectType:String = "Object";
+
     private static var imports:Map<Config,Map<String,String>> = new Map<Config,Map<String,String>>();
     public static function getImports(cfg:Config):Map<String,String> {
         if (imports.exists(cfg)) {
@@ -44,7 +47,9 @@ class CommonImports
 
         if (cfg.useOpenFlTypes) {
             //map.set("Vector", "openfl.Vector");
-            map.set("Object", "openfl.utils.Object");
+            //map.set("Object", "openfl.utils.Object");
+            map.set("Object", ObjectImport);
+            map.set(ObjectType, ObjectImport);
         }
 
         var topLevelErrorClasses = [

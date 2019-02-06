@@ -126,7 +126,7 @@ class DictionaryRebuild
                         default:
                             var newType:String = typer.getExprType(e);
                             if (isOpenFlDictionaryType(newType)) {
-                                var oldType:String = typer.tstring(returnType);
+                                var oldType:String = typer.expandStringType(typer.tstring(returnType));
                                 newType = foldDictionaryType2(oldType, newType);
                                 newType = typer.shortenStringType(newType);
                                 if (oldType != newType) {
@@ -235,8 +235,8 @@ class DictionaryRebuild
         if (a == "T") return a;
         if (b == "T") return b;
 
-        var aIsAny:Bool = a == "Dynamic" || a == "Object" || a == "openfl.utils.Object" || a == null || a == "null";
-        var bIsAny:Bool = b == "Dynamic" || b == "Object" || b == "openfl.utils.Object" || b == null || b == "null";
+        var aIsAny:Bool = a == "Dynamic" || a == "Object" || a == CommonImports.ObjectImport || a == null || a == "null";
+        var bIsAny:Bool = b == "Dynamic" || b == "Object" || b == "openfl.utils.Object" || b== "" || b == null || b == "null";
         if (aIsAny && bIsAny) return "Dynamic";
         if (aIsAny) return b;
         if (bIsAny) return a;

@@ -754,14 +754,14 @@ class Writer
                             //static non-inlined field would prevent Haxe compilation
                             switch(val) {
                                 case EConst(c): write("inline ");
-								return true;
+                                return true;
                                 default:
                             }
                         default:
                     }
                 }
             }
-			return false;
+            return false;
         }
         switch(field.kind) {
             case FVar(t, val):
@@ -1285,13 +1285,14 @@ class Writer
             inLvalAssign = false;
             //oldInLVA = false;
             var isProxy:Bool = etype == "PropertyProxy" || etype == "feathers.core.PropertyProxy";
-            if (isArrayType(etype) || isVectorType(etype) || isOpenFlDictionaryType(etype) || isMapType(etype) || isByteArrayType(etype) || isProxy) {
+            var isRawData:Bool = etype == "Object" || etype == CommonImports.ObjectType || etype == CommonImports.ObjectImport;
+            if (isArrayType(etype) || isVectorType(etype) || isOpenFlDictionaryType(etype) || isMapType(etype) || isByteArrayType(etype) || isProxy || isRawData) {
                 writeExpr(e);
                 inArrayAccess = old;
                 write("[");
                 if (isProxy) {
                     writeExpr(index);
-                } else if (isOpenFlDictionaryType(etype) || isMapType(etype)) {
+                } else if (isOpenFlDictionaryType(etype) || isMapType(etype) || isRawData) {
                     writeETypedExpr(index, TPath([typer.getMapIndexType(etype)]));
                 } else {
                     writeETypedExpr(index, TPath(["Int"]));
@@ -1313,9 +1314,6 @@ class Writer
                 if(!isString) write("Std.string(");
                 writeExpr(index);
                 if(!isString) write(")");
-                //if (isAnonymouse) {
-                    //writeInComment(rvalue);
-                //}
                 if(oldInLVA && !inEField) {
                     write(", ");
                     writeExpr(rvalue);
@@ -1348,7 +1346,11 @@ class Writer
                 write(getColon() + alt);
             return;
         }
-        write(getColon() + tstring(t, isNativeGetSet));
+        var s:String = tstring(t, isNativeGetSet);
+        if (s.indexOf("Dictionary<" + CommonImports.ObjectType) == 0) {
+            s = StringTools.replace(s, "Dictionary<" + CommonImports.ObjectType, "Dictionary<{}");
+        }
+        write(getColon() + s);
     }
 
     function writeInits(c : ClassDef) {
@@ -1399,7 +1401,8 @@ class Writer
     }
 
     function writeModifiedIdent(s : String) {
-        write(typer.getModifiedIdent(s));
+        s = typer.getModifiedIdent(s);
+        write(s);
     }
 
     /**
@@ -1872,6 +1875,8 @@ class Writer
         writeFinish(writeExpr(fix == null ? e : fix));
     }
 
+    private var restrictedFieldArrayAccessConversion:Array<String> = ["length", "split", "indexOf"];
+
     function writeEField(fullExpr:Expr, e:Expr, f:String):BlockEnd {
         var n = checkE4XDescendants(fullExpr);
         if(n != null) return writeExpr(n);
@@ -1879,7 +1884,9 @@ class Writer
         var t2 = getExprType(e);
         //write("/* EField ("+Std.string(e)+","+Std.string(f)+") " +t1 + ":"+t2+ "  */\n");
         var old = inArrayAccess;
-        if (t2 == "FastXMLList" && t1 == "FastXMLList") {
+        if (isDynamicType(t2) && restrictedFieldArrayAccessConversion.indexOf(f) == -1) {
+            writeEArray(e, EConst(CString(f)));
+        } else if (t2 == "FastXMLList" && t1 == "FastXMLList") {
             writeExpr(ECall(EField(e, "descendants"), [EConst(CString(f))]));
         } else if(t1 == "FastXMLList" || (t1 == null && t2 == "FastXML")) {
             //write("/* t1 : " + t1 + " */");
@@ -1943,7 +1950,7 @@ class Writer
                                 if (type == "Function" || type == "haxe.Constraints.Function") {
                                     write("1 /*# of arguments of " + v + "*/");
                                     return None;
-                                } else if (type != null && type.indexOf("->") != -1) {
+                                } else if (type != null && isFunctionType(type)) {
                                     writeExpr(getCompatCallExpr("getFunctionLength", [e]));
                                     return None;
                                 }
@@ -1975,10 +1982,12 @@ class Writer
                 writeIndent();
             }
             var v = vars[i];
+            var rExpr = null;
             var rvalue = v.val;
             if(rvalue != null) {
                 switch(rvalue) {
-                    case ETypedExpr(e,_):
+                    case ETypedExpr(e, _):
+                        rExpr = e;
                         switch(e) {
                             case EBinop("||=", e1,_,_):
                                 writeExpr(e);
@@ -1990,9 +1999,19 @@ class Writer
                     default:
                 }
             }
-            var type = tstring(v.t);
+            var vt = v.t;
+            var type = tstring(vt);
             write("var " + typer.getModifiedIdent(v.name));
-            writeVarType(v.t);
+            if (type == "Array<Dynamic>") {
+                var fieldType:String = typer.getExprType(EIdent(v.name));
+                if (fieldType != type) {
+                    vt = TPath([typer.shortenStringType(fieldType)]);
+                    if (rExpr != null) {
+                        rvalue = ETypedExpr(rExpr, TPath([fieldType]));
+                    }
+                }
+            }
+            writeVarType(vt);
             if(rvalue != null) {
                 write(" = ");
                 writeExpr(rvalue);
@@ -2453,7 +2472,7 @@ class Writer
         //var isArray:Bool = isArrayType(t) || isVectorType(t);
         //var isXml:Bool = t == "FastXML" || t == "FastXMLList";
         var isDictionary:Bool = isOpenFlDictionaryType(t);
-        var isObject:Bool = t == "Object" || t == "openfl.utils.Object" || t == null || t == "Dynamic";
+        var isObject:Bool = t == "Object" || t == CommonImports.ObjectType || t == CommonImports.ObjectImport || t == null || t == "Dynamic";
         var eValueType:String = getForEachType(t);
 
         write("for (");
@@ -2580,7 +2599,7 @@ class Writer
                             write("cast ");
                             writeExpr(e1);
                         default:
-                            if (s == "Dictionary" || s == "PropertyProxy" || s == "Object") {
+                            if (s == "Dictionary" || s == "PropertyProxy" || s == "Object" || s == CommonImports.ObjectType) {
                                 write("AS3.as(");
                                 writeExpr(e1);
                                 write(", " + s + ")");
@@ -2615,7 +2634,7 @@ class Writer
             }
             if (defaultCast) {
                 var e2t:String = typer.getExprType(e2, true);
-                if (e2t == "Object" || e2t == "openfl.utils.Object" || e2t == "Dynamic") {
+                if (e2t == "Object" || e2t == CommonImports.ObjectType || e2t == CommonImports.ObjectImport || e2t == "Dynamic") {
                     write("(cast ");
                     writeExpr(e1);
                     write(")");
@@ -2692,14 +2711,19 @@ class Writer
                 if (op == "=") inLvalAssign = true;
                 rvalue = e2;
                 var t = getExprType(e1);
-                if (t != null) {
-                    switch (e2) {
-                        case null:
-                        case EIdent("null"):
-                        default:
-                            e2 = ETypedExpr(e2, TPath([t]));
+                //if (t != getExprType(e2)) {
+                    if (t != null) {
+                        switch (e2) {
+                            case null:
+                            case EIdent("null"):
+                            case EArrayDecl(es) if (es.length == 0):
+                            case ETypedExpr(e, _):
+                                e2 = ETypedExpr(e, TPath([t]));
+                            default:
+                                e2 = ETypedExpr(e2, TPath([t]));
+                        }
                     }
-                }
+                //}
             } else {
                 switch(e1) {
                     case EArrayDecl(_): rvalue = e2;
@@ -3008,8 +3032,8 @@ class Writer
 
     private inline function writeDictionaryTypeConstructor(k:String, v:String):Void {
         //write("new ");
-        //if (k == "Dynamic" || k == "Object" || k == "openfl.utils.Object") {
-            //if (k == "Object" || k == "openfl.utils.Object") k = "Dynamic";
+        //if (k == "Dynamic" || k == "Object" || k == CommonImports.ObjectImport) {
+            //if (k == "Object" || k == CommonImports.ObjectImport) k = "Dynamic";
             //write("haxe.ds.ObjectMap<" + k + ", ");
         //} else if (k == "Float" || k == "Class<Dynamic>" || k == "Class") {
             //write("Dictionary<" + k + ",");
@@ -3017,8 +3041,11 @@ class Writer
             //write("Map<" + k + ",");
         //}
         //write(v + ">(");
-        if (k == "Dynamic") k = "Object";
-        write("new Dictionary<" + k + "," + v + ">(");
+        if (k == "Dynamic" || k == CommonImports.ObjectType || k == CommonImports.ObjectImport && cfg.useOpenFlTypes) {
+            write("new Dictionary<{}, " + v + ">(");
+        } else {
+            write("new Dictionary<" + k + ", " + v + ">(");
+        }
     }
 
     inline function writeENew(t : T, params : Array<Expr>):Void {
@@ -3089,7 +3116,7 @@ class Writer
                         writeDictionaryTypeConstructor(ks, kv);
                         isDictionary = true;
                     }
-                case TPath(p) if (p[0] == "Object" || p[0] == "openfl.utils.Object"): isObject = true;
+                case TPath(p) if (p[0] == "Object" || p[0] == CommonImports.ObjectType || p[0] == CommonImports.ObjectImport): isObject = true;
                 case TPath(p) if (p[0] == "ByteArray" || p[0] == "openfl.utils.ByteArray"):
                     writeExpr(getCompatCallExpr("newByteArray", params));
                     handled = true;
@@ -3183,7 +3210,7 @@ class Writer
                 }
             case EArray(e, index):
                 var t:String = getExprType(e);
-                if (isMapType(t) || isOpenFlDictionaryType(t)) {
+                if (isMapType(t) || isOpenFlDictionaryType(t) || isDynamicType(t)) {
                     nullable = true;
                 }
             case EIdent("null"):
@@ -3236,7 +3263,7 @@ class Writer
                     case EBinop("&&", e1, e2, nl):
                         e = ETernary(EUnop("!", true, e1), e1, e2);
                     case ECall(EVector(t), params):
-                        if (type == "Object" || type == "openfl.utils.Object" || (isVectorType(type) && getExprType(e) != type)) {
+                        if (type == "Object" || type == CommonImports.ObjectType || type == CommonImports.ObjectImport || (isVectorType(type) && getExprType(e) != type)) {
                             write("cast ");
                         }
                     default:
@@ -3259,7 +3286,7 @@ class Writer
                 write(".remove(");
                 writeExpr(index);
                 write(")");
-            } else if (atype == "Dynamic" || atype == "Object" || atype == "openfl.utils.Object") {
+            } else if (atype == "Dynamic" || atype == "Object" || atype == CommonImports.ObjectType || atype == CommonImports.ObjectImport) {
                 switch(index) {
                     case EConst(c):
                         switch(c) {
@@ -3284,7 +3311,7 @@ class Writer
                 addWarning("EDelete");
                 writeNL("This is an intentional compilation error. See the README for handling the delete keyword");
                 writeIndent('delete ${getIdentString(object)}[${getIdentString(index)}]');
-                writeInComment(atype);
+                write("/* " + atype + " */");
             }
         }
     }
@@ -3412,7 +3439,7 @@ class Writer
                 return switch(t) {
                     case "Bool":
                         null;
-                    case null:
+                    case null, "Dynamic":
                         ECall(EField(EIdent("AS3"), "as"), [e, EIdent("Bool")]);
                     case "Int" | "UInt":
                         EBinop("!=", e, EConst(CInt("0")), false);
@@ -3496,10 +3523,10 @@ class Writer
                         result = ECall(rebuiltExpr, params);
                     } else if (isDynamicType(type)) {
                         //Reflect.hasField(e, f);
-						var e1:Expr = params[0];
-						if (getExprType(e1) != "String") {
-							e1 = getToStringExpr(e1);
-						}
+                        var e1:Expr = params[0];
+                        if (getExprType(e1) != "String") {
+                            e1 = getToStringExpr(e1);
+                        }
                         result = ECall(EField(EIdent("Reflect"), "hasField"), [e, e1]);
                     } else if (true || isClassType(type)) {
                         result = ECall(EField(EIdent("AS3"), "hasOwnProperty"), [e, params[0]]);
@@ -3991,11 +4018,11 @@ class Writer
     }
 
     function prepareObjectFieldName(name:String):String {
-        if (validVariableNameEReg.match(name)) {
-            return name;
-        } else {
+        //if (validVariableNameEReg.match(name)) {
+            //return name;
+        //} else {
             return '"' + name + '"';
-        }
+        //}
     }
 
     /**
@@ -4025,7 +4052,7 @@ class Writer
         return s != null && (s.indexOf("Vector<") == 0 || s.indexOf("openfl.Vector<") == 0 || s.indexOf(cfg.arrayTypePath + "<") == 0);
     }
 
-    static inline function isDynamicType(s:String):Bool return s == "Dynamic" || s == "Object" || s == "openfl.utils.Object";
+    static inline function isDynamicType(s:String):Bool return s == "Dynamic" || s == "Object" || s == CommonImports.ObjectType || s == CommonImports.ObjectImport;
 
     inline function isMapType(s:String):Bool {
         return s != null && (s.indexOf("Map") == 0 || s.indexOf("haxe.ds.ObjectMap") == 0);
@@ -4039,9 +4066,22 @@ class Writer
         return s != null && (s.indexOf("Dictionary") == 0 || s.indexOf("openfl.utils.Dictionary") == 0) && cfg.useOpenFlTypes;
     }
 
+    inline function isFunctionType(type:String):Bool {
+        if (type == "Function" || type == "haxe.Constraints.Function") return true;
+        if (type == null) return false;
+        var delimeters:Array<String> = [];
+        Typer.getTypeParams(type, delimeters);
+        var level:Int = 0;
+        for (d in delimeters) {
+            if (d == "<" || d == "(") level++;
+            if (d == ">" || d == ")") level--;
+            if (d == "->" && level == 0) return true;
+        }
+        return false;
+    }
+
     inline function isFunctionExpr(e:Expr):Bool {
-        var type:String = getExprType(e);
-        return type == "Function" || type == "haxe.Constraints.Function" || (type != null && type.indexOf("->") != -1);
+        return isFunctionType(getExprType(e));
     }
 
     inline function isIntExpr(e:Expr):Bool {

@@ -204,10 +204,11 @@ class Typer
                     }
                 }
                 switch(t2) {
-                    case "Object", "Dynamic":
+                    case "Object", "Dynamic", CommonImports.ObjectType, CommonImports.ObjectImport:
                         switch(f) {
                             case "hasOwnProperty": return "String->Bool";
                         }
+                        return "Dynamic";
                     case "Reflect":
                         switch(f) {
                             case "hasField": return "Dynamic->String->Bool";
@@ -276,7 +277,7 @@ class Typer
                             default: return "String";
                         }
                     case "FastXMLNodeAccess": return "FastXML";
-                    case "FastXMLNodeListAccess": return "FastXMLList";
+                    case "FastXMLNodeListAccess": return "Void->FastXMLList";
                     case "FastXMLAttribAccess": return "String";
                     case "FastXMLHasAttribAccess": return "Bool";
                     case "FastXMLHasNodeAccess": return "Bool";
@@ -288,7 +289,7 @@ class Typer
                             case "att":"FastXMLAttribAccess";
                             case "has":"FastXMLHasAttribAccess";
                             case "hasNode":"FastXMLHasNodeAccess";
-                            case "name":"String";
+                            case "name":"Void->String";
                             case "innerData":"String";
                             case "innerHTML":"String";
                             case "descendants": "String->FastXMLList";
@@ -464,10 +465,29 @@ class Typer
                         if (commaPosition != -1) {
                             return bothTypes.substr(commaPosition + 1);
                         }
+                    } else if (tn == "Object" || tn == CommonImports.ObjectType || tn == CommonImports.ObjectImport) {
+                        return "Dynamic";
                     }
                 }
                 return tn;
-            case EArrayDecl(_): return "Array<Dynamic>";
+            case EArrayDecl(a):
+                var type:String = null;
+                for (e in a) {
+                    var t:String = getExprType(e);
+                    if (type != t) {
+                        if (type == null) {
+                            type = t;
+                        } else {
+                            type = null;
+                            break;
+                        }
+                    }
+                }
+                if (type == null) {
+                    return "Array<Dynamic>";
+                } else {
+                    return "Array<" + type + ">";
+                }
             case EUnop(_, _, e2): return getExprType(e2);
             case EParent(e): return getExprType(e);
             case ETernary(cond, e1, e2): return getExprType(e1);
@@ -503,6 +523,7 @@ class Typer
                                     case EVector(t):
                                         types.push(tstring(TVector(t)));
                                     case EIdent(v):
+                                        v = getModifiedIdent(v);
                                         var fullPath:String = resolveClassIdent(v);
                                         types.push(tstring(TPath([fullPath == null ? v : fullPath])));
                                         //types.push(tstring(TPath([fullPath])));
@@ -522,6 +543,8 @@ class Typer
                 return getExprType(e);
             case ENL(e):
                 return getExprType(e);
+            case EObject(fl):
+                return CommonImports.ObjectType;
             case EBlock(es):
                 if (es.length == 1) {
                     return getExprType(es[0]);
@@ -552,7 +575,7 @@ class Typer
             case "Number": "Float";
             case "Boolean": "Bool";
             case "Function": cfg.functionToDynamic ? "Dynamic" : s;
-            case "Object": cfg.useOpenFlTypes ? "Object" : "Dynamic";
+            case "Object": cfg.useOpenFlTypes ? CommonImports.ObjectType : "Dynamic";
             case "undefined": "null";
             //case "Error": cfg.mapFlClasses ? "flash.errors.Error" : s;
             case "XML": "FastXML";
@@ -598,12 +621,30 @@ class Typer
                     case "uint"     : cfg.uintToInt ? "Int" : "UInt";
                     case "void"     : "Void";
                     case "Function" : cfg.functionToDynamic ? "Dynamic" : c;
-                    case "Object"   : isNativeGetSet ? "{}" : (cfg.useOpenFlTypes ? "Object" : "Dynamic");
+                    case "Object", CommonImports.ObjectType : isNativeGetSet ? "{}" : (cfg.useOpenFlTypes ? CommonImports.ObjectType : "Dynamic");
                     case "XML"      : cfg.useFastXML ? "FastXML" : "Xml";
                     case "XMLList"  : cfg.useFastXML ? "FastXMLList" : "Iterator<Xml>";
                     case "RegExp"   : cfg.useCompat ? "as3hx.Compat.Regex" : "flash.utils.RegExp";
                     //default         : fixCase ? properCase(c, true) : c;
-                    default         : cfg.importExclude.indexOf(c) != -1 ? p[p.length - 1] : fixCase ? properCase(c, true) : c;
+                    default         :
+                        if (cfg.importExclude.indexOf(c) != -1) {
+                            c = p[p.length - 1];
+                        } else {
+                            if (fixCase) c = properCase(c, true);
+                        }
+                        var s:String = c;
+                        if (s.indexOf("<") != -1) {
+                            var delimiters:Array<String> = new Array<String>();
+                            var t:Array<Array<String>> = getTypeParams(s, delimiters);
+                            s = getModifiedIdent(t[0].join("."));
+                            for (i in 1...t.length) {
+                                s += delimiters[i - 1] + getModifiedIdent(t[i].join("."));
+                            }
+                            if (delimiters.length == t.length) {
+                                s += delimiters[delimiters.length - 1];
+                            }
+                        }
+                        s;
                 }
             case TComplex(e): return getExprType(e); // not confirmed
             case TDictionary(k, v): (cfg.dictionaryToHash ? "haxe.ds.ObjectMap" : "Dictionary") + "<" + tstring(k) + "," + tstring(v) + ">";
@@ -1410,8 +1451,19 @@ class Typer
         if (f.varArgs != null) {
             context.set(f.varArgs, "Array<Dynamic>");
         }
+        var localTyping:Map<String,String> = new Map<String,String>();
         function lookUpForTyping(expr:Expr):RebuildResult {
             switch(expr) {
+                case EBinop("=", EIdent(v), e2, _):
+                    if (localTyping.exists(v)) {
+                        if (localTyping.get(v) == null) {
+                            context.set(v, resolveArrayType(context.get(v), getExprType(e2)));
+                        } else {
+                            localTyping.set(v, resolveArrayType(localTyping.get(v), getExprType(e2)));
+                        }
+                    } else {
+                        localTyping.set(v, getExprType(e2));
+                    }
                 case EForEach(ev, e, block):
                     var etype:String = getExprType(e);
                     var isMap:Bool = etype != null && (etype.indexOf("Map") == 0 || etype.indexOf("Dictionary") == 0 || etype.indexOf("openfl.utils.Dictionary") == 0);
@@ -1479,7 +1531,20 @@ class Typer
                     }
                 case EVars(vars):
                     for (v in vars) {
-                        context.set(v.name, tstring(v.t));
+                        var t:String;
+                        switch(v.val) {
+                            case ETypedExpr(e, _):
+                                t = getExprType(e);
+                            default:
+                                t = getExprType(v.val);
+                        }
+                        t = resolveArrayType(tstring(v.t), t);
+
+                        if (localTyping.get(v.name) != null) {
+                            t = resolveArrayType(t, localTyping.get(v.name));
+                            localTyping.set(v.name, null);
+                        }
+                        context.set(v.name, t);
                     }
                 case EFunction(f, name):
                     if (name != null) {
@@ -1492,6 +1557,16 @@ class Typer
             return null;
         }
         RebuildUtils.rebuild(f.expr, lookUpForTyping);
+    }
+
+    private static var arrayDynamicIdent:String = "Array<Dynamic>";
+    private static var arrayIdent:String = "Array<";
+    private function resolveArrayType(a:String, b:String):String {
+        if (a == null || (a == arrayDynamicIdent && b != null && b.indexOf(arrayIdent) == 0 && a != b)) {
+            return b;
+        } else {
+            return a;
+        }
     }
 
     public function leaveFunction():Void {
