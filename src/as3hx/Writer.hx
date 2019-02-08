@@ -1612,21 +1612,23 @@ class Writer
                     }
                     write(":");
 
-                    //prevent switch case indenting if begins
-                    //with block expr
-                    var didIndent = if (shouldIndentCase(c.el)) {
-                        lvl++;
-                        true;
-                    } else {
-                        false;
+                    // consume and ignore block {} in switch
+                    function writeCase(e:Expr):Void {
+                        switch(e) {
+                            case ENL(e): writeCase(e);
+                            case EBlock(exprs):
+                                for (inBlockExpr in exprs) {
+                                    writeFinish(writeExpr(inBlockExpr));
+                                }
+                            default:
+                                writeFinish(writeExpr(ENL(e)));
+                        }
                     }
-
-                    for (i in 0...c.el.length)
-                    {
-                        writeFinish(writeExpr(c.el[i]));
+                    lvl++;
+                    for (e in c.el) {
+                        writeCase(e);
                     }
-                    if (didIndent)
-                        lvl--;
+                    lvl--;
                 }
                 if(def != null) {
                     writeSwitchDefault(def);
