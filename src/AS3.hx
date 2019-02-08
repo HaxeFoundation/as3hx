@@ -39,7 +39,7 @@ class AS3 {
 
     public static inline function asBool(e:Dynamic):Bool {
         #if (js || flash)
-        return untyped e ? __js__("true") : __js__("false");
+        return untyped Boolean(e);
         #else
         return e != false && e != null && e != 0 && !(Std.is(e, String) && e.length == 0);
         #end
