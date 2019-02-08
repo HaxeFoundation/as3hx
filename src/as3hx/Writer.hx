@@ -2217,7 +2217,14 @@ class Writer
 
             var tstring:String = typer.getExprType(expr);
             var types:Array<String> = tstring == null ? [] : tstring.split("->");
-            writeExpr(expr);
+
+            switch(expr) {
+                case EField(e, f) if(isDynamicType(getExprType(e))):
+                    writeExpr(e);
+                    write("." + f);
+                default:
+                    writeExpr(expr);
+            }
             write("(");
             var enl = false;
             var hadArguments:Bool = false;
