@@ -61,62 +61,56 @@ http://www.kirupa.com/forum/showthread.php?223798-ActionScript-3-Tip-of-the-Day/
 E4X is currently partly done. This will fail in some cases, just examine source
 and output carefully.
 
-#### For Initializations:
-The output of
+### AS3 markup
+You can use comments in ActionScript 3 code to enchance quality of conversion
 
-```as3
-if (true) {
-    for (var i:uint = 0; i < 7; i++)
-        val += "0";
-} else {
-    for (i = 0; i < 8; i++)
-        val += "0";
-}
-```
+#### Haxe code injection
+Use comment `/*haxe:*/` in arbitrary place in code to inject enclosed string as a raw Haxe code.
 
-is
+    /*haxe:
+    methodToCallInHaxe();
+    */
 
-```haxe
-if (true) {
-    var i:UInt = 0;
-    while (i < 7) {
-        val += "0";
-        i++;
+    var trueInHaxe:Boolean = /*haxe:true;//*/false;
+
+Use conditional compilation blocks to hide AS3 code from Haxe compiler
+
+    CONFIG::AS3 {
+        methodToCallInAs3();
     }
-} else {
-    i = 0;
-    while (i < 8) {
-        val += "0";
-        i++;
+
+#### Type hints
+Use comment `/*haxe:*/` after AS3 type to override AS3 type with type from comment.
+
+    var o:*/*haxe:utils.RawData*/ = {};
+
+You can use it to define strict Haxe function types:
+
+    function registerCallback(callback:Function/*haxe:Event->Void*/):void { }
+
+
+
+Use comment `/*<>*/` to force Haxe type parameters on AS3 types:
+
+    var b:Dictionary = new Dictionary/*<Int,String>*/();
+    
+    public class ItemRenderer/*<ItemValue>*/ {
     }
-}
-```
+ 
+### Conversion tips
+The bigger part of the complete project is converted at once, the better results you will get since type info takes a great role in conversion.
 
-As you can see, the scope of `i` in Flash is not the same as in Haxe,
-so the `else` section will produce Unknown identifier : i. The solution
-is to move the `var i : UInt = 0;` outside of the blocks in the generated
-code.
+You can chain src paths `neko as3hx.n "src\path\1" "src\path\2" "src\path\2"` if your project has more than one src path.
 
-This can not be avoided by always creating the `i` variable, as the code
+Use `-libPath "path\to\as3\classes"` command line parameter to define path with all related code that should be taken into account during conversion but should not be converted by itself. The internal directory structure is not important since only package names are taken into consideration.
 
-```as3
-for (var i:uint = 0; i < 7; i++)
-    val += "0";
-for (i = 0; i < 8; i++)
-    val += "0";
-```
+For better results include interfaces to swc libraries that you use in your project. You can decompile swcs to get such interfaces.
 
-would then produce a double initialization of `i`, also causing a compiler error.
+It's a good idea to include decompiled interfaces from playerglobal.swc to enhance interaction with Flash API.
 
-```haxe
-var i:UInt = 0;
-while (i < 7) {
-    val += "0";
-    i++;
-}
-var i = 0;
-while (i < 8) {
-    val += "0";
-    i++;
-}
-```
+
+
+### Disclaimer
+This fork is made for a single project in mind. So there are probably some breaking changes in formatting of converted code for different code styles.
+
+Also there are no publicly available test cases for added functionality.
