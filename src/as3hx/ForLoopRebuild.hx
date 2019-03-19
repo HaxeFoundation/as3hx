@@ -1,7 +1,6 @@
 package as3hx;
 import as3hx.As3.Expr;
 import as3hx.RebuildUtils.RebuildResult;
-import neko.Lib;
 
 /**
  * ...
@@ -46,10 +45,10 @@ class ForLoopRebuild
             return null;
         }
     }
-    
+
     public function replaceForLoopsWithWhile(expressions:Array<Expr>):Array<Expr> {
         forLoopNum = 0;
-        
+
         var re:Array<Expr> = rebuildLookUpPassArray(expressions);
         var rexpr:Expr = RebuildUtils.rebuild(EBlock(expressions), rebuildLookUpPass);
         switch(rexpr) {
@@ -58,7 +57,7 @@ class ForLoopRebuild
                 expressions = es;
             default:
         }
-        
+
         forLoopNum = 0;
         re = RebuildUtils.rebuildArray(expressions, rebuildReplacePass);
         if (re != null) {
@@ -66,7 +65,7 @@ class ForLoopRebuild
         }
         return expressions;
     }
- 
+
 
     private function openBlockContext():Void {
         loopsListPerLoopVarStack.push(loopsListPerLoopVar);
@@ -101,7 +100,7 @@ class ForLoopRebuild
         if (r == null) {
             r = expr;
         }
-        
+
         var condition:Expr;
         if (conds.length == 0) {
             condition = EIdent("true");
@@ -111,19 +110,19 @@ class ForLoopRebuild
                 condition = EBinop("&&", condition, conds[i], false);
             }
         }
-        
+
         var whileBody:Array<Expr> = switch(r) {
             case EBlock(e): e;
             default: [r];
         }
         whileBody = whileBody.concat(incrs);
-        
+
         var result:Array<Expr> = [];
         for (init in inits) {
             result.push(init);
         }
         result.push(EWhile(condition, EBlock(whileBody), false));
-        
+
         return result;
     }
 
@@ -151,12 +150,12 @@ class ForLoopRebuild
             case EFor(inits, conds, incrs, e):
                 if (loopNumToReplace.exists(forLoopNum++)) {
                     var res:Array<Expr> = convertEForToEWhile(inits, conds, incrs, e);
-                    
+
                     var resRebuild:Array<Expr> = RebuildUtils.rebuildArray(res, rebuildReplacePass);
                     if (resRebuild != null) {
                         res = resRebuild;
                     }
-                    
+
                     return RebuildResult.RReplaceArray(res);
                 }
             default:
@@ -182,12 +181,12 @@ class ForLoopRebuild
         if (loopsListPerLoopVar.exists(loopVariable)) {
             for (f in loopsListPerLoopVar.get(loopVariable)) {
                 loopNumToReplace.set(f.num, true);
-                
+
             }
             loopsListPerLoopVar.remove(loopVariable);
         }
     }
-    
+
     private function processLookUpPassExpr(expr:Expr):Void {
         var loopVariablesAccess:Map<String,Bool> = getOverwrittenIdents(expr, loopsListPerLoopVar);
         for (loopVariable in loopVariablesAccess.keys()) {
@@ -214,7 +213,7 @@ class ForLoopRebuild
                     loop.expr = expr;
                     loop.num = forLoopNum++;
                     storeLoop(loopVariable, loop);
-                    
+
                     var r:Expr = RebuildUtils.rebuild(e, rebuildLookUpPass);
                     if (r != null) {
                         return RebuildResult.RReplace(EFor(inits, conds, incrs, r));
@@ -235,7 +234,7 @@ class ForLoopRebuild
         }
         return null;
     }
-    
+
     private static function canUseForLoop(inits:Array<Expr>, conds:Array<Expr>, incrs:Array<Expr>, e:Expr):Bool {
         if (inits.length == 0 || conds.length != 1 || incrs.length != 1) return false;
         var loopVariable:String = getForLoopVariable(incrs);
@@ -268,7 +267,7 @@ class ForLoopRebuild
                 }
             default: return false;
         }
-        
+
         // if variable is not incremented by 1, no FOR
         switch(incrs[0]) {
             case EUnop("++", _, e1):
@@ -287,10 +286,10 @@ class ForLoopRebuild
         if (checkIfUsesIdentForWriting(loopVariable, e, false)) {
             return false;
         }
-        
+
         return true;
     }
-    
+
     private function getOverwrittenIdents(e:Expr, blockContext:Map<String,Array<LoopPosition>>):Map<String,Bool> {
         var result:Map<String,Bool> = new Map<String,Bool>();
         for (key in loopsListPerLoopVar.keys()) {
@@ -302,7 +301,7 @@ class ForLoopRebuild
         }
         return result;
     }
-    
+
     public static function checkIfUsesIdentValue(ident:String, expr:Expr):Bool {
         var wasUsed:Bool = false;
         function rebuild(e:Expr):RebuildResult {
@@ -361,7 +360,7 @@ class ForLoopRebuild
         RebuildUtils.rebuild(expr, rebuild);
         return wasUsed;
     }
-    
+
     public static function checkIfUsesIdentForWriting(ident:String, expr:Expr, definitelyOverwritten:Bool):Bool {
         var result:Bool = false;
         function rebuild(e:Expr):RebuildResult {
@@ -397,7 +396,7 @@ class ForLoopRebuild
         RebuildUtils.rebuild(expr, rebuild);
         return result;
     }
-    
+
     public static function isIdent(e:Expr, ident:String):Bool {
         switch(e) {
             case EParent(e): return isIdent(e, ident);

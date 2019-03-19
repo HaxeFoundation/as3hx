@@ -33,7 +33,6 @@ class AS3 {
     }
 
     public static inline function asFloat(e:Dynamic):Float {
-        //return cast(e, Float);
         return as3hx.Compat.parseFloat(e);
     }
 
@@ -55,41 +54,15 @@ class AS3 {
     }
 
     public static macro function as(e:Expr, type:Expr):Expr {
-        //switch(Context.typeof(e)) {
-        switch(type.expr) {
-            //case EConst(CIdent("Dictionary")): return macro Std.is($e, haxe.Constraints.IMap) ? $e : null;
-            case EConst(CIdent("Dictionary")): return macro AS3.asDictionary($e);
+        return switch(type.expr) {
+            case EConst(CIdent("Dictionary")): macro AS3.asDictionary($e);
             #if openfl
-            case EConst(CIdent("Object")): return macro AS3.asObject($e);
+            case EConst(CIdent("Object")): macro AS3.asObject($e);
             #end
-            case EConst(CIdent("Float")): return macro AS3.asFloat($e);
-            case EConst(CIdent("Bool")): return macro AS3.asBool($e);
-
-                                //write("(try cast(");
-                                //writeExpr(e1);
-                                //write(", ");
-                                //switch(e2) {
-                                    //case EIdent(s): writeModifiedIdent(s);
-                                    //default: writeExpr(e2);
-                                //}
-            //case TAbstract(t, _) if(t.get().name == "Dictionary"): return macro Std.is($e, haxe.Constraints.IMap) ? $e : null;
-            //case TInst(t, _) if(t.get().pack.length == 0): t.get().name;
-            case _:
+            case EConst(CIdent("Float")): macro AS3.asFloat($e);
+            case EConst(CIdent("Bool")): macro AS3.asBool($e);
+            default: macro AS3.asClass($e, $type);
         }
-        //throw Context.typeExpr(type);
-        //throw Context.typeof(type);
-        return macro AS3.asClass($e, $type);
-        //return macro {
-            //cast AS3.AS(${e}, ${type});
-            //cast(AS3.AS(${e}, ${type}), );
-        //}
-        //return switch(type) {
-            //case "Int": macro ${e};
-            //case "Float": macro Std.int(${e});
-            //case "String": macro @:privateAccess as3hx.Compat._parseInt(${e}, ${base});
-            //case "Bool": macro ${e} ? 1 : 0;
-            //case _: macro Std.parseInt(Std.string(${e}));
-        //}
     }
 
     public static inline function hasOwnProperty(o:Dynamic, field:String):Bool {
@@ -186,24 +159,7 @@ class AS3 {
     /**
      * Converts a typed expression into an Int.
      */
-    //#if js
     macro public static function int<T>(e:ExprOf<T>, ?base:ExprOf<Int>):ExprOf<T> {
         return macro untyped ~~${e};
     }
-    //#else
-    //macro public static function int<T>(e:ExprOf<T>, ?base:ExprOf<Int>):ExprOf<T> {
-        //var type = switch(Context.typeof(e)) {
-            //case TAbstract(t, _) if(t.get().pack.length == 0): t.get().name;
-            //case TInst(t, _) if(t.get().pack.length == 0): t.get().name;
-            //case _: null;
-        //}
-        //return switch(type) {
-            //case "Int": macro ${e};
-            //case "Float": macro Std.int(${e});
-            //case "String": macro as3hx.Compat.parseInt(${e}, ${base});
-            //case "Bool": macro ${e} ? 1 : 0;
-            //case _: return macro as3hx.Compat.parseInt(Std.string(${e}), ${base});
-        //}
-    //}
-    //#end
 }
