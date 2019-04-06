@@ -1,0 +1,9 @@
+{
+	"haxeTestExplorer.testCommand": [
+		"haxelib",
+		"run",
+		"munit",
+		"test",
+		"-neko"
+	]
+}
