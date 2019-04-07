@@ -46,6 +46,8 @@ class ImportParserTest
 	public function testDictionary():Void
 	{
 		var importParts = getImportParts('import flash.utils.Dictionary;');
+		Assert.areEqual(importParts.length, 0);
+		var importParts = getImportParts('import flash.utils.Dictionary;', false);
 		Assert.areEqual(importParts.length, 3);
 		Assert.areEqual(importParts[0], 'flash');
 		Assert.areEqual(importParts[1], 'utils');
@@ -108,11 +110,12 @@ class ImportParserTest
 		Assert.areEqual(importParts[0], '*');
 	}
 	
-	function getImportParts(importString:String):Array<Dynamic> 
+	function getImportParts(importString:String, dictionaryToHash:Bool = true):Array<Dynamic> 
 	{
 		var tokenizer = new Tokenizer(new haxe.io.StringInput(importString));
 		Assert.areEqual(tokenizer.id(), 'import');
 		var cfg = new as3hx.Config();
+		cfg.dictionaryToHash = dictionaryToHash;
 		var importParts = ImportParser.parse(tokenizer, cfg);
 		return importParts;
 	}

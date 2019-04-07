@@ -1,8 +1,7 @@
+class Issue300 {
 
-class Issue300
-{
-    public function new()
-    {
-        trace(as3hx.Compat.typeof(3));
-    }
+	public function new() {
+		trace(as3hx.Compat.typeof(3));
+	}
+
 }

@@ -1,8 +1,7 @@
+class Issue85 {
 
-class Issue85
-{
-    public function new()
-    {
-        var i : Int = 1;
-    }
+	public function new() {
+		var i:Int = 1;
+	}
+
 }

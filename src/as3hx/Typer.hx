@@ -204,7 +204,7 @@ class Typer
                     }
                 }
                 switch(t2) {
-                    case "Object", "Dynamic", CommonImports.ObjectType, CommonImports.ObjectImport:
+                    case "Dynamic", CommonImports.ObjectType, CommonImports.ObjectImport:
                         switch(f) {
                             case "hasOwnProperty": return "String->Bool";
                         }
@@ -621,7 +621,7 @@ class Typer
                     case "uint"     : cfg.uintToInt ? "Int" : "UInt";
                     case "void"     : "Void";
                     case "Function" : cfg.functionToDynamic ? "Dynamic" : c;
-                    case "Object", CommonImports.ObjectType : isNativeGetSet ? "{}" : (cfg.useOpenFlTypes ? CommonImports.ObjectType : "Dynamic");
+                    case CommonImports.ObjectType : isNativeGetSet ? "{}" : (cfg.useOpenFlTypes ? CommonImports.ObjectType : "Dynamic");
                     case "XML"      : cfg.useFastXML ? "FastXML" : "Xml";
                     case "XMLList"  : cfg.useFastXML ? "FastXMLList" : "Iterator<Xml>";
                     case "RegExp"   : cfg.useCompat ? "as3hx.Compat.Regex" : "flash.utils.RegExp";
@@ -1271,6 +1271,10 @@ class Typer
             //classMap = new Map<String, String>();
             while (ic != null && ic.extend != null) {
                 var packageString:String = parentPath.substring(0, parentPath.lastIndexOf("."));
+                if (classPrograms[ic] == null) {
+                    ic = null;
+                    break;
+                }
                 var path:String = getPathByType(ic.extend, ic, classPrograms[ic].pack, packageString);
                 if (path != null) {
                     parentPath = path;

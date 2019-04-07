@@ -1,7 +1,7 @@
 
 package as3hx;
 
-import haxe.xml.Fast;
+import haxe.xml.Access;
 import sys.FileSystem;
 import sys.io.File;
 import haxe.ds.StringMap;
@@ -116,7 +116,6 @@ class Config {
      */
     public var importTypes : StringMap<String>;
 
-
     /** source directory **/
     public var src : Array<String>;
     /** output directory **/
@@ -133,7 +132,7 @@ class Config {
         processImportPaths();
     }
 
-    public function init() {
+    public function init():Void {
         var env = Sys.environment();
         if (env.exists("AS3HX_CONFIG")) {
             cfgFile = env.get("AS3HX_CONFIG");
@@ -183,11 +182,11 @@ class Config {
         return s.substr(0, 1).toUpperCase() + s.substr(1);
     }
 
-    function processDefaultConfig() {
+    function processDefaultConfig():Void {
         fromXmlString(defaultConfig());
     }
 
-    function processEnvConfig() {
+    function processEnvConfig():Void {
         // $HOME/.as3hx_config.xml or env
         if(cfgFile != null) {
             if(!FileSystem.exists(cfgFile)) {
@@ -202,7 +201,7 @@ class Config {
         }
     }
 
-    function processLocalConfig() {
+    function processLocalConfig():Void {
         if(FileSystem.exists("./.as3hx_config.xml")) {
             fromXmlString(File.getContent("./.as3hx_config.xml"));
         }
@@ -212,7 +211,7 @@ class Config {
      * Store fuly qualified names of Haxe files found
      * at provided directories
      */
-    function processImportPaths() {
+    function processImportPaths():Void {
         importTypes = new StringMap<String>();
         for(path in importPaths) {
             processImportPath(path, "", importTypes);
@@ -250,7 +249,7 @@ class Config {
         }
     }
 
-    public static function usage() {
+    public static function usage():Void {
         var println = Sys.println;
         println("Usage: as3hx [options] sourceDir [outdir]");
         println("  Options:");
@@ -267,7 +266,7 @@ class Config {
         println("  outdir\t\t : defaults to './out'");
     }
 
-    function processCommandLine() {
+    function processCommandLine():Void {
         var args = Sys.args().copy();
         #if !munit
         if (args.length == 0) {
@@ -277,10 +276,10 @@ class Config {
         #else
         if (args.length == 0) return;
         #end
-        var arg = "";
-        while(true) {
+        var arg:String = null;
+        while (true) {
             arg = args.shift();
-            switch(arg) {
+            switch (arg) {
                 case "-help", "--help":
                     usage();
                     Sys.exit(0);
@@ -308,31 +307,30 @@ class Config {
                     dictionaryToHash = true;
                 case "-libPath", "--libPath":
                     libPaths.push(args.shift());
-                default:
+                case null:
                     break;
+                case _ if (arg.charAt(0) == "-"):
+                    Sys.println("Unknown argument: " + arg);
+                    usage();
+                    Sys.exit(1);
+                case _ if (src.length == 0):
+                    src.push(directory(arg));
+                case _ if (dst.length == 0):
+                    dst.push(directory(arg, Sys.getCwd() + "out"));
             }
         }
-        if(arg == null) {
+        if (dst.length == 0) {
+            dst.push(directory(arg, Sys.getCwd() + "out"));
+        }
+        if (src == null) {
             usage();
             Sys.exit(1);
         }
-        var cwd = new Path(arg).toString();
-        if (((StringTools.endsWith(cwd, "/") && cwd != "/") || StringTools.endsWith(cwd, "\\")) && !StringTools.endsWith(cwd, ":\\")) {
-            cwd = cwd.substr(0, cwd.length - 1);
-        }
-        if (FileSystem.exists(cwd) && FileSystem.isDirectory(cwd)) {
-            Sys.setCwd(cwd);
-        }
-        src.push(directory(arg));
-        dst.push(directory(args.shift(), "./out"));
-        while (args.length > 1) {
-            src.push(directory(args.shift()));
-            dst.push(directory(args.shift(), "./out"));
-        }
     }
 
-    static var reabs = ~/^([a-z]:|\\\\|\/)/i;
-    static function directory(dir : String, alt = ".") {
+    static var reabs:EReg = ~/^([a-z]:|\\\\|\/)/i;
+    
+    static function directory(dir : String, alt = "."):String {
         if (dir == null)
             dir = alt;
         if(dir.endsWith("/") || dir.endsWith("\\"))
@@ -353,12 +351,12 @@ class Config {
     }
     */
 
-    public function fromXmlString(s:String) {
+    public function fromXmlString(s:String):Void {
         var x = Xml.parse(s);
-        fromXml(new Fast(x.firstElement()));
+        fromXml(new Access(x.firstElement()));
     }
 
-    public function fromXml(f:Fast) {
+    public function fromXml(f:Access):Void {
         for(el in f.elements) {
             switch(el.name) {
             case "indentChars":         setCharField(el, "    ");
@@ -400,7 +398,7 @@ class Config {
         }
     }
 
-    function setBoolField(f:Fast, defaultVal:Bool) {
+    function setBoolField(f:Access, defaultVal:Bool):Void {
         var val = defaultVal;
         if(f.has.value) {
             var c = f.att.value.toLowerCase().charAt(0);
@@ -409,7 +407,7 @@ class Config {
         Reflect.setField(this, f.name, val);
     }
 
-    function setCharField(f:Fast, defaultVal:String, constrain:Array<String> = null) {
+    function setCharField(f:Access, defaultVal:String, constrain:Array<String> = null):Void {
         if(constrain == null) constrain = [];
         var val = (f.has.value) ? f.att.value : defaultVal;
         if(constrain.length > 0) {
@@ -421,7 +419,7 @@ class Config {
         Reflect.setField(this, f.name, unescape(val));
     }
 
-    function setExcludeField(f:Fast, defaultExcludes:List<String>) {
+    function setExcludeField(f:Access, defaultExcludes:List<String>):Void {
         excludePaths = defaultExcludes;
         for (file in f.nodes.path) {
             if (file.has.value) {
@@ -430,7 +428,7 @@ class Config {
         }
     }
 
-    function setLibPaths(f:Fast, defaultLibPaths:Array<String>) {
+    function setLibPaths(f:Access, defaultLibPaths:Array<String>):Void {
         libPaths = defaultLibPaths;
         for (dir in f.nodes.path) {
             if (dir.has.value) {
@@ -439,7 +437,7 @@ class Config {
         }
     }
 
-    function setConditionalVars(f:Fast, defaultVars:List<String>) {
+    function setConditionalVars(f:Access, defaultVars:List<String>):Void {
         conditionalVars = defaultVars;
         for (conditionalVar in f.nodes.variable) {
             if (conditionalVar.has.value) {
@@ -448,7 +446,7 @@ class Config {
         }
     }
 
-    function setImportPaths(f:Fast, defaultVars:Array<String>) {
+    function setImportPaths(f:Access, defaultVars:Array<String>):Void {
         importPaths = defaultVars;
         for (importPath in f.nodes.variable) {
             if (importPath.has.value) {
@@ -457,7 +455,7 @@ class Config {
         }
     }
 
-    function setImportExclude(f:Fast, defaultVars:Array<String>) {
+    function setImportExclude(f:Access, defaultVars:Array<String>):Void {
         importExclude = defaultVars;
         for (importPath in f.nodes.variable) {
             if (importPath.has.value) {
@@ -475,7 +473,7 @@ class Config {
 
     public static function isWindows() : Bool {
         var os = Sys.systemName();
-        return (new EReg("window","i")).match(os);
+        return new EReg("window", "i").match(os);
     }
 
     static function escape(s:String):String {

@@ -4075,7 +4075,7 @@ class Writer
         return s != null && (s.indexOf("Dictionary") == 0 || s.indexOf("openfl.utils.Dictionary") == 0) && cfg.useOpenFlTypes;
     }
 
-    inline function isFunctionType(type:String):Bool {
+    function isFunctionType(type:String):Bool {
         if (type == "Function" || type == "haxe.Constraints.Function") return true;
         if (type == null) return false;
         var delimeters:Array<String> = [];
@@ -4124,7 +4124,7 @@ class Writer
         default: false;
     }
 
-    function addWarning(type:String, isError = false) {
+    function addWarning(type:String, isError = false):Void {
         warnings.set(type, isError);
     }
 

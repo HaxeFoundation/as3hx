@@ -1,7 +1,7 @@
 package test.package;
 
-interface Test
-{
-    function someFunc() : Void;
-}
+interface Test {
 
+	function someFunc():Void;
+
+}

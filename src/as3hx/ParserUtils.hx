@@ -167,8 +167,7 @@ class ParserUtils {
      * In certain cases, a typedef will be generated
      * for a class attribute, for better type safety
      */
-    public static function generateTypeIfNeeded(classVar : ClassField)
-    {
+    public static function generateTypeIfNeeded(classVar : ClassField) {
         //this only applies to static field attributes, as
         //they only define constants values
         if (!Lambda.has(classVar.kwds, "static")) {

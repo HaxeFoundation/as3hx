@@ -28,7 +28,7 @@ class CompatTest
     @Test
     public function getFunctionLength() {
         Assert.areEqual(0, Compat.getFunctionLength(getFunctionLength));
-        Assert.areEqual(3, Compat.getFunctionLength(Assert.areEqual));
+        Assert.areEqual(4, Compat.getFunctionLength(Assert.areEqual));
     }
     
     @Test

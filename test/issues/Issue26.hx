@@ -1,44 +1,33 @@
+class Issue26 {
 
-class Issue26
-{
+	public function new() {}
 
-    public function new()
-    {
-    }
 }
 
+class Foo {
 
-class Foo
-{
-    @:allow()
-    private function foo() : Void
-    {
-    }
-    
-    private function some() : Void
-    {
-    }
+	@:allow()
+	private function foo():Void {}
 
-    public function new()
-    {
-    }
+	private function some():Void {}
+
+	public function new() {}
+
 }
 
-class Bar extends Foo
-{
-    @:allow()
-    override private function foo() : Void
-    {
-        super.foo();
-    }
-    
-    override private function some() : Void
-    {
-        super.some();
-    }
+class Bar extends Foo {
 
-    public function new()
-    {
-        super();
-    }
+	@:allow()
+	override private function foo():Void {
+		super.foo();
+	}
+
+	override private function some():Void {
+		super.some();
+	}
+
+	public function new() {
+		super();
+	}
+
 }

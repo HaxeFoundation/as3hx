@@ -1,7 +1,5 @@
+class Issue303 {
 
-class Issue303
-{
-    public function new(i : Int = 1000)
-    {
-    }
+	public function new(i:Int = 1000) {}
+
 }

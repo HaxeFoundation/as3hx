@@ -1,9 +1,8 @@
+class Issue198 {
 
-class Issue198
-{
-    public function new()
-    {
-        var b : Bool;
-        b = b && true;
-    }
+	public function new() {
+		var b:Bool;
+		b = b && true;
+	}
+
 }

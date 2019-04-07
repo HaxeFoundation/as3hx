@@ -1,12 +1,11 @@
 package test.package;
 
-class Min
-{
-    private var testAttr : Int = 1;
+class Min {
 
-    public function new()
-    {
-        var test : String = "hello";
-    }
+	private var testAttr:Int = 1;
+
+	public function new() {
+		var test:String = 'hello';
+	}
+
 }
-

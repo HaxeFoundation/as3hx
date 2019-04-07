@@ -1,9 +1,8 @@
+class Issue261 {
 
-class Issue261
-{
-    public function new()
-    {
-        var a : Array<Dynamic> = [{ }];
-        Reflect.setField(a[a.length - 1], "some", 10);
-    }
+	public function new() {
+		var a:Array<Dynamic> = [{}];
+		Reflect.setField(a[a.length - 1], 'some', 10);
+	}
+
 }

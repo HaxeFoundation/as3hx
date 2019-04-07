@@ -1,13 +1,9 @@
-import flash.utils.Dictionary;
+class Dict {
 
-class Dict
-{
+	private var _dic:haxe.ds.ObjectMap<Dynamic, Dynamic> = new haxe.ds.ObjectMap<Dynamic, Dynamic>();
 
-    private var _dic : Dictionary = new Dictionary();
+	public function new() {
+		var dic:haxe.ds.ObjectMap<Dynamic, Dynamic> = new haxe.ds.ObjectMap<Dynamic, Dynamic>();
+	}
 
-    public function new()
-    {
-        var dic : Dictionary = new Dictionary();
-    }
 }
-

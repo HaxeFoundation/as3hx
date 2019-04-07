@@ -1,19 +1,17 @@
-
 typedef ConfigsTypedef = {
-    var name : String;
-    var id : Int;
+	var name: String;
+	var id: Int;
 }
 
-class Issue95
-{
-    private static var _configs : Array<ConfigsTypedef> = [
-        {
-            name : "name",
-            id : 10
-        }
-    ];
+class Issue95 {
 
-    public function new()
-    {
-    }
+	private static var _configs:Array<ConfigsTypedef> = [
+		{
+			name: 'name',
+			id: 10
+		}
+	];
+
+	public function new() {}
+
 }

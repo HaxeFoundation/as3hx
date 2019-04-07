@@ -24,6 +24,11 @@ class AS3HXTest {
         output = new BytesOutput();
     }
 
+    @Before
+    public function setup() {
+        cfg.processDefaultConfig();
+    }
+    
     @Test
     public function issue14() {
         generate("Issue14.as", "Issue14.hx");
@@ -571,6 +576,21 @@ class AS3HXTest {
         generate("Issue27.as", "Issue27.hx");
     }
 
+    @Test("for(var i = 5; i < a.length; a.pop()) -> while(i < a.length)")
+    public function issue296() {
+        generate("Issue296.as", "Issue296.hx");
+    }
+
+    @Test("for(var i = 0; some(i); i++) -> while(i < some(i))")
+    public function issue296_1() {
+        generate("Issue296_1.as", "Issue296_1.hx");
+    }
+    
+    @Test("https://github.com/HaxeFoundation/as3hx/issues/323")
+    public function issue323() {
+        generate("Issue323.as", "Issue323.hx");
+    }
+    
     function generate(as3FileName:String, expectedHaxeFileName:String) {
         var issuesDirectory = FileSystem.absolutePath("test/issues");
         var generatedDirectoryPath = '$issuesDirectory/generated';

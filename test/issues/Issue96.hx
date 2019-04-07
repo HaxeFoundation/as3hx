@@ -1,9 +1,8 @@
+class Issue96 {
 
-class Issue96
-{
-    public function new()
-    {
-        var o : Dynamic = "";
-        var s : String = (Std.is(o, String)) ? Std.string(o) : "";
-    }
+	public function new() {
+		var o:Dynamic = '';
+		var s:String = (Std.is(o, String)) ? Std.string(o) : '';
+	}
+
 }

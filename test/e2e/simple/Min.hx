@@ -1,7 +1,5 @@
-class Min
-{
-    public function new()
-    {
-    }
-}
+class Min {
 
+	public function new() {}
+
+}

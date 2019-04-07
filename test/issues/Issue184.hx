@@ -1,9 +1,8 @@
+class Issue184 {
 
-class Issue184
-{
-    public function new()
-    {
-        var a : Array<Dynamic> = [];
-        a.insert(0, 1);
-    }
+	public function new() {
+		var a:Array<Dynamic> = [];
+		a.insert(0, 1);
+	}
+
 }

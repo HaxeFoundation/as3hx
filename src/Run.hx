@@ -3,7 +3,6 @@ using StringTools;
 import as3hx.As3.Program;
 import as3hx.Config;
 import as3hx.Error;
-import as3hx.ParserUtils;
 import as3hx.Writer;
 import sys.FileSystem;
 import sys.io.File;
@@ -11,15 +10,15 @@ using haxe.io.Path;
 
 class Run {
 
-    static var errors : Array<String> = new Array();
-    static var warnings : Map<String,Map<String,Bool>> = new Map();
-    static var cfg : as3hx.Config;
+    static var errors:Array<String> = [];
+    static var warnings:Map<String, Map<String, Bool>> = new Map();
+    static var cfg:as3hx.Config;
     static var writer:Writer;
     static var currentDstPath:String;
-    static var files:Array<FileEntry> = new Array<FileEntry>();
+    static var files:Array<FileEntry> = [];
 
-
-    public static function main() {
+    public static function main():Void {
+        Sys.setCwd(Sys.args().pop());
         cfg = new as3hx.Config();
         if (cfg.useFullTyping) {
             writer = new Writer(cfg);
@@ -99,14 +98,13 @@ class Run {
     static function parseFile(fileLocation:String, fileName:String, file:String):Program {
         var p = new as3hx.Parser(cfg);
         var content = File.getContent(file);
-        var program = p.parseString(content, fileLocation, fileName);
-        /*/try {
+        return try {
             p.parseString(content, fileLocation, fileName);
         } catch (e : Error) {
             #if macro
             File.stderr().writeString(file + ":" + p.tokenizer.line + ": " + errorString(e) + "\n");
             #end
-            if(cfg.errorContinue) {
+            if (cfg.errorContinue) {
                 errors.push("In " + file + "(" + p.tokenizer.line + ") : " + errorString(e));
                 null;
             } else {
@@ -117,11 +115,10 @@ class Run {
                     null;
                 #end
             }
-        }//*/
-        return program;
+        }
     }
 
-    static function errorString(e : Error) {
+    static function errorString(e : Error):String {
         return switch(e) {
             case EInvalidChar(c): "Invalid char '" + String.fromCharCode(c) + "' 0x" + StringTools.hex(c, 2);
             case EUnexpected(src): "Unexpected " + src;
@@ -144,9 +141,9 @@ class Run {
         }
     }
 
-    static function postProcessor(?postProcessor:String = "", ?outFile:String = "") {
+    static function postProcessor(?postProcessor:String = "", ?outFile:String = ""):Void {
         if(postProcessor != "" && outFile != "") {
-            Sys.println('Running post-processor ' + postProcessor + ' on file: ' + outFile);
+            Sys.println("Running post-processor " + postProcessor + " on file: " + outFile);
             Sys.command(postProcessor, [outFile]);
         }
     }
@@ -154,15 +151,15 @@ class Run {
     //if a .hx file with the same name as the .as file is found in the .as
     //file directory, then it is considered the expected output of the conversion
     //and is diffed against the actual output
-    static function verifyGeneratedFile(file:String, src:String, outFile:String) {
+    static function verifyGeneratedFile(file:String, src:String, outFile:String):Void {
         var test = src.addTrailingSlash() + Writer.properCase(file.substr(0, -3), true) + ".hx";
         if (FileSystem.exists(test) && FileSystem.exists(outFile)) {
             Sys.println("expected HX file: " + test);
             var expectedFile = File.getContent(test);
             var generatedFile = File.getContent(outFile);
             if (generatedFile != expectedFile) {
-                Sys.println('Don\'t match generated file:' + outFile);
-                Sys.command('diff', [test, outFile]);
+                Sys.println("Don't match generated file:" + outFile);
+                Sys.command("diff", [test, outFile]);
             }
         }
     }

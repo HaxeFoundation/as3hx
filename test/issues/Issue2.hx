@@ -1,10 +1,9 @@
+class Issue2 {
 
-class Issue2
-{
-    public function new()
-    {
-        trace({
-                    name : "hello"
-                });
-    }
+	public function new() {
+		trace({
+					name: 'hello'
+				});
+	}
+
 }
