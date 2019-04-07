@@ -1,4 +1,5 @@
 package as3hx;
+
 import as3hx.As3.ClassDef;
 import as3hx.As3.ClassField;
 import as3hx.As3.Expr;
@@ -11,33 +12,33 @@ import as3hx.RebuildUtils.RebuildResult;
 /**
  * AS3 typing allows multiple equal variable type declarations in one method and opens new variable context only inside function, not in any {} block
  */
-class Typer
-{
-    public var classes(default,null) : Map<String,Map<String,String>> = new Map<String,Map<String,String>>();
-    public var classDefs(default,null) : Map<String,ClassDef> = new Map<String,ClassDef>();
-    public var classChildren(default,null):Map<String,Array<String>> = new Map<String,Array<String>>();
+class Typer {
+
+    public var classes(default,null) : Map<String, Map<String, String>> = new Map<String, Map<String, String>>();
+    public var classDefs(default,null) : Map<String, ClassDef> = new Map<String, ClassDef>();
+    public var classChildren(default,null):Map<String, Array<String>> = new Map<String, Array<String>>();
     public var currentPath(default, null):String = null;
     var cfg:Config;
-    var classesByPackages:Map<String,Map<String,String>> = new Map<String,Map<String,String>>();
-    var parentStaticFields : Map<String,String> = new Map<String,String>();
-    var funDefs : Map<String,String> = new Map<String,String>();
-    var classPrograms : Map<ClassDef,Program> = new Map<ClassDef,Program>();
-    var staticContext : Map<String,String> = new Map<String,String>();
-    var context : Map<String,String> = new Map<String,String>();
-    var contextStack : Array<Map<String,String>> = [];
+    var classesByPackages:Map<String, Map<String, String>> = new Map<String, Map<String, String>>();
+    var parentStaticFields : Map<String, String> = new Map<String, String>();
+    var funDefs : Map<String, String> = new Map<String, String>();
+    var classPrograms : Map<ClassDef, Program> = new Map<ClassDef, Program>();
+    var staticContext : Map<String, String> = new Map<String, String>();
+    var context : Map<String, String> = new Map<String,String>();
+    var contextStack : Array<Map<String, String>> = [];
     var functionStack : Array<Function> = [];
     var functionStackName : Array<String> = [];
     var pack:String = null;
-    var importsMap : Map<String,String>;
-    var classPacks:Map<ClassDef,String> = new Map<ClassDef,String>();
+    var importsMap : Map<String, String>;
+    var classPacks:Map<ClassDef, String> = new Map<ClassDef, String>();
     var _hostClassRef:Reference<ClassDef> = new Reference<ClassDef>();
 
     public function new(cfg:Config) {
         this.cfg = cfg;
     }
 
-    public function getContextClone(relativeLevel:Int = 0):Map<String,String> {
-        var context:Map<String,String>;
+    public function getContextClone(relativeLevel:Int = 0):Map<String, String> {
+        var context:Map<String, String>;
         if (relativeLevel < 0 && -relativeLevel <= contextStack.length) {
             context = contextStack[contextStack.length + relativeLevel];
         } else {
@@ -72,7 +73,7 @@ class Typer
     private function getQualifiedClassName(shortName:String):String {
         if (classes.exists(shortName)) return shortName;
         if (importsMap != null && importsMap.exists(shortName)) return importsMap.get(shortName);
-        return '';
+        return "";
     }
 
     public function getThisIdentType(ident:String):String {
@@ -647,7 +648,7 @@ class Typer
                         s;
                 }
             case TComplex(e): return getExprType(e); // not confirmed
-            case TDictionary(k, v): (cfg.dictionaryToHash ? "haxe.ds.ObjectMap" : "Dictionary") + "<" + tstring(k) + "," + tstring(v) + ">";
+            case TDictionary(k, v): (cfg.dictionaryToHash ? "haxe.ds.ObjectMap" : "Dictionary") + "<" + tstring(k) + ", " + tstring(v) + ">";
             case TFunction(p): p.map(function(it) {
                     var s:String = tstring(it);
                     if (s != null && s.indexOf("->") != -1) {
@@ -1184,7 +1185,7 @@ class Typer
     }
 
     private function unshiftIntoFunction(f:Function, toInsert:Array<Expr>):Void {
-        var doInsert:Expr->Expr = null;
+        var doInsert:Expr -> Expr = null;
         doInsert = function(e) {
             if(e == null) return null;
             switch(e) {
@@ -1209,7 +1210,6 @@ class Typer
         return tstring(a) == tstring(b);
     }
 
-
     private function getClassPath(c:ClassDef):String {
         var pack:String = classPacks[c];
         if (pack != null && pack.length > 0) {
@@ -1230,7 +1230,7 @@ class Typer
         }
     }
 
-    public function getImportString(i : Array<String>, hasClassName:Bool) {
+    public function getImportString(i : Array<String>, hasClassName:Bool):String {
         if (i[0] == "flash") {
             i[0] = cfg.flashTopLevelPackage;
             return i.join(".");
@@ -1262,8 +1262,8 @@ class Typer
     public function enterClass(path:String, c:ClassDef):Void {
         currentPath = path;
         //parentStaticFields = new Map<String,String>();
-        staticContext = new Map<String,String>();
-        var classMap:Map<String,String>;
+        staticContext = new Map<String, String>();
+        var classMap:Map<String, String>;
         classMap = classes.get(path);
         var ic:ClassDef = c;
         var parentPath:String = path;

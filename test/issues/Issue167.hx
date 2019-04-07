@@ -1,4 +1,5 @@
 import flash.geom.Point;
+
 class Issue167 {
 
 	public function new(p:Point = null) {

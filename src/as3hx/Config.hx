@@ -494,10 +494,10 @@ class Config {
         return
 '<as3hx>
     <errorContinue value="true" />
-    <indentChars value="    " />
+    <indentChars value="\\t" />
     <newlineChars value="\\n" />
-    <bracesOnNewline value="true" />
-    <spacesOnTypeColon value="true" />
+    <bracesOnNewline value="false" />
+    <spacesOnTypeColon value="false" />
     <uintToInt value="true" />
     <vectorToArray value="true" />
     <guessCasts value="true" />

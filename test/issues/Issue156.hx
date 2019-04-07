@@ -15,8 +15,4 @@ class Issue156 extends EventDispatcher {
 
 class PrivateClass extends Sprite {
 
-	public function new() {
-		super();
-	}
-
 }

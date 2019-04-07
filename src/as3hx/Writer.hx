@@ -1,5 +1,6 @@
 package as3hx;
 
+import haxe.io.BytesOutput;
 import as3hx.As3;
 import as3hx.RebuildUtils.RebuildResult;
 import haxe.io.Output;
@@ -172,7 +173,7 @@ class Writer
 
     inline function getColon():String return cfg.spacesOnTypeColon ? " : " : ":";
 
-    function writeComments(comments : Array<Expr>) {
+    function writeComments(comments : Array<Expr>):Void {
         for(c in comments) {
             switch(c) {
             case null:
@@ -201,19 +202,15 @@ class Writer
         }
     }
 
-    function writePackage(pack : Array<String>)
-    {
-        if (pack.length > 0)
-        {
+    function writePackage(pack : Array<String>):Void {
+        if (pack.length > 0) {
             writeLine("package " + properCaseA(pack,false).join(".") + ";");
             writeNL();
         }
     }
 
-    function writeImports(imports : Array<Array<String>>)
-    {
-        if (imports.length > 0)
-        {
+    function writeImports(imports : Array<Array<String>>):Void {
+        if (imports.length > 0) {
             for (i in imports) {
                 writeImport(i);
                 writeNL();
@@ -222,8 +219,7 @@ class Writer
         }
     }
 
-    function writeImport(i : Array<String>)
-    {
+    function writeImport(i : Array<String>):Void {
         var type = typer.getImportString(i, true);
         if (cfg.importExclude != null && cfg.importExclude.indexOf(type) != -1) {
             var short:String = type.substr(type.lastIndexOf(".") + 1);
@@ -243,8 +239,7 @@ class Writer
         }
     }
 
-    function writeAdditionalImports(defPackage : Array<String>, allTypes : Array<T>, definedTypes : Array<String>)
-    {
+    function writeAdditionalImports(defPackage : Array<String>, allTypes : Array<T>, definedTypes : Array<String>):Void {
         // We don't want to import any type that is defined within
         // this file, so add each of those to the type import map
         // first.
@@ -280,7 +275,7 @@ class Writer
 
         // Now look up each type import string in the type import
         // map.
-        var addnImports = new Array<String>();
+        var addnImports:Array<String> = [];
         for(u in uniqueTypes.keys()) {
             if (typeImportMap.exists(u)) {
                 var nu:String = typeImportMap.get(u);
@@ -302,14 +297,12 @@ class Writer
         }
     }
 
-    function writeDefinitions(defs : Array<Definition>)
-    {
+    function writeDefinitions(defs : Array<Definition>):Void {
         for(d in defs)
             writeDefinition(d);
     }
 
-    function writeDefinition(def : Definition)
-    {
+    function writeDefinition(def : Definition):Void {
         switch(def)
         {
             case CDef(c): writeClassDef(c);
@@ -318,7 +311,7 @@ class Writer
         }
     }
 
-    function writeMetaData(data:Array<Expr>) {
+    function writeMetaData(data:Array<Expr>):Void {
         if(data == null)
             return;
 
@@ -352,8 +345,7 @@ class Writer
         }
     }
 
-    function writeClassDef(c : ClassDef)
-    {
+    function writeClassDef(c : ClassDef):Void {
         writeMetaData(c.meta);
 
         if (!generatedTypesWritten) {
@@ -385,6 +377,7 @@ class Writer
             buf.add(" " + parents.join(" "));
         buf.add(openb());
         write(buf.toString());
+        writeNL();
         lvl++;
 
         var path:String = (pack.length > 0 ? pack.join(".") + "." : "") + c.name;
@@ -394,6 +387,7 @@ class Writer
 
         // process properties
         writeProperties(c);
+        writeNL();
 
         // process fields
         writeFields(c);
@@ -410,8 +404,7 @@ class Writer
     }
 
     var propertyMap = new Map();
-    function tryAddProperty(field:ClassField, f:Function):Void
-    {
+    function tryAddProperty(field:ClassField, f:Function):Void {
         var isGetter:Bool = this.isGetter(field.kwds);
         var isSetter:Bool = !isGetter && this.isSetter(field.kwds);
         if (isGetter || isSetter)
@@ -444,8 +437,8 @@ class Writer
             }
         }
     }
-    function tryWritePropertyVar(field:ClassField, c:ClassDef):Void
-    {
+
+    function tryWritePropertyVar(field:ClassField, c:ClassDef):Void {
         if (!propertyMap.exists(field.name))
             return;
 
@@ -488,8 +481,7 @@ class Writer
         }
     }
 
-    function writeProperties(c : ClassDef)
-    {
+    function writeProperties(c : ClassDef):Void {
         for (field in c.fields)
         {
             switch(field.kind)
@@ -552,8 +544,7 @@ class Writer
         //}
     //}
 
-    function writeFields(c : ClassDef)
-    {
+    function writeFields(c : ClassDef):Void {
         if (c.isInterface) {
             for (field in c.fields) {
                 writeField(field, c);
@@ -562,12 +553,12 @@ class Writer
         }
 
         var constructor:Function = null;
-        var constructorFieldInits:Array<Expr> = new Array<Expr>();
+        var constructorFieldInits:Array<Expr> = [];
         var hasConstructor:Bool = false;
         var needConstructor:Bool = false;
 
         for (field in c.fields) {
-            switch(field.kind) {
+            switch (field.kind) {
                 case FFun ( f ):
                     if (!hasConstructor && field.name == c.name) {
                         constructor = f;
@@ -619,7 +610,6 @@ class Writer
             constructor.expr = EBlock(constructorFieldInits);
         }
 
-
         for (field in c.fields) {
             writeField(field, c);
         }
@@ -650,8 +640,7 @@ class Writer
         }
     }
 
-    function writeField(field : ClassField, c : ClassDef)
-    {
+    function writeField(field : ClassField, c : ClassDef):Void {
         var isGet : Bool = isGetter(field.kwds);
         var isSet : Bool = isSetter(field.kwds);
         var isFun : Bool = switch(field.kind) {case FFun(_): true; default: false;};
@@ -800,6 +789,7 @@ class Writer
 
                 write(";");
             case FFun( f ):
+                writeNL();
                 writeMetaData(field.meta);
                 RebuildUtils.rebuild(f.expr, lookUpForNamespaces);
                 if (field.name == c.name)
@@ -885,8 +875,7 @@ class Writer
      * Return a new array containing all the conditional
      * compilation constants from the provided array
      */
-    function getCondComp(exprs : Array<Expr>) : Array<String>
-    {
+    function getCondComp(exprs : Array<Expr>) : Array<String> {
         var condComps = [];
         for (expr in exprs)
         {
@@ -903,8 +892,7 @@ class Writer
      * Return a new array containing all the conditional
      * compilation expressions from the provided array
      */
-    function getECondComp(exprs : Array<Expr>) : Array<Expr>
-    {
+    function getECondComp(exprs : Array<Expr>) : Array<Expr> {
         var condComps = [];
         for (expr in exprs)
         {
@@ -922,12 +910,10 @@ class Writer
      * contains a conditional compilation expr for the
      * condComp compilation constant
      */
-    function hasCondComp(condComp : String, exprs : Array<Expr>) : Bool
-    {
-        for (expr in exprs)
-        {
+    function hasCondComp(condComp : String, exprs : Array<Expr>) : Bool {
+        for (expr in exprs) {
             switch (expr) {
-                case ECondComp(v,e,e2):
+                case ECondComp(v, e, e2):
                     if (condComp == v) {
                         return true;
                     }
@@ -941,8 +927,7 @@ class Writer
      * Write closing statement ("#end") for conditional
      * conpilation if any
      */
-    function writeECondCompEnd(condComps : Array<String>) : Void
-    {
+    function writeECondCompEnd(condComps : Array<String>) : Void {
         for (i in 0...condComps.length) {
             writeNL();
             writeIndent("#end");
@@ -952,8 +937,7 @@ class Writer
         }
     }
 
-    function writeArgs(args : Array<{ name : String, t : Null<T>, val : Null<Expr>, exprs : Array<Expr> }>, varArgs:String = null, functionExpressions:Array<Expr>)
-    {
+    function writeArgs(args : Array<{ name : String, t : Null<T>, val : Null<Expr>, exprs : Array<Expr> }>, varArgs:String = null, functionExpressions:Array<Expr>) {
         if(varArgs != null && !cfg.replaceVarArgsWithOptionalArguments) {
             var varArg = {
                 name:varArgs,
@@ -1039,7 +1023,7 @@ class Writer
                     case ENL(_): //newline
                         if (pendingComma) {
                             pendingComma = false;
-                            write(",");
+                            write(", ");
                         }
                         writeNL();
                         writeIndent();
@@ -1082,7 +1066,7 @@ class Writer
         return fst;
     }
 
-    function writeConstructor(f:Function, isSubClass:Bool) {
+    function writeConstructor(f:Function, isSubClass:Bool):Void {
         //add super if missing, as it is mandatory in Haxe for subclasses
         if (isSubClass && !constructorHasSuper(f.expr)) {
             switch(f.expr) {
@@ -1101,13 +1085,13 @@ class Writer
             es = new VarExprFix(cfg).apply(f, es, typer);
         }
         writeExpr(EBlock(es));
+        writeNL();
     }
 
     /**
      * Wether constructor method has a super() call
      */
-    function constructorHasSuper(?expr : Expr) : Bool
-    {
+    function constructorHasSuper(?expr : Expr) : Bool {
         if (expr == null) return false;
         var hasSuper:Bool = false;
         function rebuildHasSuper(e:Expr):RebuildResult {
@@ -1134,7 +1118,7 @@ class Writer
         return result;
     }
 
-    function writeFunction(f : Function, isGetter:Bool, isSetter:Bool, isNative:Bool, ?name : Null<String>, ?ret : FunctionRet, ?meta:Array<Expr>) {
+    function writeFunction(f : Function, isGetter:Bool, isSetter:Bool, isNative:Bool, ?name : Null<String>, ?ret : FunctionRet, ?meta:Array<Expr>):Void {
         var oldFunctionReturnType:T = functionReturnType;
         functionReturnType = f.ret.t;
 
@@ -1162,8 +1146,8 @@ class Writer
         if (ret == null)
             ret = f.ret;
         writeFunctionReturn(ret, isGetter, isSetter, isNative);
-        var formatExpr:Expr->(Expr->Expr)->Expr = null;
-        var formatBlock:Array<Expr>->(Expr->Expr)->Array<Expr> = function(exprs, getResult) {
+        var formatExpr:Expr -> (Expr -> Expr) -> Expr = null;
+        var formatBlock:Array<Expr> -> (Expr -> Expr) -> Array<Expr> = function(exprs, getResult) {
             for(i in 0...exprs.length) {
                 exprs[i] = formatExpr(exprs[i], getResult);
             }
@@ -1186,11 +1170,11 @@ class Writer
                 default: e;
             }
         }
-        if(isIntType(tstring(ret.t))) {
+        if (isIntType(tstring(ret.t))) {
             formatBlock(es, function(?e) return e != null && needCastToInt(e) ? getCastToIntExpr(e) : e);
         }
         // haxe setters must return the provided type
-        if(isSetter && !isNative && f.args.length == 1) {
+        if (isSetter && !isNative && f.args.length == 1) {
             var result = EIdent(f.args[0].name);
             formatBlock(es, function(e) {
                 if (e != null) {
@@ -1205,8 +1189,10 @@ class Writer
         if (cfg.fixLocalVariableDeclarations) {
             es = new VarExprFix(cfg).apply(f, es, typer);
         }
-        writeStartStatement();
+        if (!isInterface)
+            writeStartStatement();
         writeExpr(EBlock(es));
+        writeNL();
         functionReturnType = oldFunctionReturnType;
     }
 
@@ -1214,14 +1200,14 @@ class Writer
      * Write the returned typed of a function and all
      * comments and newline until opening bracket
      */
-    function writeFunctionReturn(ret:FunctionRet, isGetter : Bool, isSetter : Bool, isNative : Bool) {
+    function writeFunctionReturn(ret:FunctionRet, isGetter : Bool, isSetter : Bool, isNative : Bool):Void {
         //write return type
         if(isNative) {
             if(isGetter) writeVarType(ret.t, "{}", true);
             if(isSetter) writeVarType(null, "Void", true);
         }
         else
-            writeVarType(ret.t,null,false);
+            writeVarType(ret.t, null, false);
 
         //write comments after return type
         for (expr in ret.exprs) {
@@ -1237,7 +1223,7 @@ class Writer
         write("/* " + p + " */");
     }
 
-    inline function writeEReturn(?e:Expr) {
+    inline function writeEReturn(?e:Expr):Void {
         write("return");
         if(e == null) return;
         write(" ");
@@ -1248,7 +1234,7 @@ class Writer
         return isArrayType(etype) || isVectorType(etype) || isOpenFlDictionaryType(etype) || isMapType(etype) || isByteArrayType(etype);
     }
 
-    function writeEArray(e:Expr, index:Expr) {
+    function writeEArray(e:Expr, index:Expr):Void {
         //write("/* EArray ("+Std.string(e)+","+Std.string(index)+") " + Std.string(getExprType(e, true)) + "  */ ");
         var old = inArrayAccess;
         inArrayAccess = true;
@@ -1326,22 +1312,19 @@ class Writer
         }
     }
 
-    function writeLoop(incrs:Array<Expr>, f:Void->Void) {
+    function writeLoop(incrs:Array<Expr>, f:Void -> Void):Void {
         var old = loopIncrements;
         loopIncrements = incrs.slice(0);
         f();
         loopIncrements = old;
     }
 
-    static function ucfirst(s : String) : String
-    {
+    static function ucfirst(s : String) : String {
         return s.substr(0, 1).toUpperCase() + s.substr(1);
     }
 
-    function writeVarType(?t : Null<T>, ?alt : String, isNativeGetSet:Bool=false)
-    {
-        if (t == null)
-        {
+    function writeVarType(?t : Null<T>, ?alt : String, isNativeGetSet:Bool = false):Void {
+        if (t == null) {
             if (alt != null)
                 write(getColon() + alt);
             return;
@@ -1353,7 +1336,7 @@ class Writer
         write(getColon() + s);
     }
 
-    function writeInits(c : ClassDef) {
+    function writeInits(c : ClassDef):Void {
         if(c.inits == null || c.inits.length == 0)
             return;
         writeNL("");
@@ -1372,10 +1355,8 @@ class Writer
         writeNL("}");
     }
 
-    function getConst(c : Const) : String
-    {
-        return switch(c)
-        {
+    function getConst(c : Const) : String {
+        return switch(c) {
             case CInt(v), CFloat(v): v;
             case CString(s): quote(s);
         }
@@ -1400,7 +1381,7 @@ class Writer
         }
     }
 
-    function writeModifiedIdent(s : String) {
+    function writeModifiedIdent(s : String):Void {
         s = typer.getModifiedIdent(s);
         write(s);
     }
@@ -1413,7 +1394,7 @@ class Writer
         if(cfg.debugExpr) write(" /* " + Std.string(expr) + " */ ");
         if(expr == null) return None;
         var rv = Semi;
-        switch(expr) {
+        switch (expr) {
             case ETypedExpr(e, t): rv = writeETypedExpr(e, t);
             case EConst(c): write(getConst(c));
             case EIdent(v): writeModifiedIdent(v);
@@ -1512,14 +1493,14 @@ class Writer
             case ETry(e, catches): rv = writeETry(e, catches);
             case EObject(fl):
                 if (fl.empty()) {
-                    write("{ }");
+                    write("{}");
                 } else {
                     writeNL("{");
                     lvl++;
                     var length = fl.length;
                     for (i in 0...length) {
                         var field = fl[i];
-                        if (i > 0) writeNL(",");
+                        if (i > 0) writeNL(", ");
                         var field = fl[i];
                         writeIndent(prepareObjectFieldName(field.name) + (cfg.spacesOnTypeColon ? " : " : ": "));
                         writeExpr(field.e);
@@ -1528,7 +1509,7 @@ class Writer
                     writeNL();
                     writeIndent("}");
                 }
-            case ERegexp(str, opts): write('new ${getExprType(expr)}(' + eregQuote(str) + ', "' + opts + '")');
+            case ERegexp(str, opts): write('new ${getExprType(expr)}(' + eregQuote(str) + ", '" + opts + "')");
             case ENamespaceAccess(e, f): writeExpr(e);
             case ESwitch( e, cases, def):
                 var newCases : Array<CaseDef> = new Array();
@@ -1606,8 +1587,8 @@ class Writer
 
                     writeMetaData(c.meta); //write commnent and newline before "case"
                     write("case ");
-                    for(i in 0...c.vals.length) {
-                        write(i>0 ? ", " : "");
+                    for (i in 0...c.vals.length) {
+                        write(i > 0 ? ", " : "");
                         writeExpr(c.vals[i]);
                     }
                     write(":");
@@ -1689,19 +1670,19 @@ class Writer
             case ECommented(s, b, t, ex): rv = writeECommented(s,b,t,ex);
             case EMeta(m):
                 if (!cfg.convertFlexunit || !writeMunitMetadata(m)) {
-                    write("@:meta("+m.name+"(");
+                    write("@:meta(" + m.name + "(");
                     var first = true;
                     for(arg in m.args) {
                         if(!first)
-                            write(",");
+                            write(", ");
                         first = false;
                         if(arg.name != null)
-                            write(arg.name + "=");
+                            write(arg.name + " = ");
                         else
-                            write("name=");
+                            write("name = ");
                         writeExpr(arg.val);
                     }
-                    writeNL("))");
+                    write("))");
                 }
             case ETypeof(e):
                 switch(e) {
@@ -1792,13 +1773,13 @@ class Writer
         return rv;
     }
 
-    function writeSwitchDefault(def:SwitchDefault) {
+    function writeSwitchDefault(def:SwitchDefault):Void {
         if(def.vals != null && def.vals.length > 0) {
             writeNL();
             writeIndent();
             write("/* covers case ");
             for (i in 0 ... def.vals.length) {
-                write(i>0 ? ", " : "");
+                write(i > 0 ? ", " : "");
                 writeExpr(def.vals[i]);
             }
             write(":");
@@ -1818,7 +1799,7 @@ class Writer
             }
         }
         writeMetaData(newMeta); //write comment and newline before "default"
-        write("default:");
+        write("case _:");
         lvl++;
         for (i in 0...def.el.length)
         {
@@ -1837,7 +1818,10 @@ class Writer
                 //writeFinish(writeETypedExpr(ex, TPath([null])));
             }
             lvl--;
-            write(closeb());
+            if (e.length > 0)
+                write(closeb());
+            else
+                write("}");
             result = None;
         } else {
             write(";");
@@ -2028,7 +2012,7 @@ class Writer
         return result;
     }
 
-    inline function writeEParent(e:Expr) {
+    inline function writeEParent(e:Expr):Void {
         switch(e) {
             case EParent(e): writeExpr(e);
             default:
@@ -2041,6 +2025,7 @@ class Writer
     function writeECall(fullExpr:Expr, expr:Expr, params:Array<Expr>):BlockEnd {
         switch(expr) {
             case EField(expr, f):
+                    trace('-----');
                 if ((f == "push" || f == "unshift") && params.length > 1 && (isArrayExpr(expr) || isVectorExpr(expr))) {
                     if (f == "unshift") {
                         params = params.copy();
@@ -2397,7 +2382,7 @@ class Writer
     }
 
     inline function writeEFor(inits:Array<Expr>, conds:Array<Expr>, incrs:Array<Expr>, e:Expr):BlockEnd {
-        //Sys.println('inits: ${inits}; conds: ${conds}; incrs: ${incrs}');
+        // Sys.println('inits: ${inits}; conds: ${conds}; incrs: ${incrs}');
         for (i in 0...inits.length - 1) {
             var e:Expr = inits[i];
             writeExpr(ENL(e));
@@ -2797,10 +2782,10 @@ class Writer
                 }
             default:
         }
-        if((isIntType(type) || type == "UInt") && op == "!") {
+        if ((isIntType(type) || type == "UInt") && op == "!") {
             writeExpr(EBinop("!=", e, EConst(CInt("0")), false));
             result = None;
-        } else if(prefix) {
+        } else if (prefix) {
             write(op);
             writeExpr(e);
         } else {
@@ -2812,7 +2797,7 @@ class Writer
 
     inline function getToStringExpr(e:Expr):Expr return ECall(EField(EIdent("Std"), "string"), [e]);
 
-    function writeCastToInt(e:Expr) {
+    function writeCastToInt(e:Expr):Void {
         var type = getExprType(e);
         if(type != "Int") {
             e = getCastToIntExpr(e);
@@ -2838,7 +2823,7 @@ class Writer
         return ECall(EField(EIdent("Std"), "parseInt"), [getToStringExpr(e)]);
     }
 
-    function writeCastToFloat(e:Expr) {
+    function writeCastToFloat(e:Expr):Void {
         var type = getExprType(e);
         if (type != "Float" && type != "Int") {
             e = getCastToFloatExpr(e);
@@ -2989,7 +2974,7 @@ class Writer
     //      return false;
     //  });
     // e1.(@user_id == 3) attribute search
-    function writeE4XFilterExpr(e1:Expr, e2:Expr) {
+    function writeE4XFilterExpr(e1:Expr, e2:Expr):Void {
         if(inE4XFilter)
             throw "Unexpected E4XFilter inside E4XFilter";
 
@@ -3060,11 +3045,11 @@ class Writer
     inline function writeENew(t : T, params : Array<Expr>):Void {
         var writeParams = function() {
             var argTypes:Array<T> = typer.getClassConstructorTypes(tstring(t));
-            for(i in 0...params.length) {
-                if(i > 0)
+            for (i in 0...params.length) {
+                if (i > 0)
                     write(", ");
                 var param:Expr = params[i];
-                switch(param) {
+                switch (param) {
                     case EVector(t):
                         param = EIdent("Vector");
                     default:
@@ -3076,7 +3061,7 @@ class Writer
                 }
             }
         }
-        switch(t) {
+        switch (t) {
             case TComplex(e):
                 var pack:Array<String> = typer.getPackString(e);
                 if (pack != null) {
@@ -3086,7 +3071,7 @@ class Writer
         }
         var isVariable:Bool = false;
         var handled = false;
-        switch(t) {
+        switch (t) {
             case TPath(p) if (p.length == 1 && typer.isVariable(p[0])): isVariable = true;
             default:
         }
@@ -3141,9 +3126,7 @@ class Writer
         }
         if (!handled) {
             if (isObject) write("{}");
-            else if (isDictionary) {
-            }
-            else write("new " + tstring(t) + "(");
+            else if (!isDictionary) write("new " + tstring(t) + "(");
             // prevent params when converting vector to array
             var out = switch(t) {
                 case TVector(_): !cfg.vectorToArray;
@@ -4030,7 +4013,7 @@ class Writer
         //if (validVariableNameEReg.match(name)) {
             //return name;
         //} else {
-            return '"' + name + '"';
+            return "'" + name + "'";
         //}
     }
 
@@ -4130,12 +4113,12 @@ class Writer
 
     static function quote(s : String) : String
     {
-        return '"' + StringTools.replace(s, '"', '\\"') + '"';
+        return "'" + StringTools.replace(s, "'", "\\'") + "'";
     }
 
     static function eregQuote(s : String) : String
     {
-        return '"' + StringTools.replace(StringTools.replace(s, '\\', '\\\\'), '"', '\\"') + '"';
+        return "'" + StringTools.replace(StringTools.replace(s, '\\', '\\\\'), "'", "\\'") + "'";
     }
 
     function isOverride(kwds : Array<String>) : Bool
@@ -4215,8 +4198,7 @@ class Writer
      * Write an As3 package level function. As Haxe
      * does not have this, wrap it in a class definition
      */
-    function writeFunctionDef(fDef : FunctionDef)
-    {
+    function writeFunctionDef(fDef : FunctionDef):Void {
         writeClassDef(wrapFuncDefInClassDef(fDef));
     }
 
@@ -4563,7 +4545,7 @@ class Writer
             }
         }
 
-        o = output;
+        o = new BytesOutput();
         genTypes = program.genTypes;
         writeComments(program.header);
         writePackage(program.pack);
@@ -4572,6 +4554,20 @@ class Writer
         generatedTypesWritten = false;
         writeDefinitions(program.defs);
         writeComments(program.footer);
+
+        var rv = untyped o.getBytes().toString();
+        rv = StringTools.trim(rv);
+        var lines:Array<String> = rv.split('\n');
+        var counter:Int = lines.length;
+        var prevEmpty:Bool = false;
+        for (line in lines) {
+            var s:String = StringTools.rtrim(line);
+            output.writeString(s);
+            if (--counter > 0 && (s != '' || !prevEmpty))
+                output.writeString('\n');
+            prevEmpty = s == '';
+        }
+
         return warnings;
     }
 
@@ -4581,7 +4577,7 @@ class Writer
      * warning is affecting, so that the porter can more easily determine
      * the fix.
      */
-    public static function showWarnings(allWarnings : Map<String,Map<String,Bool>>) {
+    public static function showWarnings(allWarnings : Map<String,Map<String,Bool>>):Void {
         var wke : Map<String,Array<String>> = new Map(); // warning->files
         for(filename in allWarnings.keys()) {
             for(errname in allWarnings.get(filename).keys()) {
@@ -4613,7 +4609,7 @@ class Writer
                 default: println("WARNING: " + warn);
                 }
                 for(f in a)
-                    println("\t"+f);
+                    println("\t" + f);
             }
         }
     }
@@ -4656,4 +4652,5 @@ class Writer
             function (v:String) return v.length > 0 ? v.charAt(0).toUpperCase() + v.substr(1) : ""
         ).array().join("");
     }
+
 }

@@ -1,4 +1,5 @@
 package as3hx.parsers;
+
 import as3hx.As3.T;
 import as3hx.Parser.Types;
 

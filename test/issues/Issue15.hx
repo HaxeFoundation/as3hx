@@ -34,12 +34,12 @@ class Issue15 {
 		}
 		++i;
 
-		for (item /* AS3HX WARNING could not determine type for var: item exp: EObject([]) type: null */ in {}) {
+		for (item in as3hx.Compat.each({})) {
 			trace('');
 		}
 		++i;
 
-		for (item /* AS3HX WARNING could not determine type for var: item exp: EObject([]) type: null */ in {}) {
+		for (item in as3hx.Compat.each({})) {
 			trace('');
 		}
 		++i;
