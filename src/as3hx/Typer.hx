@@ -175,7 +175,7 @@ class Typer {
     }
 
     public function getExprType(e:Expr, isFieldAccess:Bool = false):Null<String> {
-        switch(e) {
+        switch (e) {
             case null: return null;
             case ETypedExpr(e2, t): return tstring(t);
             case EField(e2, f):
@@ -204,7 +204,7 @@ class Typer {
                         case "sort" : return "Function->Void";
                     }
                 }
-                switch(t2) {
+                switch (t2) {
                     case "Dynamic", CommonImports.ObjectType, CommonImports.ObjectImport:
                         switch(f) {
                             case "hasOwnProperty": return "String->Bool";
@@ -390,7 +390,7 @@ class Typer {
                     }
                 }
             case EIdent(s):
-                switch(s) {
+                switch (s) {
                     case "as3hx.Compat": return "as3hx.Compat";
                     case "Std": return "Std";
                     case "true", "false": return "Bool";
@@ -1455,7 +1455,7 @@ class Typer {
         if (f.varArgs != null) {
             context.set(f.varArgs, "Array<Dynamic>");
         }
-        var localTyping:Map<String,String> = new Map<String,String>();
+        var localTyping:Map<String, String> = new Map<String, String>();
         function lookUpForTyping(expr:Expr):RebuildResult {
             switch(expr) {
                 case EBinop("=", EIdent(v), e2, _):
@@ -1641,11 +1641,10 @@ class Typer {
 
     inline function isStatic(c:ClassField):Bool return Lambda.has(c.kwds, "static");
 
-
     /**
      * Opens a new context for variable typing
      */
-    function openContext(f:Function = null, name:String = null, cl:ClassDef = null) {
+    function openContext(f:Function = null, name:String = null, cl:ClassDef = null):Void {
         var c = new Map();
         for(k in context.keys())
             c.set(k, context.get(k));
@@ -1660,7 +1659,7 @@ class Typer {
     /**
      * Closes the current variable typing context
      */
-    function closeContext() {
+    function closeContext():Void {
         context = contextStack.pop();
         if (functionStack.length > 0) {
             functionStack.pop();

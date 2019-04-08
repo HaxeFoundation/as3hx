@@ -654,7 +654,8 @@ class Writer {
         var namespaceMetadata:Array<String> = null;
         if (isFun) {
             switch(field.kind) {
-                case FFun(f): typer.enterFunction(f, field.name, c);
+                case FFun(f):
+                    typer.enterFunction(f, field.name, c);
                 default:
             };
         }
@@ -2098,15 +2099,19 @@ class Writer {
                                 write(")");
                             case "getQualifiedClassName":
                                 var t:String = getExprType(params[0]);
-                                if (isClassType(t)) {
-                                    writeExpr(ECall(EField(EIdent("Type"), "getClassName"), params));
-                                } else if (t == "Dynamic" || t == null) {
-                                    writeExpr(ECall(EField(EIdent("as3hx.Compat"), "getQualifiedClassName"), params));
-                                } else { // regular type
-                                    writeExpr(ECall(EField(EIdent("Type"), "getClassName"), [ECall(EField(EIdent("Type"), "getClass"), params)]));
+                                switch (params[0]) {
+                                    case EIdent(v) if (v == t):
+                                        writeExpr(ECall(EField(EIdent("Type"), "getClassName"), params));
+                                    case _:
+                                        if (isClassType(t)) {
+                                            writeExpr(ECall(EField(EIdent("Type"), "getClassName"), params));
+                                        } else if (t == "Dynamic" || t == null) {
+                                            writeExpr(ECall(EField(EIdent("as3hx.Compat"), "getQualifiedClassName"), params));
+                                        } else { // regular type
+                                            writeExpr(ECall(EField(EIdent("Type"), "getClassName"), [ECall(EField(EIdent("Type"), "getClass"), params)]));
+                                        }
+                                            //ECall(EField(EIdent("Type"), "getClassName"), [ECall(EField(EIdent("Type"), "getSuperClass"), [e])]);
                                 }
-                                    //ECall(EField(EIdent("Type"), "getClassName"), [ECall(EField(EIdent("Type"), "getSuperClass"), [e])]);
-
                             case "getQualifiedSuperclassName":
                                 var t:String = getExprType(params[0]);
                                 if (isClassType(t)) {
@@ -4311,8 +4316,7 @@ class Writer {
         return out;
     }
 
-    function openb() : String
-    {
+    function openb() : String {
         if (cfg.bracesOnNewline) {
             var s:String = cfg.newlineChars + indent() + "{";
             if (pendingTailComment != null) {
@@ -4334,20 +4338,18 @@ class Writer {
         return s;
     }
 
-    function write(s : String)
-    {
+    function write(s : String):Void {
         //set line as dirty if string contains something other
         //than whitespace/indent
         if (!containsOnlyWhiteSpace(s) && s != cfg.indentChars) {
             lineIsDirty = true;
         }
-
         o.writeString(s);
     }
 
     /** write Haxe "allow" metadata using current package */
-    function writeAllow() {
-        write("@:allow("+properCaseA(this.pack,false).join(".")+")");
+    function writeAllow():Void {
+        write("@:allow(" + properCaseA(this.pack, false).join(".") + ")");
         writeNL();
         writeIndent();
     }
@@ -4361,8 +4363,7 @@ class Writer {
      * comment written on dirty line (not first text on line),
      * add extra whitespace before and after comment
      */
-    function writeComment(s : String, blockComment : Bool)
-    {
+    function writeComment(s : String, blockComment : Bool):Void {
         if (blockComment) {
             if (isHaxeCodeComment(s)) {
                 write(s.substring(7, s.length - 2));
@@ -4380,15 +4381,12 @@ class Writer {
         }
     }
 
-    function writeIndent(s = "")
-    {
+    function writeIndent(s = ""):Void {
         write(indent() + s);
     }
 
-    function writeLine(s = "")
-    {
+    function writeLine(s = ""):Void {
         lineIsDirty = false;
-
         if (pendingTailComment != null) {
             write(indent() + s + pendingTailComment + cfg.newlineChars);
             pendingTailComment = null;
@@ -4397,18 +4395,17 @@ class Writer {
         }
     }
 
-    function writeNL(s = "")
-    {
+    function writeNL(s = ""):Void {
         write(s);
         if (pendingTailComment != null) {
-            write(pendingTailComment);
+            write(" " + pendingTailComment);
             pendingTailComment = null;
         }
         write(cfg.newlineChars);
         lineIsDirty = false;
     }
 
-    inline function writeStartStatement() {
+    inline function writeStartStatement():Void {
         if(cfg.bracesOnNewline) {
             writeNL();
             writeIndent();
@@ -4417,7 +4414,7 @@ class Writer {
         }
     }
 
-    inline function writeCloseStatement() {
+    inline function writeCloseStatement():Void {
         if(cfg.bracesOnNewline) {
             write(")");
             writeNL();
@@ -4427,7 +4424,7 @@ class Writer {
         }
     }
 
-    function writeFinish(cond:BlockEnd) {
+    function writeFinish(cond:BlockEnd):Void {
         switch(cond) {
             case None:
             case Semi: write(";");

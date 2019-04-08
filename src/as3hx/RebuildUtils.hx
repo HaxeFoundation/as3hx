@@ -78,7 +78,7 @@ class RebuildUtils
         }
     }
 
-    public static function rebuild(e:Expr, rebuildMethod:Expr->RebuildResult):Expr {
+    public static function rebuild(e:Expr, rebuildMethod:Expr -> RebuildResult):Expr {
         if (e == null) return null;
         var r:RebuildResult = rebuildMethod(e);
         switch(r) {
@@ -157,8 +157,8 @@ class RebuildUtils
         return false;
     }
 
-    private static function rebuildExprParams(e:Expr, rebuildMethod:Expr->RebuildResult):Expr {
-        switch(e) {
+    private static function rebuildExprParams(e:Expr, rebuildMethod:Expr -> RebuildResult):Expr {
+        switch (e) {
             case EFunction(f, name):
                 var rexpr = rebuild(f.expr, rebuildMethod);
                 if (rexpr == null) return null;

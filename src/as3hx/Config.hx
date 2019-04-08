@@ -502,7 +502,7 @@ class Config {
     <vectorToArray value="true" />
     <guessCasts value="true" />
     <functionToDynamic value="false" />
-    <useFullTyping value="false" />
+    <useFullTyping value="true" />
     <getterMethods value="get_%I" />
     <setterMethods value="set_%I" />
     <forcePrivateSetter value="true" />
