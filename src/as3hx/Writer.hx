@@ -24,8 +24,8 @@ typedef CaseDef = {
  * @author Franco Ponticelli
  * @author Russell Weir
  */
-class Writer
-{
+class Writer {
+
     var lvl : Int;
     var o : Output;
     var cfg : Config;
@@ -50,8 +50,7 @@ class Writer
     var typer:Typer;
     var dictionaries:DictionaryRebuild;
 
-    public function new(config:Config)
-    {
+    public function new(config:Config) {
         this.lvl = 0;
         this.cfg = config;
         this.varCount = 0;
@@ -1337,13 +1336,13 @@ class Writer
     }
 
     function writeInits(c : ClassDef):Void {
-        if(c.inits == null || c.inits.length == 0)
+        if (c.inits == null || c.inits.length == 0)
             return;
         writeNL("");
         writeIndent();
         writeNL('private static var ${c.name}_static_initializer = {');
         lvl++;
-        for(e in c.inits) {
+        for (e in c.inits) {
             writeIndent();
             writeExpr(e);
             writeNL(";");
@@ -1391,8 +1390,8 @@ class Writer
      * @return if the block requires a terminating ;
      */
     function writeExpr(?expr : Expr) : BlockEnd {
-        if(cfg.debugExpr) write(" /* " + Std.string(expr) + " */ ");
-        if(expr == null) return None;
+        if (cfg.debugExpr) write(" /* " + Std.string(expr) + " */ ");
+        if (expr == null) return None;
         var rv = Semi;
         switch (expr) {
             case ETypedExpr(e, t): rv = writeETypedExpr(e, t);
@@ -2025,7 +2024,6 @@ class Writer
     function writeECall(fullExpr:Expr, expr:Expr, params:Array<Expr>):BlockEnd {
         switch(expr) {
             case EField(expr, f):
-                    trace('-----');
                 if ((f == "push" || f == "unshift") && params.length > 1 && (isArrayExpr(expr) || isVectorExpr(expr))) {
                     if (f == "unshift") {
                         params = params.copy();

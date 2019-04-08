@@ -131,9 +131,9 @@ class FunctionParser {
             }
         }
 
-        if(tokenizer.peek() == TBrOpen) {
+        if (tokenizer.peek() == TBrOpen) {
             f.expr = parseExpr(true);
-            switch(ParserUtils.removeNewLineExpr(f.expr)) {
+            switch (ParserUtils.removeNewLineExpr(f.expr)) {
             case EObject(fl):
                 if(fl.length == 0) {
                     f.expr = EBlock([]);

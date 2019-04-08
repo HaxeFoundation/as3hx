@@ -1,4 +1,5 @@
 package as3hx;
+
 import as3hx.As3.Expr;
 import as3hx.RebuildUtils.RebuildResult;
 
@@ -6,24 +7,21 @@ import as3hx.RebuildUtils.RebuildResult;
  * ...
  * @author xmi
  */
-
-
 class LoopPosition {
-    public function new() { }
+    public function new() {}
     public var expr:Expr;
     public var num:Int;
 }
 
-class ForLoopRebuild
-{
-    private var loopsListPerLoopVar:Map<String,Array<LoopPosition>> = new Map<String,Array<LoopPosition>>();
-    private var loopsListPerLoopVarStack:Array<Map<String,Array<LoopPosition>>> = new Array<Map<String,Array<LoopPosition>>>();
-    private var loopNumToReplace:Map<Int,Bool> = new Map<Int,Bool>();
+class ForLoopRebuild {
+
+    private var loopsListPerLoopVar:Map<String, Array<LoopPosition>> = new Map<String, Array<LoopPosition>>();
+    private var loopsListPerLoopVarStack:Array<Map<String, Array<LoopPosition>>> = [];
+    private var loopNumToReplace:Map<Int, Bool> = new Map<Int, Bool>();
     private var forLoopNum:Int = 0;
 
-    public function new() {
+    public function new() {}
 
-    }
     private function rebuildLookUpPassArray(expressions:Array<Expr>):Array<Expr> {
         var needUpdate:Bool = false;
         var newExpressions:Array<Expr> = [];
@@ -65,7 +63,6 @@ class ForLoopRebuild
         }
         return expressions;
     }
-
 
     private function openBlockContext():Void {
         loopsListPerLoopVarStack.push(loopsListPerLoopVar);
@@ -405,4 +402,5 @@ class ForLoopRebuild
         }
         return false;
     }
+
 }

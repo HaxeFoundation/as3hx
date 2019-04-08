@@ -17,12 +17,12 @@ class ExprParser {
 
         var tk = tokenizer.token();
         Debug.dbgln("parseExpr(" + tk + ")", tokenizer.line);
-        switch( tk ) {
+        switch ( tk ) {
         case TSemicolon:
             return parseExpr(funcStart);
         case TId(id):
             var e = parseStructure(id);
-            if(e == null)
+            if (e == null)
                 e = EIdent(ParserUtils.escapeName(id));
             return switch(e) {
                 case EIf(_,_,_) | EFor(_,_,_,_) | EForIn(_,_,_) | EForEach(_,_,_) | EWhile(_,_,_) | ESwitch(_,_,_): e;
@@ -328,13 +328,13 @@ class ExprParser {
         var parseExpr = parse.bind(tokenizer, types, cfg);
         Debug.dbgln("parseFullExpr()", tokenizer.line);
         var e = parseExpr(false);
-        if( ParserUtils.opt(tokenizer, TColon) ) {
+        if ( ParserUtils.opt(tokenizer, TColon) ) {
             switch( e ) {
             case EIdent(l): e = ELabel(l);
             default: tokenizer.add(TColon);
             }
         }
-        if( !ParserUtils.opt(tokenizer, TComma) )
+        if ( !ParserUtils.opt(tokenizer, TComma) )
             tokenizer.end();
         return e;
     }

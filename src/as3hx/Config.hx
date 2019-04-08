@@ -516,7 +516,7 @@ class Config {
     <excludeList />
     <conditionalCompilationList />
     <conditionalCompilationConstantsClass value="" />
-    <fixLocalVariableDeclarations value="true" />
+    <fixLocalVariableDeclarations value="false" />
     <dictionaryToHash value="false" />
     <rebuildLocalFunctions value="true" />
     <useAngleBracketsNotationForDictionaryTyping value="true" />

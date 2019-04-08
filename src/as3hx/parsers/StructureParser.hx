@@ -30,8 +30,8 @@ class StructureParser {
             var e1 = parseExpr(false);
             e1 = f(e1);
             tokenizer.end();
-            var elseExpr = if(ParserUtils.opt(tokenizer, TId("else"), true)) parseExpr(false) else null;
-            if(elseExpr != null) elseExpr = f(elseExpr);
+            var elseExpr = if (ParserUtils.opt(tokenizer, TId("else"), true)) parseExpr(false) else null;
+            if (elseExpr != null) elseExpr = f(elseExpr);
             switch(cond) {
                 case ECondComp(v, e, e2):
                     //corner case, the condition is an AS3 preprocessor
@@ -44,15 +44,15 @@ class StructureParser {
             }
         case "var", "const":
             var vars = [];
-            while( true ) {
+            while ( true ) {
                 var name = tokenizer.id(), t = null, val = null;
                 name = ParserUtils.escapeName(name);
-                if( ParserUtils.opt(tokenizer, TColon) )
+                if ( ParserUtils.opt(tokenizer, TColon) )
                     t = parseType();
-                if( ParserUtils.opt(tokenizer, TOp("=")) )
+                if ( ParserUtils.opt(tokenizer, TOp("=")) )
                     val = ETypedExpr(parseExpr(false), t);
                 vars.push( { name : name, t : t, val : val } );
-                if( !ParserUtils.opt(tokenizer, TComma) )
+                if ( !ParserUtils.opt(tokenizer, TComma) )
                     break;
             }
             EVars(vars);
@@ -63,10 +63,10 @@ class StructureParser {
             var e = parseExpr(false);
             EWhile(econd,e, false);
         case "for":
-            if( ParserUtils.opt(tokenizer, TId("each")) ) {
+            if ( ParserUtils.opt(tokenizer, TId("each")) ) {
                 tokenizer.ensure(TPOpen);
                 var ev = parseExpr(false);
-                switch(ev) {
+                switch (ev) {
                     case EBinop(op, e1, e2, n):
                         if(op == "in") {
                             tokenizer.ensure(TPClose);
@@ -126,7 +126,7 @@ class StructureParser {
             }
             EReturn(e);
         case "new":
-            if(ParserUtils.opt(tokenizer, TOp("<"))) {
+            if (ParserUtils.opt(tokenizer, TOp("<"))) {
                 // o = new <VectorType>[a,b,c..]
                 var t = parseType();
                 tokenizer.ensure(TOp(">"));
@@ -221,7 +221,7 @@ class StructureParser {
                         default: return null;
                     }
                 }
-                switch(call) {
+                switch (call) {
                     case EIdent(v):
                         var type = TPath([v]);
                         types.seen.push(type);
@@ -413,25 +413,25 @@ class StructureParser {
     }
 
     static function getParams(tokenizer:Tokenizer, parseExpr) {
-        return switch(tokenizer.token()) {
+        return switch (tokenizer.token()) {
             case TPOpen:
                 var params = [];
                 var parCount = 1;
-                while(parCount > 0) {
+                while (parCount > 0) {
                     var t = tokenizer.token();
-                    switch(t) {
+                    switch (t) {
                         case TPOpen: parCount++;
                         case TPClose:
                             parCount--;
                             if(params.length > 0) params[params.length - 1] = EParent(params[params.length - 1]);
                         case TComma:
-                        case TOp(op) if(params.length > 0):
+                        case TOp(op) if (params.length > 0):
                             params[params.length - 1] = ParserUtils.makeBinop(tokenizer, op, params[params.length - 1], parseExpr(false));
                         case _:
                             tokenizer.add(t);
-                            if(params.length < 2) params.push(parseExpr(false));
+                            if (params.length < 2) params.push(parseExpr(false));
                             else {
-                                if(params.length == 2) params.push(EArrayDecl([]));
+                                if (params.length == 2) params.push(EArrayDecl([]));
                                 switch(params[2]) {
                                     case EArrayDecl(e): e.push(parseExpr(false));
                                     case _:
@@ -443,4 +443,5 @@ class StructureParser {
             case _: null;
         }
     }
+
 }
