@@ -1,4 +1,5 @@
 import flash.net.URLRequest;
+
 class Issue257 {
 
 	public function new() {

@@ -1,8 +1,9 @@
 import flash.display.DisplayObject;
+
 class Issue164 {
 
 	public function new(rootClass:Class<Dynamic>) {
-		var d:DisplayObject = try cast(Type.createInstance(rootClass, []), DisplayObject) catch (e:Dynamic) null;
+		var d:DisplayObject = AS3.as(Type.createInstance(rootClass, []), DisplayObject);
 	}
 
 }

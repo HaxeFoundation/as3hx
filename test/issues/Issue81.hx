@@ -1,7 +1,6 @@
 import flash.system.Security;
-class Issue81 {
 
-	public function new() {}
+class Issue81 {
 
 	private static var Issue81_static_initializer = {
 		Security.allowDomain('*');

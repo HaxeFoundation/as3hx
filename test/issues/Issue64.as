@@ -8,7 +8,7 @@ package {
             var time:Number;
             var events:Vector.<Event>;
             for (var i:int = 0, n:int = timelines.length; i < n; i++) {
-                timelienes[i].apply(skeleton, lastTime, time, events, 1);
+                timelines[i].apply(skeleton, lastTime, time, events, 1);
             }
         }
     }

@@ -1,8 +1,8 @@
 import flash.events.TouchEvent;
+
 class Issue144 {
 
-	private var multitouchEnabled:Bool;
-
+	private var multitouchEnabled:Bool = false;
 	private var types:Array<String> = [];
 
 	public function new() {

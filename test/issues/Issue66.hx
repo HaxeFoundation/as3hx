@@ -1,11 +1,11 @@
 class Issue66 {
 
 	public function new() {
-		var a:Int = 1;
-		var b:Int = as3hx.Compat.parseInt(10.5);
-		var c:Int = as3hx.Compat.parseInt(a / b);
+		var a:Int = AS3.int(1);
+		var b:Int = AS3.int(AS3.int(10.5));
+		var c:Int = AS3.int(AS3.int(a / b));
 		var b:Float;
-		var d:Int = as3hx.Compat.parseInt(b);
+		var d:Int = AS3.int(AS3.int(b));
 	}
 
 }

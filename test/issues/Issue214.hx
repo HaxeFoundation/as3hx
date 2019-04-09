@@ -1,9 +1,8 @@
 class Issue214 {
 
-	public var test(never, set):Bool;
-
 	public function new() {}
 
+	public var test(never, set):Bool;
 	private function set_test(v:Bool):Bool {
 		if (!v) {
 			return v;

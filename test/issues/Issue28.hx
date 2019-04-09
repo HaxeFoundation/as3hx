@@ -1,7 +1,6 @@
 class Issue28 {
 
 	private static var b:Bool = true;
-
 	private static var o:Dynamic = (b) ? {} : null;
 
 	public function new() {

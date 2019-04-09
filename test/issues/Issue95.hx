@@ -5,13 +5,11 @@ typedef ConfigsTypedef = {
 
 class Issue95 {
 
-	private static var _configs:Array<ConfigsTypedef> = [
+	private static var _configs:Array<ConfigsTypedef> = cast [
 		{
-			name: 'name',
-			id: 10
+			'name': 'name',
+			'id': 10
 		}
 	];
-
-	public function new() {}
 
 }

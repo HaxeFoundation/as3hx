@@ -3,8 +3,8 @@ class Issue23 {
 	public function new(i:Int, n:Float, ss:String) {
 		var a:Int = i;
 		var a2:Int = i;
-		var a3:Int = as3hx.Compat.parseInt(n);
-		var a4:Int = as3hx.Compat.parseInt(s);
+		var a3:Int = AS3.int(n);
+		var a4:Int = AS3.int(s);
 
 		var b:Float = n;
 		var b2:Float = n;

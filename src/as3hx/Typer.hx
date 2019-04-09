@@ -380,6 +380,8 @@ class Typer {
                                 return getExprType(params[1]);
                             default:
                         }
+                    case EField(e, "splice"):
+                        return 'Array<Dynamic>'; // todo get array type
                     default:
                 }
                 var t:String = getExprType(e);

@@ -2,7 +2,7 @@ class Issue69 {
 
 	public function new() {
 		var s:String = '';
-		var c:String = s.charAt(0);
+		var c:String = Std.string(s.charAt(0));
 	}
 
 }

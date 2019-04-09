@@ -33,6 +33,7 @@ class Writer {
     var loopIncrements : Array<Expr>;
     var varCount : Int; // vars added for ESwitch or EFor initialization
     var isInterface : Bool; // set if current class is an interface
+    var isExtends : Bool;
     var inArrayAccess : Bool;
     var inEField : Bool;
     var inE4XFilter : Bool;
@@ -367,7 +368,8 @@ class Writer {
         }
 
         var parents = [];
-        if (null != c.extend) {
+        isExtends = null != c.extend;
+        if (isExtends) {
             parents.push((isInterface ? "implements " : "extends ") + tstring(c.extend));
         }
         for (i in c.implement)
@@ -396,6 +398,7 @@ class Writer {
         writeInits(c);
 
         lvl--;
+        writeNL();
         write(closeb());
 
         //close conditional compilation block if needed
@@ -813,11 +816,13 @@ class Writer {
                         if( cfg.getterSetterStyle == "flash" || cfg.getterSetterStyle == "combined") {
                             start(field.name, true);
                             writeFunction(f, isGetter(field.kwds), isSetter(field.kwds), true, name, ret);
+                            writeNL();
                         }
                         // write haxe version
                         if( cfg.getterSetterStyle == "haxe" || cfg.getterSetterStyle == "combined") {
                             start(field.name, false);
                             writeFunction(f, isGetter(field.kwds), isSetter(field.kwds), false, name, ret);
+                            writeNL();
                         }
                         if(cfg.getterSetterStyle == "combined") {
                             writeNL("#end");
@@ -826,6 +831,7 @@ class Writer {
                     } else {
                         start(name, false);
                         writeFunction(f, isGetter(field.kwds), isSetter(field.kwds), false, name, ret, field.meta);
+                        writeNL();
                     }
                 }
 
@@ -1000,7 +1006,7 @@ class Writer {
                         if(arg.val != null) {
                             write(" = ");
                             switch(tstring(t)) {
-                                case "Int" if(needCastToInt(arg.val)):
+                                case "Int" if (needCastToInt(arg.val)):
                                     switch(arg.val) {
                                         case EConst(_ => CFloat(f)):
                                             var index = f.indexOf('.');
@@ -1192,7 +1198,7 @@ class Writer {
         if (!isInterface)
             writeStartStatement();
         writeExpr(EBlock(es));
-        writeNL();
+        // writeNL();
         functionReturnType = oldFunctionReturnType;
     }
 
@@ -1271,7 +1277,7 @@ class Writer {
             inLvalAssign = false;
             //oldInLVA = false;
             var isProxy:Bool = etype == "PropertyProxy" || etype == "feathers.core.PropertyProxy";
-            var isRawData:Bool = etype == "Object" || etype == CommonImports.ObjectType || etype == CommonImports.ObjectImport;
+            var isRawData:Bool = false; //etype == "Object" || etype == CommonImports.ObjectType || etype == CommonImports.ObjectImport;
             if (isArrayType(etype) || isVectorType(etype) || isOpenFlDictionaryType(etype) || isMapType(etype) || isByteArrayType(etype) || isProxy || isRawData) {
                 writeExpr(e);
                 inArrayAccess = old;
@@ -1404,6 +1410,9 @@ class Writer {
             case EField(e, f): rv = writeEField(expr, e, f);
             case EBinop(op, e1, e2, newLineAfterOp): rv = writeEBinop(op, e1, e2, newLineAfterOp);
             case EUnop(op, prefix, e): rv = writeEUnop(op, prefix, e);
+            case ECall(EIdent('super'), params):
+                if (isExtends) rv = writeECall(expr, EIdent('super'), params);
+                else return None;
             case ECall(e, params): rv = writeECall(expr, e, params);
             case EIf(cond, e1, e2): rv = writeEIf(cond, e1, e2);
             case ETernary(cond, e1, e2): writeETernarny(cond, e1, e2);
@@ -1934,7 +1943,8 @@ class Writer {
                             if (f == "length") {
                                 var type:String = getExprType(e);
                                 if (type == "Function" || type == "haxe.Constraints.Function") {
-                                    write("1 /*# of arguments of " + v + "*/");
+                                    // write("1 /*# of arguments of " + v + "*/");
+                                    write('as3hx.Compat.getFunctionLength(' + v + ')');
                                     return None;
                                 } else if (type != null && isFunctionType(type)) {
                                     writeExpr(getCompatCallExpr("getFunctionLength", [e]));
@@ -2074,7 +2084,7 @@ class Writer {
                             case "Number": writeCastToFloat(params[0]);
                             case "String":
                                 if (getExprType(params[0]) == "String") {
-                                    writeEParent(params[0]);
+                                    writeExpr(params[0]);
                                 } else {
                                     writeExpr(getToStringExpr(params[0]));
                                 }
@@ -2145,7 +2155,7 @@ class Writer {
                         case "int" | "uint":
                             var t:String = getExprType(params[0]);
                             if (t == "Int" || t == "UInt") {
-                                writeEParent(params[0]);
+                                writeExpr(params[0]);
                             } else {
                                 writeExpr(getCastToIntExpr(params[0]));
                             }
@@ -2182,7 +2192,7 @@ class Writer {
                     if (globalFunction != null) {
                         //write(properCase(globalFunction, true) + ".");
                         write(n.charAt(0).toUpperCase() + n.substr(1) + ".");
-                    } else {
+                    } else if (!typer.isExistingIdent(n)) {
                         var type:String = typer.getExprType(expr);
                         var className:String = type.substring(type.lastIndexOf(".") + 1);
                         if (type != "Function" && type != "haxe.Constraints.Function" && type.indexOf("->") == -1 && (className.charAt(0) == className.charAt(0).toUpperCase())) {
@@ -2255,8 +2265,8 @@ class Writer {
         write("if (");
         lvl++; //extra indenting if condition on multiple lines
         var rb = rebuildIfExpr(cond);
-        if(rb != null) {
-            var f:Expr->Expr = null;
+        if (rb != null) {
+            var f:Expr -> Expr = null;
             f = function(e) return switch(e) {
                 case EParent(e): f(e);
                 default: e;
@@ -2293,13 +2303,21 @@ class Writer {
             // if we find an EBlock([ENL(EIf(...))])
             // after an `else` then we have an
             // `else if` statement
-            switch(e2) {
+            var haveExtra:Bool = false;
+            switch (e2) {
                 case EBlock(e3):
                     if (e3 != null && e3.length == 1) {
                         var e4 = ParserUtils.removeNewLineExpr(e3[0]);
                         var extraExpr:Expr = extractComments(e3[0]);
-                        writeExpr(extraExpr);
-                        switch(e4) {
+                        if (extraExpr != null) switch (extraExpr) {
+                            case ENL(ECommented(s, isBlock, isTail, e)):
+                                haveExtra = true;
+                                writeNL(s);
+                            case _:
+                        }
+                        // writeExpr(extraExpr);
+                        
+                        switch (e4) {
                             case EIf(_, _, _):
                                 // found single if statement after an else
                                 // replace parent `block` + `new line` with
@@ -2319,12 +2337,16 @@ class Writer {
             }
             //writeNL();
             if (elseif != null) {
-                //writeIndent(" else ");
-                write(" else ");
+                if (haveExtra)
+                    writeIndent("else ");
+                else
+                    write(" else ");
                 result = writeExpr(elseif);
             } else {
-                //writeIndent(" else");
-                write(" else");
+                if (haveExtra)
+                    writeIndent("else");
+                else
+                    write(" else");
                 writeStartStatement();
                 result = writeExpr(e2);
             }
@@ -2587,10 +2609,17 @@ class Writer {
                             writeExpr(e1);
                             write(")");
                         case "Class":
-                            //addWarning("as Class", true);
-                            write("as3hx.Compat.castClass(");
-                            writeExpr(e1);
-                            write(")");
+                            switch (e1) {
+                                case EField(ECall(_, _), 'constructor'):
+                                    write("Type.getClass(");
+                                    writeExpr(e1);
+                                    write(")");
+                                case _:
+                                    //addWarning("as Class", true);
+                                    write("as3hx.Compat.castClass(");
+                                    writeExpr(e1);
+                                    write(")");
+                            }
                         case "Function":
                             addWarning("as Function", false);
                             write("cast ");
@@ -3439,9 +3468,14 @@ class Writer {
                     case "Int" | "UInt":
                         EBinop("!=", e, EConst(CInt("0")), false);
                     case "Float":
-                        var lvalue = EBinop("!=", e, EConst(CInt("0")), false);
-                        var rvalue = EUnop("!", true, ECall(EField(EIdent("Math"), "isNaN"), [e]));
-                        EParent(EBinop("&&", lvalue, rvalue, false));
+                        switch (e) {
+                            case ECall(_, _):
+                                e;
+                            case _:
+                                var lvalue = EBinop("!=", e, EConst(CInt("0")), false);
+                                var rvalue = EUnop("!", true, ECall(EField(EIdent("Math"), "isNaN"), [e]));
+                                EParent(EBinop("&&", lvalue, rvalue, false));
+                        }
                     default: EBinop("!=", e, EIdent("null"), false);
                 }
             case EBinop(op, e2, e3, n):
@@ -3876,7 +3910,7 @@ class Writer {
             }
             return changed ? EBinop(op, lvalue, rvalue, false) : null;
         }
-        if(isBitwiseAndAssignmetnOp(op)) return EBinop("=", lvalue, EBinop(op.charAt(0), lvalue, rvalue, false), false);
+        if (isBitwiseAndAssignmetnOp(op)) return EBinop("=", lvalue, EBinop(op.charAt(0), lvalue, rvalue, false), false);
         switch(op) {
             case "||=":
                 var type = getExprType(lvalue);
@@ -3886,7 +3920,7 @@ class Writer {
                         case "Int" | "UInt" | "Float" | _: rebuildIfExpr(lvalue);
                     }
                     if (cond == null) cond = lvalue;
-                    if(isDynamicType(type)) {
+                    if (isDynamicType(type)) {
                         cond = switch(cond) {
                             case EBinop(op, e1, e2, false) if(op == "!="): EBinop("==", e1, e2, false);
                             default: cond;
@@ -3930,7 +3964,7 @@ class Writer {
                     }
                 }
                 switch(rvalue) {
-                    case EBinop(op,e1,e2,_) if(op == "||="):
+                    case EBinop(op,e1,e2,_) if (op == "||="):
                         writeExpr(rebuildBinopExpr(op, e1, e2));
                         writeNL();
                         writeIndent();
@@ -4398,7 +4432,10 @@ class Writer {
     function writeNL(s = ""):Void {
         write(s);
         if (pendingTailComment != null) {
-            write(" " + pendingTailComment);
+            if (s == "")
+                write(pendingTailComment);
+            else
+                write(" " + pendingTailComment);
             pendingTailComment = null;
         }
         write(cfg.newlineChars);
@@ -4443,10 +4480,11 @@ class Writer {
             for(field in genType.fields) {
                 writeNL();
                 writeIndent(cfg.indentChars);
-                write("var "+field.name + " : " + field.t + ";");
+                write("var " + field.name + ": " + field.t + ";");
             }
             writeNL();
             write("}");
+            writeNL();
             writeNL();
         }
     }

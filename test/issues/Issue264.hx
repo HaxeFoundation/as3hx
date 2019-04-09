@@ -1,3 +1,5 @@
+import flash.errors.Error;
+
 class Issue264 {
 
 	public function new() {
@@ -5,17 +7,16 @@ class Issue264 {
 		var message:String;
 
 		// error inside
-		if (Std.is(obj.error, Error)) {
-			message = obj.error.message;
-		}
-		// error event inside
-		else if (Std.is(obj.error, ErrorEvent)) {
-			message = obj.error.text;
-		}
-		// unknown
+		if (Std.is(Reflect.field(obj, 'error'), Error)) {
+			message = AS3.string(Reflect.field(Reflect.field(obj, 'error'), 'message'));
+		}// error event inside
+		else if (Std.is(Reflect.field(obj, 'error'), ErrorEvent)) {
+			message = AS3.string(Reflect.field(Reflect.field(obj, 'error'), 'text'));
+		}// unknown
 		else {
-			message = Std.string(obj.error);
+			message = Std.string(Std.string(Reflect.field(obj, 'error')));
 		}
+
 	}
 
 }
