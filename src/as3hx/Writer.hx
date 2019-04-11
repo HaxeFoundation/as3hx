@@ -1459,29 +1459,29 @@ class Writer {
                     }
                     return r;
                 }
-                switch (e) {
-                    case ENew(t, params):
-                        //var c = params.copy();
-                        //c.unshift(EConst(CString(tstring(t) + ": ")));
-                        var args:Array<Expr> = [EConst(CString(tstring(t)))];
-                        if (params.length > 0) {
-                            args.push(joinToString(params));
-                        }
-                        writeExpr(ENew(TPath(["XError"]), args));
-                    case ECall(e1, params):
-                        switch(e1) {
-                            case EIdent(s):
-                                var args:Array<Expr> = [EConst(CString(s))];
-                                if (params.length > 0) {
-                                    args.push(joinToString(params));
-                                }
-                                writeExpr(ENew(TPath(["XError"]), args));
-                            default:
-                                writeExpr(e);
-                        }
-                    default:
+                // switch (e) {
+                //     case ENew(t, params):
+                //         //var c = params.copy();
+                //         //c.unshift(EConst(CString(tstring(t) + ": ")));
+                //         var args:Array<Expr> = [EConst(CString(tstring(t)))];
+                //         if (params.length > 0) {
+                //             args.push(joinToString(params));
+                //         }
+                //         writeExpr(ENew(TPath(["XError"]), args));
+                //     case ECall(e1, params):
+                //         switch(e1) {
+                //             case EIdent(s):
+                //                 var args:Array<Expr> = [EConst(CString(s))];
+                //                 if (params.length > 0) {
+                //                     args.push(joinToString(params));
+                //                 }
+                //                 writeExpr(ENew(TPath(["XError"]), args));
+                //             default:
+                //                 writeExpr(e);
+                //         }
+                //     default:
                         writeExpr(e);
-                }
+                // }
                 //switch (e) {
                     //case ENew(t, params):
                         //var c = params.copy();
@@ -1866,8 +1866,21 @@ class Writer {
         }
     }
     function writeBlockLine(e:Expr):Void {
-        var fix = fixBlockLine(e);
-        writeFinish(writeExpr(fix == null ? e : fix));
+        if (e != null) {
+            switch (e) {
+                case EConst(_): return;
+                case EIdent(_): return;
+                case ENL(e):
+                    if (e != null) switch (e) {
+                        case EConst(_): return;
+                        case EIdent(_): return;
+                        case _:
+                    }
+                case _: 
+            }
+            var fix = fixBlockLine(e);
+            writeFinish(writeExpr(fix == null ? e : fix));
+        }
     }
 
     private var restrictedFieldArrayAccessConversion:Array<String> = ["length", "split", "indexOf"];

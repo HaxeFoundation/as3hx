@@ -1,4 +1,5 @@
 import starling.utils.StringUtil;
+
 class Issue213 {
 
 	public function new() {

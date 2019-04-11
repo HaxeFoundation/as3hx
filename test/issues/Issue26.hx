@@ -1,7 +1,5 @@
 class Issue26 {
 
-	public function new() {}
-
 }
 
 class Foo {
