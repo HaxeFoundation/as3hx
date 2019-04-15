@@ -230,6 +230,10 @@ class StructureParser {
                         var type = TVector(t);
                         types.seen.push(type);
                         return ENew(type, []);
+                    case EBinop('as', EIdent(v), e2, nl):
+                        var type = TPath([v]);
+                        types.seen.push(type);
+                        return EBinop('as', ENew(type, []), e2, nl);
                     default:
                         var result:Expr = extractFirstCall(call);
                         if (firstCall != null) {
