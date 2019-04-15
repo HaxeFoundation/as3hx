@@ -4567,7 +4567,7 @@ class Writer {
             imported.push(packWithDot + type.name);
         }
 
-        switch(program.defs[0]) {
+        if (program.defs.length > 0) switch (program.defs[0]) {
             case CDef(c):
                 for (meta in c.meta) {
                     switch (meta) {

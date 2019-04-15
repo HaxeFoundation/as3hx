@@ -17,16 +17,15 @@ class FileParser {
         if (this.fileExtension.indexOf(".") != 0) this.fileExtension = "." + fileExtension;
     }
 
-
     public function parseDirectory(src:String, excludes:List<String>, handler:String->String->String->String->Void, relativeDestination:String = "/"):Void {
         src = Path.normalize(src);
         relativeDestination = Path.normalize(relativeDestination);
         var subDirList = new Array<String>();
-        for(childName in FileSystem.readDirectory(src)) {
+        for (childName in FileSystem.readDirectory(src)) {
             var childPath = Path.addTrailingSlash(src) + childName;
             if (FileSystem.isDirectory(childPath)) {
                 subDirList.push(childName);
-            } else if(StringTools.endsWith(childName, fileExtension) && !isExcludeFile(excludes, childPath)) {
+            } else if (StringTools.endsWith(childName, fileExtension) && !isExcludeFile(excludes, childPath)) {
                 handler(src, childName, childPath, relativeDestination);
             }
         }
@@ -35,8 +34,7 @@ class FileParser {
         }
     }
 
-
-    static function isExcludeFile(excludes: List<String>, file: String) {
+    static function isExcludeFile(excludes: List<String>, file: String):Bool {
         var filePath:String = as3hx.Config.toPath(file);
         return Lambda.filter(excludes, function (path) {
             var excludePath:String = StringTools.replace(path, ".", "\\");

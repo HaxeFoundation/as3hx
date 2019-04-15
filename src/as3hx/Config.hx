@@ -514,7 +514,9 @@ class Config {
     <replaceVarArgsWithOptionalArguments value="false" />
     <flashTopLevelPackage value="flash"/>
     <excludeList />
-    <conditionalCompilationList />
+    <conditionalCompilationList>
+        <variable value="CONFIG::performanceInstrumentation"/>
+    </conditionalCompilationList>
     <conditionalCompilationConstantsClass value="" />
     <fixLocalVariableDeclarations value="false" />
     <dictionaryToHash value="true" />

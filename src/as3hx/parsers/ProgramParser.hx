@@ -22,15 +22,19 @@ class ProgramParser {
         // look for first 'package'
         var tk = tokenizer.token();
         var a = ParserUtils.explodeComment(tk);
+        var closed = false;
+        var defs:Array<Definition> = [];
 
-        for(t in a) {
+        for (t in a) {
             switch(t) {
                 case TId(s):
-                    if(s != "package")
+                    // if (s == 'mx_internal') continue;
+                    if (s != "package") {
                         ParserUtils.unexpected(t);
-                    if(ParserUtils.opt(tokenizer, TBrOpen))
-                        pack = []
-                    else {
+                    }
+                    if (ParserUtils.opt(tokenizer, TBrOpen)) {
+                        pack = [];
+                    } else {
                         pack = parsePackageName();
                         tokenizer.ensure(TBrOpen);
                     }
@@ -38,16 +42,62 @@ class ProgramParser {
                     if(t != null) throw "Assert error " + Tokenizer.tokenString(t);
                     header.push(ECommented(s,b,false,null));
                 case TNL(t): header.push(ENL(null));
-                default: ParserUtils.unexpected(t);
+                case TBkOpen:
+                    var tdef = tokenizer.token();
+                    var cname = switch tdef {
+                        case TId(s): s;
+                        case _: throw 'error';
+                    }
+                    var t = tokenizer.token();
+                    if (t != TPOpen) {
+                        ParserUtils.unexpected(t);
+                        continue;
+                    }
+                    
+                    var cdef = new ClassDef();
+                    cdef.imports = [];
+                    cdef.isInterface = false;
+                    cdef.typeParams = null;
+                    cdef.implement = [];
+                    cdef.extend = null;
+                    cdef.inits = [];
+                    cdef.meta = [];
+                    cdef.kwds = [];
+                    cdef.name = cname;
+                    cdef.fields = [];
+                    while (true) {
+                        var name = switch (tokenizer.token()) {
+                            case TId(s): s;
+                            case _: throw 'error';
+                        }
+                        var op = tokenizer.token();
+                        var value = switch (tokenizer.token()) {
+                            case TConst(s): s;
+                            case _: throw 'error';
+                        }
+                        var dm = tokenizer.token();
+                        cdef.fields.push({meta: [], kwds: ['public', 'static'], name: name, kind: FVar(TPath(['String']), EConst(value)), condVars: []});
+                        switch dm {
+                            case TComma:
+                            case _: break;
+                        }
+                    }
+                    defs.push(CDef(cdef));
+                    var close = tokenizer.token();
+                    if (close != TBkClose) {
+                        ParserUtils.unexpected(close);
+                        continue;
+                    }
+                    closed = true;
+                default: 
+                    ParserUtils.unexpected(t);
             }
         }
 
         // parse package
         var imports = [];
         var inits : Array<Expr> = [];
-        var defs = [];
         var meta : Array<Expr> = [];
-        var closed = false;
         var inNamespace = false;
         var inCondBlock = false;
         var outsidePackage = false;
@@ -55,7 +105,7 @@ class ProgramParser {
 
         var pf : Bool->Void = null;
         pf = function(included:Bool) {
-        while( true ) {
+        while ( true ) {
             var tk = tokenizer.token();
             switch( tk ) {
             case TBrClose: // }
@@ -73,10 +123,10 @@ class ProgramParser {
                     continue;
                 }
             case TBrOpen: // {
-                if(inNamespace)
+                if (inNamespace)
                     continue;
                 // private classes outside of first package {}
-                if( !closed ) {
+                if ( !closed ) {
                     ParserUtils.unexpected(tk);
                 }
                 closed = false;
@@ -194,36 +244,44 @@ class ProgramParser {
                     }
                     continue;
                 default:
-                    if(ParserUtils.opt(tokenizer, TNs)) {
+                    if (ParserUtils.opt(tokenizer, TNs)) {
                         var ns : String = id;
                         var t = ParserUtils.uncomment(tokenizer.token());
-                        switch(t) {
+                        switch (t) {
                             case TId(id2): id = id2;
                             default: ParserUtils.unexpected(t);
                         }
-
                         if (Lambda.has(cfg.conditionalVars, ns + "::" + id)) {
                             // this is a user supplied conditional compilation variable
                             Debug.openDebug("conditional compilation: " + ns + "::" + id, tokenizer.line);
                            // condVars.push(ns + "_" + id);
-                            meta.push(ECondComp(ns + "_" + id, null, null));
                             inCondBlock = true;
                             t = tokenizer.token();
-                            switch (t) {
-                                case TBrOpen:
+
+                            var nt = tokenizer.token();
+                            switch (nt) {
+                                case TNL(TId('import')):
+                                    tokenizer.add(nt);
                                     pf(false);
-                                default:
-                                    tokenizer.add(t);
-                                    pf(false);
+                                case _:
+                                    tokenizer.add(nt);
+                                    meta.push(ECondComp(ns + "_" + id, null, null));
+
+                                    switch (t) {
+                                        case TBrOpen, TNL(TBrOpen):
+                                            pf(false);
+                                        default:
+                                            tokenizer.add(t);
+                                            pf(false);
+                                    }
                             }
-                           // condVars.pop();
+                            // condVars.pop();
                             Debug.closeDebug("end conditional compilation: " + ns + "::" + id, tokenizer.line);
                             continue;
                         } else {
                             ParserUtils.unexpected(t);
                         }
-                    }
-                    else if(ParserUtils.opt(tokenizer, TSemicolon)) {
+                    } else if (ParserUtils.opt(tokenizer, TSemicolon)) {
                         // class names without an import statement used
                         // for forcing compilation and linking.
                         inits.push(EIdent(id));
