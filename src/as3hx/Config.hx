@@ -517,10 +517,10 @@ class Config {
     <conditionalCompilationList />
     <conditionalCompilationConstantsClass value="" />
     <fixLocalVariableDeclarations value="false" />
-    <dictionaryToHash value="false" />
+    <dictionaryToHash value="true" />
     <rebuildLocalFunctions value="true" />
     <useAngleBracketsNotationForDictionaryTyping value="true" />
-    <verifyGeneratedFiles value="false" />
+    <verifyGeneratedFiles value="true" />
     <useFastXML value="true" />
     <useCompat value="true" />
     <postProcessor value="" />
