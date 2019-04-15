@@ -41,6 +41,7 @@
 
 -cp test/unit
 -neko build/neko_test.n
+-lib test-adapter
 
 --next
 

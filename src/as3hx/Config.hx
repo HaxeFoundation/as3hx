@@ -182,7 +182,7 @@ class Config {
         return s.substr(0, 1).toUpperCase() + s.substr(1);
     }
 
-    function processDefaultConfig():Void {
+    public function processDefaultConfig():Void {
         fromXmlString(defaultConfig());
     }
 

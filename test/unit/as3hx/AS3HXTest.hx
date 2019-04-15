@@ -598,10 +598,22 @@ class AS3HXTest {
         var content = File.getContent('$issuesDirectory/$as3FileName');
         var program = parser.parseString(content, issuesDirectory, '$issuesDirectory/$as3FileName');
         var fw = File.write('$generatedDirectoryPath/$expectedHaxeFileName', false);
+        if (cfg.useFullTyping) {
+            writer.register(program);
+            writer.prepareTyping();
+            if (cfg.useOpenFlTypes) {
+                writer.refineTypes(program);
+                writer.applyRefinedTypes(program);
+            }
+            writer.finishTyping();
+        }
         writer.process(program, fw);
         fw.close();
         var expectedText = File.getContent('$issuesDirectory/$expectedHaxeFileName');
         var actualText = File.getContent('$generatedDirectoryPath/$expectedHaxeFileName');
+        if (expectedText != actualText) {
+            Sys.command("diff", ['$issuesDirectory/$expectedHaxeFileName', '$generatedDirectoryPath/$expectedHaxeFileName']);
+        }
         Assert.areEqual(expectedText, actualText);
     }
 }
