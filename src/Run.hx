@@ -16,6 +16,12 @@ class Run {
     static var writer:Writer;
     static var currentDstPath:String;
     static var files:Array<FileEntry> = [];
+    static var mxmlRoot:String;
+    static var mxmlRel:String;
+    static var mxmlMain:String;
+    static var mxmlFiles:Array<String> = [];
+    static var mxmlTmpPath:String = 'tmp/';
+    static var mxmlGenPath:String = mxmlTmpPath + 'generated/';
 
     public static function main():Void {
         Sys.setCwd(Sys.args().pop());
@@ -24,6 +30,7 @@ class Run {
             writer = new Writer(cfg);
         }
         var fileParser:FileParser = new FileParser(cfg, ".as");
+        var mxmlParser:FileParser = new FileParser(cfg, ".mxml");
         var libExcludes:List<String> = new List<String>();
         for (libPath in cfg.libPaths) {
             if (libPath == null) {
@@ -42,7 +49,20 @@ class Run {
             }
             currentDstPath = Path.removeTrailingSlashes(Path.normalize(dst));
             fileParser.parseDirectory(src, cfg.excludePaths, parseSrcFile);
+            mxmlParser.parseDirectory(src, cfg.excludePaths, addMxmlToList);
         }
+        mxmlFiles.remove(mxmlMain);
+        Sys.command('mxmlc', [mxmlMain, '--output', mxmlTmpPath + 'tmp.swf', '--keep-generated-actionscript']);
+        var mxmls:Array<String> = [for (f in mxmlFiles) f.substr(mxmlRoot.length + 1)];
+        var map:Map<String, String> = [for (e in mxmls)
+            mxmlGenPath + e.substr(0, -5) + '-generated.as' => e.split('/').pop().substr(0, -5) + '.as'];
+        cleanTmp(mxmlTmpPath, map);
+        renameTmp(mxmlTmpPath, map);
+        var prevDst:String = currentDstPath;
+        currentDstPath = currentDstPath + mxmlRel;
+        fileParser.parseDirectory(mxmlGenPath, cfg.excludePaths, parseSrcFile);
+        currentDstPath = prevDst;
+        
         //loop(cfg.src, cfg.dst, cfg.excludePaths);
         if (cfg.useFullTyping) {
             writer.prepareTyping();
@@ -67,6 +87,46 @@ class Run {
             for(i in errors)
                 Sys.println(i);
         }
+        #if neko
+        if (Sys.systemName() == 'Linux') Sys.sleep(1);
+        #end
+    }
+
+    static function cleanTmp(path:String, ignore:Map<String, String>):Void {
+        for (element in FileSystem.readDirectory(path)) {
+            if (FileSystem.isDirectory(path + element)) {
+                cleanTmp(path + element + '/', ignore);
+            } else {
+                var file:String = path + element;
+                if (!ignore.exists(file)) {
+                    trace('Delete: $file');
+                    FileSystem.deleteFile(file);
+                }
+            }
+        }
+    }
+
+    static function renameTmp(path:String, map:Map<String, String>):Void {
+        for (element in FileSystem.readDirectory(path)) {
+            if (FileSystem.isDirectory(path + element)) {
+                renameTmp(path + element + '/', map);
+            } else {
+                var file:String = path + element;
+                if (map.exists(file)) {
+                    trace('Rename: $file => ' + path + map[file]);
+                    FileSystem.rename(file, path + map[file]);
+                }
+            }
+        }
+    }
+
+    static function addMxmlToList(fileLocation:String, fileName:String, file:String, relativeDestination:String):Void {
+        if (mxmlRoot == null || fileLocation.length < mxmlRoot.length) {
+            mxmlRoot = fileLocation;
+            mxmlMain = file;
+            mxmlRel = relativeDestination;
+        }
+        mxmlFiles.push(file);
     }
 
     static function parseLibFile(fileLocation:String, fileName:String, file:String, relativeDestination:String):Void {
