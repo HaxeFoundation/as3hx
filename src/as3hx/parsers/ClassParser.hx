@@ -124,7 +124,7 @@ class ClassParser {
                 switch( t ) {
                 case TId(id):
                     switch( id ) {
-                    case "public", "static", "private", "protected", "override", "internal", "final": kwds.push(id);
+                    case "public", "static", "private", "protected", "override", "internal", "final", "mx_internal": kwds.push(id);
                     case "const":
                         kwds.push(id);
                         do {

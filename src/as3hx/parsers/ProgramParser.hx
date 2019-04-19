@@ -208,7 +208,7 @@ class ProgramParser {
                 case "use":
                     parseUse();
                     continue;
-                case "final", "public", "class", "internal", "interface", "dynamic", "function":
+                case "final", "public", "class", "internal", "interface", "dynamic", "function", "mx_internal":
                     inNamespace = false;
                     tokenizer.add(tk);
                     var d = parseDefinition(path, filename, meta);

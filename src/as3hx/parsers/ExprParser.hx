@@ -165,6 +165,8 @@ class ExprParser {
                                     Debug.closeDebug("end conditional compilation: " + i + "::" + id, tokenizer.line);
                                     return ECondComp(i + "_" + id, e, null);
                             }
+                        } else if (i == 'mx_internal') {
+                            return parseExprNext(ECommented('// ', true, false, EIdent(i + "::" + id)), 0);
                         } else switch(tokenizer.peek()) {
                             case TBrOpen: // functions inside a namespace
                                 return parseExprNext(ECommented("/* AS3HX WARNING namespace modifier " + i + "::"+id+" */", true, false, null), 0);

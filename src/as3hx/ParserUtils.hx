@@ -1,5 +1,6 @@
 package as3hx;
 
+import haxe.PosInfos;
 import as3hx.Tokenizer;
 import as3hx.Error;
 import as3hx.Parser;
@@ -158,9 +159,8 @@ class ParserUtils {
         }
     }
 
-    public static function unexpected(tk:Token) : Dynamic {
-        throw EUnexpected(Tokenizer.tokenString(tk));
-        return null;
+    public static function unexpected(tk:Token, ?pos:PosInfos) : Dynamic {
+        return throw EUnexpected(Tokenizer.tokenString(tk) + '(${pos.fileName}:${pos.lineNumber})');
     }
 
     /**

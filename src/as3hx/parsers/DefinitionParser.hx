@@ -16,16 +16,16 @@ class DefinitionParser {
         while( true ) {
             var id = tokenizer.id();
             switch( id ) {
-            case "public", "internal", "final", "dynamic": kwds.push(id);
+            case "public", "internal", "final", "dynamic", "mx_internal": kwds.push(id);
             case "use":
                 parseUse();
                 continue;
             case "class":
-                var c = parseClass(path, filename, kwds,meta,false);
+                var c = parseClass(path, filename, kwds, meta, false);
                 types.defd.push(c);
                 return CDef(c);
             case "interface":
-                var c = parseClass(path, filename, kwds,meta,true);
+                var c = parseClass(path, filename, kwds, meta, true);
                 types.defd.push(c);
                 return CDef(c);
             case "function":

@@ -620,11 +620,12 @@ class Writer {
             writeNL();
             writeNL();
             writeIndent();
+            if (isMXInternal(c.kwds))
+                write("@:ns('mx_internal')");
             if (isInternal(c.kwds)) {
                 writeAllow();
                 write("private ");
-            }
-            else {
+            } else {
                 write("public ");
             }
             if (c.extend != null) {
@@ -716,18 +717,19 @@ class Writer {
 
             //coner-case, constructor of internal AS3 class is set to private in
             //Haxe with a meta allowing access from same package
-            if(isConstructor && isInternal(c.kwds)) {
-                write("private ");
+            if (isMXInternal(field.kwds)) {
+                write("@:ns('mx_internal') ");
             }
-            else if(isPublic(field.kwds)) {
+            if (isConstructor && isInternal(c.kwds)) {
+                write("private ");
+            } else if(isPublic(field.kwds)) {
                 if(!(isGet && cfg.forcePrivateGetter) //check if forced private getter
                     && !(isSet && cfg.forcePrivateSetter)) //check if forced private setter
                     write("public ");
                 else if(!isInterface) {
                     write("private ");
                 }
-            }
-            else if(!isInterface) {
+            } else if(!isInterface) {
                 write("private ");
             }
             //check wheter the field is an AS3 constants, which can be inlined in Haxe
@@ -4186,38 +4188,35 @@ class Writer {
         return Lambda.has(kwds, "public");
     }
 
-    function isPrivate(kwds : Array<String>) : Bool
-    {
+    function isPrivate(kwds : Array<String>) : Bool {
         return Lambda.has(kwds, "private");
     }
 
-    function isInternal(kwds : Array<String>) : Bool
-    {
+    function isInternal(kwds : Array<String>) : Bool {
         return Lambda.has(kwds, "internal");
     }
 
-    function isFinal(kwds : Array<String>) : Bool
-    {
+    function isMXInternal(kwds : Array<String>) : Bool {
+        return Lambda.has(kwds, "mx_internal");
+    }
+
+    function isFinal(kwds : Array<String>) : Bool {
         return Lambda.has(kwds, "final");
     }
 
-    function isProtected(kwds : Array<String>) : Bool
-    {
+    function isProtected(kwds : Array<String>) : Bool {
         return Lambda.has(kwds, "protected");
     }
 
-    function isGetter(kwds : Array<String>) : Bool
-    {
+    function isGetter(kwds : Array<String>) : Bool {
         return Lambda.has(kwds, "get");
     }
 
-    function isSetter(kwds : Array<String>) : Bool
-    {
+    function isSetter(kwds : Array<String>) : Bool {
         return Lambda.has(kwds, "set");
     }
 
-    function isConst(kwds : Array<String>) : Bool
-    {
+    function isConst(kwds : Array<String>) : Bool {
         return Lambda.has(kwds, "const");
     }
 
