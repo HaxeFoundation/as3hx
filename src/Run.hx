@@ -56,7 +56,8 @@ class Run {
             mxmlFiles.remove(mxmlMain);
             var asconfig:String = "asconfig.json";
             var r:Int = if (FileSystem.exists(asconfig)) {
-                var flex:String = Sys.getEnv("FLEX");
+                var flex:String = Sys.getEnv("FLEX_HOME");
+                if (flex == null) flex = Sys.getEnv("FLEX");
                 if (flex == null) exit(1, "FLEX home not set!");
                 var asc:String = File.getContent(asconfig);
                 if (asc.indexOf("keep-generated-actionscript") == -1) exit(1, "keep-generated-actionscript not set in asconfig.json");
