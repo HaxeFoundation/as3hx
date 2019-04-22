@@ -1660,7 +1660,12 @@ class Writer {
                 addWarning("EE4X");
             case EE4XFilter( e1, e2 ):
                 // e1.(weight > 300) search
-                writeE4XFilterExpr(e1, e2);
+                try {
+                    writeE4XFilterExpr(e1, e2);
+                } catch (e:String) {
+                    writeComment("//" + e, true);
+                    addWarning(e, true);
+                }
             case EE4XDescend( e1, e2 ):
                 //write("/* " + e2 + " */");
                 writeExpr(e1);

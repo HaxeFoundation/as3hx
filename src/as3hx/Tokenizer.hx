@@ -144,7 +144,7 @@ class Tokenizer {
                     char = nextChar();
                 }
                 switch( char ) {
-                case 'x'.code:
+                case 'x'.code, 'X'.code:
                     if( buf.toString() == "0" ) {
                         do {
                             buf.addChar(char);

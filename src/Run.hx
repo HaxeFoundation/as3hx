@@ -1,3 +1,4 @@
+import haxe.Json;
 using StringTools;
 
 import as3hx.As3.Program;
@@ -51,17 +52,34 @@ class Run {
             fileParser.parseDirectory(src, cfg.excludePaths, parseSrcFile);
             mxmlParser.parseDirectory(src, cfg.excludePaths, addMxmlToList);
         }
-        mxmlFiles.remove(mxmlMain);
-        Sys.command('mxmlc', [mxmlMain, '--output', mxmlTmpPath + 'tmp.swf', '--keep-generated-actionscript']);
-        var mxmls:Array<String> = [for (f in mxmlFiles) f.substr(mxmlRoot.length + 1)];
-        var map:Map<String, String> = [for (e in mxmls)
-            mxmlGenPath + e.substr(0, -5) + '-generated.as' => e.split('/').pop().substr(0, -5) + '.as'];
-        cleanTmp(mxmlTmpPath, map);
-        renameTmp(mxmlTmpPath, map);
-        var prevDst:String = currentDstPath;
-        currentDstPath = currentDstPath + mxmlRel;
-        fileParser.parseDirectory(mxmlGenPath, cfg.excludePaths, parseSrcFile);
-        currentDstPath = prevDst;
+        if (mxmlFiles.length > 1) {
+            mxmlFiles.remove(mxmlMain);
+            var asconfig:String = "asconfig.json";
+            var r:Int = if (FileSystem.exists(asconfig)) {
+                var flex:String = Sys.getEnv("FLEX");
+                if (flex == null) exit(1, "FLEX home not set!");
+                var asc:String = File.getContent(asconfig);
+                if (asc.indexOf("keep-generated-actionscript") == -1) exit(1, "keep-generated-actionscript not set in asconfig.json");
+                var json = Json.parse(asc);
+                var output:String = json.compilerOptions.output;
+                mxmlTmpPath = output.substr(0, output.lastIndexOf("/") + 1);
+                mxmlGenPath = mxmlTmpPath + "generated/";
+                mxmlRoot = cfg.src[0];
+                Sys.command("asconfigc", ["--sdk", flex]);
+            } else {
+                Sys.command("mxmlc", [mxmlMain, "--output", mxmlTmpPath + "tmp.swf", "--keep-generated-actionscript"]);
+            }
+            if (r != 0) exit(r);
+            var mxmls:Array<String> = [for (f in mxmlFiles) f.substr(mxmlRoot.length + 1)];
+            var map:Map<String, String> = [for (e in mxmls)
+                mxmlGenPath + e.substr(0, -5) + "-generated.as" => e.split("/").pop().substr(0, -5) + ".as"];
+            cleanTmp(mxmlTmpPath, map);
+            renameTmp(mxmlTmpPath, map);
+            var prevDst:String = currentDstPath;
+            currentDstPath = currentDstPath + mxmlRel;
+            fileParser.parseDirectory(mxmlGenPath, cfg.excludePaths, parseSrcFile);
+            currentDstPath = prevDst;
+        }
         
         //loop(cfg.src, cfg.dst, cfg.excludePaths);
         if (cfg.useFullTyping) {
@@ -87,9 +105,15 @@ class Run {
             for(i in errors)
                 Sys.println(i);
         }
+        exit();
+    }
+
+    static function exit(code:Int = 0, ?message:String):Void {
+        if (message != null) Sys.println(message);
         #if neko
         if (Sys.systemName() == 'Linux') Sys.sleep(1);
         #end
+        Sys.exit(code);
     }
 
     static function cleanTmp(path:String, ignore:Map<String, String>):Void {
