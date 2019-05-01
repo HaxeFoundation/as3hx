@@ -43,13 +43,10 @@ class FastXMLList {
         return l.length;
     }
 
-    /**
-     * 
     public function set(i:Int, v:FastXML) : FastXML {
         l[i] = v;
         return v;
     }
-    */
 
     public function toString() : String {
         var s = "";

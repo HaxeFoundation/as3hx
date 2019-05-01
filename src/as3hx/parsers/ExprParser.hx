@@ -112,7 +112,6 @@ class ExprParser {
         var parseExprList = parseList.bind(tokenizer, types, cfg);
         var parseType= TypeParser.parse.bind(tokenizer, types, cfg);
         var parseE4X = E4XParser.parse.bind(tokenizer, types, cfg);
-
         var tk = tokenizer.token();
         Debug.dbgln("parseExprNext("+e1+") ("+tk+")", tokenizer.line);
         switch( tk ) {
@@ -344,21 +343,21 @@ class ExprParser {
     public static function parseList(tokenizer:Tokenizer, types:Types, cfg:Config, etk:Token) : Array<Expr> {
         var parseExpr = parse.bind(tokenizer, types, cfg);
         Debug.dbgln("parseExprList()", tokenizer.line);
-
-        var args = new Array();
+        var args = [];
         var f = function(t) {
-            if(args.length == 0) return;
-            args[args.length-1] = ParserUtils.tailComment(args[args.length-1], t);
+            if (args.length == 0) return;
+            args[args.length - 1] = ParserUtils.tailComment(args[args.length - 1], t);
         }
         if (ParserUtils.opt(tokenizer, etk)) return args;
         var exprToToken = new Map<Expr, Token>();
-        while(true) {
+        while (true) {
             var tk = tokenizer.token();
             tokenizer.add(tk);
             var expr = parseExpr(false);
             exprToToken.set(expr, tk);
             args.push(expr);
             tk = tokenizer.token();
+
             switch(tk) {
                 case TComma:
                     var ntk = tokenizer.token();

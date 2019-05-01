@@ -1252,8 +1252,20 @@ class Writer {
         if(etype == "FastXML" || etype == "FastXMLList") {
             writeExpr(e);
             inArrayAccess = old;
-            write(".get(");
+            var oldInLVA = inLvalAssign;
+            inLvalAssign = false;
+            if (oldInLVA) {
+                write(".set(");
+            } else {
+                write(".get(");
+            }
             writeExpr(index);
+            if (oldInLVA) {
+                write(", ");
+                writeExpr(rvalue);
+                rvalue = null;
+            }
+            inLvalAssign = oldInLVA;
             write(")");
         } else if(isMapType(etype)) {
             writeExpr(e);
@@ -3094,7 +3106,7 @@ class Writer {
         }
     }
 
-    inline function writeENew(t : T, params : Array<Expr>):Void {
+    function writeENew(t : T, params : Array<Expr>):Void {
         var writeParams = function() {
             var argTypes:Array<T> = typer.getClassConstructorTypes(tstring(t));
             for (i in 0...params.length) {
@@ -3178,7 +3190,14 @@ class Writer {
         }
         if (!handled) {
             if (isObject) write("{}");
-            else if (!isDictionary) write("new " + tstring(t) + "(");
+            else if (!isDictionary) {
+                var ts = tstring(t);
+                if (ts == "FastXML") {
+                    writeParams();
+                    return;
+                }
+                write("new " + ts + "(");
+            }
             // prevent params when converting vector to array
             var out = switch(t) {
                 case TVector(_): !cfg.vectorToArray;
