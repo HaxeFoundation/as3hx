@@ -3747,7 +3747,9 @@ class Writer {
                 }
                 else if (f == "sort") {
                     if (isArrayExpr(e)) {
-                        switch(params[0]) {
+                        switch (params[0]) {
+                            case null:
+                                result = ECall(EField(e, "sort"), [EField(EIdent("AS3"), "defaultSort")]);
                             case EField(e1, "RETURNINDEXEDARRAY"):
                                 switch(e1) {
                                     case EIdent("Array"):

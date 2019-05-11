@@ -18,6 +18,8 @@ class XMLReader {
         if (isCDATA) {
             var end1 = input.readByte();
             var end2 = input.readByte();
+            buf.addChar(end1);
+            buf.addChar(end2);
             if (end1 == '['.code) {
                 if (end2 != 'C'.code)
                     throw EInvalidChar(end2);

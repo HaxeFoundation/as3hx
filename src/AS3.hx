@@ -162,4 +162,29 @@ class AS3 {
     macro public static function int<T>(e:ExprOf<T>, ?base:ExprOf<Int>):ExprOf<T> {
         return macro untyped ~~${e};
     }
+
+    public static function defaultSort(a:Dynamic, b:Dynamic):Int {
+        return if (Std.is(a, String))
+            defaultStringSort(a, b);
+        else if (Std.is(a, Int))
+            defaultIntSort(a, b);
+        else
+            throw 'Unsupported';
+    }
+
+    public static function defaultStringSort(a:String, b:String):Int {
+        var min:Int = Std.int(Math.min(a.length, b.length));
+        a = a.toLowerCase();
+        b = b.toLowerCase();
+        for (i in 0...min) {
+            var r:Int = a.charCodeAt(i) - a.charCodeAt(i);
+            if (r != 0) return r;
+        }
+        return 0;
+    }
+
+    public static function defaultIntSort(a:Int, b:Int):Int {
+        return a - b;
+    }
+
 }
