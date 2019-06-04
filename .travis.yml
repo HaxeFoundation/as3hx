@@ -4,6 +4,7 @@ haxe:
   - development
   - 3.4.2
   - 3.4.4
+  - 3.4.7
 
 os:
   - linux
