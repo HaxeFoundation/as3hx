@@ -309,14 +309,12 @@ class Compat {
         return untyped __cs__('int.MaxValue');
         #elseif java
         return untyped __java__('Integer.MAX_VALUE');
-        #elseif cpp
-        return 2147483647;
         #elseif python
         return PythonSysAdapter.maxint;
         #elseif php
         return untyped __php__('PHP_INT_MAX');
         #else
-        return 2^31-1;
+        return 2147483647;
         #end
     }
     
@@ -333,14 +331,12 @@ class Compat {
         return untyped __cs__('int.MinValue');
         #elseif java
         return untyped __java__('Integer.MIN_VALUE');
-        #elseif cpp
-        return -2147483648;
         #elseif python
         return -PythonSysAdapter.maxint - 1;
         #elseif php
         return untyped __php__('PHP_INT_MIN');
         #else
-        return -2^31;
+        return -2147483648;
         #end
     }
     
