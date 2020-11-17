@@ -1,6 +1,8 @@
 # as3hx [![Build Status](https://travis-ci.org/HaxeFoundation/as3hx.svg?branch=master)](https://travis-ci.org/HaxeFoundation/as3hx)
 Convert ActionScript 3 to Haxe 3 code.
 
+**Note**: This repository is no longer actively maintained. Please refer to https://github.com/innogames/ax3 as an alternative!
+
 ### Build
 You'll need Haxe 3.* to build the project and Neko 2.* to run it.
     
