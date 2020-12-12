@@ -266,7 +266,7 @@ class Compat {
         #elseif java
         return untyped __java__('Double.MAX_VALUE');
         #elseif cpp
-        return 1.79769313486232e+308;
+        return 1.7976931348623158e+308;
         #elseif python
         return PythonSysAdapter.float_info.max;
         #else
